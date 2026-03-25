@@ -1,251 +1,76 @@
-# Contributing to Automotive Claude Code
+# Contributing to Automotive Antigravity Workspace
 
-Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to the automotive engineering expert ecosystem! This document provides guidelines for maintaining and expanding our domain-specific intelligence.
 
 ## 🎯 Vision
 
-Democratize automotive expertise through AI, enabling every engineer to work at expert level with complete standards compliance.
+Democratize automotive expertise through the Antigravity platform, enabling every engineer to work at the same level as hardware, software, and functional safety experts while ensuring complete ISO 26262 and ISO 21434 compliance.
 
 ## 🤝 Ways to Contribute
 
-### 1. Add New Skills
-- Navigate to `skills/` directory
-- Create YAML file following existing patterns
-- Include complete implementation, not TODOs
-- Add tests in `tests/unit/`
-- Document in `knowledge-base/`
+### 1. Develop New Expert Skills
+- **Location**: `.agents/skills/`
+- **Format**: `SKILL.md` (Native Antigravity format)
+- **Requirement**: Use the migration script or follow the template to define domain expert personas (e.g., BMS Engineer, SoC Architect).
+- **Knowledge Linking**: Always include mandatory references to our `knowledge-base/` and `rules/` folders.
 
-### 2. Implement Tool Adapters
-- Create adapter in `tools/adapters/<category>/`
-- Inherit from `BaseToolAdapter`
-- Implement all abstract methods
-- Add integration tests
-- Update `tool_router.py`
+### 2. Standardize Engineering Workflows
+- **Location**: `.agents/workflows/`
+- **Format**: Markdown with YAML frontmatter.
+- **Requirement**: Break down complex automotive tasks (e.g., "ASIL-D FSC Review") into repeatable, tool-enabled steps.
 
-### 3. Create Agents
-- Define agent in `agents/<domain>/`
-- Specify capabilities and tools
-- Add collaboration patterns
-- Document usage examples
+### 3. Maintain the Automotive Knowledge Base
+- **Location**: `knowledge-base/`
+- **Focus Areas**: ISO 26262, MISRA C/C++, AUTOSAR documents, and toolchain migration guides.
+- **Contribution**: Keep technical documentation up-to-date and cross-reference them in `SKILL.md` files to ground AI logic in reality.
 
-### 4. Improve Documentation
-- Fix typos and clarify explanations
-- Add tutorials and examples
-- Expand knowledge base articles
-- Translate to other languages
+### 4. Expand the Command Arsenal
+- **Location**: `commands/`
+- **Format**: Shell scripts (`.sh`) or Python utilities.
+- **Focus**: Automotive analysis tools like FMEA generators, ASIL checkers, and CAN-FD matrix exporters.
 
-### 5. Report Bugs
-- Search existing issues first
-- Provide reproduction steps
-- Include environment details
-- Share logs and error messages
+---
 
 ## 📝 Development Workflow
 
-### Setup Development Environment
+### Setup Your Workspace
 
 ```bash
-# Clone repository
-git clone https://github.com/automotive-opensource/automotive-claude-code-agents.git
-cd automotive-claude-code-agents
+# Clone the repository
+git clone https://github.com/dubgyd/automotive-antigravity-agents.git
+cd automotive-antigravity-agents
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install in development mode
-pip install -e ".[dev]"
-
-# Install pre-commit hooks
-pre-commit install
+# Use Antigravity to load the skills
+# Antigravity will automatically detect .agents/skills/
 ```
 
-### Code Quality Standards
+### Contribution Standards
 
-```bash
-# Format code
-make format
+#### Skills (`SKILL.md`)
+- Must explicitly state the `Domain` and `Mandatory Knowledge References`.
+- Avoid placeholders; provided capabilities must be executable by the AI.
 
-# Run linters
-make lint
+#### Workflows
+- Every step should be actionable.
+- Use `// turbo` annotations for automation-safe commands.
 
-# Run tests
-make test
+#### Documentation
+- Use GitHub Alerts (`> [!IMPORTANT]`, `> [!WARNING]`) for critical safety info.
+- All automotive engineering documents must cite the specific ISO 26262 part number where applicable.
 
-# Check coverage
-make coverage
-```
+---
 
-### Commit Message Convention
+## 🔒 Safety & Ethics
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Test additions/changes
-- `chore`: Build/tooling changes
-
-**Examples:**
-```
-feat(autosar): add SWC generation skill
-fix(battery): correct SOC estimation algorithm
-docs(api): update tool adapter API reference
-```
-
-### Pull Request Process
-
-1. **Create Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Make Changes**
-   - Write production-ready code
-   - Add comprehensive tests (80%+ coverage)
-   - Update documentation
-   - Follow coding standards
-
-3. **Test Locally**
-   ```bash
-   make test
-   make lint
-   make coverage
-   ```
-
-4. **Push and Create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-   - Fill out PR template completely
-   - Link related issues
-   - Request reviews from maintainers
-
-5. **Address Review Feedback**
-   - Make requested changes
-   - Push updates to same branch
-   - Mark conversations as resolved
-
-6. **Merge**
-   - Squash commits when merging
-   - Ensure CI passes
-   - Delete branch after merge
-
-## 🎨 Code Style
-
-### Python
-- Follow [PEP 8](https://pep8.org/)
-- Use type hints for all functions
-- Maximum line length: 88 characters (Black default)
-- Docstrings: Google style
-- Format with Black: `make format`
-
-### YAML
-- Use 2-space indentation
-- No trailing whitespace
-- Use lowercase with hyphens for keys
-- Quote strings when ambiguous
-
-### Shell Scripts
-- Use `#!/usr/bin/env bash`
-- Set `-euo pipefail`
-- Quote all variables
-- Use `readonly` for constants
-- Add comments for complex logic
-
-## 🧪 Testing Guidelines
-
-### Test Coverage Requirements
-- **Minimum**: 80% for new code
-- **Safety-critical**: 100% for ISO 26262 ASIL-D
-- **Security**: 100% for ISO 21434 features
-
-### Test Structure
-```python
-def test_<what>_<when>_<expected>():
-    """Clear description of what is being tested."""
-    # Arrange
-    setup_test_conditions()
-
-    # Act
-    result = function_under_test()
-
-    # Assert
-    assert result == expected_value
-```
-
-### Running Tests
-```bash
-# All tests
-pytest
-
-# Specific file
-pytest tests/unit/test_tool_router.py
-
-# With coverage
-pytest --cov=tools --cov-report=html
-
-# Verbose output
-pytest -vv
-```
-
-## 📚 Documentation Guidelines
-
-### Code Documentation
-- All public functions must have docstrings
-- Include parameter types and return types
-- Provide usage examples
-- Document exceptions raised
-
-### Knowledge Base
-- Follow 5-level structure (overview → advanced)
-- Use clear headings and hierarchy
-- Include code examples
-- Add cross-references
-- Keep automotive context in mind
-
-## 🔒 Security
-
-### Reporting Vulnerabilities
-- **DO NOT** open public issues for security vulnerabilities
-- Email: security@automotive-claude-code.org
-- Include detailed reproduction steps
-- Allow 90 days for fix before public disclosure
-
-### Security Best Practices
-- Never commit secrets or credentials
-- Validate all external input
-- Use parameterized queries
-- Follow OWASP Top 10 guidelines
-- Implement least-privilege access
+Given the safety-critical nature of automotive engineering:
+1. **No Hallucinations**: Never submit a skill or knowledge item that generates fake safety metrics.
+2. **Review Hierarchy**: Any changes to `rules/` or `knowledge-base/standards/` must be reviewed by the Safety Officer persona before merging.
+3. **Data Privacy**: Never commit private vehicle fleet telemetry or OEM-proprietary source code.
 
 ## 📜 License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
 
-## 💬 Getting Help
-
-- **Discord**: [Join our community](https://discord.gg/automotive-claude)
-- **GitHub Discussions**: Ask questions and share ideas
-- **Email**: contributors@automotive-claude-code.org
-
 ## 🙏 Recognition
 
-Contributors are recognized in:
-- `CONTRIBUTORS.md` file
-- Release notes
-- Project website
-- Annual contributor spotlight
-
-Thank you for making automotive development accessible to everyone! 🚗✨
+Contributors help build the future of Software Defined Vehicles (SDV). Thank you for making automotive engineering more accessible and safer! 🚗✨
