@@ -1,0 +1,165 @@
+name: electrochromic-glass
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Variable transparency window and sunroof systems using electrochromic, SPD, and PDLC technologies for automotive light and privacy control."
+use_cases:
+  - "Designing electrochromic sunroofs with multi-zone tint control"
+  - "Implementing SPD smart glass for instant-response window dimming"
+  - "Building PDLC privacy glass for rear windows and partition screens"
+  - "Creating automated tint control linked to sun position and cabin temperature"
+  - "Integrating smart glass with the vehicle energy management system"
+automotive_standards:
+  - "FMVSS 205 - Glazing materials light transmittance requirements"
+  - "ECE R43 - Safety glazing including variable transmission glass"
+  - "ISO 3538 - Automotive glass optical quality requirements"
+  - "SAE J100 - Windshield light transmittance minimum thresholds"
+  - "ISO 13837 - Solar transmittance measurement for automotive glazing"
+instructions: |
+  # Electrochromic Glass
+
+  ## Overview
+  Electrochromic and smart glass technologies enable vehicle windows and sunroofs to
+  dynamically change their transparency, tint level, and solar heat transmission in
+  response to electrical signals. This replaces mechanical sunshades and fixed tinted
+  glass with electronically controlled glazing that adapts to lighting conditions, privacy
+  needs, and thermal comfort requirements. Three primary technologies serve different
+  automotive applications with distinct performance characteristics.
+
+  ## Key Concepts
+
+  ### Electrochromic (EC) Glass
+  Changes tint through electrochemical ion migration:
+  - Tint range from 60% visible light transmission (clear) to 1% (dark)
+  - Transition time of 5 to 15 minutes for full clear-to-dark change
+  - Very low power consumption, drawing current only during transitions
+  - Memory effect holds tint state without continuous power
+  - Best suited for sunroofs and rear glass where slow transition is acceptable
+
+  ### Suspended Particle Device (SPD) Glass
+  Uses aligned nanoparticles to control light transmission:
+  - Tint range from 55% (clear) to 0.5% (dark) visible light transmission
+  - Near-instant response time under 3 seconds for full transition
+  - Requires continuous voltage to maintain the clear state
+  - Power consumption of 1 to 5 W per square meter in the clear state
+  - Best suited for side windows where rapid response is valued
+
+  ### Polymer Dispersed Liquid Crystal (PDLC) Glass
+  Switches between opaque and transparent states:
+  - Transitions between transparent (voltage on) and translucent/opaque (voltage off)
+  - Does not control tint level, only privacy (haze versus clear)
+  - Response time under 100 milliseconds
+  - Power consumption of 3 to 7 W per square meter in the transparent state
+  - Best suited for interior partition screens and privacy panels
+
+  ## Implementation Guide
+
+  ### Step 1 - Select Technology Per Application
+  Match smart glass type to each glazing location:
+  - Windshield upper band uses EC for gradual sun visor replacement
+  - Side windows use SPD for rapid response to tunnel and sun transitions
+  - Sunroof uses EC for solar load management with acceptable transition speed
+  - Rear privacy partition uses PDLC for chauffeur and ride-share configurations
+
+  ### Step 2 - Integrate into Glazing Assembly
+  Incorporate smart glass layers into the laminated glass stack:
+  - Smart glass films are laminated between glass plies during windshield manufacturing
+  - Electrical bus bars along glass edges connect to vehicle wiring through the seal
+  - Each zone requires independent bus bar pairs for multi-zone control
+  - Ensure optical quality meets ECE R43 distortion limits after lamination
+
+  ### Step 3 - Design the Control System
+  Build the electronics that drive smart glass panels:
+  - EC glass requires a variable DC voltage driver (0 to 1.5 V typical)
+  - SPD glass requires an AC driver at 100 to 120 V peak at frequencies of 50 to 200 Hz
+  - PDLC glass requires an AC driver at 60 to 100 V peak
+  - Implement zone-by-zone addressability for multi-zone sunroof and side glass control
+
+  ### Step 4 - Implement Automation Logic
+  Create intelligent tint management:
+  - Link tint level to sun sensor data and solar angle calculation
+  - Increase tint automatically when cabin temperature exceeds target by 3 degrees
+  - Darken the sunroof when the vehicle is parked to reduce cabin heat soak
+  - Provide manual override through the HMI for all automatic functions
+
+  ### Step 5 - Validate Regulatory Compliance
+  Ensure all smart glass meets glazing regulations:
+  - Windshield must maintain minimum 70% VLT in the driver viewing zone at all times
+  - Front side windows must maintain minimum 70% VLT per FMVSS 205 in most markets
+  - Rear glazing has no minimum VLT requirement in most jurisdictions
+  - Test VLT across the full voltage range at operating temperature extremes
+
+  ## Best Practices
+
+  ### Energy Management
+  - Use EC glass for large surfaces like sunroofs to minimize continuous power draw
+  - Implement sleep mode that maintains last tint state using EC memory effect
+  - Calculate total smart glass power budget for worst case (all panels in active state)
+  - Coordinate smart glass with HVAC to reduce air conditioning load in summer
+
+  ### Durability
+  - Validate UV stability of the smart glass film over equivalent 15-year sun exposure
+  - Test delamination resistance through 1000 thermal cycles from -40 C to 105 C
+  - Verify no bubble formation in the laminate under sustained high-temperature soak
+  - Confirm electrical bus bar connections survive 10 years of thermal cycling
+
+  ### User Experience
+  - Provide a visual indicator showing current tint level on the overhead console
+  - Implement smooth tint transitions rather than abrupt step changes
+  - Remember per-user tint preferences linked to driver profile settings
+  - Default to safe state (maximum VLT) on any electrical failure
+
+  ## Troubleshooting
+
+  ### Glass Will Not Darken
+  Check the power supply voltage at the glass bus bar connections. Verify the driver
+  electronics are generating the correct voltage waveform. For EC glass, inspect for
+  delamination that could interrupt the ion conduction path.
+
+  ### Uneven Tint Across the Panel
+  Inspect the bus bar for high-resistance connections causing voltage drop along the edge.
+  For EC glass, uneven tinting suggests degradation of the electrochromic layer. Check
+  for moisture ingress at the glass edge seal that could locally damage the active layer.
+
+  ### Tint Transition is Very Slow
+  For EC glass, cold temperatures significantly slow ion migration. Verify the glass
+  temperature is above -10 C for acceptable performance. Check the drive voltage is at
+  the correct level for the target tint state.
+
+  ### Glass Stays Dark When It Should Be Clear
+  For SPD, verify the AC drive signal is being supplied, as SPD defaults to dark without
+  power. For EC, check if the reverse voltage is being applied to bleach the film. Run
+  the glass controller diagnostic to check for communication faults.
+
+  ## Integration Patterns
+
+  ### ADAS and Smart Glass Coordination
+  Using smart glass to support advanced driver assistance:
+  - Automatically clear the windshield upper band when the driver monitoring system detects
+    upward gaze toward traffic lights or overhead signs
+  - Dim side windows on the sun side to reduce glare that degrades camera perception
+  - Coordinate with the rain sensor to optimize glass clarity during precipitation
+  - Clear all glass to maximum transparency when emergency braking is activated
+
+  ### Energy Harvesting
+  Using smart glass to improve vehicle energy efficiency:
+  - Calculate HVAC energy savings from reduced solar heat gain through tinted glass
+  - Optimize tint level to balance cabin temperature against HVAC compressor load
+  - Integrate with the battery management system to include glass power draw in energy budget
+  - Model the net energy benefit of smart glass versus fixed tint across climate zones
+
+  ## Testing and Validation
+
+  ### Optical Performance Measurement
+  Quantify smart glass visual properties across operating conditions:
+  - Measure visible light transmission at 10 voltage steps from clear to fully dark
+  - Record haze values at each tint level ensuring they remain below 2%
+  - Test color neutrality by measuring transmitted light chromaticity coordinates
+  - Validate uniform tinting across the full glass surface with no more than 5% variation
+
+  ### Lifecycle Durability
+  Verify smart glass survives automotive glazing lifetime requirements:
+  - Cycle between clear and dark states 50000 times simulating 15 years of daily use
+  - Measure transmission degradation after cycling compared to initial performance
+  - Test edge seal integrity after 2000 hours of UV exposure at 60 C
+  - Verify bus bar connection resistance stability after 10000 thermal cycles

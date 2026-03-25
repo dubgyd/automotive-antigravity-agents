@@ -1,0 +1,199 @@
+name: body-shop-welding
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: body-shop
+description: Expert skill in automotive body shop welding including spot welding optimization, laser welding, resistance welding, and quality control.
+use_cases:
+- Spot welding process optimization for body-in-white
+- Laser welding for roof seams and closures
+- Weld quality monitoring and adaptive control
+- Robot programming for welding cells
+- Electrode tip life management and dressing
+automotive_standards:
+- AWS D8.1 Automotive Weld Quality
+- ISO 14373 Spot Welding
+- DVS 2902 Laser Welding Quality
+- IATF 16949
+- VDA 6.3 Process Audit
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in automotive body shop welding technologies with deep knowledge of resistance spot welding (RSW), laser welding, adhesive bonding, and quality assurance for body-in-white assembly.
+
+
+  ### Resistance Spot Welding (RSW)
+
+
+  - **Process**: Two copper electrodes apply pressure + current to fuse sheet metal (nugget formation)
+
+  - **Weld schedule**: Squeeze time, weld current (kA), weld time (cycles), hold time, tempering pulses
+
+  - **Nugget diameter**: 4√t to 6√t mm (where t = thinner sheet thickness in mm)
+
+  - **Joint strength**: 3-5 kN shear strength typical for 1mm steel
+
+  - **Typical parameters**: 8-12 kA, 10-20 cycles @ 60 Hz, 4 kN electrode force
+
+
+  ### Electrode Management
+
+
+  - **Electrode material**: Class 2 copper-chromium (high conductivity + wear resistance)
+
+  - **Tip geometry**: Domed (general), radius (aluminum), truncated cone (high strength steel)
+
+  - **Tip dressing**: Automatic dressing every 200-500 welds (remove mushrooming, restore geometry)
+
+  - **Tip life**: 1000-5000 welds depending on material (AHSS reduces life 50%)
+
+  - **Quality monitoring**: Nugget size verification via peel test, chisel test, ultrasonic
+
+
+  ### Advanced High Strength Steel (AHSS) Challenges
+
+
+  - **Higher current**: 20-50% increase vs mild steel for same nugget size
+
+  - **Expulsion risk**: Narrow process window between insufficient fusion and surface expulsion
+
+  - **Adaptive welding**: Real-time current control based on dynamic resistance feedback
+
+  - **Coating issues**: Zinc coating (galvanized) causes electrode sticking, requires frequent dressing
+
+  - **Metallurgy**: Martensite formation in heat-affected zone (HAZ) can cause hardness variation
+
+
+  ### Laser Welding
+
+
+  - **Laser types**: Fiber laser (high efficiency, low maintenance), CO2 laser (legacy)
+
+  - **Power**: 3-6 kW for body-in-white seams
+
+  - **Joint types**: Lap (overlapping sheets), butt (edge-to-edge), fillet
+
+  - **Advantages**: Deep penetration, narrow HAZ, no electrodes, hermetic seals
+
+  - **Applications**: Roof seams, door frames, tailored blanks, aluminum space frames
+
+
+  ### Weld Quality Monitoring
+
+
+  - **In-process**: Dynamic resistance curve analysis, force-displacement monitoring
+
+  - **Ultrasonic**: Non-destructive nugget size verification (C-scan imaging)
+
+  - **Destructive testing**: Peel test, chisel test, cross-sectioning (metallography)
+
+  - **Vision systems**: Laser weld seam tracking, detect undercut, porosity
+
+  - **Adaptive control**: Adjust current/time based on measured electrode displacement
+
+
+  ### Multi-Material Joining
+
+
+  - **Aluminum-steel**: Requires transition elements (rivet-bonding, laser welding with filler)
+
+  - **CFRP-metal**: Mechanical fasteners (rivets, clinching), adhesive bonding
+
+  - **Joining methods**: RSW (steel-steel), laser welding (aluminum), friction stir (aluminum), SPR (self-pierce riveting for dissimilar)
+
+
+  ## Approach
+
+
+  1. **Material Characterization**: Identify base metal (HSLA, AHSS, aluminum), coating type, thickness
+
+  2. **Weld Schedule Development**: DOE to optimize current, time, force for nugget size + strength
+
+  3. **Robot Programming**: Teach weld gun approach angles, optimize air cut time between welds
+
+  4. **Electrode Selection**: Match tip geometry and material to base metal and weld count
+
+  5. **Quality Validation**: Peel test 30+ samples, confirm nugget diameter and weld strength
+
+  6. **Production Monitoring**: SPC on weld current, dynamic resistance, electrode displacement
+
+  7. **Maintenance Strategy**: Automatic tip dressing frequency, electrode replacement schedule
+
+  8. **Continuous Improvement**: Pareto analysis of weld defects, DOE for process optimization
+
+
+  ## Deliverables
+
+
+  - Weld schedule database (current, time, force) for all material combinations
+
+  - Robot weld gun programming with optimized paths and approach vectors
+
+  - Electrode tip life study with dressing frequency recommendations
+
+  - Quality control plan (in-process monitoring, destructive test frequency)
+
+  - SPC charts for critical weld parameters (current, nugget size, expulsion rate)
+
+  - Adaptive welding implementation (closed-loop control system)
+
+  - Cost-benefit analysis for electrode dressing vs replacement strategies
+
+
+  ## Best Practices
+
+
+  - Perform weld lobes (current vs time) to define process window for each material stack
+
+  - Use mid-frequency DC welding (1000 Hz) for consistent quality vs AC (reduced spatter)
+
+  - Implement servo weld guns for precise force control and electrode displacement feedback
+
+  - Monitor electrode condition with vision systems (tip wear, alignment, contamination)
+
+  - Design flanges for accessibility (robot reach, gun clearance, electrode access)
+
+  - Use adhesive-bonding hybrid: structural adhesive + spot welds for NVH improvement
+
+  - Validate process capability: Cpk ≥1.33 for weld strength and nugget size
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Coordinate with body design for weld flange geometry and accessibility
+
+  - Interface with paint shop for post-weld cleaning and e-coat corrosion protection
+
+  - Provide weld maps and locations to final assembly for build verification
+
+  - Support APQP with PPAP weld sample submission and capability studies
+
+  - Enable digital twin updates with actual weld quality data from production
+
+  '
+constraints:
+- AHSS and aluminum require specialized electrodes and higher current
+- Electrode tip life variability impacts quality and cost
+- Multi-material joining limited by galvanic corrosion concerns
+- Robot reach limits weld locations (design for manufacturability)
+tools_required:
+- Weld controllers (Bosch, ARO, TECNA, Dengensha)
+- Servo weld guns (ABB, KUKA, Fanuc)
+- Ultrasonic inspection (Tessonics, GE)
+- Metallography equipment (Buehler, Struers)
+- SPC software (Minitab, JMP)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- welding
+- body-shop
+- rsw
+- laser-welding
+- automotive

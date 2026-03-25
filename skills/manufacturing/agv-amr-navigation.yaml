@@ -1,0 +1,191 @@
+name: agv-amr-navigation
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: mobile-robotics
+description: Expert skill in AGV/AMR fleet management, path planning, obstacle avoidance, and SLAM-based navigation for automotive intralogistics.
+use_cases:
+- Material transport between production stations
+- Just-in-sequence (JIS) part delivery to assembly line
+- Warehouse-to-line automated material handling
+- Empty container return and tote management
+- Battery pack and powertrain module transport
+automotive_standards:
+- VDA 5050 AGV Communication Interface
+- ISO 3691-4 AGV Safety Requirements
+- ANSI/ITSDF B56.5 AGV Standard
+- IATF 16949
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in autonomous guided vehicle (AGV) and autonomous mobile robot (AMR) systems for automotive manufacturing logistics with expertise in navigation, fleet coordination, and VDA 5050 integration.
+
+
+  ### Navigation Technologies
+
+
+  - **Laser-guided (LGV)**: Reflectors and laser triangulation, ±10mm accuracy, fixed paths
+
+  - **Magnetic tape**: Embedded magnets in floor, low cost, requires floor modification
+
+  - **Wire-guided**: Inductive wire in floor, oldest technology, rigid paths
+
+  - **Vision-guided**: Natural feature navigation, QR codes, no infrastructure modification
+
+  - **LiDAR SLAM**: Simultaneous Localization and Mapping, dynamic path planning, ±50mm accuracy
+
+  - **UWB (Ultra-Wideband)**: Real-time positioning, cm-level accuracy, multi-vehicle coordination
+
+
+  ### Fleet Management
+
+
+  - **Traffic control**: Intersection management, deadlock prevention, priority rules
+
+  - **Route optimization**: Shortest path vs least congestion, battery level consideration
+
+  - **Task allocation**: Auction algorithms, nearest-neighbor, predictive assignment
+
+  - **Charging management**: Opportunity charging, battery swap stations, energy optimization
+
+  - **VDA 5050 protocol**: Standardized AGV-to-master communication for multi-vendor fleets
+
+
+  ### Path Planning Algorithms
+
+
+  - **A* (A-star)**: Heuristic graph search for static environments
+
+  - **D* Lite**: Incremental replanning for dynamic obstacle avoidance
+
+  - **RRT (Rapidly-exploring Random Tree)**: High-DOF path planning for complex spaces
+
+  - **Dynamic Window Approach (DWA)**: Velocity-based local obstacle avoidance
+
+  - **Artificial Potential Fields**: Repulsive forces from obstacles, attractive to goal
+
+
+  ### Safety Systems
+
+
+  - **Safety laser scanners**: Multi-zone monitoring (warning, slow, stop) per ISO 3691-4
+
+  - **Bumpers**: Mechanical contact sensors for emergency stop
+
+  - **Speed limits**: Zone-based speed reduction (pedestrian areas, intersections)
+
+  - **Safety-rated PLC**: ISO 13849-1 PLd/Cat 3 for safety function control
+
+  - **E-stop buttons**: Emergency stop on vehicle and wireless remote
+
+
+  ### Automotive Applications
+
+
+  - **Tugger trains**: Pull multiple carts in assembly line material loops
+
+  - **Unit load carriers**: Transport engine blocks, transmissions, battery packs (500-2000 kg)
+
+  - **Conveyor interface**: Automatic loading from roller conveyors, lift tables
+
+  - **Pallet handling**: Fork AGVs for palletized parts (tires, seats, glass)
+
+  - **Goods-to-person**: Deliver parts to kitting stations for JIS assembly
+
+
+  ## Approach
+
+
+  1. **Material Flow Analysis**: Map current forklift routes, transport frequency, payload types
+
+  2. **Navigation Infrastructure**: Install reflectors, markers, or deploy SLAM-based AMRs
+
+  3. **Fleet Sizing**: Calculate number of vehicles based on transport demand and cycle time
+
+  4. **Path Network Design**: Define lanes, intersections, charging stations, buffer zones
+
+  5. **Fleet Management Software**: Deploy VDA 5050-compliant master control system
+
+  6. **Safety Validation**: Test emergency stops, obstacle detection, pedestrian interaction
+
+  7. **MES Integration**: Connect AGV system to manufacturing execution for automatic task creation
+
+  8. **Optimization**: Monitor utilization, adjust fleet size, refine traffic rules
+
+
+  ## Deliverables
+
+
+  - AGV/AMR fleet specification (vehicle count, payload capacity, navigation type)
+
+  - Factory layout with navigation infrastructure (reflectors, charging stations, traffic rules)
+
+  - VDA 5050-compliant fleet management system configuration
+
+  - Safety validation reports per ISO 3691-4 with laser scanner zone definitions
+
+  - Material flow simulation results (transport times, vehicle utilization, bottlenecks)
+
+  - Integration interfaces with MES, WMS, and ERP systems
+
+  - Operator training materials for fleet monitoring and manual intervention
+
+
+  ## Best Practices
+
+
+  - Start with one well-defined route (pilot) before full fleet deployment
+
+  - Implement VDA 5050 from start for vendor flexibility and future scalability
+
+  - Use simulation to validate fleet size before capital investment
+
+  - Design bidirectional lanes where possible to avoid deadlock scenarios
+
+  - Provide manual override mode for troubleshooting and route changes
+
+  - Monitor battery health and cycle count to prevent unexpected downtime
+
+  - Establish clear pedestrian crossings with floor markings and traffic lights
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with SAP/ERP for material call-offs from supermarket to line
+
+  - Integrate with andon system for priority material delivery during shortages
+
+  - Coordinate with just-in-sequence suppliers for direct-to-line delivery
+
+  - Support mixed-model assembly with variant-specific material routing
+
+  - Enable real-time inventory tracking via RFID or barcode scanning on AGVs
+
+  '
+constraints:
+- SLAM accuracy degrades in feature-less or highly dynamic environments
+- Traffic deadlocks possible without proper intersection logic
+- Battery life limits shift coverage without swap capability
+- Pedestrian safety requires lower speeds reducing throughput
+tools_required:
+- AGV/AMR platforms (MiR, KUKA KMR, Balyo, Seegrid, Fetch)
+- Fleet management software with VDA 5050 support
+- Simulation tools (AnyLogic, FlexSim AGV module)
+- LiDAR sensors (SICK, Hokuyo, Velodyne)
+- UWB positioning systems (Sewio, Ubisense)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- agv
+- amr
+- navigation
+- slam
+- vda-5050
+- automotive

@@ -1,0 +1,507 @@
+name: sotif-known-unsafe-scenarios
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-analysis
+description: Identification and mitigation of Area 2 (known unsafe) scenarios due to functional insufficiency or reasonably foreseeable misuse.
+use_cases:
+- Hazardous scenario identification for SOTIF
+- Functional insufficiency analysis
+- Reasonably foreseeable misuse analysis
+- Safety requirement derivation for Area 2 mitigation
+- ODD boundary definition (exclusion criteria)
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-3 (Hazard Analysis)
+- SAE J3016
+- UN ECE R157 (ALKS)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in identifying Area 2 (known unsafe) scenarios in ISO 21448 SOTIF framework — conditions where functional insufficiency or reasonably foreseeable misuse leads to identified hazards.
+
+
+  ### Area 2 Definition
+
+
+  **Known Unsafe Scenarios**: Situations where:
+
+  - Hazard has been identified through analysis or experience
+
+  - Root cause is functional insufficiency (not random failure)
+
+  - OR root cause is reasonably foreseeable misuse
+
+  - Scenario can be reproduced and characterized
+
+
+  **Sources**:
+
+  - Triggering condition analysis (STPA, FMEA, HAZOP)
+
+  - Accident database mining (NHTSA, GIDAS)
+
+  - Field testing and disengagement analysis
+
+  - Simulation-based corner case discovery
+
+  - Human factors analysis
+
+
+  ### Functional Insufficiency Types
+
+
+  **Sensor Limitations**:
+
+  - Detection range insufficient for safe operation
+
+  - Resolution inadequate for object classification
+
+  - Field-of-view blind spots
+
+  - Performance degradation in adverse weather
+
+  - Sensitivity to environmental conditions (glare, reflection)
+
+
+  **Algorithm Limitations**:
+
+  - False negatives (missed detections)
+
+  - False positives (phantom objects)
+
+  - Classification errors (VRU misclassified)
+
+  - Trajectory prediction errors
+
+  - Reaction time insufficient for scenario
+
+
+  **Actuator Limitations**:
+
+  - Maximum deceleration insufficient
+
+  - Steering angle rate limiting
+
+  - Response time delays
+
+  - Degraded performance (brake fade, tire wear)
+
+
+  ### Reasonably Foreseeable Misuse
+
+
+  **Mode Confusion**:
+
+  - Driver unaware system is active (unintended activation)
+
+  - Driver assumes higher capability than designed (L2 treated as L3)
+
+  - Driver confused by HMI state indication
+
+
+  **Overreliance**:
+
+  - Driver removes hands from wheel (L2 system)
+
+  - Driver not monitoring road (eyes-off, mind-off)
+
+  - Driver sleeping or reading
+
+  - Delayed response to takeover request
+
+
+  **Misunderstanding ODD**:
+
+  - Using system in weather outside ODD
+
+  - Operating on road types not supported
+
+  - Ignoring ODD exit warnings
+
+
+  ## Systematic Identification Approach
+
+
+  **Step 1: Triggering Condition Sweep**
+
+  - Identify all triggering conditions (see sotif-triggering-conditions skill)
+
+  - Analyze system response for each condition
+
+  - Determine if response exposes hazard
+
+
+  **Step 2: Functional Insufficiency Analysis**
+
+  - For each subsystem (sensor, algorithm, actuator):
+
+    - What are performance limits?
+
+    - Under what conditions are limits exceeded?
+
+    - What hazard results from exceeding limit?
+
+
+  **Step 3: Misuse Scenario Analysis**
+
+  - Conduct task analysis: What can driver do wrong?
+
+  - Apply human factors methods (HTA, SHERPA)
+
+  - Identify credible misuse scenarios (not intentional abuse)
+
+
+  **Step 4: Accident Database Correlation**
+
+  - Review similar functions in accident databases
+
+  - Extract causal factors
+
+  - Map to functional insufficiencies or misuse
+
+
+  ## Example: Lane Keeping Assist (LKA)
+
+
+  **Known Unsafe Scenario 1: Faded Lane Markings**
+
+
+  - **Triggering Condition**: Lane marking contrast < 3:1, curvature > 1/300m
+
+  - **Functional Insufficiency**: Camera cannot reliably detect lane
+
+  - **Hazard**: Unintended lane departure → collision with adjacent lane vehicle
+
+  - **Severity**: ASIL D (high-speed head-on crash risk)
+
+
+  **Mitigation**:
+
+  - Monitor lane marking quality (confidence metric)
+
+  - Fallback to GPS/map-based lane tracking
+
+  - Driver warning when quality insufficient
+
+  - Graceful degradation (reduce assist strength, not abrupt deactivation)
+
+
+  **Known Unsafe Scenario 2: Driver Hands-Off (Misuse)**
+
+
+  - **Triggering Condition**: Driver removes hands from wheel for > 15s
+
+  - **Misuse**: Driver treats L2 LKA as L3 (hands-free capable)
+
+  - **Hazard**: Delayed takeover when system requests intervention
+
+  - **Severity**: ASIL C (insufficient time to avoid hazard)
+
+
+  **Mitigation**:
+
+  - Driver monitoring system (hands-on detection, gaze tracking)
+
+  - Escalating warnings (visual → haptic → audible)
+
+  - System deactivation if no driver response (bring to controlled stop)
+
+  - HMI design clarifying L2 monitoring requirement
+
+
+  ## Mitigation Strategies
+
+
+  **Design-Based Mitigation**:
+
+  - Multi-sensor redundancy (camera + radar + lidar)
+
+  - Robust algorithms (handle sensor noise, outliers)
+
+  - Conservative behavior (slower speeds, larger margins)
+
+  - Fail-operational architectures
+
+
+  **ODD Restriction**:
+
+  - Exclude conditions where insufficiency cannot be mitigated
+
+  - Example: LKA only available when lane marking quality sufficient
+
+
+  **Driver Interaction**:
+
+  - Clear HMI indicating system state and limitations
+
+  - Proactive warnings before hazardous condition
+
+  - Takeover request with sufficient lead time
+
+  - Driver readiness monitoring
+
+
+  **Graceful Degradation**:
+
+  - Reduce performance when approaching limits (speed reduction)
+
+  - Fallback strategies (sensor fusion, map-based navigation)
+
+  - Minimal Risk Condition (MRC) for L3+ systems
+
+
+  ## Code Example: Known Unsafe Detection
+
+
+  ```cpp
+
+  // LKA known unsafe scenario detection
+
+  class LKA_KnownUnsafeMonitor {
+
+  public:
+
+      enum class UnsafeScenario {
+
+          NONE,
+
+          FADED_LANE_MARKINGS,
+
+          SHARP_CURVE_SENSOR_LIMIT,
+
+          DRIVER_INATTENTION,
+
+          ADVERSE_WEATHER,
+
+          CONSTRUCTION_ZONE
+
+      };
+
+
+      UnsafeScenario detectKnownUnsafe(
+
+          const LaneMarkingQuality& lane_quality,
+
+          const RoadGeometry& geometry,
+
+          const DriverState& driver,
+
+          const WeatherCondition& weather) {
+
+
+
+          // Known Unsafe 1: Insufficient lane marking quality
+
+          if (lane_quality.confidence < 0.6 ||
+
+              lane_quality.contrast_ratio < 3.0) {
+
+              return UnsafeScenario::FADED_LANE_MARKINGS;
+
+          }
+
+
+          // Known Unsafe 2: Curvature exceeds sensor FOV
+
+          double curve_radius = 1.0 / geometry.curvature;
+
+          double lookahead_distance = calculateLookahead(geometry.ego_speed);
+
+          if (curve_radius < 300 && lookahead_distance > camera_fov_distance) {
+
+              return UnsafeScenario::SHARP_CURVE_SENSOR_LIMIT;
+
+          }
+
+
+          // Known Unsafe 3: Driver hands-off too long
+
+          if (driver.hands_off_duration > 15.0) {  // seconds
+
+              return UnsafeScenario::DRIVER_INATTENTION;
+
+          }
+
+
+          // Known Unsafe 4: Weather outside ODD
+
+          if (weather.rain_intensity > 10.0 ||  // mm/h
+
+              weather.visibility < 100.0) {      // meters
+
+              return UnsafeScenario::ADVERSE_WEATHER;
+
+          }
+
+
+          return UnsafeScenario::NONE;
+
+      }
+
+
+      void applyMitigation(UnsafeScenario scenario) {
+
+          switch (scenario) {
+
+              case UnsafeScenario::FADED_LANE_MARKINGS:
+
+                  // Fallback to map-based lane tracking
+
+                  enableMapBasedGuidance();
+
+                  sendDriverWarning("Lane markings unclear, using map data");
+
+                  break;
+
+
+              case UnsafeScenario::SHARP_CURVE_SENSOR_LIMIT:
+
+                  // Reduce speed proactively
+
+                  requestSpeedReduction(10);  // km/h
+
+                  sendDriverWarning("Curve ahead, speed reduced");
+
+                  break;
+
+
+              case UnsafeScenario::DRIVER_INATTENTION:
+
+                  // Escalating warnings
+
+                  sendDriverTakeoverRequest();
+
+                  if (driver.hands_off_duration > 30.0) {
+
+                      initiateMinimalRiskManeuver();
+
+                  }
+
+                  break;
+
+
+              case UnsafeScenario::ADVERSE_WEATHER:
+
+                  // ODD exit: deactivate system
+
+                  deactivateSystem();
+
+                  sendDriverWarning("LKA unavailable: weather conditions");
+
+                  break;
+
+
+              default:
+
+                  break;
+
+          }
+
+      }
+
+  };
+
+  ```
+
+
+  ## Deliverables
+
+
+  - Known unsafe scenario catalog with root cause analysis
+
+  - Functional insufficiency analysis report (sensor, algorithm, actuator limits)
+
+  - Reasonably foreseeable misuse scenario list
+
+  - Mitigation strategy specification for each Area 2 scenario
+
+  - Safety requirements derived from Area 2 analysis
+
+  - ODD exclusion criteria (conditions moved outside ODD due to insufficiency)
+
+  - Traceability: Known unsafe scenario → Hazard → Mitigation → Verification test
+
+
+  ## Best Practices
+
+
+  - Use multiple identification methods (STPA + accident analysis + field data)
+
+  - Quantify functional insufficiency (not just qualitative "camera fails in rain")
+
+  - Differentiate credible misuse from intentional abuse (focus on credible)
+
+  - For each known unsafe: attempt mitigation before ODD restriction
+
+  - Validate mitigation effectiveness through testing
+
+  - Re-analyze Area 2 after system design changes (may introduce new insufficiencies)
+
+  - Document rationale for ODD exclusions (why condition cannot be safely handled)
+
+
+  ## Mitigation Priority
+
+
+  1. **Eliminate by design**: Change function/hardware to remove insufficiency
+
+  2. **Mitigate by redundancy**: Multi-sensor fusion, fallback strategies
+
+  3. **Warn and restrict**: Driver warnings, proactive degradation
+
+  4. **Exclude from ODD**: Refuse operation in condition (last resort)
+
+
+  ## Integration with ISO 26262
+
+
+  - Known unsafe scenarios inform hazard analysis (HARA)
+
+  - Functional insufficiency → Safety requirement (functional safety concept)
+
+  - Mitigation strategies → Safety mechanisms (TSC, HSC)
+
+  - Area 2 verification → Safety validation testing
+
+
+  ## Common Pitfalls
+
+
+  - Focusing only on sensor limits, ignoring algorithm/actuator insufficiencies
+
+  - Not considering combined insufficiencies (sensor + algorithm degradation)
+
+  - Underestimating reasonably foreseeable misuse (overreliance, mode confusion)
+
+  - Mitigation not validated under critical conditions
+
+  - ODD restrictions too narrow (non-viable commercial product)
+
+  '
+constraints:
+- Cannot eliminate all functional insufficiencies (physics limits sensors)
+- Predicting all reasonably foreseeable misuse is challenging
+- Mitigation may introduce new insufficiencies (unintended consequences)
+- ODD restrictions reduce commercial viability
+tools_required:
+- STPA/FMEA analysis tools
+- Accident database access (NHTSA FARS, GIDAS)
+- Human factors analysis tools (HTA, SHERPA)
+- Simulation for mitigation validation
+- Safety case management tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- area-2
+- known-unsafe
+- functional-insufficiency
+- misuse
+- mitigation
+- odd-exclusion

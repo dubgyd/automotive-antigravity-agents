@@ -1,0 +1,392 @@
+---
+name: istio-setup
+version: 1.0.0
+description: Deploy and configure Istio service mesh for automotive microservices
+category: kubernetes
+subcategory: service-mesh
+tags: [istio, service-mesh, security, observability, traffic-management]
+
+instructions: |
+  ## Istio Service Mesh for Automotive Microservices
+
+  ### Overview
+
+  Istio provides a transparent infrastructure layer for service-to-service
+  communication in Kubernetes. For automotive cloud platforms, Istio adds
+  mutual TLS encryption, traffic management, observability, and fault
+  injection without modifying application code.
+
+  ### Architecture
+
+  ```
+  ┌─────────────────────────────────────────────────────────────┐
+  │                   Istio Control Plane                        │
+  │  ┌──────────────────────────────────────────────────────┐   │
+  │  │                     istiod                            │   │
+  │  │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │   │
+  │  │  │  Pilot   │  │  Citadel │  │  Galley           │   │   │
+  │  │  │ (config) │  │  (certs) │  │  (config validate)│   │   │
+  │  │  └──────────┘  └──────────┘  └──────────────────┘   │   │
+  │  └──────────────────────────────────────────────────────┘   │
+  └──────────────────────┬──────────────────────────────────────┘
+                         │  xDS API (config push)
+  ┌──────────────────────┼──────────────────────────────────────┐
+  │                Data Plane (Envoy Sidecars)                   │
+  │                                                             │
+  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+  │  │ Pod A       │  │ Pod B       │  │ Pod C       │        │
+  │  │ ┌─────────┐ │  │ ┌─────────┐ │  │ ┌─────────┐ │        │
+  │  │ │  App    │ │  │ │  App    │ │  │ │  App    │ │        │
+  │  │ └────┬────┘ │  │ └────┬────┘ │  │ └────┬────┘ │        │
+  │  │ ┌────┴────┐ │  │ ┌────┴────┐ │  │ ┌────┴────┐ │        │
+  │  │ │ Envoy   │◄┼──┼►│ Envoy   │◄┼──┼►│ Envoy   │ │        │
+  │  │ │ Sidecar │ │  │ │ Sidecar │ │  │ │ Sidecar │ │        │
+  │  │ └─────────┘ │  │ └─────────┘ │  │ └─────────┘ │        │
+  │  └─────────────┘  └─────────────┘  └─────────────┘        │
+  └─────────────────────────────────────────────────────────────┘
+  ```
+
+  ### Key Features for Automotive
+
+  | Feature | Capability | Automotive Use |
+  |---------|-----------|---------------|
+  | mTLS | Automatic mutual TLS between services | Secure service communication |
+  | Traffic Management | Canary, blue-green, A/B routing | Safe OTA rollouts |
+  | Observability | Distributed tracing, metrics, access logs | Performance analysis |
+  | Fault Injection | Delay, abort injection | Resilience testing |
+  | Rate Limiting | Request rate per source | Protect backend services |
+  | Circuit Breaking | Automatic failover | Prevent cascading failures |
+
+  ### Installation
+
+  ```bash
+  # Download istioctl
+  curl -L https://istio.io/downloadIstio | sh -
+  export PATH=$PWD/istio-*/bin:$PATH
+
+  # Install with production profile
+  istioctl install --set profile=default
+
+  # Enable sidecar injection for namespace
+  kubectl label namespace automotive-production istio-injection=enabled
+  ```
+
+  Profiles:
+  - `minimal`: istiod only (no ingress gateway)
+  - `default`: istiod + ingress gateway
+  - `demo`: Full features including egress gateway (development)
+
+  ### Traffic Management
+
+  ```yaml
+  # Canary deployment: 90% to v1, 10% to v2
+  apiVersion: networking.istio.io/v1beta1
+  kind: VirtualService
+  metadata:
+    name: adas-service
+  spec:
+    hosts:
+    - adas-service
+    http:
+    - route:
+      - destination:
+          host: adas-service
+          subset: v1
+        weight: 90
+      - destination:
+          host: adas-service
+          subset: v2
+        weight: 10
+  ```
+
+  ### Mutual TLS Configuration
+
+  ```yaml
+  # Enforce strict mTLS for automotive namespace
+  apiVersion: security.istio.io/v1beta1
+  kind: PeerAuthentication
+  metadata:
+    name: default
+    namespace: automotive-production
+  spec:
+    mtls:
+      mode: STRICT
+  ```
+
+  ### Observability Integration
+
+  Istio generates telemetry automatically:
+  - **Metrics**: Request rate, latency, error rate per service (exported to Prometheus)
+  - **Traces**: Distributed traces across service calls (Jaeger, Zipkin)
+  - **Access logs**: Structured logs per request (stdout or external sink)
+  - **Kiali**: Service mesh dashboard showing topology, traffic flow, health
+
+  ### Fault Injection for Resilience Testing
+
+  ```yaml
+  # Inject 5-second delay on 10% of requests
+  apiVersion: networking.istio.io/v1beta1
+  kind: VirtualService
+  metadata:
+    name: telemetry-service
+  spec:
+    hosts:
+    - telemetry-service
+    http:
+    - fault:
+        delay:
+          percentage:
+            value: 10
+          fixedDelay: 5s
+      route:
+      - destination:
+          host: telemetry-service
+  ```
+
+  ### Best Practices
+
+  - Use `STRICT` mTLS for all production namespaces
+  - Enable sidecar injection at the namespace level (not per-pod)
+  - Use VirtualServices for traffic shifting during canary deployments
+  - Configure circuit breakers to prevent cascading failures
+  - Integrate with Prometheus and Grafana for metrics visualization
+  - Use Kiali for service mesh topology visualization
+  - Set resource limits on Envoy sidecars (default ~100m CPU, 128Mi memory)
+  - Implement authorization policies to restrict service-to-service access
+  - Test fault injection scenarios to validate application resilience
+  - Monitor Istio control plane health (istiod resource usage, xDS sync time)
+
+metadata:
+  author: Service Mesh Architect
+  created: 2026-03-19
+  stability: stable
+  prerequisites:
+    - Kubernetes cluster 1.25+
+    - kubectl configured
+    - Helm 3.x (optional)
+  use_cases:
+    - Microservices communication security
+    - Traffic management and routing
+    - Observability and tracing
+    - Fault injection and resilience
+
+parameters:
+  istio_version:
+    type: string
+    description: Istio version to install
+    default: "1.20.2"
+
+  profile:
+    type: enum
+    description: Istio installation profile
+    values: [default, minimal, ambient, demo]
+    default: default
+
+  enable_mtls:
+    type: boolean
+    description: Enable mutual TLS
+    default: true
+
+  mtls_mode:
+    type: enum
+    description: mTLS mode
+    values: [STRICT, PERMISSIVE]
+    default: STRICT
+
+  enable_tracing:
+    type: boolean
+    description: Enable distributed tracing
+    default: true
+
+  tracing_backend:
+    type: enum
+    description: Tracing backend
+    values: [jaeger, zipkin, datadog]
+    default: jaeger
+
+  enable_kiali:
+    type: boolean
+    description: Enable Kiali dashboard
+    default: true
+
+  ingress_gateway_type:
+    type: enum
+    description: Ingress gateway service type
+    values: [LoadBalancer, NodePort, ClusterIP]
+    default: LoadBalancer
+
+steps:
+  - id: install_istioctl
+    name: Install istioctl CLI
+    type: installation
+    commands:
+      - name: Download istioctl
+        command: |
+          curl -L https://istio.io/downloadIstio | ISTIO_VERSION={{istio_version}} sh -
+          cd istio-{{istio_version}}
+          export PATH=$PWD/bin:$PATH
+          istioctl version
+
+  - id: install_istio
+    name: Install Istio control plane
+    type: deployment
+    depends_on: [install_istioctl]
+    commands:
+      - name: Install with profile
+        command: |
+          istioctl install --set profile={{profile}} -y
+
+          # Wait for Istio components
+          kubectl wait --for=condition=Available deployment/istiod -n istio-system --timeout=300s
+
+      - name: Label namespace for injection
+        command: |
+          kubectl label namespace default istio-injection=enabled --overwrite
+          kubectl label namespace automotive-workloads istio-injection=enabled --overwrite
+
+  - id: configure_mtls
+    name: Configure mutual TLS
+    type: configuration
+    condition: enable_mtls
+    depends_on: [install_istio]
+    commands:
+      - name: Configure peer authentication
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: security.istio.io/v1beta1
+          kind: PeerAuthentication
+          metadata:
+            name: default
+            namespace: istio-system
+          spec:
+            mtls:
+              mode: {{mtls_mode}}
+          EOF
+
+      - name: Configure destination rules
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: networking.istio.io/v1beta1
+          kind: DestinationRule
+          metadata:
+            name: default
+            namespace: istio-system
+          spec:
+            host: "*.local"
+            trafficPolicy:
+              tls:
+                mode: ISTIO_MUTUAL
+          EOF
+
+  - id: setup_observability
+    name: Setup observability stack
+    type: deployment
+    depends_on: [install_istio]
+    commands:
+      - name: Install Prometheus
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
+
+      - name: Install Grafana
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
+
+      - name: Install Jaeger
+        condition: enable_tracing and tracing_backend == 'jaeger'
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/jaeger.yaml
+
+      - name: Install Kiali
+        condition: enable_kiali
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
+
+          # Wait for Kiali
+          kubectl wait --for=condition=Available deployment/kiali -n istio-system --timeout=300s
+
+  - id: configure_gateways
+    name: Configure ingress/egress gateways
+    type: configuration
+    depends_on: [install_istio]
+    commands:
+      - name: Configure ingress gateway
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: networking.istio.io/v1beta1
+          kind: Gateway
+          metadata:
+            name: automotive-gateway
+            namespace: istio-system
+          spec:
+            selector:
+              istio: ingressgateway
+            servers:
+            - port:
+                number: 80
+                name: http
+                protocol: HTTP
+              hosts:
+              - "*.automotive.example.com"
+              tls:
+                httpsRedirect: true
+            - port:
+                number: 443
+                name: https
+                protocol: HTTPS
+              hosts:
+              - "*.automotive.example.com"
+              tls:
+                mode: SIMPLE
+                credentialName: automotive-tls-cert
+          EOF
+
+automotive_patterns:
+  microservices_security:
+    description: Secure automotive microservices communication
+    implementation: |
+      # Enable mTLS for all services
+      # Use RBAC for service-to-service authorization
+      # Implement JWT authentication for external APIs
+      # Enable audit logging
+
+  traffic_management:
+    description: Advanced traffic routing for automotive services
+    patterns:
+      - Canary deployments (5%, 25%, 50%, 100%)
+      - A/B testing for ADAS algorithms
+      - Traffic mirroring for testing
+      - Circuit breaking for fault tolerance
+
+  observability:
+    description: Complete observability for automotive services
+    components:
+      - Distributed tracing (Jaeger)
+      - Metrics (Prometheus + Grafana)
+      - Service topology (Kiali)
+      - Access logs
+
+best_practices:
+  - Enable mTLS in STRICT mode for production
+  - Use namespace-level policies
+  - Implement proper resource limits
+  - Enable access logging for compliance
+  - Use virtual services for traffic management
+  - Implement circuit breakers
+  - Configure retry policies
+  - Use outlier detection
+
+related_skills:
+  - linkerd-deployment
+  - traffic-management
+  - mutual-tls
+  - k8s-monitoring-setup
+
+examples:
+  - name: Install Istio with strict mTLS
+    command: |
+      istio-setup \
+        --profile=default \
+        --enable-mtls=true \
+        --mtls-mode=STRICT \
+        --enable-tracing=true \
+        --enable-kiali=true

@@ -1,0 +1,378 @@
+---
+name: obd-ii
+category: diagnostics
+description: OBD-II diagnostic protocol skills for emissions and powertrain diagnostics
+
+instructions: |
+  ## OBD-II Diagnostics Guide — SAE J1979
+
+  ### Overview
+
+  On-Board Diagnostics II (OBD-II) is a legally mandated diagnostic system for
+  emissions-related monitoring in all vehicles sold in the US (since 1996) and EU
+  (EOBD since 2001). It provides standardized access to powertrain data, emission
+  DTCs, freeze frames, and readiness monitor status through the 16-pin DLC connector.
+
+  ### OBD-II Connector (SAE J1962)
+
+  ```
+  Pin Layout (Type A - 12V):
+       1  2  3  4  5  6  7  8
+        ╔══╗╔══╗╔══╗╔══╗╔══╗╔══╗╔══╗╔══╗
+        ╚══╝╚══╝╚══╝╚══╝╚══╝╚══╝╚══╝╚══╝
+        9  10 11 12 13 14 15 16
+
+  Key Pins:
+    4  = Chassis Ground     5  = Signal Ground
+    6  = CAN-H (ISO 15765)  14 = CAN-L (ISO 15765)
+    7  = K-Line (ISO 9141)  16 = Battery Positive (+12V)
+  ```
+
+  ### OBD-II Modes (Services)
+
+  | Mode | Name | Purpose |
+  |------|------|---------|
+  | 01 | Current Data | Read real-time PIDs |
+  | 02 | Freeze Frame | Snapshot at DTC occurrence |
+  | 03 | Emission DTCs | Read confirmed DTCs |
+  | 04 | Clear DTCs | Clear codes, reset MIL |
+  | 05 | O2 Sensor Test | Oxygen sensor monitoring |
+  | 06 | Test Results | Non-continuous monitor results |
+  | 07 | Pending DTCs | DTCs from current cycle |
+  | 08 | Control Request | On-board system control |
+  | 09 | Vehicle Info | VIN, Calibration ID, CVN |
+  | 0A | Permanent DTCs | Cannot be cleared by scan tool |
+
+  ### Common PIDs (Mode 01)
+
+  | PID | Name | Formula | Unit |
+  |-----|------|---------|------|
+  | 0x00 | Supported PIDs 01-20 | Bit mask | - |
+  | 0x01 | Monitor Status | Bit fields | - |
+  | 0x04 | Engine Load | A * 100 / 255 | % |
+  | 0x05 | Coolant Temp | A - 40 | degC |
+  | 0x0C | Engine RPM | (256*A + B) / 4 | RPM |
+  | 0x0D | Vehicle Speed | A | km/h |
+  | 0x0F | Intake Air Temp | A - 40 | degC |
+  | 0x10 | MAF Rate | (256*A + B) / 100 | g/s |
+  | 0x11 | Throttle Position | A * 100 / 255 | % |
+  | 0x1F | Run Time | 256*A + B | seconds |
+  | 0x2F | Fuel Tank Level | A * 100 / 255 | % |
+  | 0x5E | Fuel Rate | (256*A + B) / 20 | L/h |
+
+  ### DTC Format
+
+  ```
+  First character (2 bits):  P=Powertrain, C=Chassis, B=Body, U=Network
+  Second character (2 bits): 0=SAE, 1=Manufacturer, 2=SAE, 3=SAE/Mfr
+  Remaining digits (12 bits): Specific fault code
+
+  Example: P0301 = Powertrain, SAE-defined, Cylinder 1 Misfire
+           B = 00, 0 = 00, 3 = 0011, 01 = 00000001
+           Raw bytes: 0x03 0x01
+  ```
+
+  ### Readiness Monitors
+
+  PID 0x01 reports which emission monitors have completed since DTCs were cleared:
+
+  - **Continuous**: Misfire, Fuel System, Comprehensive Component
+  - **Non-continuous (Spark)**: Catalyst, Heated Catalyst, Evaporative System,
+    Secondary Air, O2 Sensor, O2 Sensor Heater, EGR/VVT
+  - **Non-continuous (Compression)**: NMHC Catalyst, NOx/SCR, Boost Pressure,
+    Exhaust Gas Sensor, PM Filter, EGR/VVT
+
+  A vehicle must have all applicable monitors "ready" to pass emissions testing.
+
+  ### Protocol Detection
+
+  OBD-II supports multiple transport protocols. Detection order:
+  1. ISO 15765 (CAN) — most modern vehicles, mandatory since 2008
+  2. ISO 14230 (KWP2000) — European vehicles pre-2008
+  3. ISO 9141-2 — Older European and Asian vehicles
+  4. SAE J1850 PWM — Ford vehicles
+  5. SAE J1850 VPW — GM vehicles
+
+  ### Fuel Consumption Calculation
+
+  ```python
+  # From MAF sensor (Mode 01, PID 0x10)
+  fuel_rate_gps = maf_gps / air_fuel_ratio  # typically 14.7 for gasoline
+  fuel_rate_lph = fuel_rate_gps * 3600 / fuel_density  # 0.745 kg/L gasoline
+  consumption_l100km = (fuel_rate_lph / speed_kmh) * 100
+
+  # Or directly from PID 0x5E (if supported)
+  fuel_rate_lph = pid_5e_value / 20.0
+  ```
+
+  ### Best Practices
+
+  - Query PID 0x00 first to discover supported PIDs before reading others
+  - Respect polling rate limits (most ECUs support 5-10 PIDs/second on CAN)
+  - Use Mode 09 PID 02 to read VIN for vehicle identification
+  - Check readiness monitors after clearing DTCs to track drive cycle progress
+  - Log freeze frame data (Mode 02) alongside DTCs for fault context
+  - Handle multi-frame ISO-TP responses for PIDs with large data (VIN, Cal ID)
+
+skills:
+  - name: read_obd_pids
+    description: Read OBD-II Parameter IDs (PIDs)
+    task: |
+      Execute OBD-II PID requests:
+      1. Send Mode 01 (Current Data) with PID
+      2. Parse response: 0x41 + PID + data bytes
+      3. Apply PID-specific formula to raw data
+      4. Convert to engineering units (RPM, km/h, °C, %)
+      5. Return structured data with units
+    tools:
+      - obd_ii_adapter
+    validation:
+      - PIDs read successfully
+      - Formulas applied correctly
+      - Units labeled properly
+
+  - name: read_emission_dtcs
+    description: Read emission-related DTCs
+    task: |
+      Read OBD-II DTCs:
+      1. Send Mode 03 (Request Emission DTCs)
+      2. Parse response: DTC count + DTC codes
+      3. Decode DTC format (Pxxxx, Cxxxx, Bxxxx, Uxxxx)
+      4. Map to descriptions (P0301 - Cylinder 1 Misfire)
+      5. Categorize by system (powertrain, chassis, body, network)
+    tools:
+      - obd_ii_adapter
+    validation:
+      - DTCs retrieved correctly
+      - DTC format decoded
+      - Descriptions mapped
+
+  - name: clear_emission_dtcs
+    description: Clear emission DTCs and reset MIL
+    task: |
+      Clear DTCs with Mode 04:
+      1. Send Mode 04 (Clear DTCs / Reset MIL)
+      2. Verify positive response
+      3. Wait for ECU to reset monitoring status
+      4. Read DTCs again to confirm cleared
+      5. Note: Readiness monitors will be reset to 'not ready'
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Positive response received
+      - DTCs cleared on re-read
+      - MIL extinguished
+
+  - name: read_freeze_frame
+    description: Read freeze frame data
+    task: |
+      Retrieve freeze frame:
+      1. Send Mode 02 (Freeze Frame Data) with PID
+      2. Specify frame number (0 for most recent)
+      3. Parse freeze frame PIDs (snapshot at DTC occurrence)
+      4. Apply PID formulas as in Mode 01
+      5. Reconstruct engine state at fault time
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Freeze frame retrieved
+      - PIDs parsed correctly
+      - State reconstruction complete
+
+  - name: read_readiness_monitors
+    description: Read OBD readiness monitor status
+    task: |
+      Check readiness monitors:
+      1. Read PID 0x01 (Monitor status since DTCs cleared)
+      2. Parse MIL status (on/off)
+      3. Extract DTC count
+      4. Parse readiness monitor bits (catalyst, O2, evap, etc.)
+      5. Report ready/not ready status for each monitor
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Monitor status parsed
+      - MIL status correct
+      - Readiness reported accurately
+
+  - name: read_vin_obd
+    description: Read VIN via OBD-II
+    task: |
+      Retrieve VIN:
+      1. Send Mode 09, PID 02 (Vehicle Identification Number)
+      2. Parse multi-frame response (17 characters)
+      3. Decode ASCII VIN string
+      4. Validate VIN format (ISO 3779)
+      5. Extract manufacturer, model year, plant code
+    tools:
+      - obd_ii_adapter
+    validation:
+      - VIN retrieved successfully
+      - Format validated
+      - Decoded correctly
+
+  - name: read_calibration_id
+    description: Read ECU calibration identification
+    task: |
+      Retrieve calibration ID:
+      1. Send Mode 09, PID 04 (Calibration ID)
+      2. Parse multi-frame response
+      3. Decode calibration identification string
+      4. Read Calibration Verification Numbers (CVN) with PID 06
+      5. Store for software version tracking
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Calibration ID retrieved
+      - CVN read successfully
+      - Version tracked
+
+  - name: read_o2_sensor_data
+    description: Read oxygen sensor data
+    task: |
+      O2 sensor monitoring:
+      1. Read PID 0x14-0x1B (O2 sensor voltages)
+      2. Read PID 0x24-0x2B (O2 sensor voltages, wide range)
+      3. Read PID 0x34-0x3B (O2 sensor current)
+      4. Apply formulas to convert to volts/amps
+      5. Identify sensor location (bank, position)
+    tools:
+      - obd_ii_adapter
+    validation:
+      - All O2 sensors read
+      - Conversions correct
+      - Locations identified
+
+  - name: read_fuel_system_status
+    description: Read fuel system status
+    task: |
+      Fuel system monitoring:
+      1. Read PID 0x03 (Fuel System Status)
+      2. Decode status bits (open loop, closed loop, etc.)
+      3. Read PID 0x06/0x07 (Short/Long Term Fuel Trim)
+      4. Calculate fuel trim percentages
+      5. Identify rich/lean conditions
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Fuel status decoded
+      - Fuel trim calculated
+      - Conditions identified
+
+  - name: read_evap_system
+    description: Read EVAP system data
+    task: |
+      EVAP system monitoring:
+      1. Read PID 0x32 (Evap System Vapor Pressure)
+      2. Read PID 0x33 (Absolute Barometric Pressure)
+      3. Convert to kPa
+      4. Check for EVAP leaks (P0442, P0456 DTCs)
+      5. Monitor purge control valve operation
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Pressures read correctly
+      - Conversions accurate
+      - Leak detection functional
+
+  - name: monitor_real_time_data
+    description: Stream real-time OBD data
+    task: |
+      Real-time data streaming:
+      1. Select PIDs for monitoring (RPM, speed, load, etc.)
+      2. Poll PIDs at configurable rate (1-10 Hz)
+      3. Parse responses and apply formulas
+      4. Emit data stream for logging/visualization
+      5. Handle missed responses gracefully
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Streaming active at requested rate
+      - Data parsed correctly
+      - Missed responses handled
+
+  - name: perform_evap_leak_test
+    description: Perform EVAP leak test routine
+    task: |
+      EVAP test execution:
+      1. Check readiness monitor for EVAP (must be 'ready')
+      2. Trigger EVAP test with Mode 06 or Mode 08
+      3. Monitor test progress
+      4. Read test results (pass/fail, leak size)
+      5. Log test outcome
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Test triggered successfully
+      - Results retrieved
+      - Outcome logged
+
+  - name: read_supported_pids
+    description: Query supported PIDs
+    task: |
+      Discover supported PIDs:
+      1. Read PID 0x00 (PIDs supported 0x01-0x20)
+      2. Read PID 0x20 (PIDs supported 0x21-0x40)
+      3. Read PID 0x40 (PIDs supported 0x41-0x60)
+      4. Parse bit masks to identify supported PIDs
+      5. Build list of available data streams
+    tools:
+      - obd_ii_adapter
+    validation:
+      - All support PIDs queried
+      - Bit masks parsed correctly
+      - Supported list accurate
+
+  - name: calculate_fuel_consumption
+    description: Calculate instantaneous fuel consumption
+    task: |
+      Fuel consumption calculation:
+      1. Read PID 0x5E (Engine Fuel Rate in L/h)
+      2. Read PID 0x0D (Vehicle Speed in km/h)
+      3. Calculate L/100km or MPG
+      4. Track cumulative consumption over trip
+      5. Calculate average consumption
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Fuel rate read correctly
+      - Consumption calculated accurately
+      - Averages tracked
+
+  - name: obd_performance_tracking
+    description: Track OBD performance test results
+    task: |
+      Mode 06 performance tracking:
+      1. Read Mode 06 (Test Results, non-continuously monitored)
+      2. Parse Test ID (TID) and Component ID (CID)
+      3. Extract test value, min, max limits
+      4. Compare value to limits (pass/fail)
+      5. Generate performance report
+    tools:
+      - obd_ii_adapter
+    validation:
+      - Test results retrieved
+      - Limits parsed correctly
+      - Pass/fail determined accurately
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 15
+  standard: SAE J1979 (OBD-II)
+  modes_supported:
+    - Mode 01: Current Data
+    - Mode 02: Freeze Frame Data
+    - Mode 03: Request Emission DTCs
+    - Mode 04: Clear DTCs / Reset MIL
+    - Mode 06: Test Results (non-continuously monitored)
+    - Mode 08: Request Control of On-Board System
+    - Mode 09: Vehicle Information
+  connector: OBD-II 16-pin (SAE J1962)
+  protocols:
+    - ISO 15765 (CAN)
+    - ISO 14230 (KWP2000)
+    - ISO 9141-2
+    - SAE J1850 PWM
+    - SAE J1850 VPW

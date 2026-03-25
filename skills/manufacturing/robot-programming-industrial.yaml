@@ -1,0 +1,219 @@
+name: robot-programming-industrial
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: robotics
+description: Expert skill in programming industrial robots (ABB, KUKA, FANUC, Yaskawa) for automotive manufacturing with focus on path planning, cycle optimization, and safety.
+use_cases:
+- Spot welding and laser welding programming
+- Material handling and part transfer automation
+- Sealing and adhesive dispensing path generation
+- Assembly operations with force control
+- Cycle time optimization and collision avoidance
+automotive_standards:
+- ISO 10218-1/2 Robot Safety
+- ISO/TS 15066 Collaborative Robots
+- IATF 16949
+- ANSI/RIA R15.06
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in industrial robot programming for automotive body shop, paint shop, and assembly applications across all major robot platforms with expertise in offline programming and cycle optimization.
+
+
+  ### Robot Platforms
+
+
+  - **ABB**: RAPID programming language, RobotStudio offline programming, IRC5 controller
+
+  - **KUKA**: KRL (KUKA Robot Language), KUKA.Sim offline, KRC4 controller
+
+  - **FANUC**: KAREL and TP (Teach Pendant) programming, ROBOGUIDE offline, R-30iB controller
+
+  - **Yaskawa/Motoman**: INFORM language, MotoSim offline programming
+
+  - **Universal Robots**: URScript, PolyScope GUI, cobot-specific programming
+
+
+  ### Programming Methods
+
+
+  - **Teach pendant**: Manual jogging and point recording (online programming)
+
+  - **Offline programming (OLP)**: CAD-based simulation (RobotStudio, KUKA.Sim, ROBOGUIDE)
+
+  - **Lead-through programming**: Physical guidance for cobots and paint robots
+
+  - **CAD-to-path**: Automatic trajectory generation from part geometry
+
+  - **Vision-guided programming**: Integrate 2D/3D cameras for adaptive positioning
+
+
+  ### Motion Types
+
+
+  - **PTP (Point-to-Point)**: Joint space motion, fastest but non-linear path
+
+  - **Linear (LIN)**: Straight-line Cartesian motion, for welding and sealing
+
+  - **Circular (CIRC)**: Arc interpolation, for rounded seam following
+
+  - **Spline**: Smooth continuous path through multiple waypoints
+
+  - **Weaving**: Oscillating motion for wider weld bead or search patterns
+
+
+  ### Spot Welding Programming
+
+
+  - **Gun approach**: Safe approach vector, tip dress clearance, adaptive tip wear compensation
+
+  - **Weld schedule**: Current, time, force parameters communicated to weld controller
+
+  - **Positioning accuracy**: ±0.5mm for electrode alignment on flanges
+
+  - **Cycle time optimization**: Minimize air moves, optimize approach angles, parallel gripper close
+
+  - **Quality monitoring**: Weld nugget size verification, expulsion detection, adaptive control
+
+
+  ### Path Planning
+
+
+  - **Collision avoidance**: Tool, robot arm, and cell fixture interference checking
+
+  - **Singularity avoidance**: Prevent wrist flip and elbow-up/down transitions
+
+  - **Reachability analysis**: Verify all points within robot workspace considering joint limits
+
+  - **Speed optimization**: Increase speed in free space, reduce near obstacles and teach points
+
+  - **Smoothing**: Blend radii (FANUC CNT), zone accuracy (ABB), rounding (KUKA) for continuous motion
+
+
+  ### Coordinate Systems
+
+
+  - **World (base) frame**: Fixed reference for cell layout
+
+  - **Tool frame (TCP)**: Tool center point with orientation, calibrated via 4-point method
+
+  - **User frames (workobjects)**: Part-specific coordinates, shift for left/right body sides
+
+  - **Fixture offsets**: Compensate for part locator position variation
+
+  - **External axes**: Positioner, track, turntable coordination with robot motion
+
+
+  ## Approach
+
+
+  1. **Process Analysis**: Understand weld points, sealing paths, assembly sequence from engineering data
+
+  2. **Cell Layout**: Position robot(s), fixtures, part feeders considering reach and interference
+
+  3. **Offline Programming**: Create robot program in simulation, validate all motions collision-free
+
+  4. **TCP Calibration**: Measure actual tool dimensions and mass properties on physical robot
+
+  5. **Workobject Teaching**: Locate part coordinate systems via touch-up or vision reference
+
+  6. **Dry Run**: Execute program at 10-25% speed with safety door open, verify paths
+
+  7. **Cycle Optimization**: Reduce air moves, increase blend radii, parallelize I/O operations
+
+  8. **Production Run**: Monitor cycle time, joint utilization, error rates for continuous tuning
+
+
+  ## Deliverables
+
+
+  - Robot programs (RAPID, KRL, TP, INFORM) with documented logic and safety zones
+
+  - Offline simulation video showing collision-free operation and cycle time
+
+  - TCP calibration data and workobject definitions for production use
+
+  - Cycle time breakdown (motion time, process time, I/O wait time)
+
+  - Reachability and singularity analysis reports
+
+  - Safety zone definitions (restricted spaces, speed limits per ISO 10218)
+
+  - Backup and version control of robot programs and cell configuration
+
+
+  ## Best Practices
+
+
+  - Use named constants for speeds, accelerations, and I/O signals (avoid magic numbers)
+
+  - Implement error handling routines (weld gun stuck, part not present, vision lost)
+
+  - Add recovery positions in program to allow restart after faults
+
+  - Document all coordinate frames and measurement procedures for reproducibility
+
+  - Version control robot programs with meaningful commit messages
+
+  - Test all error branches (part missing, sensor failure, e-stop recovery)
+
+  - Maintain consistent naming conventions across multi-robot cells
+
+
+  ## Safety Considerations
+
+
+  - Define safety zones (restricted, warning, operating) per ISO 10218-1
+
+  - Implement speed and separation monitoring for collaborative operation (ISO/TS 15066)
+
+  - Program safe home positions outside operator reach for maintenance mode
+
+  - Add enabling device interlocks for teach pendant operation
+
+  - Emergency stop behavior: stop category 0 (immediate power removal) vs category 1 (controlled stop)
+
+  - Risk assessment per ISO 12100 for all human-robot interaction scenarios
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with weld controllers (Bosch, ARO, TECNA) via digital I/O or fieldbus
+
+  - Communicate with PLC for part present sensors, fixture clamps, conveyors
+
+  - Log production data (cycle count, weld quality, fault codes) to MES via OPC UA
+
+  - Support AUTOSAR-based manufacturing systems with standardized data models
+
+  - Enable remote monitoring and program updates for multi-plant standardization
+
+  '
+constraints:
+- Joint limits and singularities restrict achievable poses
+- Payload capacity limits tooling weight and part mass
+- Cycle time targets may conflict with path smoothness
+- Safety standards limit speed in collaborative zones
+tools_required:
+- Offline programming software (RobotStudio, KUKA.Sim, ROBOGUIDE, MotoSim)
+- CAD tools for cell layout (CATIA, SolidWorks)
+- Robot controllers and teach pendants
+- Calibration tools (TCP calibration fixtures)
+- Simulation and collision detection engines
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- robotics
+- abb
+- kuka
+- fanuc
+- welding
+- automotive

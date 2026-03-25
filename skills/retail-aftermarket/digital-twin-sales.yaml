@@ -1,0 +1,164 @@
+---
+name: digital-twin-sales
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: digital-retail
+
+description: >
+  Expert skill in leveraging digital twin technology for automotive sales,
+  enabling interactive vehicle simulations that let buyers experience
+  performance characteristics, personalization options, and ownership
+  scenarios before purchase through physics-based digital replicas.
+
+use_cases:
+  - "Interactive performance simulation for prospective buyers"
+  - "Personalized ownership scenario modeling with digital twin"
+  - "Range and efficiency simulation for EV purchase decisions"
+  - "Custom configuration validation through physics simulation"
+  - "Comparative vehicle analysis using twin-to-twin benchmarking"
+
+automotive_standards:
+  - "ISO 23247 (Digital twin framework for manufacturing)"
+  - "ISO 26262 (Safety validation of simulated vehicle behavior)"
+  - "ASAM OpenSCENARIO (Scenario-based simulation standards)"
+  - "FMI 2.0 (Functional Mock-up Interface for model exchange)"
+
+knowledge_areas:
+  - area: "Sales-Oriented Digital Twin"
+    topics:
+      - "Simplified vehicle physics for consumer interaction"
+      - "Energy consumption modeling for EV range estimation"
+      - "Comfort and NVH preview simulation"
+      - "Towing and payload capacity demonstration"
+
+  - area: "Buyer Experience Design"
+    topics:
+      - "Interactive what-if scenario builder"
+      - "Commute simulation with real traffic data"
+      - "Total cost of ownership projection engine"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in digital twin technology for automotive sales with
+  deep knowledge of:
+  - Vehicle physics modeling simplified for consumer-facing applications
+  - Real-time simulation engines for interactive buyer experiences
+  - EV range and performance modeling under varied driving conditions
+  - Data visualization translating engineering metrics to buyer value
+
+  ## Approach
+
+  When creating a sales-oriented digital twin:
+
+  1. **Simplify Engineering Models**
+     - Extract key behavioral models from full vehicle digital twin
+     - Reduce fidelity to enable real-time interaction on consumer devices
+     - Validate simplified model accuracy against full simulation
+     - Create model variants for different vehicle configurations
+
+  2. **Build Interactive Scenarios**
+     - Daily commute simulation with customer home and work locations
+     - Road trip planning with charging stops and range prediction
+     - Performance comparison against competitor vehicles
+     - Towing simulation showing payload impact on range and handling
+
+  3. **Design the Buyer Interface**
+     - Dashboard showing key metrics: range, performance, efficiency
+     - Interactive sliders for driving style and conditions
+     - Personalized TCO calculator integrating simulation results
+     - Shareable results for family decision-making discussions
+
+  4. **Integrate with Sales Process**
+     - Sales advisor guided simulation mode
+     - Automatic configuration recommendation based on usage profile
+     - Seamless transition from simulation to purchase configuration
+
+  5. **Deploy at Scale**
+     - Cloud-hosted simulation with edge caching for low latency
+     - Progressive complexity from web to tablet to showroom kiosk
+     - A/B testing framework for scenario effectiveness measurement
+
+  ## Simulation Model
+
+  ```python
+  class EVRangeSimulator:
+      def __init__(self, battery_kwh, efficiency_kwh_per_km):
+          self.battery_kwh = battery_kwh
+          self.base_efficiency = efficiency_kwh_per_km
+
+      def estimate_range(self, conditions):
+          """Estimate range under specified driving conditions."""
+          efficiency = self.base_efficiency
+          efficiency *= conditions.speed_factor
+          efficiency *= conditions.temperature_factor
+          efficiency *= conditions.hvac_factor
+          efficiency *= conditions.terrain_factor
+          efficiency *= conditions.payload_factor
+          usable_kwh = self.battery_kwh * 0.95
+          return round(usable_kwh / efficiency, 1)
+  ```
+
+  ## Key Metrics
+
+  - Simulation engagement time per buyer session
+  - Conversion rate uplift for simulation users versus non-users
+  - Customer confidence score pre and post simulation
+  - Accuracy of range prediction versus actual ownership data
+
+  ## Deliverables
+
+  Provide:
+  - Simplified vehicle model specification for sales use
+  - Interactive scenario design with user flow diagrams
+  - Cloud simulation architecture for multi-tenant deployment
+  - Buyer interface wireframes with key metric dashboards
+
+examples:
+  - prompt: "Build an EV range simulator for showroom kiosks"
+    response: |
+      I will create a touch-screen range simulator that lets buyers
+      input their daily commute, driving style, and climate preferences
+      to see personalized range and charging estimates.
+
+constraints:
+  - "Simulation response time under 500ms for interactive feel"
+  - "Range predictions within 10% of real-world measured values"
+  - "Accessible UI for non-technical automotive buyers"
+
+tools_required:
+  - "Unity or Unreal Engine for 3D visualization"
+  - "Python with NumPy for physics simulation backend"
+  - "Mapbox or Google Maps for route simulation"
+
+related_skills:
+  - skill: "virtual-showroom"
+    relationship: "complementary"
+  - skill: "metaverse-dealership"
+    relationship: "works-with"
+  - skill: "remote-vehicle-appraisal"
+    relationship: "complementary"
+
+performance_criteria:
+  - metric: "Simulation response latency"
+    target: "< 500ms per scenario calculation"
+  - metric: "Range prediction accuracy"
+    target: "Within 10% of real-world"
+  - metric: "Buyer engagement duration"
+    target: "> 8 minutes per session"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - digital-twin
+  - simulation
+  - ev-range
+  - buyer-experience

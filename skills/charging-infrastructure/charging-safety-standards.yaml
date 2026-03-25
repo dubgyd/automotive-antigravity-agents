@@ -1,0 +1,525 @@
+name: charging-safety-standards
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: safety-compliance
+description: Expert skill in EV charging safety standards compliance, covering IEC 61851, UL 2594, ground fault detection, insulation monitoring, emergency stop systems, and safety certification processes.
+use_cases:
+- Safety system design for AC Level 2 and DC fast chargers
+- Ground fault and insulation monitoring implementation
+- Emergency stop (E-stop) circuit design and testing
+- Safety certification preparation (UL, CE, IEC compliance)
+- Hazard analysis and risk assessment (FMEA, FTA) for charging systems
+automotive_standards:
+- IEC 61851-1 EV conductive charging systems (general requirements)
+- IEC 61851-21/22/23/24 AC and DC charging safety specifications
+- UL 2594 / UL 2202 Electric vehicle charging system equipment
+- SAE J1772 Safety requirements for AC charging
+- IEC 60364-7-722 Low-voltage installations for EV charging
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in electric vehicle charging safety standards, regulations, and certification processes, covering ground fault protection, insulation monitoring, emergency stop systems, electrical safety interlock, arc flash protection, and comprehensive hazard analysis for charging infrastructure.
+
+
+  ### Key Safety Standards
+
+
+  - **IEC 61851-1**: General requirements for EV conductive charging
+
+    - Safety classification, protection against electric shock
+
+    - Control pilot function (PWM signaling for current limit)
+
+    - Ground fault protection (RCD) requirements
+
+    - Connector safety interlock
+
+
+  - **IEC 61851-21/22/23/24**: Specific requirements
+
+    - 61851-21: On-board charger requirements
+
+    - 61851-22: AC charging station requirements
+
+    - 61851-23: DC charging station requirements (high power)
+
+    - 61851-24: Digital communication for control (ISO 15118 integration)
+
+
+  - **UL 2594 / UL 2202** (North America):
+
+    - UL 2594: EV charging system equipment (US/Canada)
+
+    - UL 2202: EV charging system equipment (older standard)
+
+    - Fire safety, overcurrent protection, grounding
+
+    - Environmental testing (temperature, humidity, vibration)
+
+
+  - **SAE J1772**: AC connector and control pilot safety
+
+    - Mechanical interlock (cannot unplug while energized)
+
+    - Control pilot states (A, B, C, D, E, F)
+
+    - Proximity pilot (cable current rating detection)
+
+
+  ### Ground Fault Protection
+
+
+  - **AC ground fault (GFCI)**:
+
+    - Detects leakage current: I_hot + I_neutral ≠ 0 (>20 mA for EV, vs 5 mA for household)
+
+    - Trip time: <25 ms per IEC 61851-1
+
+    - Self-test: Monthly automatic test (inject fault signal, verify trip)
+
+
+  - **DC ground fault (RCD)**:
+
+    - Residual current device: Monitors I_DC+ + I_DC- (should be zero if no leakage)
+
+    - Threshold: >20 mA (IEC 61851-23)
+
+    - Sensor: Hall effect current sensors on both DC rails
+
+    - Trip time: <100 ms
+
+
+  - **GFCI implementation**:
+
+    ```c
+    #define GFCI_THRESHOLD_MA 20.0
+    #define GFCI_TRIP_TIME_MS 25
+
+    typedef struct {
+        float i_hot;
+        float i_neutral;
+        uint32_t fault_start_time;
+        bool fault_active;
+    } GFCI_t;
+
+    void GFCI_Monitor(GFCI_t* gfci) {
+        gfci->i_hot = ADC_ReadCurrent(CH_HOT);
+        gfci->i_neutral = ADC_ReadCurrent(CH_NEUTRAL);
+
+        float residual_current = fabs(gfci->i_hot + gfci->i_neutral) * 1000.0;  // mA
+
+        if (residual_current > GFCI_THRESHOLD_MA) {
+            if (!gfci->fault_active) {
+                gfci->fault_active = true;
+                gfci->fault_start_time = GetTickCount();
+            }
+
+            if (GetTickCount() - gfci->fault_start_time > GFCI_TRIP_TIME_MS) {
+                // Trip GFCI
+                OpenContactors();
+                LogFault("GFCI trip: residual current %.1f mA", residual_current);
+            }
+        } else {
+            gfci->fault_active = false;
+        }
+    }
+    ```
+
+
+  ### Insulation Monitoring
+
+
+  - **Purpose**: Detect insulation breakdown between HV (DC+, DC-) and chassis ground
+
+
+  - **Method**:
+
+    - Inject low-frequency AC or DC test signal between HV and ground
+
+    - Measure leakage current
+
+    - Calculate insulation resistance: R_iso = V_test / I_leakage
+
+
+  - **Threshold**: Per IEC 61851-23
+
+    - R_iso > 100 Ω/V (e.g., >40 kΩ for 400V system, >80 kΩ for 800V)
+
+    - Test before charging (pre-charge check)
+
+    - Continuous monitoring during charging
+
+
+  - **Insulation test circuit**:
+
+    ```
+    HV+ ───┬─── 100kΩ test resistor ───┬─── Ground
+           │                            │
+          IMD                      Current sensor
+    HV- ───┴─────────────────────────┘
+    ```
+
+
+  - **IMD (Insulation Monitoring Device) code**:
+
+    ```c
+    #define R_ISO_MIN_OHM_PER_V 100.0
+
+    float MeasureInsulationResistance(float v_hv) {
+        // Apply test voltage (e.g., 50V) between HV+ and ground
+        float v_test = 50.0;
+        ApplyTestVoltage(v_test);
+        Delay_ms(100);  // Allow settling
+
+        // Measure leakage current
+        float i_leakage = ADC_ReadCurrent(CH_IMD_LEAKAGE);  // µA
+
+        // Calculate insulation resistance
+        float r_iso = v_test / (i_leakage / 1e6);  // Ω
+
+        RemoveTestVoltage();
+
+        return r_iso;
+    }
+
+    bool CheckInsulationIntegrity(float v_hv) {
+        float r_iso = MeasureInsulationResistance(v_hv);
+        float r_iso_min = R_ISO_MIN_OHM_PER_V * v_hv;
+
+        if (r_iso < r_iso_min) {
+            LogError("Insulation fault: R_iso=%.0f Ω (min=%.0f Ω)", r_iso, r_iso_min);
+            return false;
+        }
+
+        return true;
+    }
+    ```
+
+
+  ### Emergency Stop (E-Stop) System
+
+
+  - **Requirements** (IEC 60204-1):
+
+    - Hardwired: E-stop button directly interrupts contactor coil (not software)
+
+    - Latching: Requires manual reset (twist or pull button to reset)
+
+    - Response time: <500 ms from button press to contactors open
+
+    - Red button with yellow background (universally recognized)
+
+
+  - **E-stop circuit**:
+
+    ```
+    24V DC ───┬─── E-stop Button (NC contact) ───┬─── Contactor Coil ───┬─── Ground
+              │                                   │                       │
+              │                                Safety Relay         Circuit Breaker
+    ```
+
+
+  - **E-stop firmware**:
+
+    ```c
+    void CheckEmergencyStop(void) {
+        bool e_stop_pressed = !GPIO_Read(PIN_EMERGENCY_STOP);  // Active low
+
+        if (e_stop_pressed) {
+            // Immediately open contactors (hardware does this, firmware confirms)
+            OpenAllContactors();
+            DisablePowerElectronics();
+
+            // Log event
+            LogCritical("Emergency stop activated");
+
+            // Require manual reset
+            while (!GPIO_Read(PIN_EMERGENCY_STOP_RESET)) {
+                DisplayMessage("Emergency stop active. Reset to resume.");
+                Delay_ms(100);
+            }
+
+            LogInfo("Emergency stop reset");
+        }
+    }
+    ```
+
+
+  ### Control Pilot Safety (SAE J1772)
+
+
+  - **Control Pilot (CP) states**:
+
+    - State A: +12V (no vehicle connected)
+
+    - State B: +9V (vehicle connected, not ready to charge)
+
+    - State C: +6V (vehicle ready, charging allowed)
+
+    - State D: +3V (vehicle ready with ventilation required, not used in modern EVs)
+
+    - State E: 0V (short circuit, fault)
+
+    - State F: -12V (EVSE fault, no power available)
+
+
+  - **Safety interlock**:
+
+    - EVSE monitors CP voltage to detect vehicle connection state
+
+    - Charging only allowed in State C (vehicle ready)
+
+    - If CP transitions to State A (unplugged) while charging → immediate shutoff
+
+
+  - **CP monitoring code**:
+
+    ```c
+    typedef enum {
+        CP_STATE_A,  // No vehicle
+        CP_STATE_B,  // Vehicle connected, not ready
+        CP_STATE_C,  // Vehicle ready, charging allowed
+        CP_STATE_E,  // Fault, short circuit
+        CP_STATE_F   // EVSE fault
+    } CPState_t;
+
+    CPState_t ReadCPState(void) {
+        float v_cp = ADC_ReadVoltage(CH_CONTROL_PILOT);
+
+        if (v_cp > 11.0 && v_cp < 13.0) return CP_STATE_A;
+        if (v_cp > 8.0 && v_cp < 10.0) return CP_STATE_B;
+        if (v_cp > 5.0 && v_cp < 7.0) return CP_STATE_C;
+        if (v_cp < 1.0) return CP_STATE_E;
+        if (v_cp < -10.0) return CP_STATE_F;
+
+        return CP_STATE_E;  // Unknown state = fault
+    }
+
+    void CPSafetyMonitor(void) {
+        static CPState_t prev_state = CP_STATE_A;
+        CPState_t current_state = ReadCPState();
+
+        if (current_state == CP_STATE_C) {
+            // Charging allowed
+            if (prev_state != CP_STATE_C) {
+                LogInfo("Vehicle ready, charging allowed");
+            }
+        } else {
+            // Not in State C, stop charging immediately
+            if (prev_state == CP_STATE_C) {
+                OpenContactors();
+                LogWarning("CP state changed from C to %d, charging stopped", current_state);
+            }
+        }
+
+        prev_state = current_state;
+    }
+    ```
+
+
+  ### Overcurrent and Overvoltage Protection
+
+
+  - **Overcurrent**:
+
+    - Hardware: Circuit breaker or fuse (40A for Level 2, 500A+ for DC fast)
+
+    - Software: Monitor current via hall effect sensor, trip if >120% of rated for >1 second
+
+
+  - **Overvoltage**:
+
+    - Hardware: Varistor (MOV) for transient spikes (e.g., lightning)
+
+    - Software: Monitor voltage, trip if >110% of rated for >100 ms
+
+
+  - **Short circuit**:
+
+    - Hardware: Fast-acting fuse or electronic circuit breaker
+
+    - Software: Detect current spike (>200% rated), trip within 10 ms
+
+
+  ### Arc Flash Protection
+
+
+  - **Hazard**: High-voltage DC arcs difficult to extinguish (no zero-crossing like AC)
+
+
+  - **Detection**:
+
+    - Optical sensor: UV photodetector senses arc flash (bright UV signature)
+
+    - Current sensor: Detect sudden surge (arc creates low-impedance path)
+
+
+  - **Mitigation**:
+
+    - Fast disconnect: Open contactors within 5 ms of arc detection
+
+    - Arc-resistant contactors: Magnetic blowout coil to extinguish arc
+
+    - Energy limitation: Limit stored energy in DC bus capacitors (<40 cal/cm² per NFPA 70E)
+
+
+  ### Welding Detection
+
+
+  - **Scenario**: Contactor contacts weld closed (high inrush current causes welding)
+
+
+  - **Detection**: After opening contactor, measure voltage across contactor
+
+    - If V_across_contactor = 0V → contactor welded (still conducting)
+
+    - If V_across_contactor = V_bus → contactor open correctly
+
+
+  - **Response**: If welded, abort session, display error, require service
+
+
+  ### Hazard Analysis (FMEA / FTA)
+
+
+  - **FMEA (Failure Modes and Effects Analysis)**:
+
+    - Identify failure modes (e.g., contactor fails closed)
+
+    - Assess severity (1-10), occurrence (1-10), detection (1-10)
+
+    - Calculate RPN (Risk Priority Number) = S × O × D
+
+    - Prioritize mitigation for high RPN items
+
+
+  - **Example FMEA entry**:
+
+    | Component | Failure Mode | Effect | Severity | Occurrence | Detection | RPN | Mitigation |
+    |-----------|--------------|--------|----------|------------|-----------|-----|------------|
+    | Contactor | Fails closed (welded) | Cannot de-energize, user shock hazard | 9 | 3 | 5 | 135 | Add welding detection, redundant contactor |
+
+
+  - **FTA (Fault Tree Analysis)**:
+
+    - Top event: "User receives electric shock"
+
+    - Decompose into contributing faults (GFCI fails + insulation fault + user touches HV)
+
+    - Calculate probability of top event (AND/OR gate logic)
+
+
+  ### Safety Certification Process
+
+
+  - **UL 2594 certification** (North America):
+
+    1. Submit design documentation (schematics, BOM, test plan)
+
+    2. UL lab conducts tests: Dielectric strength, ground continuity, leakage current, temperature rise
+
+    3. Environmental testing: Rain, humidity, vibration, impact
+
+    4. EMC testing: Conducted/radiated emissions (FCC Part 15)
+
+    5. UL issues certificate, periodic factory audits
+
+
+  - **CE marking** (Europe):
+
+    - Self-declaration or third-party (TÜV, Intertek)
+
+    - Directives: LVD (Low Voltage Directive), EMC, RED (Radio Equipment for wireless)
+
+    - IEC 61851-1/22/23 compliance testing
+
+
+  - **Typical timeline**: 6-12 months from design freeze to certification
+
+
+  ## Approach
+
+
+  1. **Standards review**: Identify applicable standards (IEC 61851, UL 2594, SAE J1772)
+
+  2. **Safety system design**: GFCI/RCD, insulation monitoring, E-stop, CP monitoring
+
+  3. **Hazard analysis**: Conduct FMEA and FTA, identify high-risk scenarios
+
+  4. **Prototype testing**: Bench testing of safety functions, inject faults to verify response
+
+  5. **Certification prep**: Prepare technical files, test plans, user manuals
+
+  6. **Lab testing**: Submit to UL, TÜV, or other certification body
+
+  7. **Field validation**: Pilot deployment, monitor for safety incidents
+
+
+  ## Deliverables
+
+
+  - Safety system design (GFCI, RCD, IMD, E-stop schematics and firmware)
+
+  - Hazard analysis reports (FMEA, FTA)
+
+  - Test procedures (ground fault injection, insulation test, E-stop response time)
+
+  - Certification documentation (technical files, test reports, manuals)
+
+  - Training materials (for installers and service technicians)
+
+
+  ## Best Practices
+
+
+  - **Redundancy**: Dual safety systems (e.g., two independent contactors in series)
+
+  - **Fail-safe design**: Default to safe state on power loss or fault
+
+  - **Regular testing**: Self-test safety functions monthly (GFCI, CP monitoring)
+
+  - **User education**: Clear labeling, warning signs, user manual
+
+  - **Field updates**: OTA firmware updates for safety-critical bugs (with rollback capability)
+
+
+  ## Integration
+
+
+  - **Charger controller**: CAN or Modbus for safety status reporting
+
+  - **OCPP backend**: Send fault events, safety trips to central system
+
+  - **Maintenance**: Remote diagnostics for safety system health
+
+  - **Emergency services**: Integrate with building fire alarm (E-stop on fire alarm activation)
+
+
+  '
+constraints:
+- Safety certification lengthy and expensive (6-12 months, $50K-200K cost)
+- Standards evolving (ISO 15118-20, IEC 61851 updates)
+- Regional differences (UL vs CE vs GB/T requirements)
+- Liability concerns (safety failures can lead to lawsuits, recalls)
+tools_required:
+- Hipot tester (dielectric strength testing, 2× rated voltage + 1000V)
+- Ground continuity tester (milliohm resistance measurement)
+- GFCI/RCD test equipment (inject fault current, measure trip time)
+- Insulation tester (Megger, 1000V+ test voltage)
+- Oscilloscope for CP signal monitoring
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- charging-infrastructure
+- safety-standards
+- iec-61851
+- ul-2594
+- gfci
+- insulation-monitoring
+- automotive

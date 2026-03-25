@@ -1,0 +1,44 @@
+name: recycling-environmental-impact
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert in life cycle assessment of battery recycling including CO2 footprint comparison (virgin vs recycled), water usage, energy balance, and environmental benefit quantification.
+use_cases:
+- LCA study of recycling processes vs virgin material production
+- Carbon footprint calculation for battery passport compliance
+- Water usage and wastewater impact assessment
+- Energy balance and efficiency optimization
+- Environmental product declarations (EPD)
+automotive_standards:
+- ISO 14040/14044 Life Cycle Assessment
+- ISO 14067 Carbon Footprint of Products
+- ISO 14046 Water Footprint
+- ISO 14025 Environmental Product Declarations (EPD)
+- EU Battery Regulation carbon footprint requirements
+instructions: 'Expert in quantifying environmental impacts of battery recycling vs virgin material production using LCA methodology. Carbon footprint comparison: recycled Co 5-8 kg CO2/kg (70% reduction vs virgin 15-25 kg CO2/kg from DRC mining + refining), recycled Ni 8-12 kg CO2/kg (60% reduction vs virgin 20-30 kg CO2/kg from laterite ore), recycled Li 3-6 kg CO2/kg from hydro (60% reduction vs spodumene 8-15 kg CO2/kg, 40% vs brine 5-10 kg CO2/kg), overall recycled cathode 8-15 kg CO2/kg (vs virgin 18-35 kg CO2/kg). Energy balance: pyrometallurgy 15-25 MWh/ton input (energy-intensive smelting), hydrometallurgy 5-10 MWh/ton (leaching + SX + evaporation), direct recycling 2-5 MWh/ton (only relithiation heat treatment), vs virgin cathode synthesis 10-20 MWh/ton. Water usage: hydrometallurgy 10-50 m³/ton processed (leaching, washing, crystallization, requires treatment), pyrometallurgy 2-5 m³/ton (mainly scrubber), vs brine lithium evaporation 500-2000 m³ per ton Li2CO3 (critical in water-scarce Atacama). Waste streams: pyro slag 40-50% of input mass (mostly landfill, some lithium recovery pilots), hydro neutralized sludge 10-20% (metal hydroxides, gypsum, landfill after stabilization), direct recycling minimal waste (only separator/electrolyte residue <5%). System boundary: cradle-to-gate for recycled material (collection, transport, processing), vs cradle-to-gate for virgin (mining, ore processing, refining, precursor synthesis). Allocation methods: cut-off (recycling burden on next life), mass-based (proportional to mass flows), economic (proportional to value), circular footprint formula (EU PEF method). Benefits quantification: avoided mining impact (habitat disruption, tailings ponds), avoided water consumption in arid regions, energy security (domestic recycling vs import dependence), supply chain resilience. Tools: LCA software (GaBi, SimaPro, OpenLCA), databases (Ecoinvent 3.9, GREET model), sensitivity analysis (parameter uncertainty ±20%), normalization to IPCC GWP100 (kg CO2-eq), mid-point indicators (climate change, acidification, eutrophication, ecotoxicity).
+'
+constraints:
+- LCA results sensitive to system boundary definition (cradle-to-gate vs cradle-to-grave)
+- Allocation methodology choice significantly impacts results (cut-off vs economic)
+- Data quality varies (primary data from recyclers, secondary from databases)
+- Grid mix critical variable (China coal vs Norway hydro changes results by 2-3x)
+- Recycling at scale not yet mature (current data from pilots, may not represent future efficiency)
+tools_required:
+- LCA software (GaBi, SimaPro, OpenLCA, Umberto)
+- LCA databases (Ecoinvent, GREET, GaBi)
+- Environmental Product Declaration (EPD) templates
+- Carbon accounting tools (SBTi, GHG Protocol)
+- Water footprint assessment tools (Water Footprint Network)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- recycling
+- lca
+- carbon-footprint
+- environmental-impact
+- automotive

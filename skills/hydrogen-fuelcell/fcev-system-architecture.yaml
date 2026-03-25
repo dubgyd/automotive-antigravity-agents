@@ -1,0 +1,474 @@
+name: fcev-system-architecture
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: system-integration
+description: Expert skill in FCEV (Fuel Cell Electric Vehicle) drivetrain architecture, component integration, and power flow management.
+use_cases:
+- FCEV powertrain architecture design
+- Fuel cell and battery hybrid system integration
+- DC-DC converter and power electronics sizing
+- Hydrogen storage system packaging
+- Balance of Plant (BoP) component selection
+automotive_standards:
+- ECE R134 (Hydrogen propulsion system safety)
+- ISO 23273 (Hydrogen fuel system components)
+- SAE J2578 (Recommended practice for general fuel cell vehicle safety)
+- ISO 14687 (Hydrogen fuel quality)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in FCEV system architecture, component integration, and power flow management. Deep understanding of fuel cell stack, DC-DC converter, battery buffer, hydrogen storage, and Balance of Plant (BoP) subsystems.
+
+
+  ### FCEV Drivetrain Topology
+
+
+  ```
+
+  [H2 Tank] → [Pressure Regulator] → [Fuel Cell Stack]
+
+                                            ↓
+
+                                      [DC-DC Converter]
+
+                                            ↓
+
+                                      [High Voltage Bus] ← [Battery Buffer]
+
+                                            ↓
+
+                                      [Inverter] → [Electric Motor] → [Gearbox] → [Wheels]
+
+  ```
+
+
+  - **Fuel cell stack**: Primary power source (80-120 kW for passenger vehicle)
+
+  - **Battery buffer**: Li-ion pack (1-2 kWh, 300-400V) for transient power and regen
+
+  - **DC-DC boost converter**: Step up FC voltage (200-350V) to HV bus (400-650V)
+
+  - **Electric motor**: Permanent magnet synchronous motor (100-150 kW peak)
+
+  - **Hydrogen storage**: 5-6 kg H2 at 700 bar (Type IV carbon fiber tanks)
+
+  - **Balance of Plant**: Air compressor, coolant pump, humidifier, valves, sensors
+
+
+  ### Power Flow Management
+
+
+  ```python
+
+  class FCEVPowerManager:
+
+      def __init__(self):
+
+          self.fc_max_power = 100e3  # W
+
+          self.batt_max_power = 30e3  # W
+
+          self.fc_ramp_rate = 5e3    # W/s (slow transient response)
+
+          self.batt_soc = 0.6        # State of charge
+
+
+
+      def distribute_power(self, P_demand, accel_pedal_rate):
+
+          """
+
+          Distribute power between fuel cell and battery.
+
+
+
+          Strategy:
+
+          - Fuel cell: Baseload power (slow transients)
+
+          - Battery: Peak power and regenerative braking
+
+          """
+
+          # Fuel cell follows slow average demand
+
+          P_fc_target = min(P_demand * 0.7, self.fc_max_power)
+
+
+
+          # Battery provides transient power
+
+          P_batt_target = P_demand - P_fc_target
+
+
+
+          # Limit battery power based on SOC
+
+          if self.batt_soc < 0.3:
+
+              P_batt_target = min(P_batt_target, 10e3)  # Protect battery
+
+          elif self.batt_soc > 0.8:
+
+              P_batt_target = max(P_batt_target, -20e3) # Accept regen
+
+
+
+          # Clamp to component limits
+
+          P_fc = np.clip(P_fc_target, 0, self.fc_max_power)
+
+          P_batt = np.clip(P_batt_target, -self.batt_max_power, self.batt_max_power)
+
+
+
+          return P_fc, P_batt
+
+  ```
+
+
+  ### DC-DC Converter Design
+
+
+  - **Topology**: Unidirectional boost converter (FC always sources power)
+
+  - **Input voltage**: 200-350V (FC stack voltage varies with load)
+
+  - **Output voltage**: 400-650V (HV bus regulation)
+
+  - **Power rating**: 100-120 kW continuous
+
+  - **Efficiency**: 95-97% across operating range
+
+  - **Control**: Current mode control with anti-windup
+
+
+  **DC-DC control algorithm**:
+
+  ```c
+
+  typedef struct {
+
+      float V_fc_min;     // 200V (at max current)
+
+      float V_fc_max;     // 350V (at no load)
+
+      float V_bus_target; // 500V (HV bus setpoint)
+
+      float I_fc_max;     // 300A (stack current limit)
+
+      float duty_cycle;   // PWM duty cycle [0-1]
+
+  } DCDC_Controller_t;
+
+
+
+  void dcdc_control_loop(DCDC_Controller_t *ctrl, float V_fc, float V_bus, float I_bus) {
+
+      // Calculate required FC current
+
+      float I_fc_req = (V_bus * I_bus) / (V_fc * 0.96);  // Account for efficiency
+
+
+
+      // Limit to stack maximum
+
+      float I_fc = fminf(I_fc_req, ctrl->I_fc_max);
+
+
+
+      // Boost converter duty cycle: D = 1 - V_in/V_out
+
+      ctrl->duty_cycle = 1.0f - (V_fc / ctrl->V_bus_target);
+
+
+
+      // Clamp duty cycle to safe limits
+
+      ctrl->duty_cycle = fmaxf(0.1f, fminf(0.9f, ctrl->duty_cycle));
+
+
+
+      // Apply PWM to gate driver
+
+      set_pwm_duty(ctrl->duty_cycle);
+
+  }
+
+  ```
+
+
+  ### Hydrogen Storage System
+
+
+  - **Tank type**: Type IV COPV (carbon fiber over plastic liner)
+
+  - **Storage pressure**: 700 bar (10,150 psi) nominal
+
+  - **Capacity**: 5-6 kg H2 for 500-600 km range
+
+  - **Tank count**: Typically 2-3 tanks for packaging flexibility
+
+  - **Safety devices**: PRD (pressure relief device), TPRD (thermal), pressure sensors
+
+  - **Refueling time**: 3-5 minutes for full tank
+
+
+  ### Balance of Plant Components
+
+
+  **Air supply system**:
+
+  - Electric compressor (30-50 kW) for cathode air (stoichiometry 2.0-2.5)
+
+  - Intercooler to reduce compressed air temperature
+
+  - Humidifier to hydrate inlet air (membrane or enthalpy wheel)
+
+  - Back-pressure valve to control cathode pressure
+
+
+  **Hydrogen supply system**:
+
+  - Pressure regulator cascade (700 bar → 10 bar → stack inlet)
+
+  - Recirculation pump/ejector to recover unreacted H2
+
+  - Purge valve to remove N2/H2O buildup in anode loop
+
+  - Hydrogen sensors for leak detection
+
+
+  **Thermal management**:
+
+  - Coolant loop for stack (60-80°C operating temperature)
+
+  - Radiator with fan (30-40 kW heat rejection)
+
+  - Separate cooling for compressor and power electronics
+
+  - Electric heater for cold start (-40°C capability)
+
+
+  **Water management**:
+
+  - Product water collection and separation
+
+  - Recirculation to humidifier
+
+  - Drain valves for freeze protection
+
+
+  ### System Control Architecture
+
+
+  ```c
+
+  typedef enum {
+
+      FC_STATE_OFF,
+
+      FC_STATE_STARTUP,
+
+      FC_STATE_IDLE,
+
+      FC_STATE_RUNNING,
+
+      FC_STATE_SHUTDOWN,
+
+      FC_STATE_FAULT
+
+  } FCSystemState_t;
+
+
+
+  typedef struct {
+
+      FCSystemState_t state;
+
+      float stack_voltage;      // V
+
+      float stack_current;      // A
+
+      float stack_temp;         // °C
+
+      float air_stoich;         // Lambda ratio
+
+      float h2_pressure;        // bar
+
+      float coolant_flow;       // L/min
+
+      uint32_t runtime_hours;
+
+  } FCSystemStatus_t;
+
+
+
+  void fc_system_state_machine(FCSystemStatus_t *status, float power_request) {
+
+      switch (status->state) {
+
+          case FC_STATE_OFF:
+
+              if (power_request > 0) {
+
+                  // Start sequence: purge, leak check, ramp up
+
+                  start_air_compressor();
+
+                  open_h2_valve();
+
+                  status->state = FC_STATE_STARTUP;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_STARTUP:
+
+              // Wait for stack voltage to stabilize
+
+              if (status->stack_voltage > 200.0f && status->stack_temp > 40.0f) {
+
+                  status->state = FC_STATE_RUNNING;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_RUNNING:
+
+              // Normal operation - regulate stoichiometry and pressure
+
+              control_air_stoichiometry(status->stack_current);
+
+              control_coolant_flow(status->stack_temp);
+
+
+
+              if (power_request < 0.1f) {
+
+                  status->state = FC_STATE_IDLE;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_SHUTDOWN:
+
+              // Purge sequence: remove H2, dry membrane
+
+              purge_anode_loop();
+
+              ramp_down_compressor();
+
+              status->state = FC_STATE_OFF;
+
+              break;
+
+      }
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Power Requirement Analysis**: Define drive cycle, peak power, continuous power
+
+  2. **Component Sizing**: Select FC stack, battery, DC-DC converter, motor ratings
+
+  3. **Packaging Study**: Integrate H2 tanks, FC stack, cooling, BoP within vehicle constraints
+
+  4. **Power Split Strategy**: Design FC/battery hybrid control for efficiency and durability
+
+  5. **BoP Design**: Size compressor, cooling system, humidifier for operating conditions
+
+  6. **Safety Integration**: H2 leak detection, ventilation, crash safety, pressure relief
+
+  7. **Control Architecture**: Implement state machines for startup/shutdown/operation
+
+
+  ## Deliverables
+
+
+  - System architecture diagram with component specifications
+
+  - Power flow simulation results (drive cycle analysis)
+
+  - DC-DC converter design (topology, ratings, control algorithm)
+
+  - Hydrogen storage system layout (tank placement, piping, PRD locations)
+
+  - BoP component selection list (compressor, pump, valves, sensors)
+
+  - Thermal management sizing (radiator, coolant flow, heat load)
+
+  - Control architecture specification (state machines, safety logic)
+
+
+  ## Best Practices
+
+
+  - Design for load-following (FC) vs load-leveling (battery) power split
+
+  - Minimize FC transient power to extend stack lifetime
+
+  - Ensure H2 purge strategy prevents anode flooding and N2 accumulation
+
+  - Implement redundant H2 leak detection (3+ sensors in cabin/underbody)
+
+  - Design for cold start capability (-30 to -40°C)
+
+  - Package H2 tanks in crash-protected zones with PRD venting to exterior
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface with vehicle dynamics model for drive cycle simulation
+
+  - Provide component specs to packaging and CAD teams
+
+  - Supply power flow model to energy management controller
+
+  - Generate safety requirements for H2 system certification (ECE R134)
+
+  - Support HIL testing with FC stack emulator and BoP hardware
+
+  '
+constraints:
+- H2 tank packaging constraints in vehicle platform
+- DC-DC converter efficiency and weight
+- Battery buffer thermal management
+- Cold start performance below -20°C
+tools_required:
+- MATLAB/Simulink for system modeling
+- AVL Cruise for drive cycle simulation
+- CAD tools for packaging studies
+- dSPACE/ETAS HIL systems for controller validation
+- Safety analysis tools (FMEA, FTA)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- fcev
+- system-architecture
+- power-management
+- dc-dc-converter
+- balance-of-plant
+- automotive

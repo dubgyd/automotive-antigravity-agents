@@ -1,0 +1,123 @@
+name: v2g-vehicle-to-grid
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive-ev
+subcategory: bidirectional-charging
+description: "Expert skill in Vehicle-to-Grid (V2G) bidirectional power flow implementation, covering grid services, frequency regulation, demand response, and energy market participation."
+use_cases:
+  - "V2G aggregation platform development for grid services"
+  - "Frequency regulation using EV battery fleets"
+  - "Peak shaving and demand response programs"
+  - "Renewable energy storage and grid balancing"
+  - "Revenue optimization for EV owners participating in energy markets"
+automotive_standards:
+  - "ISO 15118-20 Bidirectional power transfer"
+  - "IEEE 1547 Interconnection of distributed energy resources"
+  - "IEEE 2030.1.1 V2G communication protocols"
+  - "IEC 61850 Power utility automation"
+  - "UL 1741 SA Inverters for distributed generation"
+instructions: |
+  # Vehicle-to-Grid (V2G) Implementation
+
+  ## Overview
+  Vehicle-to-Grid enables EVs to provide grid services by discharging stored
+  energy back to the power grid. This creates revenue streams for EV owners
+  while helping stabilize the grid during peak demand or renewable intermittency.
+
+  ## Key Concepts
+
+  ### Bidirectional Power Flow
+  - AC V2G uses bidirectional on-board chargers (OBC)
+  - DC V2G uses bidirectional off-board chargers (EVSE)
+  - Power factor correction required for grid code compliance
+  - Anti-islanding protection per IEEE 1547
+
+  ### Grid Services
+  - Frequency regulation (primary, secondary, tertiary reserves)
+  - Peak shaving and load leveling
+  - Demand response (curtailment and dispatch)
+  - Voltage support and reactive power compensation
+  - Spinning reserves and capacity markets
+
+  ## Implementation Guide
+
+  ### V2G Controller (C Implementation)
+
+  ```c
+  typedef struct {
+      float grid_frequency_hz;
+      float target_frequency_hz;
+      float deadband_hz;
+      float droop_percent;
+      float max_discharge_kw;
+      float battery_soc;
+      float min_soc_limit;
+  } V2GController;
+
+  float v2g_frequency_regulation(V2GController* ctrl) {
+      float freq_error = ctrl->grid_frequency_hz - ctrl->target_frequency_hz;
+
+      // Deadband - no action needed
+      if (fabs(freq_error) < ctrl->deadband_hz)
+          return 0.0f;
+
+      // Droop control
+      float power_setpoint = -(freq_error / (ctrl->target_frequency_hz *
+          ctrl->droop_percent / 100.0f)) * ctrl->max_discharge_kw;
+
+      // SOC protection
+      if (ctrl->battery_soc <= ctrl->min_soc_limit && power_setpoint > 0)
+          return 0.0f;
+
+      // Clamp to rated power
+      if (power_setpoint > ctrl->max_discharge_kw)
+          power_setpoint = ctrl->max_discharge_kw;
+      if (power_setpoint < -ctrl->max_discharge_kw)
+          power_setpoint = -ctrl->max_discharge_kw;
+
+      return power_setpoint;
+  }
+  ```
+
+  ### ISO 15118-20 V2G Communication
+
+  ```python
+  class V2GSession:
+      def __init__(self, evse_id, vehicle_id):
+          self.evse_id = evse_id
+          self.vehicle_id = vehicle_id
+
+      def negotiate_energy_transfer(self, direction, max_power_kw):
+          msg = {
+              "session_id": self.session_id,
+              "energy_transfer_mode": direction,
+              "max_power_kw": max_power_kw,
+              "schedule": self.get_schedule()
+          }
+          return self.send_v2g_message("EnergyTransferRequest", msg)
+
+      def get_schedule(self):
+          return [
+              {"start": "22:00", "end": "06:00", "mode": "CHARGE", "kw": 7.4},
+              {"start": "17:00", "end": "20:00", "mode": "DISCHARGE", "kw": 5.0},
+          ]
+  ```
+
+  ## Revenue Model
+  - Frequency regulation markets pay $20-40/MWh
+  - Capacity markets pay $50-150/kW-year
+  - Peak shaving saves $10-15/kW in demand charges
+  - Battery degradation cost must be factored ($5-15/MWh equivalent)
+
+  ## Best Practices
+  - Always maintain user-configured minimum SOC for driving needs
+  - Factor battery degradation costs into revenue calculations
+  - Implement thermal management during V2G to reduce battery stress
+  - Use forecasting to optimize charge/discharge schedules
+  - Comply with local utility interconnection requirements
+
+  ## Troubleshooting
+  - Anti-islanding protection triggering falsely - verify impedance settings
+  - Power quality issues - check THD and power factor at coupling point
+  - Communication timeouts - verify ISO 15118 TLS certificate chain
+  - Revenue below expectations - review market pricing and scheduling

@@ -1,0 +1,155 @@
+name: data-sovereignty
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: data_sovereignty
+description: GDPR compliance, regional data laws, data localization, cross-border data transfer for connected cars
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Data sovereignty in the automotive context addresses the legal, regulatory, and strategic requirements
+  governing where vehicle-generated data is stored, processed, and transferred across jurisdictions.
+  Connected vehicles generate 25+ GB of data per hour from sensors, telematics, infotainment, and V2X
+  communications, making data governance a critical OEM decision area. This skill covers GDPR compliance,
+  China PIPL and CSL requirements, US state privacy laws, data localization mandates, cross-border data
+  transfer mechanisms, and strategic data architecture decisions for global automotive operations.
+
+  ## Key Concepts
+
+  ### Regulatory Landscape by Region
+  - **EU/EEA**: GDPR (personal data), EU Data Act (non-personal vehicle data), ePrivacy Directive
+  - **China**: Personal Information Protection Law (PIPL), Cybersecurity Law (CSL), Data Security Law (DSL)
+  - **United States**: State-level (CCPA/CPRA, Virginia CDPA), sector-specific (FTC Act), no federal law
+  - **Japan**: Act on Protection of Personal Information (APPI) with adequacy decision from EU
+  - **South Korea**: Personal Information Protection Act (PIPA), strict consent requirements
+  - **India**: Digital Personal Data Protection Act (DPDPA), data localization for critical data
+
+  ### Vehicle Data Categories
+  - **Personal data**: Driver behavior, location history, biometric data, voice recordings, payment info
+  - **Vehicle operational data**: Diagnostic codes, battery health, component wear, driving patterns
+  - **Safety-critical data**: ADAS sensor logs, crash data, emergency call (eCall) recordings
+  - **Environmental data**: Road conditions, traffic patterns, weather sensing, mapping updates
+  - **Commercial data**: Fleet management, usage-based insurance, predictive maintenance signals
+
+  ### Cross-Border Data Transfer Mechanisms
+  - **Adequacy decisions**: EU adequacy for select countries enabling free data flow
+  - **Standard Contractual Clauses (SCCs)**: Legal framework for transfers to non-adequate countries
+  - **Binding Corporate Rules (BCRs)**: Intra-group transfer authorization for multinational OEMs
+  - **China cross-border assessment**: CAC security assessment required for critical data or large volumes
+  - **Data localization**: Some jurisdictions mandate data residency (China for map data, critical infrastructure)
+
+  ## Implementation Guide
+
+  ### Step 1: Data Mapping and Classification
+  - Inventory all vehicle data streams with source, type, volume, and current processing location
+  - Classify data by sensitivity level: public, internal, confidential, restricted, critical
+  - Map data flows end-to-end from vehicle through edge/cloud to backend systems and third parties
+  - Identify cross-border transfers and applicable legal bases for each data flow
+
+  ### Step 2: Regulatory Gap Analysis
+  - Assess current data practices against requirements in each market where vehicles are sold
+  - Identify gaps in consent management, data subject rights, and breach notification processes
+  - Evaluate cloud infrastructure against data localization requirements (especially China, Russia)
+  - Review supplier and partner data processing agreements for compliance
+
+  ### Step 3: Data Architecture Design
+  - Design regional data platform architecture with local processing where mandated
+  - Implement data residency controls in cloud infrastructure (regional instances, geo-fencing)
+  - Deploy privacy-enhancing technologies: anonymization, pseudonymization, differential privacy
+  - Build consent management platform integrated with vehicle HMI and mobile app
+
+  ### Step 4: Governance Framework Deployment
+  - Establish Data Protection Officer (DPO) organization with regional representatives
+  - Create data governance committee with legal, engineering, product, and IT representation
+  - Implement Data Protection Impact Assessment (DPIA) process for new vehicle features
+  - Deploy monitoring and audit capabilities for ongoing compliance verification
+
+  ## Decision Frameworks
+
+  ### Data Localization vs. Centralization Decision
+  | Factor | Localize | Centralize | Hybrid |
+  |--------|----------|-----------|--------|
+  | Regulatory mandate | Required | Not required | Partial |
+  | Data volume | Manageable locally | Needs global scale | Split by type |
+  | Analytics needs | Local insights sufficient | Cross-market ML needed | Federated learning |
+  | Cost | Higher (multi-region infra) | Lower (single region) | Moderate |
+  | Latency requirements | Low latency critical | Batch processing OK | Mixed workloads |
+
+  ### Privacy-by-Design Assessment for New Features
+  1. Does the feature require personal data? If no, proceed with anonymized/aggregated data only
+  2. What is the minimum data needed? Apply data minimization principle
+  3. Can processing be done on-vehicle (edge) rather than cloud? Prefer local processing
+  4. Is explicit consent required? Design opt-in flow in HMI before data collection begins
+  5. What is the retention period? Define and enforce automatic deletion schedules
+  6. Cross-border transfer needed? Identify legal basis and implement appropriate safeguards
+
+  ### China Market Data Strategy
+  - **Map data**: Must be processed and stored in China, use licensed local map providers
+  - **Personal data**: Store in China, security assessment for any cross-border transfer exceeding thresholds
+  - **Vehicle sensor data**: Classify per CSL data categories, restrict raw camera/LiDAR data export
+  - **Partner selection**: Use Alibaba Cloud, Tencent Cloud, or Huawei Cloud for China data residency
+
+  ## Best Practices
+
+  - Treat data sovereignty as a product architecture constraint, not just a legal compliance afterthought
+  - Design for the strictest regulation globally, then relax where permitted (privacy ceiling approach)
+  - Implement data classification at the point of collection (in-vehicle), not in the cloud backend
+  - Use federated learning and edge AI to extract insights without centralizing raw personal data
+  - Maintain a regulatory change radar to anticipate new data sovereignty requirements 12+ months ahead
+  - Conduct annual cross-border data transfer assessments as regulations evolve
+  - Negotiate data processing agreements with cloud providers that guarantee regional data residency
+  - Document all data processing purposes clearly for regulatory audit and customer transparency
+  - Build consent withdrawal mechanisms that propagate through entire data pipeline within 72 hours
+  - Separate China data infrastructure completely from global systems to ensure compliance
+
+  ## Examples
+
+  ### Example 1: EU-China Connected Vehicle Data Architecture
+  An European OEM selling in China must separate data flows. Architecture: deploy dedicated China cloud
+  instance (Alibaba Cloud) for all China-market vehicle data. Telematics, navigation, and driver profile
+  data stays in-country. Aggregated, anonymized quality and reliability metrics can transfer to EU HQ
+  after CAC security assessment approval. Cost: 8M EUR additional infrastructure vs. global platform.
+
+  ### Example 2: GDPR-Compliant Usage-Based Insurance Data Sharing
+  OEM wants to share driving behavior data with insurance partners. DPIA reveals high privacy risk.
+  Solution: implement on-vehicle scoring algorithm that computes risk score locally, share only the
+  score (not raw data) with insurer after explicit driver consent via in-car HMI. Consent is granular,
+  revocable, and does not affect vehicle functionality if declined.
+
+  ### Example 3: Cross-Border Fleet Management for Commercial Vehicles
+  A fleet of 10,000 trucks operates across EU, UK, Turkey, and Middle East. Each jurisdiction has different
+  data requirements. Solution: regional data hubs in Frankfurt (EU), London (UK), Istanbul (Turkey), and
+  Dubai (MENA). Vehicle routes trigger automatic data routing to appropriate regional hub based on GPS
+  position. Central fleet analytics uses aggregated, pseudonymized data with SCCs for non-EU transfers.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- data-sovereignty
+- automotive
+- oem

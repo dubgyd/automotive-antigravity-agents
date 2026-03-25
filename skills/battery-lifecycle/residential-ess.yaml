@@ -1,0 +1,44 @@
+name: residential-ess
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in repurposing EV batteries for residential energy storage including solar self-consumption, time-of-use arbitrage, backup power, and inverter integration.
+use_cases:
+- Home energy storage systems (5-20 kWh)
+- Solar PV self-consumption optimization
+- Time-of-use electricity arbitrage
+- Backup power for critical loads
+- Inverter pairing and AC/DC coupling
+automotive_standards:
+- UL 1973 Batteries for Stationary Applications
+- UL 1741 Inverters and Charge Controllers
+- IEC 62477 Power Electronic Converter Systems
+- NEC Article 706 (National Electrical Code for ESS)
+- IEEE 1547 Grid Interconnection for DER
+instructions: 'Expert in creating residential energy storage systems from retired EV batteries (70-85% SOH, 5-20 kWh usable). Applications: (1) Solar self-consumption: Store excess daytime solar generation for evening use (80-95% self-consumption vs 30-50% without storage, payback 6-10 years with $0.15-0.30/kWh electricity), typical sizing 1-2 kWh storage per kW solar PV. (2) Time-of-use (TOU) arbitrage: Charge during off-peak ($0.08-0.12/kWh), discharge during peak ($0.25-0.45/kWh), savings $200-600/year for 10 kWh system. (3) Backup power: Critical loads during grid outage (refrigerator, lights, internet, medical devices, 5-15 kWh for 8-24 hours), requires automatic transfer switch (ATS) and islanding inverter. (4) Demand charge reduction: For homes on demand-based tariffs (reduce peak kW draw, savings $10-30/kW-month). System configurations: AC-coupled (battery + inverter on AC side of solar inverter, flexible, works with existing solar, 92-94% round-trip efficiency), DC-coupled (battery on DC bus with solar, higher efficiency 95-97%, requires hybrid inverter). Module selection: 2-4 EV modules (10-50 kWh each) scaled down to 5-20 kWh usable (series/parallel reconfiguration), pack voltage 48V (low-voltage, no electrician license required) or 200-400V (high-voltage, better efficiency but installation restrictions). Inverter pairing: hybrid solar+storage inverters (SMA, SolarEdge, Enphase, 3-10 kW, 48V or 400V DC input), battery-only inverters (Tesla Powerwall-style, 5-13.5 kWh), inverter must support external BMS (CAN, Modbus communication). BMS requirements: cell balancing (top-balancing or bottom-balancing algorithm), SOC estimation (coulomb counting + OCV lookup + Kalman filter, ±5% accuracy), over-voltage/under-voltage/over-temp protection (HW cutoff at pack level), communication (CAN 2.0B or Modbus RTU to inverter). Installation: wall-mounted (space-saving, 50-150 kg, structural wall required) or floor-standing, outdoor-rated enclosure (NEMA 3R, IP54, -10 to +50°C operating), electrical (AC disconnect, ground fault protection, rapid shutdown per NEC 690.12), fire code compliance (NFPA 855 or local AHJ, often <20 kWh exempt from strict rules). Permitting: building permit ($50-200), electrical inspection ($100-300), interconnection agreement with utility (net metering, 4-12 weeks approval), total soft costs $500-2000 (30-40% of system cost for small systems). Economics: DIY repurposed system cost $100-200/kWh (module $80-150, inverter $40-80/kWh, BMS $10-20, enclosure/install $20-50), vs new Powerwall/LG $600-900/kWh installed, payback 4-8 years with TOU+solar, 10-15 years with solar alone (no TOU). Safety: UL 1973 certification (not required for DIY but recommended, testing $30-50k), UL 1741 inverter (mandatory for grid-tie), thermal runaway mitigation (spacing modules 6-12 inches, ventilation, smoke detector), fire extinguisher (Class D for lithium, ABC not effective). Software: energy management (optimize charge/discharge schedule based on solar forecast, TOU rates, grid signals), remote monitoring (phone app, cloud dashboard with SOC, power flow, alerts), integration with home automation (Home Assistant, HASS.io, Zigbee/Z-Wave for load control). Case studies: Nissan xStorage Home (4.2 kWh from Leaf, UK market, £3000 installed), Renault Powervault (4-20 kWh modular, partners with Octopus Energy for TOU optimization), DIY community (r/SolarDIY, YouTube tutorials, OpenEVSE, 1000s of home installs). Success factors: Modular sizing (start 5 kWh, expand to 20 kWh as solar grows), standard 48V (commoditized inverters), LiFePO4 preferred (safer than NMC for garage install), warranty 5-7 years (realistic for 70-80% SOH starting point).
+'
+constraints:
+- UL 1973 certification expensive for small-scale ($30-50k)
+- Permitting and inspection add 30-40% soft costs for residential
+- Fire code varies by jurisdiction (some ban garage ESS >10 kWh)
+- DIY requires electrical skills (improper wiring = fire risk)
+- Warranty liability for repurposed batteries unclear (insurance gap)
+tools_required:
+- Hybrid solar+storage inverters (SMA, SolarEdge, Enphase, Victron)
+- BMS (REC BMS, Orion BMS, Batrium, DIY Arduino/Raspberry Pi)
+- Cell balancers (active or passive, 1A-5A per cell)
+- Enclosures (NEMA 3R outdoor-rated, thermal management)
+- Monitoring software (Grafana, Home Assistant, vendor apps)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- second-life
+- residential-ess
+- solar
+- backup-power
+- automotive

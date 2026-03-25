@@ -1,0 +1,150 @@
+name: direct-recycling
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: "Cathode-to-cathode direct recycling including relithiation, structural repair, and crystal structure preservation for maximum energy and cost savings"
+use_cases:
+  - "Next-generation low-energy recycling process development"
+  - "Cathode material restoration and relithiation"
+  - "Crystal structure preservation techniques"
+  - "Single-chemistry fleet battery recycling optimization"
+  - "Closed-loop cathode production with 70% energy savings"
+automotive_standards:
+  - "ISO 14001 Environmental Management"
+  - "ISO 50001 Energy Management"
+  - "EU Battery Regulation recycled content targets"
+  - "ISO 14040 Life Cycle Assessment"
+  - "Battery-grade material specifications (automotive OEM specs)"
+instructions: |
+  # Direct Recycling for Battery Cathode Materials
+
+  ## Overview
+
+  Expert in emerging direct recycling technologies that recover and regenerate cathode materials
+  without destroying crystal structure, offering 70% energy savings vs conventional recycling
+  while maintaining battery performance. Direct recycling (cathode-to-cathode) repairs and
+  restores spent cathode materials to battery-grade quality without breaking down to elemental metals.
+
+  ## Key Concepts
+
+  Core principles that differentiate direct recycling from conventional approaches.
+
+  - Preserve polycrystalline structure of cathode particles (NMC, NCA, LCO)
+  - Replenish depleted lithium through relithiation processes
+  - Repair structural defects from cycling-induced degradation
+  - Directly reuse restored material in new cathode production
+
+  Energy comparison with conventional routes shows significant advantages.
+  Pyrometallurgy uses 15-25 MWh/ton with 6-10 tons CO2/ton.
+  Hydrometallurgy uses 8-12 MWh/ton with 2-4 tons CO2/ton.
+  Direct recycling uses only 2-5 MWh/ton with 0.5-1.5 tons CO2/ton.
+
+  ## Cathode Degradation Mechanisms
+
+  Understanding what direct recycling must repair in spent cathode materials.
+
+  Loss of Lithium Inventory (LLI) occurs when lithium is trapped in the SEI layer on the
+  anode or lost to side reactions with electrolyte. The cathode formula changes from
+  LiNi0.8Mn0.1Co0.1O2 to approximately Li0.65Ni0.8Mn0.1Co0.1O2, resulting in 20-30%
+  capacity fade after 1000 cycles.
+
+  Crystal structure damage includes transition metal migration where Ni2+ moves into Li
+  sites during deep cycling, oxygen loss from surface layers, microcracks from volume
+  changes, and surface reconstruction to inactive rock-salt phase.
+
+  Surface chemistry changes involve electrolyte decomposition products on particle surfaces,
+  transition metal dissolution and replating, and binder degradation.
+
+  ## Process Steps
+
+  Step 1 - Cell Disassembly and Separation. Discharge to 0V to fully delithiate cathode.
+  Separate cathode sheets from anode and separator without shredding. Remove aluminum
+  current collector by mechanical peeling or chemical dissolution. Wash to remove residual
+  electrolyte using DMC solvent.
+
+  Step 2 - Cathode Material Recovery. Thermal separation at 400-500C burns off PVDF binder
+  and carbon black. Chemical separation dissolves binder in NMP solvent, which is gentler
+  but requires solvent recovery. Ultrasonic separation uses high-frequency vibration with
+  no thermal damage but lower throughput.
+
+  Step 3 - Relithiation (the key innovation). Solid-state relithiation mixes depleted
+  cathode powder with Li2CO3, LiOH, or Li2O at 750-900C in oxygen atmosphere for 6-12
+  hours. Molten salt relithiation submerges depleted cathode in eutectic LiCl-KCl at 450C
+  for lower-temperature processing. Electrochemical relithiation operates at room temperature
+  but faces scalability challenges.
+
+  Step 4 - Crystal Structure Repair. High-temperature annealing at 850-900C in O2 repairs
+  rock-salt phase. Dopant addition of Al, Mg, or Ti at 1-2 mol% stabilizes the structure.
+  Optional surface coating of 2-10 nm Al2O3 or ZrO2 improves cycle life by 20-30%.
+
+  Step 5 - Quality Control. Particle size distribution via SEM and laser diffraction.
+  Elemental composition via ICP-OES to verify stoichiometric ratios. Crystal structure
+  via XRD to confirm layered structure. Electrochemical testing targeting 95% or greater
+  of virgin cathode capacity.
+
+  ## Implementation Guide
+
+  ```python
+  # Direct recycling process simulation for NMC811
+  import numpy as np
+
+  cathode_input_kg = 100
+  Li_initial = 0.72  # moles Li per formula unit (depleted)
+  Li_target = 1.00
+  Li_deficit = Li_target - Li_initial  # 0.28 moles
+
+  MW_cathode = 96.46  # g/mol approximate for NMC811
+  MW_Li2CO3 = 73.89   # g/mol
+  moles_cathode = (cathode_input_kg * 1000) / MW_cathode
+  Li2CO3_needed_kg = (moles_cathode * Li_deficit / 2 * MW_Li2CO3) / 1000
+
+  heat_treatment_temp_C = 850
+  heat_treatment_time_hr = 8
+  furnace_power_kW = 50
+  energy_consumption_kWh = furnace_power_kW * heat_treatment_time_hr
+
+  print(f"Li2CO3 required: {Li2CO3_needed_kg:.1f} kg")
+  print(f"Energy: {energy_consumption_kWh:.0f} kWh per 100 kg batch")
+  ```
+
+  ## Chemistry-Specific Considerations
+
+  NMC811 is the most sensitive to relithiation conditions due to Ni3+ reduction
+  susceptibility. Requires O2 partial pressure above 0.5 atm and 800-850C treatment.
+
+  NCA is more stable due to Al doping with relithiation at 750-800C.
+
+  LFP has olivine structure with minimal lithium loss. Direct recycling is not economical
+  due to low material value ($5-8/kg vs $25-40/kg for NMC).
+
+  ## Best Practices
+
+  - Source batteries from single OEM or model for chemistry consistency
+  - Discharge cells to 0V before disassembly to fully delithiate cathode
+  - Use inert atmosphere during binder burnoff to prevent over-oxidation
+  - Control O2 partial pressure during relithiation at 0.5-1.0 atm
+  - Add 1-2% excess Li to compensate for losses during heat treatment
+  - Perform slow cooling at 1C/min to prevent microcracks from thermal stress
+  - Apply surface coating post-relithiation to improve cycle life
+  - Validate every batch with electrochemical testing, not just XRD alone
+
+  ## Troubleshooting
+
+  - Low capacity recovery - Check relithiation temperature and O2 atmosphere control
+  - Impurity contamination - Improve disassembly separation of Cu, Al, and graphite
+  - Inconsistent batch quality - Ensure feedstock chemistry homogeneity
+  - Scale-up challenges - Start with 100-500 kg batches to validate reproducibility
+  - OEM reluctance to use recycled cathode - Provide long-term cycling data with comparison
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: emerging
+  complexity: advanced
+tags:
+  - "battery-lifecycle"
+  - "recycling"
+  - "direct-recycling"
+  - "relithiation"
+  - "cathode"
+  - "automotive"

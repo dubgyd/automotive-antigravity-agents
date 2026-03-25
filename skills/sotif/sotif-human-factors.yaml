@@ -1,0 +1,558 @@
+name: sotif-human-factors
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: human-factors
+description: Analysis of driver misuse, mode confusion, overreliance on automation, and human-machine interface design for SOTIF compliance.
+use_cases:
+- Reasonably foreseeable misuse identification
+- Mode confusion analysis and mitigation
+- Driver monitoring system requirements
+- HMI design for SOTIF compliance
+- Takeover request strategy development
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-3 (Hazard Analysis)
+- SAE J3016 Automation Levels
+- ISO 11064 Ergonomics
+- NHTSA Driver Distraction Guidelines
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in analyzing human factors that lead to SOTIF hazards, particularly reasonably foreseeable misuse of ADAS/AD systems due to mode confusion, overreliance, or HMI design flaws.
+
+
+  ### Reasonably Foreseeable Misuse
+
+
+  **Definition**: Human behavior that is incorrect but predictable, not intentional abuse.
+
+
+  **Common Misuse Patterns**:
+
+  - Treating L2 system as L3 (hands-free, eyes-off)
+
+  - Using system outside ODD (wrong road type, weather)
+
+  - Ignoring warnings and takeover requests
+
+  - Overreliance on automation (reduced vigilance)
+
+  - Mode confusion (unaware of system state)
+
+  - Delayed takeover (insufficient readiness)
+
+
+  ### Mode Confusion
+
+
+  **Types of Mode Confusion**:
+
+  - **Activation confusion**: Driver unaware system activated (unintended engagement)
+
+  - **Deactivation confusion**: Driver thinks system is active when it is not
+
+  - **Capability confusion**: Driver overestimates system capability (L2 treated as L3)
+
+  - **State confusion**: Driver uncertain of current system mode (active, standby, fault)
+
+
+  **Causes**:
+
+  - Ambiguous HMI state indication
+
+  - Silent mode transitions (no clear feedback)
+
+  - Similar appearance of L2 and L3 systems
+
+  - Gradual degradation without clear warnings
+
+
+  **Consequences**:
+
+  - Driver not monitoring road (when monitoring required)
+
+  - Driver intervening unnecessarily (false alarms)
+
+  - Delayed takeover (when system requests intervention)
+
+  - Using system outside ODD
+
+
+  ### Overreliance on Automation
+
+
+  **Behavioral Adaptation**:
+
+  - **Complacency**: Reduced vigilance due to trust in automation
+
+  - **Skill degradation**: Manual driving skills atrophy
+
+  - **Automation bias**: Over-trusting system, ignoring contrary evidence
+
+  - **Out-of-the-loop unfamiliarity**: Loss of situation awareness
+
+
+  **Factors Increasing Overreliance**:
+
+  - High system reliability (fewer false alarms)
+
+  - Long duration of automated operation
+
+  - Engaging secondary tasks (phone, eating, reading)
+
+  - Marketing overstating system capability
+
+
+  **Mitigation**:
+
+  - Driver monitoring system (hands-on, gaze tracking)
+
+  - Escalating warnings for inattention
+
+  - Forced disengagement if no driver response
+
+  - Clear communication of system limitations
+
+
+  ## Human Factors Analysis Methods
+
+
+  **Hierarchical Task Analysis (HTA)**:
+
+  - Decompose driving task into subtasks
+
+  - Identify points where driver can deviate from expected behavior
+
+  - Example: "Monitor system" → Driver may look at phone instead
+
+
+  **SHERPA (Systematic Human Error Reduction and Prediction Approach)**:
+
+  - For each task, identify potential errors:
+
+    - Action error (wrong action)
+
+    - Timing error (too early/late)
+
+    - Omission error (task not performed)
+
+    - Retrieval error (information not recalled)
+
+
+  **Cognitive Walkthrough**:
+
+  - Step through use cases from driver perspective
+
+  - Identify confusing interactions or ambiguous feedback
+
+
+  **Driving Simulator Studies**:
+
+  - Observe driver behavior with prototype system
+
+  - Measure takeover time, gaze patterns, secondary task engagement
+
+
+  ## Driver Monitoring System (DMS) Requirements
+
+
+  ```python
+
+  class DriverMonitoringSystem:
+
+      """Monitor driver readiness for takeover"""
+
+
+      def __init__(self):
+
+          self.hands_on_threshold = 5.0  # seconds
+
+          self.eyes_off_threshold = 2.0  # seconds
+
+          self.warning_escalation_levels = [
+
+              {"duration": 5, "type": "visual"},
+
+              {"duration": 10, "type": "haptic"},
+
+              {"duration": 15, "type": "audible"},
+
+              {"duration": 30, "type": "minimal_risk_maneuver"}
+
+          ]
+
+
+
+      def assess_driver_state(self, hands_on_wheel, gaze_on_road, head_pose):
+
+          """
+
+          Assess driver readiness
+
+
+          Returns: (readiness_level, warning_type)
+
+          - readiness_level: 0 (not ready) to 5 (fully ready)
+
+          - warning_type: None, "visual", "haptic", "audible", "takeover"
+
+          """
+
+          readiness = 5  # Start with full readiness
+
+
+          # Hands-off detection
+
+          if not hands_on_wheel:
+
+              hands_off_duration = self._get_hands_off_duration()
+
+              if hands_off_duration > self.hands_on_threshold:
+
+                  readiness -= 2
+
+                  warning = self._determine_warning_level(hands_off_duration)
+
+                  return readiness, warning
+
+
+          # Gaze-off detection
+
+          if not gaze_on_road:
+
+              eyes_off_duration = self._get_eyes_off_duration()
+
+              if eyes_off_duration > self.eyes_off_threshold:
+
+                  readiness -= 3
+
+                  warning = self._determine_warning_level(eyes_off_duration)
+
+                  return readiness, warning
+
+
+          # Head pose analysis (drowsiness detection)
+
+          if self._detect_drowsiness(head_pose):
+
+              readiness -= 2
+
+              return readiness, "audible"
+
+
+          return readiness, None
+
+
+
+      def _determine_warning_level(self, inattention_duration):
+
+          """Escalating warnings based on duration"""
+
+          for level in self.warning_escalation_levels:
+
+              if inattention_duration <= level["duration"]:
+
+                  return level["type"]
+
+          return "minimal_risk_maneuver"  # Last resort
+
+
+
+      def _get_hands_off_duration(self):
+
+          # Placeholder: Query sensor data
+
+          return 8.0  # Example: 8 seconds hands-off
+
+
+
+      def _get_eyes_off_duration(self):
+
+          # Placeholder: Query eye tracking camera
+
+          return 3.0  # Example: 3 seconds eyes-off
+
+
+
+      def _detect_drowsiness(self, head_pose):
+
+          # Placeholder: Analyze head nodding, eye closure
+
+          return False
+
+
+  # Example usage
+
+  dms = DriverMonitoringSystem()
+
+  hands_on = False  # Driver hands off wheel
+
+  gaze_on = True
+
+  head_pose = {"pitch": 0, "yaw": 0, "roll": 0}
+
+
+  readiness, warning = dms.assess_driver_state(hands_on, gaze_on, head_pose)
+
+  if readiness < 3:
+
+      print(f"Driver not ready for takeover! Issue {warning} warning.")
+
+  ```
+
+
+  ## HMI Design for SOTIF
+
+
+  **Principles**:
+
+  - **Clarity**: System state immediately obvious (color coding, icons)
+
+  - **Feedback**: Confirmation of mode changes (audible + visual)
+
+  - **Consistency**: Same HMI across all functions
+
+  - **Simplicity**: Minimize driver cognitive load
+
+  - **Redundancy**: Multi-modal feedback (visual + audible + haptic)
+
+
+  **State Indication**:
+
+  - **Active**: Green, continuous indicator, system controlling vehicle
+
+  - **Standby**: Amber, system available but not controlling
+
+  - **Unavailable**: Gray, ODD conditions not met
+
+  - **Fault**: Red, system failure, immediate takeover required
+
+  - **Takeover Request**: Flashing red, audible alert, haptic (seat vibration)
+
+
+  **Warning Escalation**:
+
+  1. Visual: Instrument cluster icon change
+
+  2. Haptic: Steering wheel vibration or seat vibration
+
+  3. Audible: Beep or voice message
+
+  4. Braking: Gentle deceleration to alert driver
+
+  5. MRM: Bring vehicle to controlled stop (no driver response)
+
+
+  **Example HMI State Machine**:
+
+
+  ```
+
+  [System Off] --[Driver activates]--> [Standby]
+
+  [Standby] --[ODD conditions met]--> [Active]
+
+  [Active] --[ODD exit detected]--> [Takeover Request]
+
+  [Takeover Request] --[Driver takes over]--> [Standby]
+
+  [Takeover Request] --[No response 10s]--> [MRM]
+
+  [Active] --[Sensor fault]--> [Fault State]
+
+  ```
+
+
+  ## Takeover Request Strategy
+
+
+  **Lead Time Calculation**:
+
+  - Required: 5-10s for driver to regain situation awareness and act
+
+  - Factors: Driver attention level, scenario criticality, system confidence
+
+
+  ```python
+
+  def calculate_takeover_lead_time(driver_readiness, scenario_criticality, system_confidence):
+
+      """
+
+      Calculate required lead time for takeover request
+
+
+      Parameters:
+
+      - driver_readiness: 0-5 (0=not attentive, 5=fully attentive)
+
+      - scenario_criticality: 0-5 (0=low, 5=imminent hazard)
+
+      - system_confidence: 0-1 (model confidence in current action)
+
+
+      Returns:
+
+      - Required lead time in seconds
+
+      """
+
+      base_lead_time = 5.0  # seconds
+
+
+      # Adjust for driver readiness (less ready = more time needed)
+
+      readiness_factor = (5 - driver_readiness) * 1.5
+
+
+      # Adjust for scenario criticality (more critical = less time available)
+
+      criticality_factor = -scenario_criticality * 0.5
+
+
+      # Adjust for system confidence (low confidence = request earlier)
+
+      confidence_factor = (1 - system_confidence) * 2.0
+
+
+      lead_time = base_lead_time + readiness_factor + criticality_factor + confidence_factor
+
+      lead_time = max(3.0, min(lead_time, 15.0))  # Clamp to [3, 15] seconds
+
+
+      return lead_time
+
+
+  # Example: Driver inattentive (readiness=2), low criticality scenario (1), high confidence (0.9)
+
+  lead_time = calculate_takeover_lead_time(driver_readiness=2, scenario_criticality=1, system_confidence=0.9)
+
+  print(f"Required takeover lead time: {lead_time:.1f} seconds")
+
+  ```
+
+
+  ## Deliverables
+
+
+  - Reasonably foreseeable misuse scenario catalog
+
+  - Mode confusion analysis and mitigation strategy
+
+  - Driver monitoring system requirements specification
+
+  - HMI design specification (state diagrams, visual mockups)
+
+  - Takeover request strategy (lead time, warning escalation)
+
+  - Driving simulator study results
+
+  - Traceability: Misuse scenario → Hazard → HMI mitigation
+
+
+  ## Best Practices
+
+
+  - Conduct user studies early (driving simulator, wizard-of-oz)
+
+  - Test with diverse driver population (age, experience, cultural background)
+
+  - Use standardized methods (HTA, SHERPA) for systematic analysis
+
+  - Implement driver monitoring (don''t rely on driver to self-monitor)
+
+  - Clear distinction in HMI between automation levels (L2 vs L3)
+
+  - Marketing and user manual must align with HMI (no overstated capability)
+
+  - Test takeover scenarios extensively (reaction time, success rate)
+
+  - Monitor field data for misuse patterns (update HMI if needed)
+
+
+  ## Regulatory Considerations
+
+
+  **UN ECE R157 (ALKS L3)**:
+
+  - Requires driver monitoring system
+
+  - Minimum 4s takeover lead time
+
+  - Minimal risk maneuver if no driver response
+
+
+  **SAE J3016**:
+
+  - Defines automation levels and driver role
+
+  - L2: Driver must monitor continuously
+
+  - L3: System monitors, requests takeover
+
+  - L4: No driver intervention required in ODD
+
+
+  **NHTSA Driver Distraction Guidelines**:
+
+  - Visual-manual tasks should not exceed 2s glance time
+
+  - Total task time should not exceed 12s
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Reasonably Foreseeable Misuse Analysis** → Identifies Area 2 scenarios
+
+  2. **HMI Design** → Mitigation strategy for misuse
+
+  3. **Driver Monitoring** → Runtime detection of misuse
+
+  4. **Validation** → Driving simulator studies, field testing
+
+
+  ## Common Pitfalls
+
+
+  - Underestimating overreliance (drivers trust system too much)
+
+  - Ambiguous HMI (driver unsure of system state)
+
+  - Insufficient takeover lead time (driver cannot react in time)
+
+  - Not testing with real users (engineer assumptions vs actual behavior)
+
+  - Marketing overstates capability (creates false expectations)
+
+  - No monitoring of field data (misuse patterns not detected post-deployment)
+
+  '
+constraints:
+- Human behavior inherently variable and unpredictable
+- Cannot prevent all misuse (only mitigate reasonably foreseeable cases)
+- Driver monitoring systems have limitations (lighting, glasses, occlusion)
+- Tradeoff between safety warnings and driver annoyance
+tools_required:
+- Driving simulator for user studies
+- Eye tracking and driver monitoring hardware
+- HMI prototyping tools (Figma, Sketch)
+- Human factors analysis tools (HTA, SHERPA)
+- Statistical analysis for user study data
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- human-factors
+- mode-confusion
+- overreliance
+- driver-monitoring
+- hmi-design
+- takeover-request
+- misuse

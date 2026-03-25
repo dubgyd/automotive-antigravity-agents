@@ -1,0 +1,643 @@
+name: hydrogen-storage-700bar
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: hydrogen-storage
+description: Expert skill in 700 bar compressed hydrogen storage system design, Type IV COPV tanks, safety devices, and refueling interface.
+use_cases:
+- Type IV hydrogen tank design and certification
+- Pressure relief device (PRD) specification
+- Hydrogen tank packaging and crash safety
+- Refueling receptacle integration (SAE J2600)
+- Boil-off and permeation management
+- Tank aging and recertification
+automotive_standards:
+- ISO 19881 (Gaseous hydrogen fuel tanks)
+- SAE J2579 (Fuel systems in fuel cell and hydrogen vehicles)
+- ECE R134 (Hydrogen system approval)
+- CSA/ANSI HGV 2 (Compressed hydrogen storage)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in 700 bar compressed hydrogen storage system design, Type IV composite overwrapped pressure vessel (COPV) construction, safety devices, and automotive packaging. Deep understanding of tank certification, crash safety, and refueling standards.
+
+
+  ### Type IV COPV Construction
+
+
+  **Layer structure** (inside to outside):
+
+  1. **Liner**: HDPE (high-density polyethylene) plastic, gas barrier, lightweight
+
+  2. **Carbon fiber composite**: T700/T800 grade, hoop-wrapped and helical-wrapped
+
+  3. **Resin matrix**: Epoxy, binds carbon fibers, structural integrity
+
+  4. **Protective layer**: Glass fiber or polymer coating, impact protection
+
+
+  **Design parameters**:
+
+  - **Nominal working pressure (NWP)**: 700 bar (70 MPa, 10,150 psi)
+
+  - **Burst pressure**: > 1575 bar (2.25× NWP per ISO 19881)
+
+  - **Hydrostatic test pressure**: 1050 bar (1.5× NWP)
+
+  - **Minimum burst ratio**: 2.25 (safety factor)
+
+  - **Volumetric capacity**: 80-150 liters per tank (automotive sizing)
+
+  - **Gravimetric capacity**: 5-6 wt% H2 (kg H2 / kg tank system)
+
+
+  ```python
+
+  class H2TankDesign:
+
+      def __init__(self):
+
+          self.NWP = 700e5  # Pa (700 bar)
+
+          self.burst_ratio = 2.35  # Design target > 2.25
+
+          self.tank_volume = 120  # Liters
+
+          self.liner_thickness = 0.003  # m (3 mm HDPE)
+
+
+
+      def calculate_carbon_fiber_thickness(self, tank_diameter):
+
+          """
+
+          Calculate required carbon fiber thickness for burst pressure.
+
+
+
+          Thin-wall pressure vessel theory: σ_hoop = P*r/t
+
+          """
+
+          P_burst = self.NWP * self.burst_ratio  # Pa
+
+          r = tank_diameter / 2  # m (inner radius)
+
+
+
+          # Carbon fiber properties
+
+          sigma_ult = 4500e6  # Pa (T700 ultimate tensile strength)
+
+          safety_factor = 1.5
+
+          sigma_allow = sigma_ult / safety_factor
+
+
+
+          # Required thickness (hoop stress governs)
+
+          t_cf = (P_burst * r) / sigma_allow  # m
+
+
+
+          return t_cf
+
+
+
+      def calculate_h2_mass(self, P_fill, T_fill):
+
+          """
+
+          Calculate stored hydrogen mass using real gas equation.
+
+
+
+          Args:
+
+              P_fill: Fill pressure [Pa]
+
+              T_fill: Fill temperature [K] (typically 253 K / -20°C)
+
+          """
+
+          import numpy as np
+
+
+
+          # Compressibility factor for H2 at 700 bar (empirical)
+
+          Z = 1.045  # Non-ideal gas correction
+
+
+
+          R_specific = 4124  # J/(kg·K) for H2
+
+          rho_H2 = P_fill / (Z * R_specific * T_fill)  # kg/m³
+
+
+
+          m_H2 = rho_H2 * (self.tank_volume / 1000)  # kg
+
+
+
+          return m_H2
+
+  ```
+
+
+  ### Pressure Relief Devices
+
+
+  **PRD (Pressure Relief Device)**:
+
+  - **TPRD (Temperature-activated PRD)**: Melts at 110°C, vents H2 during fire
+
+  - **Pressure-activated PRD**: Opens at 875 bar (1.25× NWP), overpressure protection
+
+  - **Vent line**: Directs H2 to safe location (upward/rearward, away from occupants)
+
+  - **Flow capacity**: Must vent full tank in < 4 minutes during fire (SAE J2579)
+
+
+  ```c
+
+  typedef struct {
+
+      float activation_pressure;  // bar (PPRD)
+
+      float activation_temp;      // °C (TPRD)
+
+      float flow_coefficient;     // Cv (valve flow capacity)
+
+      bool is_activated;
+
+  } PRD_t;
+
+
+
+  void check_prd_activation(PRD_t *prd, float tank_pressure, float tank_temp) {
+
+      // Check pressure-activated PRD
+
+      if (tank_pressure > prd->activation_pressure) {
+
+          prd->is_activated = true;
+
+          vent_hydrogen();  // Open vent valve
+
+          trigger_alarm(ALARM_OVERPRESSURE);
+
+      }
+
+
+
+      // Check temperature-activated PRD (thermal fuse)
+
+      if (tank_temp > prd->activation_temp) {
+
+          prd->is_activated = true;
+
+          vent_hydrogen();  // Melt fusible link, vent gas
+
+          trigger_alarm(ALARM_FIRE);
+
+      }
+
+  }
+
+  ```
+
+
+  ### Hydrogen Permeation and Boil-Off
+
+
+  **Permeation through liner**:
+
+  - **HDPE permeation rate**: ~1-2% of total H2 mass per year
+
+  - **Acceptable loss**: < 6 Nml/(hr·L) per SAE J2579
+
+  - **Monitoring**: Pressure sensors detect slow pressure drop
+
+
+  ```python
+
+  def calculate_permeation_loss(tank_volume_L, P_bar, T_K, time_days):
+
+      """
+
+      Estimate hydrogen permeation loss through HDPE liner.
+
+
+
+      Args:
+
+          tank_volume_L: Tank internal volume [L]
+
+          P_bar: Pressure [bar]
+
+          T_K: Temperature [K]
+
+          time_days: Time period [days]
+
+
+
+      Returns:
+
+          H2 mass lost [g]
+
+      """
+
+      # Permeation rate (empirical for HDPE at 700 bar, 20°C)
+
+      perm_rate = 1.5  # Nml/(hr·L) (normal ml per hour per liter)
+
+
+
+      # Total permeated volume at STP
+
+      V_perm_Nml = perm_rate * tank_volume_L * (time_days * 24)  # Nml
+
+
+
+      # Convert to mass (at STP: 1 mol H2 = 22.4 L, M_H2 = 2.016 g/mol)
+
+      m_loss_g = (V_perm_Nml / 1000) / 22.4 * 2.016  # g
+
+
+
+      return m_loss_g
+
+  ```
+
+
+  ### Refueling Interface
+
+
+  **SAE J2600 receptacle**:
+
+  - **Nozzle type**: TK16 (70 MPa), TK25 (35 MPa for buses/trucks)
+
+  - **Coupling**: Twist-lock mechanism, automatic seal verification
+
+  - **Safety interlock**: Prevents disconnection under pressure
+
+  - **Communication**: Infrared (IRDA) for pre-cooling and fill rate control
+
+
+  **Refueling control protocol**:
+
+  ```c
+
+  typedef enum {
+
+      REFUEL_IDLE,
+
+      REFUEL_CONNECT_VERIFY,
+
+      REFUEL_PRECOOL,
+
+      REFUEL_FILL,
+
+      REFUEL_COMPLETE,
+
+      REFUEL_ERROR
+
+  } RefuelState_t;
+
+
+
+  typedef struct {
+
+      RefuelState_t state;
+
+      float tank_pressure;     // bar
+
+      float tank_temp;         // °C
+
+      float target_pressure;   // bar (700 or adjusted for temp)
+
+      float fill_rate_max;     // g/s (APRR - Average Precooling Ramp Rate)
+
+      float nozzle_temp;       // °C (from station via IRDA)
+
+  } RefuelController_t;
+
+
+
+  void refuel_state_machine(RefuelController_t *ctrl) {
+
+      switch (ctrl->state) {
+
+          case REFUEL_IDLE:
+
+              // Wait for nozzle connection
+
+              if (is_nozzle_connected()) {
+
+                  ctrl->state = REFUEL_CONNECT_VERIFY;
+
+              }
+
+              break;
+
+
+
+          case REFUEL_CONNECT_VERIFY:
+
+              // Verify seal integrity (leak test)
+
+              if (verify_seal_integrity()) {
+
+                  send_tank_params_to_station();  // Via IRDA
+
+                  ctrl->state = REFUEL_PRECOOL;
+
+              } else {
+
+                  ctrl->state = REFUEL_ERROR;
+
+              }
+
+              break;
+
+
+
+          case REFUEL_PRECOOL:
+
+              // Station precools H2 to -40°C to manage temp rise
+
+              ctrl->nozzle_temp = receive_nozzle_temp();  // °C
+
+              if (ctrl->nozzle_temp < -35.0f) {
+
+                  ctrl->state = REFUEL_FILL;
+
+              }
+
+              break;
+
+
+
+          case REFUEL_FILL:
+
+              // Monitor pressure and temperature during fill
+
+              if (ctrl->tank_pressure >= ctrl->target_pressure) {
+
+                  ctrl->state = REFUEL_COMPLETE;
+
+              } else if (ctrl->tank_temp > 85.0f) {
+
+                  // Over-temperature - abort fill
+
+                  ctrl->state = REFUEL_ERROR;
+
+                  trigger_alarm(ALARM_REFUEL_OVERTEMP);
+
+              }
+
+              break;
+
+
+
+          case REFUEL_COMPLETE:
+
+              // Signal station to stop, safe disconnect
+
+              signal_station_complete();
+
+              ctrl->state = REFUEL_IDLE;
+
+              break;
+
+      }
+
+  }
+
+  ```
+
+
+  ### Tank Aging and Certification
+
+
+  **Lifetime requirements**:
+
+  - **Service life**: 15 years or 5,500 fill cycles (whichever comes first)
+
+  - **Periodic inspection**: Visual inspection every 3 years, recertification at 15 years
+
+  - **Cycle testing**: Hydraulic pressure cycling 11,250 cycles (2× service life)
+
+  - **Drop test**: 1.8 m drop onto concrete (simulates handling damage)
+
+  - **Gunfire test**: .30 caliber bullet penetration (no explosion, controlled vent)
+
+
+  ```python
+
+  class H2TankLifecycle:
+
+      def __init__(self):
+
+          self.installation_date = "2026-01-01"
+
+          self.fill_cycles = 0
+
+          self.max_fill_cycles = 5500
+
+
+
+      def check_certification_status(self, current_date, current_cycles):
+
+          """
+
+          Determine if tank requires recertification.
+
+          """
+
+          years_in_service = (current_date - self.installation_date).years
+
+
+
+          if years_in_service >= 15:
+
+              return "RECERTIFICATION_REQUIRED"
+
+          elif current_cycles >= self.max_fill_cycles:
+
+              return "CYCLE_LIMIT_EXCEEDED"
+
+          else:
+
+              remaining_cycles = self.max_fill_cycles - current_cycles
+
+              return f"OK - {remaining_cycles} cycles remaining"
+
+  ```
+
+
+  ### Crash Safety and Packaging
+
+
+  **Crash protection zones**:
+
+  - **Location**: Rear axle centerline, behind passenger compartment
+
+  - **Crumple zones**: Ensure tanks not compromised in 50 mph frontal/side/rear impact
+
+  - **Mounting**: Robust brackets with crash-triggered release (prevent tank rupture)
+
+  - **TPRD vent direction**: Upward/rearward to prevent H2 pooling in cabin
+
+
+  **Leak detection**:
+
+  ```c
+
+  #define H2_SENSOR_COUNT 4  // Minimum per SAE J2578
+
+  #define H2_CONC_THRESHOLD 1.0f  // % by volume (25% LEL)
+
+
+
+  typedef struct {
+
+      float concentration[H2_SENSOR_COUNT];  // % H2 by volume
+
+      bool leak_detected;
+
+  } H2LeakDetection_t;
+
+
+
+  void monitor_h2_leak(H2LeakDetection_t *leak) {
+
+      leak->leak_detected = false;
+
+
+
+      for (int i = 0; i < H2_SENSOR_COUNT; i++) {
+
+          if (leak->concentration[i] > H2_CONC_THRESHOLD) {
+
+              leak->leak_detected = true;
+
+              // Emergency response:
+
+              // 1. Close tank outlet valve
+
+              // 2. Activate ventilation fan
+
+              // 3. Disable ignition sources
+
+              // 4. Alert driver
+
+              trigger_h2_leak_alarm();
+
+              close_tank_valve();
+
+              break;
+
+          }
+
+      }
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Tank Sizing**: Calculate required volume for target range (5-6 kg H2)
+
+  2. **COPV Design**: Determine carbon fiber thickness for burst pressure compliance
+
+  3. **PRD Specification**: Select TPRD and PPRD devices, design vent routing
+
+  4. **Packaging Study**: Integrate tanks within vehicle structure, crash analysis
+
+  5. **Refueling Integration**: Implement SAE J2600 interface, IRDA communication
+
+  6. **Certification Testing**: Conduct burst, cycle, drop, fire, and gunfire tests
+
+  7. **Leak Detection**: Install H2 sensors, implement safety shutdown logic
+
+
+  ## Deliverables
+
+
+  - Tank design specifications (volume, burst pressure, weight)
+
+  - Carbon fiber layup schedule and manufacturing process
+
+  - PRD selection and vent line routing diagrams
+
+  - Packaging CAD models with crash simulation results
+
+  - Refueling interface controller code (C/AUTOSAR)
+
+  - Certification test reports (ISO 19881, ECE R134)
+
+  - Leak detection system design and sensor placement
+
+
+  ## Best Practices
+
+
+  - Design for 2.35× burst ratio (margin above 2.25 minimum)
+
+  - Route TPRD vent upward to prevent H2 accumulation in vehicle
+
+  - Use redundant pressure sensors (2+ per tank) for safety-critical monitoring
+
+  - Implement graduated warnings (low H2, very low H2, empty)
+
+  - Test refueling protocol at -40°C ambient temperature
+
+  - Validate permeation rate < 6 Nml/(hr·L) over 6 months
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Provide tank pressure data to fuel gauge and range estimation
+
+  - Interface with refueling controller for station communication
+
+  - Supply H2 mass/pressure to fuel cell system controller
+
+  - Integrate leak detection with vehicle safety system (cabin ventilation)
+
+  - Support crash detection for emergency valve closure
+
+  '
+constraints:
+- Tank weight and packaging volume
+- Permeation loss over vehicle lifetime
+- Crash safety compliance (ECE R134)
+- Refueling time target (3-5 minutes)
+tools_required:
+- FEA tools (ANSYS, Abaqus) for composite stress analysis
+- CAD software for packaging studies
+- Crash simulation tools (LS-DYNA)
+- Pressure cycle test bench
+- H2 leak detection sensors and calibration equipment
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- hydrogen-storage
+- 700-bar
+- copv
+- type-iv-tank
+- safety
+- automotive

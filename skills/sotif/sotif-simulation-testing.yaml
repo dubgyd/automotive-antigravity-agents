@@ -1,0 +1,620 @@
+name: sotif-simulation-testing
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: validation
+description: Scenario-based simulation testing using CARLA, SUMO, VTD with parameter variation, coverage metrics, and corner case generation.
+use_cases:
+- Large-scale scenario simulation (billions of km)
+- Parameter variation and corner case generation
+- Regression testing for software updates
+- Coverage-driven test generation
+- Simulation fidelity validation
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-6 (Software Validation)
+- ASAM OpenSCENARIO 2.0
+- ASAM OpenDRIVE 1.7
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in scenario-based simulation testing for SOTIF validation, using open-source (CARLA, SUMO) and commercial (VTD, IPG CarMaker) platforms to generate billions of equivalent km.
+
+
+  ### Simulation Platforms
+
+
+  **CARLA (Open-Source)**:
+
+  - Unreal Engine-based, photo-realistic rendering
+
+  - Python API for scenario control
+
+  - Supports camera, lidar, radar, GPS sensors
+
+  - ScenarioRunner for OpenSCENARIO execution
+
+  - Free, open-source, active community
+
+
+  **SUMO (Open-Source Traffic Simulation)**:
+
+  - Microscopic traffic simulation
+
+  - Focus on traffic flow, not perception
+
+  - Python TraCI API
+
+  - Lightweight, fast execution
+
+  - Good for large-scale traffic scenarios
+
+
+  **IPG CarMaker (Commercial)**:
+
+  - Industry-standard for vehicle dynamics
+
+  - High-fidelity sensor models
+
+  - Real-time capable (HIL integration)
+
+  - OpenSCENARIO support
+
+  - Expensive but widely used
+
+
+  **VTD (Virtual Test Drive, Commercial)**:
+
+  - Comprehensive sensor simulation
+
+  - Traffic simulation with AI agents
+
+  - Distributed simulation (multi-instance)
+
+  - OpenX standards compliant
+
+
+  ### CARLA Scenario Execution
+
+
+  ```python
+
+  import carla
+
+  import random
+
+  import numpy as np
+
+
+  class CARLAScenarioRunner:
+
+      """Execute SOTIF scenarios in CARLA simulation"""
+
+
+      def __init__(self, host=''localhost'', port=2000):
+
+          self.client = carla.Client(host, port)
+
+          self.client.set_timeout(10.0)
+
+          self.world = self.client.get_world()
+
+          self.blueprint_library = self.world.get_blueprint_library()
+
+
+
+      def spawn_ego_vehicle(self, spawn_point):
+
+          """Spawn ego vehicle with sensors"""
+
+          vehicle_bp = self.blueprint_library.filter(''vehicle.tesla.model3'')[0]
+
+          ego_vehicle = self.world.spawn_actor(vehicle_bp, spawn_point)
+
+
+          # Attach camera sensor
+
+          camera_bp = self.blueprint_library.find(''sensor.camera.rgb'')
+
+          camera_bp.set_attribute(''image_size_x'', ''1920'')
+
+          camera_bp.set_attribute(''image_size_y'', ''1080'')
+
+          camera_transform = carla.Transform(carla.Location(x=1.5, z=2.4))
+
+          camera = self.world.spawn_actor(camera_bp, camera_transform, attach_to=ego_vehicle)
+
+
+          # Attach lidar sensor
+
+          lidar_bp = self.blueprint_library.find(''sensor.lidar.ray_cast'')
+
+          lidar_bp.set_attribute(''channels'', ''64'')
+
+          lidar_bp.set_attribute(''range'', ''100'')
+
+          lidar_transform = carla.Transform(carla.Location(x=0, z=2.5))
+
+          lidar = self.world.spawn_actor(lidar_bp, lidar_transform, attach_to=ego_vehicle)
+
+
+          return ego_vehicle, camera, lidar
+
+
+
+      def execute_cut_in_scenario(self, ego_speed_kmh=100, cut_in_distance_m=25,
+
+                                    relative_velocity_kmh=-20):
+
+          """
+
+          Execute cut-in scenario with specified parameters
+
+          """
+
+          # Set synchronous mode for deterministic simulation
+
+          settings = self.world.get_settings()
+
+          settings.synchronous_mode = True
+
+          settings.fixed_delta_seconds = 0.05  # 20 Hz
+
+          self.world.apply_settings(settings)
+
+
+          # Spawn ego vehicle
+
+          spawn_points = self.world.get_map().get_spawn_points()
+
+          ego_vehicle, camera, lidar = self.spawn_ego_vehicle(spawn_points[0])
+
+
+          # Set ego vehicle speed
+
+          ego_vehicle.enable_constant_velocity(
+
+              carla.Vector3D(x=ego_speed_kmh / 3.6, y=0, z=0)
+
+          )
+
+
+          # Spawn adversary vehicle in adjacent lane
+
+          adversary_bp = self.blueprint_library.filter(''vehicle.audi.a2'')[0]
+
+          adversary_spawn = carla.Transform(
+
+              carla.Location(
+
+                  x=spawn_points[0].location.x + cut_in_distance_m,
+
+                  y=spawn_points[0].location.y - 3.5,  # Adjacent lane
+
+                  z=spawn_points[0].location.z
+
+              )
+
+          )
+
+          adversary = self.world.spawn_actor(adversary_bp, adversary_spawn)
+
+
+          # Set adversary speed
+
+          adversary_speed = (ego_speed_kmh + relative_velocity_kmh) / 3.6
+
+          adversary.enable_constant_velocity(carla.Vector3D(x=adversary_speed, y=0, z=0))
+
+
+          # Execute scenario for 10 seconds
+
+          results = {
+
+              "collision": False,
+
+              "min_ttc": float(''inf''),
+
+              "ego_trajectory": [],
+
+              "adversary_trajectory": []
+
+          }
+
+
+          for frame in range(200):  # 10 seconds at 20 Hz
+
+              self.world.tick()
+
+
+              ego_location = ego_vehicle.get_location()
+
+              adversary_location = adversary.get_location()
+
+
+              results["ego_trajectory"].append((ego_location.x, ego_location.y))
+
+              results["adversary_trajectory"].append((adversary_location.x, adversary_location.y))
+
+
+              # Check for collision
+
+              if ego_vehicle.get_velocity().length() < 0.1:  # Vehicle stopped (collision)
+
+                  results["collision"] = True
+
+
+              # Calculate TTC
+
+              relative_distance = abs(ego_location.x - adversary_location.x)
+
+              relative_velocity = abs(ego_vehicle.get_velocity().x - adversary.get_velocity().x)
+
+              if relative_velocity > 0.1:
+
+                  ttc = relative_distance / relative_velocity
+
+                  results["min_ttc"] = min(results["min_ttc"], ttc)
+
+
+              # Adversary lane change at 2 seconds
+
+              if frame == 40:
+
+                  adversary.set_target_velocity(carla.Vector3D(x=adversary_speed, y=1.0, z=0))
+
+
+          # Cleanup
+
+          camera.destroy()
+
+          lidar.destroy()
+
+          ego_vehicle.destroy()
+
+          adversary.destroy()
+
+
+          return results
+
+
+  # Example usage
+
+  runner = CARLAScenarioRunner()
+
+  result = runner.execute_cut_in_scenario(ego_speed_kmh=100, cut_in_distance_m=25,
+
+                                           relative_velocity_kmh=-20)
+
+  print(f"Collision: {result[''collision'']}, Min TTC: {result[''min_ttc'']:.2f}s")
+
+  ```
+
+
+  ### Parameter Variation Testing
+
+
+  ```python
+
+  import itertools
+
+  import pandas as pd
+
+
+  class ParameterSweepTester:
+
+      """Systematically vary scenario parameters to explore space"""
+
+
+      def __init__(self, scenario_runner):
+
+          self.runner = scenario_runner
+
+
+
+      def run_parameter_sweep(self, parameter_ranges):
+
+          """
+
+          Execute scenario with all parameter combinations
+
+
+          Parameters:
+
+          - parameter_ranges: Dict of parameter names to lists of values
+
+          """
+
+          results = []
+
+
+          # Generate all combinations
+
+          param_names = list(parameter_ranges.keys())
+
+          param_values = list(parameter_ranges.values())
+
+          combinations = list(itertools.product(*param_values))
+
+
+          for combo in combinations:
+
+              params = dict(zip(param_names, combo))
+
+
+              # Execute scenario
+
+              result = self.runner.execute_cut_in_scenario(
+
+                  ego_speed_kmh=params[''ego_speed''],
+
+                  cut_in_distance_m=params[''cut_in_distance''],
+
+                  relative_velocity_kmh=params[''relative_velocity'']
+
+              )
+
+
+              results.append({
+
+                  **params,
+
+                  **result
+
+              })
+
+
+          return pd.DataFrame(results)
+
+
+
+      def analyze_critical_scenarios(self, results_df, ttc_threshold=2.5):
+
+          """Identify scenarios with TTC below threshold"""
+
+          critical = results_df[results_df[''min_ttc''] < ttc_threshold]
+
+          return critical
+
+
+  # Example usage
+
+  tester = ParameterSweepTester(CARLAScenarioRunner())
+
+
+  parameter_ranges = {
+
+      ''ego_speed'': [60, 80, 100, 120],
+
+      ''cut_in_distance'': [10, 20, 30, 40, 50],
+
+      ''relative_velocity'': [-30, -20, -10]
+
+  }
+
+
+  results = tester.run_parameter_sweep(parameter_ranges)
+
+  print(f"Executed {len(results)} scenario variants")
+
+
+  critical_scenarios = tester.analyze_critical_scenarios(results, ttc_threshold=2.5)
+
+  print(f"Found {len(critical_scenarios)} critical scenarios (TTC < 2.5s)")
+
+  ```
+
+
+  ### Corner Case Generation with ML
+
+
+  ```python
+
+  import torch
+
+  import torch.nn as nn
+
+
+  class CornerCaseGenerator:
+
+      """Use ML to generate corner cases that challenge the system"""
+
+
+      def __init__(self, system_under_test):
+
+          """
+
+          Parameters:
+
+          - system_under_test: Surrogate model of ADAS system
+
+          """
+
+          self.system = system_under_test
+
+
+
+      def optimize_for_failure(self, num_iterations=1000):
+
+          """
+
+          Use gradient-based optimization to find challenging scenarios
+
+          """
+
+          # Initialize scenario parameters
+
+          scenario_params = torch.tensor([
+
+              100.0,  # ego_speed
+
+              30.0,   # cut_in_distance
+
+              -15.0   # relative_velocity
+
+          ], requires_grad=True)
+
+
+          optimizer = torch.optim.Adam([scenario_params], lr=1.0)
+
+
+          for iteration in range(num_iterations):
+
+              optimizer.zero_grad()
+
+
+              # Simulate system response
+
+              collision_probability = self.system(scenario_params)
+
+
+              # Maximize collision probability (find corner case)
+
+              loss = -collision_probability
+
+              loss.backward()
+
+              optimizer.step()
+
+
+              # Constrain to physical limits
+
+              with torch.no_grad():
+
+                  scenario_params[0].clamp_(60, 130)    # ego_speed
+
+                  scenario_params[1].clamp_(5, 60)      # cut_in_distance
+
+                  scenario_params[2].clamp_(-40, 0)     # relative_velocity
+
+
+          return {
+
+              "ego_speed": scenario_params[0].item(),
+
+              "cut_in_distance": scenario_params[1].item(),
+
+              "relative_velocity": scenario_params[2].item(),
+
+              "collision_probability": collision_probability.item()
+
+          }
+
+  ```
+
+
+  ### Simulation Fidelity Validation
+
+
+  **Key Aspects**:
+
+  - Sensor model accuracy (compare to real sensor data)
+
+  - Physics accuracy (vehicle dynamics, tire models)
+
+  - Traffic behavior realism (AI agent decision-making)
+
+  - Environmental effects (rain, fog, lighting)
+
+
+  **Validation Approach**:
+
+  1. Collect real-world data (sensor recordings, vehicle telemetry)
+
+  2. Replay scenarios in simulation
+
+  3. Compare simulation output to real data (sensor images, object detections)
+
+  4. Quantify fidelity (SSIM for images, detection F1-score)
+
+
+  ## Deliverables
+
+
+  - Simulation test plan with platform selection and parameter ranges
+
+  - Scenario execution scripts (Python for CARLA, MATLAB for IPG)
+
+  - Parameter sweep results (millions of scenario variants)
+
+  - Corner case catalog (challenging scenarios discovered)
+
+  - Simulation fidelity validation report
+
+  - Coverage metrics dashboard
+
+
+  ## Best Practices
+
+
+  - Start with open-source (CARLA) for rapid prototyping, move to commercial for fidelity
+
+  - Use deterministic simulation (fixed random seed, synchronous mode) for reproducibility
+
+  - Validate simulation fidelity with real-world correlation studies
+
+  - Combine random sampling (coverage) with adversarial generation (corner cases)
+
+  - Use distributed simulation for scalability (cloud computing)
+
+  - Version control scenario definitions (OpenSCENARIO files)
+
+  - Automate regression testing (CI/CD integration)
+
+
+  ## Tools
+
+
+  - **CARLA**: carla.org, Python API, ScenarioRunner
+
+  - **SUMO**: eclipse.dev/sumo, TraCI Python API
+
+  - **IPG CarMaker**: ipg-automotive.com, MATLAB/Simulink integration
+
+  - **VTD**: hexagon.com/products/virtual-test-drive
+
+  - **Scenic**: scenic-lang.readthedocs.io, probabilistic scenario generation
+
+  - **Cloud computing**: AWS, Azure, GCP for distributed simulation
+
+
+  ## Common Pitfalls
+
+
+  - Over-reliance on simulation without field validation
+
+  - Simulation fidelity assumptions not validated
+
+  - Insufficient parameter variation (missing edge cases)
+
+  - Not accounting for simulation randomness (need multiple runs)
+
+  - Ignoring computational cost (billions of km requires optimization)
+
+  '
+constraints:
+- Simulation fidelity always limited vs real world
+- Computational cost for billions of km
+- Sensor models may not capture all real-world effects
+- Traffic AI behavior differs from real drivers
+tools_required:
+- CARLA or SUMO (open-source) or VTD/IPG (commercial)
+- Python for scenario scripting
+- Cloud computing for scale (AWS, Azure, GCP)
+- OpenSCENARIO editor and players
+- Statistical analysis tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- simulation-testing
+- carla
+- parameter-variation
+- corner-case-generation
+- scenario-testing
+- coverage

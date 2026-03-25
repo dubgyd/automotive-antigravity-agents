@@ -1,0 +1,229 @@
+name: industrial-metaverse
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: industrial metaverse
+description: Expert skill in building and leveraging industrial metaverse environments for automotive manufacturing, including persistent digital twins, immersive training, remote factory operations, and cross-site collaborative engineering using XR technologies and real-time 3D simulation.
+use_cases:
+- Immersive virtual commissioning of new production lines before physical installation
+- Cross-plant collaborative engineering using shared persistent 3D environments
+- XR-based operator training for complex assembly procedures and safety scenarios
+- Remote expert assistance with AR overlay for maintenance and troubleshooting
+- Virtual factory walkthroughs for layout planning and ergonomic assessment
+- Real-time production monitoring through immersive 3D dashboard environments
+- Digital rehearsal of model changeovers and ramp-up scenarios
+- Supplier collaboration in shared virtual environments for tooling and fixture design
+automotive_standards:
+- ISO 23247 Digital Twin Framework for Manufacturing
+- ISO 15926 Industrial Data Integration
+- IEC 62264 Enterprise-Control System Integration
+- ISO 8000 Data Quality
+- VDI 2206 Design Methodology for Mechatronic Systems
+- IEEE 1918.1 Tactile Internet
+- IATF 16949 (Process Planning Clauses)
+instructions: |
+
+  ## Overview
+
+  The industrial metaverse creates persistent, shared, physics-accurate 3D environments that
+  mirror real automotive factories. Unlike traditional CAD or simulation tools, metaverse
+  platforms enable multi-user collaboration, real-time data integration from IoT sensors,
+  and immersive interaction through VR/AR headsets or desktop clients.
+
+  For automotive manufacturing, this means engineers in Germany, operators in Mexico, and
+  suppliers in China can simultaneously walk through the same virtual factory, observe live
+  production data overlaid on 3D equipment models, and collaboratively solve problems in
+  context rather than through documents and video calls.
+
+
+  ## Key Concepts
+
+  ### Metaverse Technology Stack
+
+  - **3D Engine**: Real-time rendering (Unreal Engine, Unity, NVIDIA Omniverse)
+  - **Digital Twin Platform**: Physics simulation and IoT data integration
+  - **XR Devices**: VR headsets (Meta Quest Pro), AR glasses (Microsoft HoloLens 2, Magic Leap)
+  - **Collaboration Layer**: Multi-user session management, avatars, spatial audio
+  - **Data Integration**: OPC UA, MQTT, REST APIs connecting factory systems to virtual world
+  - **Spatial Computing**: Room-scale tracking, hand tracking, eye tracking
+
+  ### Data Flow Architecture
+
+  ```
+  Physical Factory              Industrial Metaverse
+  ================              ====================
+  PLC/SCADA (OPC UA) --------> Real-time equipment state
+  MES (API) ------------------> Production KPIs overlay
+  IoT Sensors (MQTT) ---------> Environmental data (temp, vibration)
+  3D Scan (LiDAR) ------------> As-built geometry baseline
+  CAD/PLM (JT/STEP) ----------> Design intent models
+  ERP (SAP) ------------------> Material flow visualization
+  ```
+
+  ### Immersion Levels
+
+  - **Desktop 3D**: Lowest barrier, browser or application-based navigation
+  - **Tablet AR**: Overlay digital content on physical equipment via camera
+  - **Head-mounted AR**: Hands-free overlay with spatial anchoring (HoloLens)
+  - **Room-scale VR**: Full immersion for design reviews and training
+  - **CAVE/Powerwall**: Multi-person shared immersive viewing for management reviews
+
+
+  ## Implementation Guide
+
+  ### Step 1: Factory Digitization
+
+  Create the geometric and data foundation:
+
+  ```python
+  # Factory digitization pipeline
+  class FactoryDigitizer:
+      def __init__(self, lidar_scanner, cad_repository, iot_platform):
+          self.scanner = lidar_scanner
+          self.cad = cad_repository
+          self.iot = iot_platform
+
+      def create_baseline_scan(self, factory_zone: str) -> str:
+          """Generate point cloud from LiDAR scan of physical factory."""
+          point_cloud = self.scanner.scan_zone(factory_zone, resolution_mm=5)
+          mesh = self.convert_to_mesh(point_cloud, decimation_ratio=0.1)
+          return self.upload_to_metaverse(mesh, zone_id=factory_zone)
+
+      def overlay_cad_models(self, zone_id: str, equipment_list: list):
+          """Replace scan geometry with parametric CAD for interactive equipment."""
+          for equipment in equipment_list:
+              cad_model = self.cad.fetch_model(equipment["part_number"], format="USD")
+              self.place_in_scene(zone_id, cad_model, equipment["transform"])
+
+      def connect_live_data(self, zone_id: str, data_points: list):
+          """Bind IoT sensor data to 3D model properties."""
+          for point in data_points:
+              self.iot.subscribe(point["topic"], callback=self.update_3d_property)
+  ```
+
+  ### Step 2: Multi-User Collaboration Setup
+
+  ```yaml
+  collaboration_config:
+    session_management:
+      max_users_per_session: 50
+      roles: [engineer, operator, manager, supplier, viewer]
+      spatial_audio: true
+      avatar_tracking: head_and_hands
+    access_control:
+      authentication: enterprise_sso
+      authorization: role_based_per_zone
+      data_classification: confidential_geometry_restricted
+    network_requirements:
+      min_bandwidth_mbps: 50
+      max_latency_ms: 50
+      protocol: WebRTC_with_TURN_fallback
+  ```
+
+  ### Step 3: Virtual Commissioning Workflow
+
+  ```
+  Phase 1: Import       Phase 2: Simulate     Phase 3: Validate
+  ===============       =================     =================
+  CAD geometry    -->   Physics engine    --> Cycle time check
+  Robot programs  -->   Motion planning   --> Collision detection
+  PLC logic       -->   Virtual PLC       --> Signal verification
+  Safety zones    -->   Zone simulation   --> Safety validation
+  Material flow   -->   Discrete event    --> Throughput analysis
+  ```
+
+  ### Step 4: AR-Assisted Maintenance
+
+  ```python
+  # AR remote assistance session
+  class ARRemoteAssist:
+      def __init__(self, ar_platform, knowledge_base):
+          self.platform = ar_platform
+          self.kb = knowledge_base
+
+      def start_session(self, equipment_id: str, technician_device: str):
+          """Launch AR session with contextual maintenance data."""
+          equipment_twin = self.get_digital_twin(equipment_id)
+          self.platform.create_session(
+              device=technician_device,
+              anchor=equipment_twin.spatial_anchor,
+              overlays=[
+                  self.kb.get_maintenance_steps(equipment_id),
+                  equipment_twin.get_live_diagnostics(),
+                  equipment_twin.get_exploded_view(),
+              ],
+          )
+
+      def enable_remote_expert(self, expert_id: str):
+          """Allow remote expert to see technician view and annotate in 3D."""
+          self.platform.add_participant(expert_id, role="annotator")
+          self.platform.enable_spatial_annotations()
+  ```
+
+
+  ## Best Practices
+
+  - Start with high-value use cases: virtual commissioning saves 20-30% of physical commissioning time
+  - Use USD (Universal Scene Description) as the interchange format for 3D assets
+  - Maintain a single source of truth: CAD/PLM system feeds metaverse, never the reverse
+  - Design for the lowest common device -- desktop 3D first, then enhance for XR
+  - Implement data classification zones to protect proprietary geometry from supplier sessions
+  - Measure adoption with session analytics: time in environment, collaboration frequency
+  - Provide VR sickness mitigation: teleport locomotion, fixed horizon, short session limits
+  - Keep real-time data refresh below 1 second for operator-facing dashboards
+
+
+  ## Common Patterns
+
+  ### Factory Planning Review
+
+  1. Import updated layout from CAD into metaverse environment
+  2. Invite cross-functional team (production, logistics, safety, ergonomics)
+  3. Walk through factory floor at 1:1 scale in VR
+  4. Annotate issues with spatial markers (clearance, ergonomics, material flow)
+  5. Export annotations as action items linked to CAD coordinates
+
+  ### Training Scenario Design
+
+  ```
+  Scenario Template:
+    Equipment: [robot cell / press line / paint booth]
+    Objective: [normal operation / fault recovery / safety response]
+    Trainee Actions: [step-by-step guided procedure]
+    Assessment: [time to complete, error count, safety violations]
+    Feedback: [real-time AR highlights, post-session replay]
+  ```
+
+
+  ## Troubleshooting
+
+  - **Low frame rate in VR**: Reduce polygon count, use LOD (level of detail) switching
+  - **Data synchronization lag**: Check MQTT broker capacity, use edge processing
+  - **Spatial anchor drift in AR**: Recalibrate with fixed QR markers on equipment
+  - **Multi-user desync**: Verify network latency <50ms, use server-authoritative state
+  - **CAD import failures**: Convert via neutral format (STEP/JT) before USD conversion
+  - **User adoption resistance**: Start with AR tablet (familiar), graduate to headset
+
+constraints:
+- High-fidelity 3D environments require significant GPU compute resources
+- XR device battery life limits continuous use to 2-3 hours
+- Network bandwidth and latency critical for multi-site collaboration
+- Intellectual property concerns when sharing geometry with external partners
+tools_required:
+- 3D platforms (NVIDIA Omniverse, Unity, Unreal Engine)
+- XR devices (Meta Quest Pro, Microsoft HoloLens 2, Magic Leap 2)
+- LiDAR scanners (Leica BLK360, FARO Focus)
+- IoT integration (PTC ThingWorx, Siemens MindSphere)
+- Collaboration platforms (Autodesk Workshop XR, TeamViewer Spatial)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- metaverse
+- digital-twin
+- augmented-reality
+- virtual-reality
+- automotive

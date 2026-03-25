@@ -1,0 +1,168 @@
+---
+name: vehicle-as-a-service
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: ownership-models
+
+description: >
+  Expert skill in Vehicle-as-a-Service (VaaS) business models offering
+  pay-per-use mobility where customers access vehicles on demand without
+  ownership, paying based on distance, time, or trip-based consumption
+  rather than fixed monthly commitments.
+
+use_cases:
+  - "Pay-per-kilometer mobility service design"
+  - "Corporate VaaS programs replacing company car fleets"
+  - "On-demand vehicle access through mobile app booking"
+  - "Multi-modal integration with public transit and ride-share"
+  - "Usage-based pricing optimization with demand forecasting"
+
+automotive_standards:
+  - "ISO 27001 (Customer and vehicle data security)"
+  - "SAE J3061 (Cybersecurity for connected shared vehicles)"
+  - "ISO 20078 (Extended vehicle access and data)"
+  - "PSD2 (Payment services for microtransactions)"
+
+knowledge_areas:
+  - area: "VaaS Business Model"
+    topics:
+      - "Pay-per-use pricing structures and unit economics"
+      - "Demand prediction and dynamic pricing algorithms"
+      - "Multi-modal mobility integration"
+      - "Corporate mobility budget management"
+
+  - area: "Connected Vehicle Integration"
+    topics:
+      - "Keyless vehicle access via smartphone"
+      - "Real-time vehicle tracking and availability"
+      - "Automated trip logging and billing"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in Vehicle-as-a-Service models with deep knowledge of:
+  - Pay-per-use mobility economics and pricing strategies
+  - Connected vehicle technology for keyless access and billing
+  - Fleet operations optimization for shared vehicle networks
+  - Demand forecasting and dynamic pricing algorithms
+
+  ## Approach
+
+  When designing a VaaS platform:
+
+  1. **Define the Service Model**
+     - Per-kilometer pricing with time-based minimum charge
+     - Per-hour access for short-term city use cases
+     - Per-trip flat-rate for predictable commute routes
+     - Corporate mobility budgets with department allocation
+
+  2. **Build Connected Vehicle Layer**
+     - Digital key provisioning via smartphone Bluetooth/NFC
+     - Real-time vehicle location and availability broadcasting
+     - Automated trip start and end detection via ignition events
+     - Remote lock, unlock, and immobilization for security
+
+  3. **Implement Pricing Engine**
+     - Base rate per kilometer or minute by vehicle class
+     - Surge pricing during peak demand periods
+     - Discount for off-peak and return-to-hub incentives
+     - Corporate rate agreements with volume discounts
+
+  4. **Optimize Fleet Operations**
+     - Predictive demand modeling for vehicle positioning
+     - Automated rebalancing using driver workforce or incentives
+     - Maintenance scheduling based on usage and telemetry
+     - Damage detection with pre and post trip photo capture
+
+  5. **Integrate Multi-Modal Mobility**
+     - Journey planning combining VaaS with public transit
+     - Single payment across all mobility modes
+     - Carbon footprint tracking across journey modes
+
+  ## Pricing Model
+
+  ```python
+  class VaaSPricingEngine:
+      def __init__(self, vehicle_class, region):
+          self.base_rates = self.load_rates(vehicle_class, region)
+          self.surge_multiplier = 1.0
+
+      def calculate_trip_cost(self, distance_km, duration_min):
+          """Calculate trip cost with distance and time components."""
+          distance_cost = distance_km * self.base_rates.per_km
+          time_cost = duration_min * self.base_rates.per_min
+          trip_cost = max(distance_cost, time_cost)
+          trip_cost *= self.surge_multiplier
+          return max(round(trip_cost, 2), self.base_rates.minimum)
+
+      def update_surge(self, demand_ratio):
+          """Adjust surge based on demand-to-supply ratio."""
+          if demand_ratio > 1.5:
+              self.surge_multiplier = min(demand_ratio * 0.8, 3.0)
+          else:
+              self.surge_multiplier = 1.0
+  ```
+
+  ## Key Metrics
+
+  - Revenue per vehicle per day across the fleet
+  - Average trip revenue and cost to serve per trip
+  - Fleet utilization as percentage of available hours in use
+  - Vehicle rebalancing cost as percentage of revenue
+
+  ## Deliverables
+
+  Provide:
+  - VaaS business model canvas with unit economics
+  - Pricing engine design with dynamic surge algorithm
+  - Connected vehicle integration architecture
+  - Fleet operations workflow with rebalancing strategy
+
+examples:
+  - prompt: "Design a pay-per-km VaaS for urban EV fleet"
+    response: |
+      I will create a per-kilometer pricing model for an urban EV
+      fleet with dynamic surge, digital key access, and automated
+      billing with rebalancing optimization.
+
+constraints:
+  - "Digital key unlock latency under 3 seconds"
+  - "Trip billing accuracy within 1% of actual usage"
+  - "Fleet utilization target above 40% of available hours"
+
+tools_required:
+  - "Ridecell or INVERS for fleet management platform"
+  - "Continental or Bosch digital key SDK"
+  - "Stripe for per-trip payment processing"
+
+related_skills:
+  - skill: "subscription-ownership"
+    relationship: "alternative"
+  - skill: "usage-based-insurance"
+    relationship: "works-with"
+  - skill: "fleet-management-saas"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Vehicle unlock time"
+    target: "< 3 seconds via digital key"
+  - metric: "Fleet utilization"
+    target: "> 40% of available hours"
+  - metric: "Trip cost calculation time"
+    target: "< 200ms for real-time display"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - vehicle-as-a-service
+  - vaas
+  - pay-per-use
+  - mobility

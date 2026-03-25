@@ -1,0 +1,747 @@
+name: hydrogen-supply-chain
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: supply-chain
+description: Expert skill in hydrogen supply chain from production to distribution, including compression, liquefaction, transport, and refueling station network planning.
+use_cases:
+- Hydrogen production pathway comparison (green, blue, grey)
+- Compression and liquefaction for transport
+- Distribution via tube trailer, pipeline, or liquid H2 tanker
+- Refueling station network planning and coverage analysis
+- Total cost of ownership (TCO) for hydrogen supply
+- Regulatory compliance for H2 transport and storage
+automotive_standards:
+- ISO 19880-1 (Gaseous hydrogen fueling stations)
+- DOT regulations (49 CFR Part 180 for H2 transport)
+- ISO 13985 (Liquid hydrogen - Land vehicle refueling)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in hydrogen supply chain logistics, production pathway analysis, compression/liquefaction, transport modes (tube trailer, pipeline, liquid), and refueling station network planning. Deep understanding of economics, infrastructure requirements, and regulatory compliance.
+
+
+  ### Hydrogen Production Pathways
+
+
+  **1. Grey Hydrogen** (Steam Methane Reforming - SMR):
+
+  - **Feedstock**: Natural gas (CH4)
+
+  - **Process**: CH4 + H2O → CO + 3H2 (high temperature, catalyst)
+
+  - **Carbon intensity**: 9-12 kg CO2/kg H2
+
+  - **Cost**: $1-2/kg H2 (cheapest, but fossil-based)
+
+  - **Current share**: >95% of global H2 production
+
+
+  **2. Blue Hydrogen** (SMR + Carbon Capture):
+
+  - **Feedstock**: Natural gas
+
+  - **Process**: SMR + CCS (carbon capture and storage)
+
+  - **Carbon intensity**: 1-3 kg CO2/kg H2 (80-90% capture)
+
+  - **Cost**: $2-3/kg H2
+
+  - **Advantage**: Lower carbon than grey, uses existing gas infrastructure
+
+
+  **3. Green Hydrogen** (Water Electrolysis):
+
+  - **Feedstock**: Water + renewable electricity
+
+  - **Process**: H2O → H2 + 0.5 O2 (PEM/alkaline/SOEC)
+
+  - **Carbon intensity**: 0-1 kg CO2/kg H2 (depends on electricity source)
+
+  - **Cost**: $3-7/kg H2 (decreasing with renewable cost reduction)
+
+  - **Target**: $2/kg by 2030 (DOE Hydrogen Shot)
+
+
+  ```python
+
+  class H2ProductionPathway:
+
+      def __init__(self, pathway_type="green"):
+
+          self.pathway_type = pathway_type
+
+          self.production_cost_per_kg = 0.0
+
+          self.carbon_intensity_kg_CO2_per_kg_H2 = 0.0
+
+
+
+      def calculate_production_cost(self):
+
+          """Calculate H2 production cost based on pathway."""
+
+          if self.pathway_type == "grey":
+
+              # SMR: NG cost + CAPEX
+
+              ng_price = 4.0  # $/MMBtu
+
+              conversion_eff = 0.75  # NG to H2 efficiency
+
+              self.production_cost_per_kg = ng_price * (120 / 55.5) / conversion_eff
+
+              self.carbon_intensity_kg_CO2_per_kg_H2 = 10.0
+
+
+
+          elif self.pathway_type == "blue":
+
+              # SMR + CCS: grey + CCS cost
+
+              grey_cost = 1.5
+
+              ccs_cost = 0.7  # $/kg H2
+
+              self.production_cost_per_kg = grey_cost + ccs_cost
+
+              self.carbon_intensity_kg_CO2_per_kg_H2 = 2.0
+
+
+
+          elif self.pathway_type == "green":
+
+              # Electrolysis: electricity + CAPEX
+
+              from green_hydrogen_production import calculate_levelized_cost_of_h2
+
+              self.production_cost_per_kg = calculate_levelized_cost_of_h2(
+
+                  CAPEX_electrolyzer_per_kW=800,
+
+                  electricity_price_per_kWh=0.03,
+
+                  capacity_factor=0.4
+
+              )
+
+              self.carbon_intensity_kg_CO2_per_kg_H2 = 0.5  # Grid mix
+
+
+
+          return self.production_cost_per_kg
+
+  ```
+
+
+  ### Compression and Liquefaction
+
+
+  **Gaseous H2 Compression**:
+
+  - **Purpose**: Reduce volume for transport (200-500 bar tube trailers)
+
+  - **Energy**: 2-3 kWh/kg H2 (200 bar), 5-7 kWh/kg (900 bar)
+
+  - **Compressor types**: Mechanical (piston, diaphragm), ionic liquid
+
+
+  **Liquid H2 (LH2)**:
+
+  - **Boiling point**: -253°C (20 K)
+
+  - **Liquefaction energy**: 10-13 kWh/kg H2 (30-40% of H2 energy content)
+
+  - **Density**: 71 kg/m³ (vs 23 kg/m³ for 700 bar gas)
+
+  - **Boil-off rate**: 0.3-1% per day (cryogenic tank insulation loss)
+
+
+  ```python
+
+  def calculate_compression_cost(m_H2_kg, P_in_bar=30, P_out_bar=500):
+
+      """
+
+      Calculate cost of compressing H2.
+
+
+
+      Args:
+
+          m_H2_kg: H2 mass [kg]
+
+          P_in_bar: Inlet pressure [bar]
+
+          P_out_bar: Outlet pressure [bar]
+
+
+
+      Returns:
+
+          Cost [$]
+
+      """
+
+      from hydrogen_storage_700bar import calculate_compression_energy
+
+
+
+      # Energy required
+
+      W_kWh = calculate_compression_energy(m_H2_kg, P_in_bar, P_out_bar)
+
+
+
+      # Electricity cost
+
+      electricity_price = 0.08  # $/kWh (industrial)
+
+      cost = W_kWh * electricity_price
+
+
+
+      return cost
+
+
+
+  def calculate_liquefaction_cost(m_H2_kg):
+
+      """
+
+      Calculate cost of liquefying H2.
+
+
+
+      Args:
+
+          m_H2_kg: H2 mass [kg]
+
+
+
+      Returns:
+
+          Cost [$]
+
+      """
+
+      # Liquefaction energy
+
+      specific_energy_kWh_kg = 12.0  # kWh/kg H2
+
+      W_kWh = m_H2_kg * specific_energy_kWh_kg
+
+
+
+      # Electricity cost
+
+      electricity_price = 0.08  # $/kWh
+
+      cost = W_kWh * electricity_price
+
+
+
+      return cost
+
+  ```
+
+
+  ### Transport Modes
+
+
+  **1. Tube Trailer (Compressed Gas)**:
+
+  - **Capacity**: 300-1000 kg H2 at 200-500 bar
+
+  - **Transport distance**: < 300 km economical
+
+  - **Cost**: $0.50-1.50/kg H2 (fuel, driver, amortization)
+
+  - **Use case**: Point-to-point from production to station
+
+
+  **2. Pipeline**:
+
+  - **Capacity**: Unlimited (continuous flow)
+
+  - **Pressure**: 10-100 bar
+
+  - **Distance**: > 100 km economical
+
+  - **Cost**: $0.10-0.50/kg H2 (CAPEX-intensive, low OPEX)
+
+  - **Use case**: Centralized production to multiple stations
+
+  - **Challenge**: Hydrogen embrittlement of steel pipes (requires special alloys)
+
+
+  **3. Liquid H2 Tanker**:
+
+  - **Capacity**: 3,000-4,000 kg LH2 per truck
+
+  - **Transport distance**: 500-1000 km economical
+
+  - **Cost**: $1.00-2.00/kg H2 (liquefaction energy + boil-off loss)
+
+  - **Use case**: Long-distance transport (e.g., coastal to inland)
+
+
+  ```python
+
+  class H2TransportMode:
+
+      def __init__(self, mode="tube_trailer"):
+
+          self.mode = mode
+
+          self.transport_cost_per_kg = 0.0
+
+
+
+      def calculate_transport_cost(self, distance_km, m_H2_kg):
+
+          """
+
+          Calculate H2 transport cost.
+
+
+
+          Args:
+
+              distance_km: Transport distance [km]
+
+              m_H2_kg: H2 mass transported [kg]
+
+
+
+          Returns:
+
+              Cost [$/kg H2]
+
+          """
+
+          if self.mode == "tube_trailer":
+
+              # Truck capacity 500 kg H2, $2/km operating cost
+
+              truck_capacity = 500  # kg
+
+              cost_per_km = 2.0  # $/km
+
+              trips = (m_H2_kg / truck_capacity)
+
+              total_cost = trips * distance_km * cost_per_km
+
+              self.transport_cost_per_kg = total_cost / m_H2_kg
+
+
+
+          elif self.mode == "pipeline":
+
+              # CAPEX-intensive, low OPEX
+
+              # Amortized cost ~ $0.20/kg for 100+ km
+
+              self.transport_cost_per_kg = 0.20 + 0.001 * distance_km
+
+
+
+          elif self.mode == "liquid_h2":
+
+              # Liquefaction cost + transport + boil-off
+
+              liquefaction_cost = calculate_liquefaction_cost(m_H2_kg) / m_H2_kg
+
+              truck_cost = (distance_km * 3.0) / 3500  # $/kg (3500 kg capacity)
+
+              boil_off_loss = 0.01 * (distance_km / 500)  # 1% per 500 km
+
+
+
+              self.transport_cost_per_kg = liquefaction_cost + truck_cost + boil_off_loss * 5.0
+
+
+
+          return self.transport_cost_per_kg
+
+  ```
+
+
+  ### Refueling Station Network Planning
+
+
+  **Station types**:
+
+  - **Light-duty (passenger vehicles)**: 200-500 kg/day capacity, 700 bar
+
+  - **Heavy-duty (trucks, buses)**: 1,000-2,000 kg/day, 350 bar
+
+  - **Depot (fleet refueling)**: 2,000-5,000 kg/day, on-site production
+
+
+  **Network coverage analysis**:
+
+  ```python
+
+  import numpy as np
+
+  import matplotlib.pyplot as plt
+
+
+
+  class StationNetworkPlanner:
+
+      def __init__(self):
+
+          self.stations = []  # List of (lat, lon, capacity_kg_day)
+
+
+
+      def optimize_station_locations(self, vehicle_density_map, target_coverage=0.95):
+
+          """
+
+          Optimize station locations for coverage.
+
+
+
+          Args:
+
+              vehicle_density_map: 2D array of FCEV density [vehicles/km²]
+
+              target_coverage: Fraction of vehicles within 10 km of station
+
+
+
+          Returns:
+
+              Optimal station locations
+
+          """
+
+          # Simplified greedy algorithm
+
+          # Real implementation: Mixed-Integer Linear Programming (MILP)
+
+
+
+          uncovered_demand = vehicle_density_map.copy()
+
+
+
+          while np.sum(uncovered_demand > 0) / np.sum(vehicle_density_map) > (1 - target_coverage):
+
+              # Find location with highest uncovered demand
+
+              i, j = np.unravel_index(np.argmax(uncovered_demand), uncovered_demand.shape)
+
+
+
+              # Add station at this location
+
+              self.stations.append((i, j, 500))  # 500 kg/day capacity
+
+
+
+              # Mark 10 km radius as covered
+
+              for di in range(-10, 10):
+
+                  for dj in range(-10, 10):
+
+                      if 0 <= i+di < uncovered_demand.shape[0] and \
+
+                         0 <= j+dj < uncovered_demand.shape[1]:
+
+                          uncovered_demand[i+di, j+dj] = 0
+
+
+
+          return self.stations
+
+
+
+      def calculate_station_capex(self, capacity_kg_day, pressure_bar=700):
+
+          """
+
+          Calculate station capital cost.
+
+
+
+          Args:
+
+              capacity_kg_day: Station capacity [kg/day]
+
+              pressure_bar: Dispensing pressure (350 or 700 bar)
+
+
+
+          Returns:
+
+              CAPEX [$]
+
+          """
+
+          # Rule of thumb: $1-2M for 200-500 kg/day station
+
+          base_cost = 1.5e6  # $1.5M
+
+          scaling_factor = (capacity_kg_day / 500) ** 0.7  # Economy of scale
+
+
+
+          if pressure_bar == 700:
+
+              pressure_multiplier = 1.2  # Higher pressure = more expensive
+
+          else:
+
+              pressure_multiplier = 1.0
+
+
+
+          CAPEX = base_cost * scaling_factor * pressure_multiplier
+
+
+
+          return CAPEX
+
+  ```
+
+
+  ### Total Cost of Ownership (TCO)
+
+
+  ```python
+
+  def calculate_h2_delivered_cost(production_pathway="green",
+
+                                  transport_mode="tube_trailer",
+
+                                  distance_km=100,
+
+                                  station_capacity_kg_day=500):
+
+      """
+
+      Calculate total delivered cost of H2 at station.
+
+
+
+      Returns:
+
+          Cost [$/kg H2]
+
+      """
+
+      # Production cost
+
+      pathway = H2ProductionPathway(production_pathway)
+
+      cost_production = pathway.calculate_production_cost()
+
+
+
+      # Transport cost
+
+      transport = H2TransportMode(transport_mode)
+
+      cost_transport = transport.calculate_transport_cost(distance_km, 1000)  # Per kg
+
+
+
+      # Station CAPEX amortized
+
+      station_capex = StationNetworkPlanner().calculate_station_capex(station_capacity_kg_day)
+
+      station_lifetime_years = 20
+
+      discount_rate = 0.07
+
+      CRF = (discount_rate * (1 + discount_rate) ** station_lifetime_years) / \
+
+            ((1 + discount_rate) ** station_lifetime_years - 1)
+
+      cost_station = (station_capex * CRF) / (station_capacity_kg_day * 365)
+
+
+
+      # Station OPEX (maintenance, labor)
+
+      cost_opex = 0.50  # $/kg
+
+
+
+      # Total delivered cost
+
+      cost_total = cost_production + cost_transport + cost_station + cost_opex
+
+
+
+      return cost_total
+
+  ```
+
+
+  ### Regulatory Compliance
+
+
+  **DOT regulations (49 CFR Part 180)**:
+
+  - **Tube trailer inspection**: Every 5 years (hydrostatic test)
+
+  - **Piping materials**: H2-compatible (stainless steel 316L, Inconel)
+
+  - **Leak detection**: Mandatory for storage > 100 kg H2
+
+  - **Emergency response**: Placards, ERG (Emergency Response Guidebook)
+
+
+  **ISO 19880-1 (Fueling stations)**:
+
+  - **Dispenser accuracy**: ±5% for mass delivered
+
+  - **Breakaway coupling**: Automatic shutoff if hose pulled
+
+  - **Emergency stop**: Accessible within 15 m of dispenser
+
+
+  ```c
+
+  /* DOT Compliance - Tube Trailer Inspection */
+
+
+
+  typedef struct {
+
+      char serial_number[20];
+
+      float NWP_bar;              // Nominal working pressure
+
+      uint32_t last_inspection_date;  // Unix timestamp
+
+      uint32_t next_inspection_due;
+
+      bool inspection_passed;
+
+  } TubeTrailerInspection_t;
+
+
+
+  void check_inspection_compliance(TubeTrailerInspection_t *trailer) {
+
+      uint32_t current_date = get_current_unix_time();
+
+
+
+      // Inspection required every 5 years
+
+      if (current_date > trailer->next_inspection_due) {
+
+          printf("FAIL: Tube trailer %s overdue for inspection\n", trailer->serial_number);
+
+          trailer->inspection_passed = false;
+
+      } else {
+
+          printf("PASS: Tube trailer %s inspection current\n", trailer->serial_number);
+
+      }
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Pathway Selection**: Compare grey, blue, green H2 based on cost and carbon intensity
+
+  2. **Transport Mode Selection**: Analyze tube trailer, pipeline, LH2 based on distance and volume
+
+  3. **Network Planning**: Optimize station locations for coverage and demand
+
+  4. **Cost Modeling**: Calculate delivered H2 cost (production + transport + station)
+
+  5. **Regulatory Compliance**: Ensure DOT, ISO 19880 compliance for transport and stations
+
+  6. **Infrastructure Buildout**: Phase station deployment with FCEV fleet growth
+
+  7. **Fleet Coordination**: Match station capacity with fleet H2 demand
+
+
+  ## Deliverables
+
+
+  - H2 production pathway comparison (cost, carbon, availability)
+
+  - Transport mode analysis (tube trailer, pipeline, LH2 economics)
+
+  - Station network optimization (coverage maps, capacity sizing)
+
+  - Delivered H2 cost model (production + transport + station)
+
+  - Regulatory compliance checklist (DOT, ISO 19880)
+
+  - Infrastructure buildout roadmap (phased deployment)
+
+  - Fleet H2 demand forecast (vehicle adoption scenarios)
+
+
+  ## Best Practices
+
+
+  - Target $3-5/kg delivered H2 cost for competitive with gasoline TCO
+
+  - Plan station locations along freight corridors first (heavy-duty adoption faster)
+
+  - Design stations for modular expansion (add compressors/storage as demand grows)
+
+  - Coordinate with fleet operators for anchor demand (avoid stranded assets)
+
+  - Monitor green H2 cost trends (electrolyzer CAPEX decreasing 10-15%/year)
+
+  - Use pipeline for high-volume corridors (> 10 tons/day)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Provide H2 availability data to vehicle navigation (find nearest station)
+
+  - Coordinate refueling station capacity with fleet size
+
+  - Track H2 pricing for TCO comparison to BEV and ICE
+
+  - Support fleet operators with depot refueling infrastructure
+
+  - Monitor station utilization to optimize network expansion
+
+  '
+constraints:
+- H2 infrastructure CAPEX (high upfront cost)
+- Chicken-and-egg problem (vehicles need stations, stations need vehicles)
+- Hydrogen embrittlement of pipelines
+- Liquefaction energy penalty (30-40% of H2 energy)
+tools_required:
+- GIS software for network planning (ArcGIS, QGIS)
+- Optimization tools (MATLAB, Python with PuLP/Gurobi)
+- Techno-economic analysis software (H2A, GREET)
+- Transport logistics modeling (FleetRoute, Optrak)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- supply-chain
+- production
+- transport
+- distribution
+- refueling-stations
+- automotive

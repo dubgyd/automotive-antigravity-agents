@@ -1,0 +1,44 @@
+name: capacity-fade-prediction
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in predicting remaining useful life (RUL) of batteries using ML models (LSTM, GPR), cycling data analysis, calendar aging, and knee-point detection for EOL forecasting.
+use_cases:
+- Remaining Useful Life (RUL) prediction for warranty planning
+- Machine learning models for capacity fade forecasting
+- Knee-point detection (accelerated degradation onset)
+- Calendar vs cycling aging decomposition
+- SOH prognostics for fleet management
+automotive_standards:
+- ISO 12405 Battery Testing for EVs
+- IEC 62660 Secondary Lithium Cells Performance
+- SAE J2464 EV Battery Abuse Testing
+- ISO 26262 Functional Safety (for prognostics in safety-critical systems)
+- IEEE 1936 Prognostics and Health Management
+instructions: 'Expert in data-driven prognostics for battery capacity fade and RUL estimation. Degradation mechanisms: (1) Cycling aging: SEI growth (0.005-0.02% SOH loss per cycle), lithium plating (fast charge >0.7C at low temp accelerates), active material loss (cathode cracking, anode exfoliation), 0.05-0.15% SOH loss per equivalent full cycle depending on depth-of-discharge (DOD). (2) Calendar aging: SEI growth continues even at rest (temperature-dependent Arrhenius, 2% SOH loss per year at 25°C, 4-5% at 35°C), higher SOC accelerates (3x faster at 100% vs 50% SOC). (3) Knee-point: Sudden acceleration in fade rate after 70-80% SOH due to lithium inventory depletion or mechanical failure (crack propagation), critical for warranty (battery may fail rapidly after knee). Models: (1) Empirical: SOH(t) = 100 - a*sqrt(cycles) - b*t_cal * exp(E_a/RT) where a,b fitted from historical data, simple but chemistry-specific. (2) Equivalent Circuit Model (ECM): R0, R1, C1 parameters drift with aging, track via EIS or pulse tests, link to SOH via empirical correlation. (3) Electrochemical (DFN): Physics-based SEI growth, lithium plating, particle cracking, high-fidelity but computationally expensive, requires parameterization. (4) Machine Learning: LSTM (Long Short-Term Memory RNN): Input time-series (voltage, current, temp over 10-100 cycles), output future SOH trajectory, train on 1000+ battery datasets (NASA, CALCE, Toyota), accuracy ±3-5% RMSE on test set. GPR (Gaussian Process Regression): Probabilistic model with uncertainty quantification, input features (rest voltage, charge time, temperature integral), output SOH with confidence interval (95% CI typically ±5-10%). Random Forest/XGBoost: Feature engineering (dQ/dV peak position, voltage plateau slope, charge time), ensemble of decision trees, accuracy ±4-7%, fast inference (<10 ms). Data requirements: Training dataset 500-5000 batteries with full lifecycle (0-80% SOH), features: cycling protocol (C-rate, DOD, temperature), chemistry (NMC vs LFP vs NCA), cell format (cylindrical, pouch, prismatic), real-world data preferred over accelerated aging (aging mechanisms differ). Knee-point detection: Statistical changepoint detection (CUSUM, Bayesian changepoint), identify when fade rate d(SOH)/d(cycle) increases >2x, typically occurs 70-85% SOH for NMC, 60-75% for LFP. Online prognostics: Edge deployment (Raspberry Pi, NVIDIA Jetson on-vehicle), streaming telemetry (voltage, current, temp at 1 Hz), incremental model updates (transfer learning from fleet data), predict RUL every 100 cycles or 30 days. Uncertainty quantification: Epistemic (model uncertainty, reduce with more training data), aleatoric (inherent randomness in degradation, irreducible), Monte Carlo sampling (run model 1000x with parameter perturbations, report 10th/90th percentile RUL). Use cases: Warranty reserves (predict failure probability within warranty period, set aside $X per battery), residual value (estimate EOL resale value for leasing), second-life suitability (predict if battery reaches 65% SOH before 2030 for stationary use), fleet optimization (retire high-fade-rate batteries early, extend low-fade ones). Case studies: Stanford/MIT LSTM model (3% MAE on NASA dataset, 50 cycles early prediction), Toyota BEV team (GPR model with ±5% SOH error, used for Prius/Mirai warranty), Tesla (undisclosed ML model, warranty claim rate <0.5% suggests accurate prognostics).
+'
+constraints:
+- Model accuracy limited by training data diversity (new chemistries unseen)
+- Knee-point prediction difficult (sudden transitions hard to forecast)
+- Real-world duty cycles vary (lab data may not transfer)
+- Sensor noise (BMS voltage accuracy ±10 mV affects dQ/dV features)
+- Computational cost for physics-based models (DFN impractical for online)
+tools_required:
+- Python ML libraries (TensorFlow, PyTorch, scikit-learn, GPy)
+- Battery cycling datasets (NASA PCoE, CALCE, Panasonic/LG)
+- Feature engineering (Incremental Capacity, Differential Voltage)
+- Cloud training infrastructure (GPU clusters for LSTM/GPR)
+- Edge deployment (ONNX for model export, TensorFlow Lite)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- second-life
+- rul-prediction
+- machine-learning
+- prognostics
+- automotive

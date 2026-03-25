@@ -1,0 +1,297 @@
+---
+name: pod-security-policies
+version: 1.0.0
+description: Implement Pod Security Standards (PSS) and admission control for automotive Kubernetes
+category: kubernetes
+subcategory: security
+tags: [security, pss, psp, admission-control, compliance, iso26262]
+
+instructions: |
+  ## Pod Security Standards for Automotive Kubernetes
+
+  ### Overview
+
+  Pod Security Standards (PSS) define three security profiles that restrict
+  pod configurations to prevent privilege escalation, container breakout, and
+  unauthorized host access. For automotive Kubernetes, pod security enforcement
+  is critical for ISO 26262 compliance and protecting safety-critical workloads.
+
+  ### Security Levels
+
+  | Level | Description | Automotive Use |
+  |-------|-------------|---------------|
+  | Privileged | Unrestricted (no restrictions) | System components only |
+  | Baseline | Minimally restrictive, prevent known escalation | General workloads |
+  | Restricted | Heavily restricted, security best practices | Safety-critical, production |
+
+  ### Pod Security Admission (PSA)
+
+  Kubernetes 1.25+ enforces PSS via the built-in Pod Security Admission
+  controller. Apply per-namespace using labels:
+
+  ```yaml
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: automotive-production
+    labels:
+      pod-security.kubernetes.io/enforce: restricted
+      pod-security.kubernetes.io/enforce-version: latest
+      pod-security.kubernetes.io/audit: restricted
+      pod-security.kubernetes.io/warn: restricted
+  ```
+
+  Modes:
+  - `enforce`: Reject pods that violate the policy
+  - `audit`: Log violations but allow the pod
+  - `warn`: Show warnings to the user but allow the pod
+
+  ### Restricted Level Requirements
+
+  A pod must meet all of these to pass the restricted level:
+  - `runAsNonRoot: true` — No root containers
+  - `allowPrivilegeEscalation: false`
+  - `seccompProfile.type: RuntimeDefault` or `Localhost`
+  - No `hostNetwork`, `hostPID`, `hostIPC`
+  - No `hostPath` volume mounts
+  - No privileged containers
+  - Drop all capabilities, add only specific ones
+  - Read-only root filesystem (recommended)
+
+  ### OPA Gatekeeper for Custom Policies
+
+  Pod Security Admission covers basic policies. For automotive-specific rules,
+  use OPA Gatekeeper:
+
+  ```yaml
+  # Example: Require automotive label on all pods
+  apiVersion: templates.gatekeeper.sh/v1
+  kind: ConstraintTemplate
+  metadata:
+    name: requiredlabels
+  spec:
+    crd:
+      spec:
+        names:
+          kind: RequiredLabels
+        validation:
+          openAPIV3Schema:
+            type: object
+            properties:
+              labels:
+                type: array
+                items:
+                  type: string
+    targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package requiredlabels
+        violation[{"msg": msg}] {
+          provided := {l | input.review.object.metadata.labels[l]}
+          required := {l | l := input.parameters.labels[_]}
+          missing := required - provided
+          count(missing) > 0
+          msg := sprintf("Missing labels: %v", [missing])
+        }
+  ```
+
+  ### Automotive Security Policies
+
+  | Policy | Rule | Reason |
+  |--------|------|--------|
+  | Image source | Only from approved registries | Supply chain security |
+  | Resource limits | Required on all containers | Prevent resource exhaustion |
+  | Network policies | Default deny, explicit allow | Isolate safety domains |
+  | Service accounts | No automount of default token | Reduce attack surface |
+  | Seccomp profiles | RuntimeDefault minimum | Restrict syscalls |
+  | Read-only root FS | Enforced for production | Prevent runtime modification |
+  | No host namespaces | Block hostNetwork/PID/IPC | Container isolation |
+
+  ### Compliance Mapping
+
+  | Automotive Standard | Kubernetes Control |
+  |--------------------|--------------------|
+  | ISO 26262 (Safety) | Resource limits, node affinity, PDB |
+  | ISO 21434 (Cybersecurity) | PSS restricted, network policies, RBAC |
+  | ASPICE (Process) | Audit logging, GitOps, change tracking |
+  | SOC 2 (Cloud) | Encryption at rest, access controls, logging |
+
+  ### RBAC Integration
+
+  Combine PSS with RBAC for defense in depth:
+  - Developers: Can deploy to dev namespace (baseline PSS)
+  - CI/CD pipeline: Can deploy to staging/production (restricted PSS)
+  - Cluster admins: Full access with audit logging
+  - Service accounts: Minimal permissions per application
+
+  ### Best Practices
+
+  - Start with `audit` mode to discover violations before enforcing
+  - Apply `restricted` level to all production namespaces
+  - Use OPA Gatekeeper for custom automotive policies beyond PSS
+  - Require approved container registries (block Docker Hub in production)
+  - Enforce resource limits and requests on all pods
+  - Enable audit logging for all admission decisions
+  - Scan container images for CVEs in CI pipeline (Trivy, Grype)
+  - Implement network policies as default-deny with explicit allowlists
+  - Review and rotate RBAC permissions quarterly
+  - Test policy changes in staging before applying to production
+
+metadata:
+  author: Security Engineer
+  created: 2026-03-19
+  stability: stable
+  compliance: [ISO 26262, ASPICE, SOC2]
+  use_cases:
+    - Security hardening
+    - Compliance enforcement
+    - Privilege management
+    - Automotive safety requirements
+
+parameters:
+  enforcement_mode:
+    type: enum
+    description: PSS enforcement mode
+    values: [enforce, audit, warn]
+    default: enforce
+
+  default_level:
+    type: enum
+    description: Default security level
+    values: [privileged, baseline, restricted]
+    default: baseline
+
+  enable_policy_enforcement:
+    type: boolean
+    description: Enable OPA/Gatekeeper policies
+    default: true
+
+steps:
+  - id: enable_pss
+    name: Enable Pod Security Standards
+    type: configuration
+    commands:
+      - name: Configure PSS for namespaces
+        command: |
+          # Restricted for production workloads
+          kubectl label namespace automotive-production \
+            pod-security.kubernetes.io/enforce=restricted \
+            pod-security.kubernetes.io/audit=restricted \
+            pod-security.kubernetes.io/warn=restricted
+
+          # Baseline for development
+          kubectl label namespace automotive-development \
+            pod-security.kubernetes.io/enforce=baseline \
+            pod-security.kubernetes.io/audit=baseline \
+            pod-security.kubernetes.io/warn=baseline
+
+  - id: deploy_gatekeeper
+    name: Deploy OPA Gatekeeper
+    type: deployment
+    condition: enable_policy_enforcement
+    commands:
+      - name: Install Gatekeeper
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml
+
+          kubectl wait --for=condition=Available deployment/gatekeeper-controller-manager -n gatekeeper-system --timeout=300s
+
+      - name: Create constraint templates
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: templates.gatekeeper.sh/v1
+          kind: ConstraintTemplate
+          metadata:
+            name: k8srequiredlabels
+          spec:
+            crd:
+              spec:
+                names:
+                  kind: K8sRequiredLabels
+                validation:
+                  openAPIV3Schema:
+                    type: object
+                    properties:
+                      labels:
+                        type: array
+                        items:
+                          type: string
+            targets:
+            - target: admission.k8s.gatekeeper.sh
+              rego: |
+                package k8srequiredlabels
+                violation[{"msg": msg}] {
+                  provided := {label | input.review.object.metadata.labels[label]}
+                  required := {label | label := input.parameters.labels[_]}
+                  missing := required - provided
+                  count(missing) > 0
+                  msg := sprintf("Missing required labels: %v", [missing])
+                }
+          ---
+          apiVersion: constraints.gatekeeper.sh/v1beta1
+          kind: K8sRequiredLabels
+          metadata:
+            name: automotive-required-labels
+          spec:
+            match:
+              kinds:
+              - apiGroups: ["apps"]
+                kinds: ["Deployment", "StatefulSet"]
+              namespaces:
+              - "automotive-production"
+            parameters:
+              labels:
+              - "app.kubernetes.io/name"
+              - "app.kubernetes.io/version"
+              - "automotive.io/component"
+              - "automotive.io/safety-level"
+          EOF
+
+automotive_security_policies:
+  iso26262_compliance:
+    description: Enforce ISO 26262 safety requirements
+    policies:
+      - Mandatory safety level labels (ASIL-A to ASIL-D)
+      - Resource limits for safety-critical pods
+      - No privileged containers for safety functions
+      - Read-only root filesystem
+      - Run as non-root user
+      - Drop all capabilities
+
+  network_security:
+    description: Network isolation and segmentation
+    policies:
+      - Default deny all ingress/egress
+      - Explicit allow lists
+      - No host network access
+      - No host port binding
+
+  resource_management:
+    description: Resource quotas and limits
+    policies:
+      - CPU/memory limits required
+      - Storage limits enforced
+      - Pod count limits per namespace
+
+best_practices:
+  - Use restricted PSS for production
+  - Implement admission controllers
+  - Enforce security labels
+  - Regular security audits
+  - Scan container images
+  - Implement network policies
+  - Use RBAC for access control
+
+related_skills:
+  - network-policies
+  - rbac-setup
+  - secrets-management
+  - admission-controllers
+
+examples:
+  - name: Enable strict security for production
+    command: |
+      pod-security-policies \
+        --enforcement-mode=enforce \
+        --default-level=restricted \
+        --enable-policy-enforcement=true

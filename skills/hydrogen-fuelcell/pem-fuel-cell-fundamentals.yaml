@@ -1,0 +1,326 @@
+name: pem-fuel-cell-fundamentals
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: fuel-cell-physics
+description: Expert skill in PEM (Proton Exchange Membrane) fuel cell operating principles, electrochemistry, and performance characterization.
+use_cases:
+- Fuel cell stack design and sizing
+- Polarization curve analysis
+- Water balance and flooding mitigation
+- MEA (Membrane Electrode Assembly) optimization
+- Performance degradation diagnostics
+automotive_standards:
+- ISO 23273 (Hydrogen fuel system components)
+- SAE J2615 (Performance testing of fuel cell systems)
+- IEC 62282-2 (Fuel cell modules)
+- ECE R134 (Hydrogen propulsion system safety)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in PEM fuel cell electrochemistry, thermodynamics, and transport phenomena for automotive applications. Deep understanding of membrane electrode assembly (MEA) structure, catalyst layers, and gas diffusion layers.
+
+
+  ### PEM Fuel Cell Operating Principles
+
+
+  - **Electrochemical reactions**: Anode (H2 → 2H+ + 2e-), Cathode (O2 + 4H+ + 4e- → 2H2O)
+
+  - **Proton transport**: Nafion membrane conductivity, water content dependency
+
+  - **Electron transport**: External circuit current generation, load matching
+
+  - **Water management**: Product water removal, membrane humidification balance
+
+  - **Heat generation**: Reversible (entropic) and irreversible (ohmic, activation) losses
+
+  - **Operating temperature**: 60-80°C for automotive PEM, thermal stability
+
+
+  ### Polarization Curve Components
+
+
+  - **Open Circuit Voltage (OCV)**: Theoretical 1.23V (water formation), practical 0.95-1.0V
+
+  - **Activation losses**: Catalyst kinetics, Tafel equation, exchange current density
+
+  - **Ohmic losses**: Membrane resistance, contact resistance, current collector losses
+
+  - **Concentration losses**: Mass transport limitations, diffusion layer thickness
+
+  - **Limiting current density**: Maximum achievable current before voltage collapse
+
+
+  **Voltage-Current Relationship**:
+
+  ```python
+
+  def polarization_voltage(i_density, T=353.15, P_H2=1.5, P_O2=0.21):
+
+      """
+
+      Calculate PEM fuel cell voltage at given current density.
+
+
+
+      Args:
+
+          i_density: Current density [A/cm²]
+
+          T: Temperature [K]
+
+          P_H2: Hydrogen partial pressure [atm]
+
+          P_O2: Oxygen partial pressure [atm]
+
+
+
+      Returns:
+
+          Cell voltage [V]
+
+      """
+
+      R = 8.314  # J/(mol·K)
+
+      F = 96485  # C/mol
+
+
+
+      # Nernst voltage
+
+      E_nernst = 1.229 - 0.85e-3 * (T - 298.15) + (R*T)/(2*F) * \
+
+                 np.log(P_H2 * np.sqrt(P_O2))
+
+
+
+      # Activation overpotential (Tafel)
+
+      i0_anode = 1e-3   # A/cm² (high for Pt/C)
+
+      i0_cathode = 1e-7 # A/cm² (low - ORR slow)
+
+      alpha = 0.5       # Charge transfer coefficient
+
+
+
+      eta_act = (R*T)/(alpha*F) * np.log(i_density / i0_cathode)
+
+
+
+      # Ohmic overpotential
+
+      R_mem = 0.16 / 1000  # Ohm·cm² (Nafion 212, 50 µm at 80°C)
+
+      R_contact = 0.01 / 1000  # Ohm·cm² (GDL + bipolar plate)
+
+      eta_ohm = i_density * (R_mem + R_contact)
+
+
+
+      # Concentration overpotential (simplified)
+
+      i_lim = 1.5  # A/cm² (limiting current density)
+
+      eta_conc = -0.05 * np.log(1 - i_density / i_lim) if i_density < i_lim else 0.5
+
+
+
+      V_cell = E_nernst - eta_act - eta_ohm - eta_conc
+
+      return max(V_cell, 0.0)
+
+  ```
+
+
+  ### Membrane Electrode Assembly (MEA)
+
+
+  - **Catalyst layer**: Pt/C loading (0.1-0.4 mg/cm²), ionomer content (20-30 wt%)
+
+  - **Membrane**: Nafion 211/212 (25-50 µm), proton conductivity 0.1 S/cm at 80°C
+
+  - **Gas Diffusion Layer (GDL)**: Carbon paper/cloth, PTFE hydrophobic coating
+
+  - **Microporous layer (MPL)**: Carbon black + PTFE, water management, contact resistance
+
+  - **Catalyst poisoning**: CO tolerance (< 10 ppm), sulfur contamination
+
+
+  ### Water Management
+
+
+  **Water balance equation**:
+
+  ```c
+
+  /* Water transport in PEM fuel cell */
+
+  typedef struct {
+
+      double lambda_anode;    // Water content anode side (molecules H2O per SO3-)
+
+      double lambda_cathode;  // Water content cathode side
+
+      double J_water_drag;    // Electro-osmotic drag flux [mol/(cm²·s)]
+
+      double J_water_diff;    // Back-diffusion flux [mol/(cm²·s)]
+
+      double J_water_gen;     // Water generation at cathode [mol/(cm²·s)]
+
+  } WaterBalance_t;
+
+
+
+  void calculate_water_balance(WaterBalance_t *wb, double i_density,
+
+                                double D_lambda, double membrane_thickness) {
+
+      double F = 96485.0;  // C/mol
+
+      double n_drag = 2.5 * wb->lambda_anode / 22.0;  // Drag coefficient
+
+
+
+      // Electro-osmotic drag (anode to cathode)
+
+      wb->J_water_drag = (n_drag * i_density) / F;
+
+
+
+      // Back-diffusion (cathode to anode)
+
+      wb->J_water_diff = D_lambda * (wb->lambda_cathode - wb->lambda_anode) /
+
+                         membrane_thickness;
+
+
+
+      // Water generation at cathode (ORR)
+
+      wb->J_water_gen = i_density / (2.0 * F);  // 2 electrons per H2O
+
+
+
+      // Net water accumulation at cathode
+
+      double net_cathode = wb->J_water_gen + wb->J_water_drag - wb->J_water_diff;
+
+
+
+      // Update lambda (simplified)
+
+      wb->lambda_cathode += net_cathode * 0.01;  // Timestep dependent
+
+  }
+
+  ```
+
+
+  ### Fuel Cell Stack Performance
+
+
+  - **Cell count**: Automotive stacks 300-400 cells for 400V bus
+
+  - **Active area**: 200-400 cm² per cell for automotive applications
+
+  - **Power density**: 3-4 kW/L (volumetric), 2-3 kW/kg (gravimetric)
+
+  - **Operating point**: 0.6-0.7 V/cell at rated power (balance efficiency/power)
+
+  - **Efficiency**: 50-60% at rated power, 60-70% at low load
+
+
+  ## Approach
+
+
+  1. **Stack Sizing**: Determine cell count and active area based on power requirements
+
+  2. **Operating Conditions**: Set temperature (70-80°C), pressure (1.5-2.5 bar), stoichiometry
+
+  3. **Polarization Analysis**: Measure/model voltage-current curve, identify loss mechanisms
+
+  4. **Water Balance**: Calculate humidification needs, prevent flooding/drying
+
+  5. **Thermal Analysis**: Estimate heat generation, design cooling system
+
+  6. **Degradation Assessment**: Monitor OCV drift, high-frequency resistance increase
+
+  7. **Optimization**: Adjust pressure, temperature, stoichiometry for efficiency/durability
+
+
+  ## Deliverables
+
+
+  - Polarization curve models with validated parameters
+
+  - MEA design specifications (catalyst loading, membrane thickness)
+
+  - Water balance calculations and humidification strategy
+
+  - Thermal management requirements (coolant flow, radiator sizing)
+
+  - Performance maps (efficiency vs power, voltage vs current density)
+
+  - Degradation prediction models (voltage decay, resistance increase)
+
+  - Stack architecture recommendations (cell count, cooling topology)
+
+
+  ## Best Practices
+
+
+  - Validate polarization models against experimental stack data
+
+  - Monitor water balance to prevent flooding (low current) and drying (high current)
+
+  - Use impedance spectroscopy (EIS) to separate activation/ohmic/diffusion losses
+
+  - Maintain membrane hydration during start/stop transients
+
+  - Avoid voltage cycling below 0.5V (carbon corrosion) and above 0.9V (Pt dissolution)
+
+  - Design for freeze tolerance (-40°C) with proper purge and drain strategies
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Provide stack voltage-current map to DC-DC converter controller
+
+  - Interface with air compressor control for stoichiometry regulation
+
+  - Supply thermal model to cooling system controller
+
+  - Generate lookup tables for BMS to manage battery buffer power split
+
+  - Support diagnostics with impedance spectroscopy and voltage degradation trends
+
+  '
+constraints:
+- Water flooding at low current density
+- Membrane drying at high current density
+- Catalyst degradation from voltage cycling
+- Cold start performance below -20°C
+tools_required:
+- MATLAB/Simulink for stack modeling
+- Python with NumPy/SciPy for electrochemical simulation
+- EIS analyzer for impedance spectroscopy
+- Polarization curve test bench
+- Thermal imaging for hotspot detection
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- pem
+- electrochemistry
+- polarization-curve
+- mea
+- water-management
+- automotive

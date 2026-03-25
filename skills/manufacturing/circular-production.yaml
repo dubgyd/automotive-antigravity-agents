@@ -1,0 +1,167 @@
+name: circular-production
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+description: "Zero-waste manufacturing with closed-loop material recycling and remanufacturing"
+use_cases:
+  - "Design closed-loop aluminum recycling from stamping scrap back to body sheet"
+  - "Implement battery pack remanufacturing and second-life repurposing workflows"
+  - "Create material passport systems tracking composition through lifecycle loops"
+  - "Build zero-liquid-discharge water recycling systems for paint shops"
+  - "Develop waste stream value mapping to generate revenue from production byproducts"
+automotive_standards:
+  - "EU End-of-Life Vehicles Directive 2000/53/EC"
+  - "EU Battery Regulation 2023/1542"
+  - "ISO 14001 - Environmental Management Systems"
+  - "ISO 14040/14044 - Life Cycle Assessment"
+  - "VDA 231-106 - Material Recyclability Calculation"
+instructions: |
+  # Circular Production Systems
+
+  ## Overview
+  Circular production transforms the traditional linear take-make-dispose model into
+  closed loops where materials are continuously recycled, components are remanufactured,
+  and waste streams become inputs for other processes. In automotive manufacturing, this
+  addresses regulatory pressure from the EU ELV Directive requiring 95 percent recovery
+  rate and creates economic opportunity through material value retention.
+
+  ## Key Concepts
+
+  ### R-Strategy Hierarchy
+  Circular actions ranked from highest to lowest value retention:
+
+  - R0 Refuse: Eliminate unnecessary components through design simplification
+  - R1 Reduce: Lightweighting and material optimization
+  - R2 Reuse: Direct reuse of components such as seats, ECUs, and glass
+  - R3 Repair: Extend vehicle life through modular repair-friendly design
+  - R4 Remanufacture: Full restoration to original specifications with warranty
+  - R5 Repurpose: Second-life applications such as EV battery to grid storage
+  - R6 Recycle: Material recovery for reprocessing into new products
+  - R7 Recover: Energy recovery from non-recyclable waste streams
+
+  ### Material Flows in Automotive Production
+  Steel stamping generates 25 percent scrap routed to EAF steelmakers. Aluminum
+  stamping generates 40 percent scrap suitable for closed-loop alloy recycling.
+  Plastic injection molding produces 5 percent scrap for in-process regrind reuse.
+  Paint shops lose 50 percent of applied material as overspray requiring solvent
+  recovery and sludge management.
+
+  ## Implementation Guide
+
+  ### Step 1 - Waste Stream Analysis
+  Map all production waste streams with volume, composition, and recovery value.
+
+  ```python
+  class WasteStreamAnalyzer:
+      def __init__(self, plant_id: str, annual_production: int):
+          self.plant_id = plant_id
+          self.production = annual_production
+
+      def map_waste_streams(self, process_data: list) -> list:
+          """Map all waste streams with volume and circular pathway."""
+          streams = []
+          for process in process_data:
+              for waste in process["waste_outputs"]:
+                  annual_tons = waste["kg_per_vehicle"] * self.production / 1000
+                  streams.append({
+                      "process": process["name"],
+                      "material": waste["material"],
+                      "annual_tons": annual_tons,
+                      "current_disposition": waste["disposition"],
+                      "recovery_value_per_ton": waste["market_value"],
+                      "annual_value": annual_tons * waste["market_value"],
+                      "circular_opportunity": self._identify_path(waste),
+                  })
+          return sorted(streams, key=lambda s: s["annual_value"], reverse=True)
+
+      def _identify_path(self, waste: dict) -> str:
+          if waste["material"] == "aluminum" and waste.get("alloy_known"):
+              return "closed_loop_to_same_alloy_supplier"
+          elif waste["material"] == "steel":
+              return "sorted_scrap_to_EAF_steelmaker"
+          elif waste["material"] == "plastic" and waste.get("contamination_pct", 100) < 5:
+              return "regrind_reuse_in_process"
+          return "external_recycler"
+  ```
+
+  ### Step 2 - Battery Circular Economy
+  Route batteries through optimal circular pathways based on state of health.
+
+  ```python
+  class BatteryCircularManager:
+      SOH_REMANUFACTURE_THRESHOLD = 0.80
+      SOH_SECOND_LIFE_THRESHOLD = 0.60
+      SOH_RECYCLE_THRESHOLD = 0.40
+
+      def determine_path(self, battery: dict) -> dict:
+          """Route battery to optimal circular pathway."""
+          soh = battery["state_of_health"]
+          if soh >= self.SOH_REMANUFACTURE_THRESHOLD:
+              return {"path": "remanufacture", "action": "replace_degraded_cells"}
+          elif soh >= self.SOH_SECOND_LIFE_THRESHOLD:
+              return {"path": "second_life", "action": "repurpose_for_storage"}
+          elif soh >= self.SOH_RECYCLE_THRESHOLD:
+              return {"path": "recycle", "action": "hydrometallurgical_recovery"}
+          return {"path": "recycle", "action": "pyrometallurgical_recovery"}
+  ```
+
+  ### Step 3 - Material Passport System
+  Track material composition through multiple lifecycle loops for traceability.
+
+  ```python
+  class MaterialPassport:
+      def __init__(self, vehicle_vin: str):
+          self.vin = vehicle_vin
+          self.materials: list[dict] = []
+
+      def register_material(self, component: str, material: dict) -> None:
+          self.materials.append({
+              "component": component,
+              "material_type": material["type"],
+              "weight_kg": material["weight"],
+              "recycled_content_pct": material["recycled_pct"],
+              "recyclability_score": material["recyclability"],
+          })
+
+      def calculate_vehicle_recyclability(self) -> float:
+          """Calculate overall vehicle recyclability rate (target >= 0.95)."""
+          total = sum(m["weight_kg"] for m in self.materials)
+          recyclable = sum(m["weight_kg"] * m["recyclability_score"] for m in self.materials)
+          return recyclable / total if total > 0 else 0.0
+  ```
+
+  ### Step 4 - Factory Zero-Waste Hierarchy
+  Apply prioritized waste reduction strategies across all production areas:
+
+  ```
+  Priority 1: Eliminate waste at source through design optimization
+  Priority 2: Reuse in process via regrind plastic and recirculated coolant
+  Priority 3: Closed-loop recycle to same product such as aluminum scrap to sheet
+  Priority 4: Open-loop recycle to different product such as steel scrap to rebar
+  Priority 5: Energy recovery from non-recyclable waste to cement kiln
+  Priority 6: Landfill as absolute last resort with target of zero
+  ```
+
+  ## Best Practices
+  - Segregate production scrap by alloy and grade at source to preserve recycling value
+  - Design snap-fit and bolted joints for disassembly instead of adhesive bonds
+  - Mark all plastic parts with ISO 11469 material identification codes
+  - Use mono-material designs where feasible and avoid multi-layer composites
+  - Establish take-back agreements with material suppliers for closed-loop recycling
+  - Track recycled content with chain-of-custody certification such as ISCC Plus
+  - Start remanufacturing with high-value components like power electronics and motors
+  - Calculate LCA for circular versus linear pathways to validate environmental benefit
+
+  ## Troubleshooting
+  - Scrap alloy contamination: Install XRF sorters at scrap collection points to
+    verify alloy grade before routing to recyclers
+  - Recycled plastic property degradation: Blend with virgin material at 70/30 ratio
+    and add stabilizers to maintain mechanical properties
+  - Low remanufacturing core return rates: Incentivize returns with core deposit
+    programs and easy reverse logistics channels
+  - Recycled content verification challenges: Use mass balance approach with annual
+    third-party audits for certification compliance
+  - End-of-life dismantling cost exceeds material value: Redesign joints and fasteners
+    for faster disassembly to improve economic viability
+  - Battery second-life liability concerns: Establish clear warranty terms with
+    documented performance certification and degradation projections

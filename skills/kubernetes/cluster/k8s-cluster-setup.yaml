@@ -1,0 +1,667 @@
+---
+name: k8s-cluster-setup
+version: 1.0.0
+description: Kubernetes cluster deployment and setup for automotive cloud/edge infrastructure
+category: kubernetes
+subcategory: cluster
+tags: [kubernetes, cluster, setup, infrastructure, automotive]
+
+instructions: |
+  ## Kubernetes Cluster Setup for Automotive Infrastructure
+
+  ### Overview
+
+  Kubernetes orchestrates containerized automotive backend services including
+  fleet management, telemetry processing, OTA update distribution, and diagnostic
+  cloud endpoints. A production automotive cluster requires high availability,
+  security hardening, and compliance with automotive standards.
+
+  ### Cluster Architecture
+
+  ```
+  ┌───────────────────────────────────────────────────────────────┐
+  │                  Load Balancer (L4/L7)                        │
+  └──────────────────────┬────────────────────────────────────────┘
+                         │
+  ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │ Control  │   │ Control  │   │ Control  │   3 control plane nodes
+  │ Plane 1  │   │ Plane 2  │   │ Plane 3  │   (odd number for etcd quorum)
+  │ API+etcd │   │ API+etcd │   │ API+etcd │
+  └──────────┘   └──────────┘   └──────────┘
+        │              │              │
+  ══════╪══════════════╪══════════════╪═══════ CNI Network (Calico/Cilium)
+        │              │              │
+  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+  │ Worker 1 │ │ Worker 2 │ │ Worker 3 │ │ Worker 4 │ │ Worker 5 │
+  │ GPU node │ │ Standard │ │ Standard │ │ High-mem │ │ Standard │
+  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘
+  ```
+
+  ### Prerequisites
+
+  | Component | Requirement |
+  |-----------|------------|
+  | OS | Ubuntu 22.04 LTS or RHEL 9 |
+  | Kernel | >= 5.10 (cgroup v2 support) |
+  | Runtime | containerd 1.7+ or CRI-O 1.28+ |
+  | CPU | 2+ cores (control plane), 4+ (workers) |
+  | Memory | 4GB+ (control plane), 8GB+ (workers) |
+  | Network | Unique hostname, MAC, product_uuid per node |
+  | Ports | 6443 (API), 2379-2380 (etcd), 10250 (kubelet) |
+
+  ### Deployment Methods
+
+  | Method | Use Case | Complexity |
+  |--------|----------|-----------|
+  | kubeadm | On-premises, full control | Medium |
+  | EKS/AKS/GKE | Cloud-managed control plane | Low |
+  | Rancher/RKE2 | Multi-cluster management | Medium |
+  | Cluster API | Declarative lifecycle management | High |
+  | K3s | Edge/lightweight | Low |
+
+  ### CNI Network Plugin Selection
+
+  | Plugin | Features | Best For |
+  |--------|----------|---------|
+  | Calico | Network policies, BGP, VXLAN | Production, policy enforcement |
+  | Cilium | eBPF-based, L7 visibility, encryption | Security-focused, observability |
+  | Flannel | Simple VXLAN overlay | Development, small clusters |
+  | Canal | Flannel networking + Calico policies | Balanced approach |
+
+  ### Storage Options
+
+  - **local-path**: Single-node storage (development, edge)
+  - **Longhorn**: Distributed block storage with replication
+  - **Ceph/Rook**: Enterprise distributed storage
+  - **Portworx**: High-performance container storage
+  - **NFS**: Shared filesystem (legacy, simple)
+  - **CSI drivers**: Cloud-specific (EBS, Azure Disk, GCE PD)
+
+  ### Security Hardening
+
+  Essential security measures for automotive Kubernetes:
+  1. Enable RBAC and disable anonymous access
+  2. Use Pod Security Standards (restricted level for production)
+  3. Enable audit logging for compliance
+  4. Encrypt etcd data at rest
+  5. Use network policies to restrict pod-to-pod communication
+  6. Rotate certificates before expiration (kubeadm default: 1 year)
+  7. Use admission controllers (OPA Gatekeeper) for policy enforcement
+  8. Scan container images for vulnerabilities before deployment
+
+  ### Namespacing Strategy
+
+  ```
+  automotive-production   — Live vehicle-facing services
+  automotive-staging      — Pre-production testing
+  automotive-development  — Developer sandboxes
+  monitoring             — Prometheus, Grafana, alerting
+  ingress-system         — Ingress controllers, cert-manager
+  kube-system            — Core Kubernetes components
+  ```
+
+  ### Best Practices
+
+  - Use odd number of control plane nodes (3 or 5) for etcd quorum
+  - Separate etcd onto dedicated disks (SSD recommended)
+  - Implement resource quotas per namespace to prevent noisy neighbors
+  - Use node affinity and taints for workload placement (GPU, high-memory)
+  - Enable HPA for dynamic scaling of stateless services
+  - Back up etcd regularly (automated snapshots every 30 minutes)
+  - Use GitOps (Flux/ArgoCD) for declarative cluster configuration
+  - Monitor cluster health with Prometheus and set alerts for node/pod failures
+
+metadata:
+  author: Kubernetes Specialist Agent
+  created: 2026-03-19
+  updated: 2026-03-19
+  stability: stable
+  prerequisites:
+    - Container runtime (containerd, CRI-O)
+    - Linux kernel with cgroup support
+    - Network connectivity for container registry
+  use_cases:
+    - Production Kubernetes cluster deployment
+    - Multi-master high-availability setup
+    - Cloud and on-premises cluster provisioning
+    - Automotive backend infrastructure
+
+parameters:
+  cluster_name:
+    type: string
+    description: Name of the Kubernetes cluster
+    required: true
+    example: automotive-prod-cluster
+
+  cluster_type:
+    type: enum
+    description: Type of cluster deployment
+    required: true
+    values: [cloud, on-premises, edge, hybrid]
+    default: cloud
+
+  kubernetes_version:
+    type: string
+    description: Kubernetes version to deploy
+    required: true
+    default: "1.28.0"
+    pattern: "^1\\.(2[5-9]|[3-9][0-9])\\.[0-9]+$"
+
+  control_plane_nodes:
+    type: integer
+    description: Number of control plane nodes (odd number for HA)
+    required: true
+    minimum: 1
+    default: 3
+
+  worker_nodes:
+    type: integer
+    description: Number of worker nodes
+    required: true
+    minimum: 1
+    default: 5
+
+  container_runtime:
+    type: enum
+    description: Container runtime to use
+    required: true
+    values: [containerd, cri-o, docker]
+    default: containerd
+
+  network_plugin:
+    type: enum
+    description: CNI network plugin
+    required: true
+    values: [calico, flannel, cilium, weave, canal]
+    default: calico
+
+  pod_network_cidr:
+    type: string
+    description: CIDR for pod network
+    required: true
+    default: "10.244.0.0/16"
+
+  service_cidr:
+    type: string
+    description: CIDR for services
+    required: true
+    default: "10.96.0.0/12"
+
+  enable_ha:
+    type: boolean
+    description: Enable high availability setup
+    required: false
+    default: true
+
+  storage_class:
+    type: enum
+    description: Default storage class provider
+    values: [local-path, nfs, ceph, longhorn, portworx]
+    default: local-path
+
+validation:
+  cluster_name:
+    - pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+      message: "Cluster name must be DNS-compatible (lowercase, alphanumeric, hyphens)"
+
+  control_plane_nodes:
+    - condition: "control_plane_nodes % 2 != 0"
+      message: "Control plane nodes should be odd number for etcd quorum"
+
+  cidr_validation:
+    - condition: "!cidr_overlap(pod_network_cidr, service_cidr)"
+      message: "Pod network and service CIDR must not overlap"
+
+steps:
+  - id: prereq_check
+    name: Check prerequisites
+    type: validation
+    commands:
+      - name: Check kernel version
+        command: |
+          uname -r
+          # Require kernel >= 5.10 for automotive workloads
+          KERNEL_VERSION=$(uname -r | cut -d. -f1-2)
+          if (( $(echo "$KERNEL_VERSION < 5.10" | bc -l) )); then
+            echo "ERROR: Kernel version must be >= 5.10"
+            exit 1
+          fi
+
+      - name: Check cgroup v2
+        command: |
+          if [ ! -f /sys/fs/cgroup/cgroup.controllers ]; then
+            echo "WARNING: cgroup v2 not detected, some features may be limited"
+          fi
+
+      - name: Verify network connectivity
+        command: |
+          ping -c 3 8.8.8.8 || echo "WARNING: No internet connectivity"
+
+    validation:
+      - check: kernel_version >= 5.10
+        message: "Modern kernel required for automotive workloads"
+
+  - id: install_container_runtime
+    name: Install container runtime
+    type: installation
+    depends_on: [prereq_check]
+
+    commands:
+      - name: Install containerd
+        condition: container_runtime == 'containerd'
+        command: |
+          # Install containerd
+          wget https://github.com/containerd/containerd/releases/download/v1.7.13/containerd-1.7.13-linux-amd64.tar.gz
+          tar Cxzvf /usr/local containerd-1.7.13-linux-amd64.tar.gz
+
+          # Install systemd service
+          cat <<EOF > /etc/systemd/system/containerd.service
+          [Unit]
+          Description=containerd container runtime
+          Documentation=https://containerd.io
+          After=network.target local-fs.target
+
+          [Service]
+          ExecStartPre=-/sbin/modprobe overlay
+          ExecStart=/usr/local/bin/containerd
+          Type=notify
+          Delegate=yes
+          KillMode=process
+          Restart=always
+          RestartSec=5
+          LimitNOFILE=infinity
+          LimitNPROC=infinity
+          LimitCORE=infinity
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          systemctl daemon-reload
+          systemctl enable --now containerd
+
+      - name: Configure containerd for Kubernetes
+        command: |
+          mkdir -p /etc/containerd
+          containerd config default > /etc/containerd/config.toml
+
+          # Enable systemd cgroup driver
+          sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+          systemctl restart containerd
+
+  - id: install_kubeadm
+    name: Install kubeadm, kubelet, kubectl
+    type: installation
+    depends_on: [install_container_runtime]
+
+    commands:
+      - name: Add Kubernetes repository
+        command: |
+          curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+            gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+          echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+            tee /etc/apt/sources.list.d/kubernetes.list
+
+      - name: Install Kubernetes tools
+        command: |
+          apt-get update
+          apt-get install -y kubelet kubeadm kubectl
+          apt-mark hold kubelet kubeadm kubectl
+
+  - id: init_control_plane
+    name: Initialize control plane
+    type: deployment
+    depends_on: [install_kubeadm]
+
+    commands:
+      - name: Generate kubeadm config
+        command: |
+          cat <<EOF > /tmp/kubeadm-config.yaml
+          apiVersion: kubeadm.k8s.io/v1beta3
+          kind: ClusterConfiguration
+          kubernetesVersion: {{kubernetes_version}}
+          clusterName: {{cluster_name}}
+          controlPlaneEndpoint: "{{control_plane_endpoint}}"
+          networking:
+            podSubnet: {{pod_network_cidr}}
+            serviceSubnet: {{service_cidr}}
+          apiServer:
+            extraArgs:
+              audit-log-path: /var/log/kubernetes/audit.log
+              audit-log-maxage: "30"
+              audit-log-maxbackup: "10"
+              audit-log-maxsize: "100"
+              enable-admission-plugins: NodeRestriction,PodSecurityPolicy
+          ---
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          cgroupDriver: systemd
+          protectKernelDefaults: true
+          EOF
+
+      - name: Initialize first control plane node
+        command: |
+          kubeadm init --config=/tmp/kubeadm-config.yaml --upload-certs
+
+          # Save join commands
+          kubeadm token create --print-join-command > /tmp/worker-join-command.sh
+          kubeadm init phase upload-certs --upload-certs 2>&1 | \
+            grep -A 1 "certificate-key" | tail -1 > /tmp/cert-key.txt
+
+      - name: Configure kubectl for root
+        command: |
+          mkdir -p $HOME/.kube
+          cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+          chown $(id -u):$(id -g) $HOME/.kube/config
+
+  - id: install_cni
+    name: Install CNI network plugin
+    type: deployment
+    depends_on: [init_control_plane]
+
+    commands:
+      - name: Install Calico
+        condition: network_plugin == 'calico'
+        command: |
+          kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
+
+          cat <<EOF | kubectl apply -f -
+          apiVersion: operator.tigera.io/v1
+          kind: Installation
+          metadata:
+            name: default
+          spec:
+            calicoNetwork:
+              ipPools:
+              - blockSize: 26
+                cidr: {{pod_network_cidr}}
+                encapsulation: VXLANCrossSubnet
+                natOutgoing: Enabled
+                nodeSelector: all()
+          EOF
+
+      - name: Install Cilium
+        condition: network_plugin == 'cilium'
+        command: |
+          CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+          wget https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-amd64.tar.gz
+          tar xzvf cilium-linux-amd64.tar.gz -C /usr/local/bin
+
+          cilium install --version 1.15.0
+
+  - id: join_control_plane_nodes
+    name: Join additional control plane nodes
+    type: deployment
+    depends_on: [install_cni]
+    condition: control_plane_nodes > 1
+
+    commands:
+      - name: Join control plane nodes
+        command: |
+          CERT_KEY=$(cat /tmp/cert-key.txt)
+          JOIN_CMD=$(cat /tmp/worker-join-command.sh)
+
+          for node in $(seq 2 {{control_plane_nodes}}); do
+            ssh control-plane-${node} "$JOIN_CMD --control-plane --certificate-key $CERT_KEY"
+          done
+
+  - id: join_worker_nodes
+    name: Join worker nodes
+    type: deployment
+    depends_on: [install_cni]
+
+    commands:
+      - name: Join worker nodes
+        command: |
+          JOIN_CMD=$(cat /tmp/worker-join-command.sh)
+
+          for node in $(seq 1 {{worker_nodes}}); do
+            ssh worker-${node} "$JOIN_CMD"
+          done
+
+  - id: install_storage
+    name: Install storage class
+    type: deployment
+    depends_on: [join_worker_nodes]
+
+    commands:
+      - name: Install local-path provisioner
+        condition: storage_class == 'local-path'
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
+          kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+      - name: Install Longhorn
+        condition: storage_class == 'longhorn'
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.6.0/deploy/longhorn.yaml
+
+  - id: install_core_components
+    name: Install core Kubernetes components
+    type: deployment
+    depends_on: [install_storage]
+
+    commands:
+      - name: Install metrics-server
+        command: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+      - name: Install ingress-nginx
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/baremetal/deploy.yaml
+
+      - name: Install cert-manager
+        command: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.0/cert-manager.yaml
+
+  - id: verify_cluster
+    name: Verify cluster health
+    type: validation
+    depends_on: [install_core_components]
+
+    commands:
+      - name: Check node status
+        command: |
+          kubectl get nodes -o wide
+
+          # Wait for all nodes to be Ready
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+      - name: Check system pods
+        command: |
+          kubectl get pods -A
+
+          # Wait for all pods to be Running
+          kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s
+
+      - name: Run cluster diagnostic
+        command: |
+          kubectl cluster-info
+          kubectl get cs
+          kubectl version
+
+outputs:
+  kubeconfig:
+    description: Kubernetes config file for cluster access
+    path: /etc/kubernetes/admin.conf
+
+  cluster_info:
+    description: Cluster information
+    command: kubectl cluster-info
+
+  join_command_workers:
+    description: Command to join worker nodes
+    path: /tmp/worker-join-command.sh
+
+  certificate_key:
+    description: Certificate key for joining control plane nodes
+    path: /tmp/cert-key.txt
+
+error_handling:
+  - error: "connection refused"
+    action: "Check if API server is running and firewall allows port 6443"
+
+  - error: "x509: certificate"
+    action: "Verify system time is synchronized across all nodes (NTP)"
+
+  - error: "etcd cluster is unavailable"
+    action: "Check etcd pod logs: kubectl logs -n kube-system etcd-*"
+
+  - error: "CNI plugin not ready"
+    action: "Wait for CNI pods to be Running: kubectl get pods -n kube-system"
+
+best_practices:
+  cluster_design:
+    - Use odd number of control plane nodes for etcd quorum
+    - Separate control plane and worker nodes for production
+    - Use dedicated etcd cluster for large deployments
+    - Implement node affinity for critical workloads
+
+  networking:
+    - Choose CNI plugin based on performance requirements
+    - Use Cilium for eBPF-based networking and security
+    - Configure network policies for pod isolation
+    - Use separate VLANs for management and data plane
+
+  security:
+    - Enable RBAC and pod security standards
+    - Use network policies to restrict pod communication
+    - Enable audit logging for compliance
+    - Rotate certificates regularly
+    - Use admission controllers for policy enforcement
+
+  high_availability:
+    - Deploy 3 or 5 control plane nodes
+    - Use external load balancer for API server
+    - Deploy etcd on dedicated nodes for large clusters
+    - Implement backup strategy for etcd
+
+  automotive_specific:
+    - Use node labels for zone/region placement
+    - Implement resource quotas per namespace
+    - Enable HPA for dynamic workload scaling
+    - Configure monitoring for SLA compliance
+
+automotive_patterns:
+  multi_region:
+    description: Deploy cluster across multiple regions for disaster recovery
+    implementation: |
+      # Use cluster federation or multi-cluster mesh
+      # Configure cross-region networking (VPN, service mesh)
+      # Implement geo-aware load balancing
+
+  edge_integration:
+    description: Integrate with edge K3s clusters
+    implementation: |
+      # Use GitOps for fleet management
+      # Configure hierarchical namespace controller
+      # Implement edge-to-cloud data synchronization
+
+  compliance:
+    description: ISO 26262 and automotive compliance
+    implementation: |
+      # Enable audit logging for all API calls
+      # Implement pod security standards
+      # Use OPA/Gatekeeper for policy enforcement
+      # Configure RBAC with least privilege
+
+monitoring:
+  metrics:
+    - Cluster CPU/memory utilization
+    - Pod restart count
+    - API server latency
+    - etcd latency and disk I/O
+    - Network throughput
+
+  alerts:
+    - Node NotReady for > 5 minutes
+    - Control plane component down
+    - etcd cluster unhealthy
+    - Certificate expiration < 30 days
+    - Disk space > 80% on nodes
+
+troubleshooting:
+  common_issues:
+    node_not_ready:
+      symptoms: "Node shows NotReady status"
+      diagnosis: "kubectl describe node <node-name>"
+      solutions:
+        - Check kubelet status: systemctl status kubelet
+        - Check container runtime: systemctl status containerd
+        - Check CNI plugin pods
+        - Verify network connectivity
+
+    pod_pending:
+      symptoms: "Pod stuck in Pending state"
+      diagnosis: "kubectl describe pod <pod-name>"
+      solutions:
+        - Check node resources (CPU/memory)
+        - Verify pod scheduling constraints
+        - Check PVC binding status
+        - Review node taints and tolerations
+
+    api_server_slow:
+      symptoms: "kubectl commands are slow"
+      diagnosis: "kubectl get --raw /metrics | grep apiserver_request_duration"
+      solutions:
+        - Check etcd performance
+        - Review API server resource limits
+        - Optimize large list requests
+        - Enable API priority and fairness
+
+related_skills:
+  - k8s-namespaces
+  - k8s-rbac-setup
+  - k8s-monitoring-setup
+  - helm-setup
+  - k3s-edge-deployment
+
+compliance:
+  iso_26262:
+    - Audit all cluster operations
+    - Implement admission control policies
+    - Enable pod security standards
+    - Document cluster architecture
+
+  gdpr:
+    - Encrypt etcd at rest
+    - Enable audit logging
+    - Implement data retention policies
+    - Use network policies for data isolation
+
+examples:
+  - name: Production automotive cluster
+    description: Deploy 3-node control plane, 10 worker nodes with Calico
+    command: |
+      k8s-cluster-setup \
+        --cluster-name=automotive-prod \
+        --cluster-type=cloud \
+        --control-plane-nodes=3 \
+        --worker-nodes=10 \
+        --network-plugin=calico \
+        --enable-ha=true \
+        --storage-class=longhorn
+
+  - name: Edge gateway cluster
+    description: Single-node cluster for edge gateway
+    command: |
+      k8s-cluster-setup \
+        --cluster-name=edge-gateway-01 \
+        --cluster-type=edge \
+        --control-plane-nodes=1 \
+        --worker-nodes=0 \
+        --network-plugin=flannel \
+        --storage-class=local-path
+
+  - name: Hybrid cloud cluster
+    description: Multi-region cluster with on-premises and cloud nodes
+    command: |
+      k8s-cluster-setup \
+        --cluster-name=automotive-hybrid \
+        --cluster-type=hybrid \
+        --control-plane-nodes=5 \
+        --worker-nodes=20 \
+        --network-plugin=cilium \
+        --enable-ha=true

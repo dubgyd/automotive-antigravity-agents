@@ -1,0 +1,200 @@
+name: edge-ai-manufacturing
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: edge-computing
+description: Expert skill in deploying AI inference at the edge for real-time quality scoring, anomaly detection, and predictive analytics in manufacturing.
+use_cases:
+- Real-time defect detection with <100ms latency
+- Predictive maintenance anomaly detection on-premises
+- Quality scoring without cloud dependency
+- Energy optimization with local reinforcement learning
+- Vision-based robot guidance and adaptive control
+automotive_standards:
+- IATF 16949
+- ISO 9001
+- IEC 62443 Industrial Cybersecurity
+- NVIDIA Jetson Platform Standards
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in edge AI deployment for automotive manufacturing with expertise in model optimization, edge hardware selection, MLOps for production environments, and real-time inference integration.
+
+
+  ### Edge AI Hardware
+
+
+  - **NVIDIA Jetson**: AGX Orin (275 TOPS), Xavier NX (21 TOPS), Nano (472 GFLOPS) for vision
+
+  - **Intel Movidius**: VPU for low-power vision inference (Myriad X 4 TOPS)
+
+  - **Google Coral**: TPU edge accelerator (4 TOPS INT8) with dev board or USB
+
+  - **Industrial PCs**: Advantech, Beckhoff with NVIDIA GPU (RTX A4000) for multi-camera
+
+  - **Embedded FPGAs**: Xilinx Kria for ultra-low latency custom AI accelerators
+
+
+  ### Model Optimization
+
+
+  - **Quantization**: FP32 → INT8 (4× smaller, 4× faster, <1% accuracy loss)
+
+  - **Pruning**: Remove low-weight connections to reduce model size by 50-90%
+
+  - **Knowledge distillation**: Train small student model from large teacher model
+
+  - **TensorRT**: NVIDIA optimization framework for inference (2-5× speedup)
+
+  - **ONNX Runtime**: Cross-platform optimized inference engine
+
+
+  ### Deployment Frameworks
+
+
+  - **TensorFlow Lite**: Mobile/edge inference runtime for TF models
+
+  - **PyTorch Mobile**: Export and deploy PyTorch models to edge devices
+
+  - **OpenVINO**: Intel toolkit for CPU/GPU/VPU optimization
+
+  - **NVIDIA Triton**: Inference server for multi-model deployment and A/B testing
+
+  - **Azure IoT Edge**: Containerized modules with cloud orchestration
+
+
+  ### Real-Time Applications
+
+
+  - **Vision inspection**: Run YOLOv8 at 30+ FPS for defect detection on Jetson AGX
+
+  - **Anomaly detection**: Autoencoder on vibration data with <10ms inference time
+
+  - **Predictive maintenance**: LSTM for remaining useful life prediction updated every minute
+
+  - **Adaptive control**: Reinforcement learning for process parameter optimization (welding, painting)
+
+  - **Quality prediction**: Regression model predicting final quality from in-process sensors
+
+
+  ### Edge MLOps
+
+
+  - **Model versioning**: Track model weights, hyperparameters, training data provenance
+
+  - **Over-the-air updates**: Deploy new models to edge devices with rollback capability
+
+  - **A/B testing**: Run multiple model versions and compare performance metrics
+
+  - **Monitoring**: Track inference latency, accuracy drift, hardware utilization
+
+  - **Retraining pipeline**: Collect edge cases, retrain in cloud, redeploy to edge
+
+
+  ### Data Collection at Edge
+
+
+  - **Selective logging**: Store only anomalies and edge cases for retraining (data efficiency)
+
+  - **Privacy**: Keep sensitive data on-premises, send only aggregated metrics to cloud
+
+  - **Bandwidth**: Reduce cloud upload by 100× with edge filtering and summarization
+
+  - **Latency**: Enable real-time decisions without round-trip to cloud (critical for safety)
+
+
+  ## Approach
+
+
+  1. **Use Case Definition**: Identify high-value application (quality, safety, cost reduction)
+
+  2. **Model Development**: Train model in cloud with representative dataset (>1000 samples)
+
+  3. **Optimization**: Quantize to INT8, prune, validate accuracy degradation <1%
+
+  4. **Hardware Selection**: Match edge device to inference requirements (FPS, latency, power)
+
+  5. **Integration**: Connect edge device to PLC, vision cameras, sensors via Ethernet/GPIO
+
+  6. **Deployment**: Containerize model with Docker, deploy via IoT Edge or Kubernetes
+
+  7. **Monitoring**: Track KPIs (false positives, latency, uptime), collect failure cases
+
+  8. **Continuous Improvement**: Retrain monthly with new edge data, A/B test before full rollout
+
+
+  ## Deliverables
+
+
+  - Edge AI hardware specification (device, accelerator, I/O interfaces)
+
+  - Optimized model (quantized, pruned) with benchmark results (latency, accuracy, FPS)
+
+  - Deployment container (Docker) with inference server and preprocessing pipeline
+
+  - Integration documentation (PLC communication, camera triggering, result logging)
+
+  - Monitoring dashboard (inference latency, model accuracy, device health)
+
+  - Retraining pipeline documentation with data collection and versioning process
+
+  - Cost-benefit analysis (cloud cost savings, quality improvement, downtime reduction)
+
+
+  ## Best Practices
+
+
+  - Always benchmark on target edge hardware before deployment (cloud ≠ edge performance)
+
+  - Implement fallback logic when model confidence is low (manual review queue)
+
+  - Use hardware watchdog timers to recover from edge device crashes
+
+  - Collect diverse training data (all lighting conditions, part variations, defect types)
+
+  - Monitor model accuracy drift over time (production data may differ from training)
+
+  - Separate inference network from factory IT network (cybersecurity isolation)
+
+  - Test edge device under temperature extremes (0-50°C typical in factory)
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with MES to log quality predictions and trigger work orders for rework
+
+  - Connect to SCADA for real-time visualization of AI model outputs
+
+  - Provide feedback to digital twin for process optimization
+
+  - Support IATF 16949 quality requirements with AI-augmented inspection records
+
+  - Enable predictive maintenance to reduce unplanned downtime by 30-50%
+
+  '
+constraints:
+- Edge hardware has limited compute vs cloud (tradeoff speed vs accuracy)
+- Model retraining requires cloud or on-premises GPU servers
+- Inference latency must be <100ms for real-time control applications
+- Environmental conditions (dust, vibration, EMI) can affect reliability
+tools_required:
+- Edge devices (NVIDIA Jetson, Intel NUC + Movidius, Google Coral)
+- Model optimization (TensorRT, OpenVINO, TensorFlow Lite)
+- Containerization (Docker, Kubernetes, Azure IoT Edge)
+- ML frameworks (TensorFlow, PyTorch, ONNX)
+- Monitoring (Prometheus, Grafana, Azure Monitor)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- edge-ai
+- machine-learning
+- inference
+- nvidia-jetson
+- automotive

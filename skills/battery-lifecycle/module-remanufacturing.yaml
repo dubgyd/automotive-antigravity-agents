@@ -1,0 +1,45 @@
+name: module-remanufacturing
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in remanufacturing retired EV battery modules including cell replacement, BMS reprogramming, connector refurbishment, and warranty establishment for second-life products.
+use_cases:
+- Module-level refurbishment and cell replacement
+- BMS firmware reprogramming for new application
+- Connector and bus bar repair/replacement
+- Warranty framework for remanufactured modules
+- Quality control and testing protocols
+automotive_standards:
+- IEC 62660 Lithium-ion Cells (replacement cell specs)
+- ISO 9001 Quality Management for remanufacturing
+- UL 1974 Evaluation for Repurposing Batteries
+- IEC 62619 Safety Requirements for Stationary Batteries
+- ISO 14001 Environmental Management
+instructions: 'Expert in remanufacturing battery modules to restore performance close to new for second-life applications. Process flow: (1) Module inspection: Visual (casing cracks, corrosion, electrolyte leakage), electrical (measure OCV, IR per cell, identify weak cells <3.0V or >100 mΩ), thermal imaging (hot spots indicate internal shorts). (2) Disassembly: Open module housing (snap-fit or screws, preserve for reuse), document configuration (cell topology, series/parallel arrangement, photos), remove BMS PCB (save for reprogramming or replace). (3) Cell-level assessment: Test each cell (capacity C/5 discharge, IR at 1 kHz, self-discharge <2%/month), classify: Grade A >90% capacity (reuse), Grade B 80-90% (reuse in lower-tier module), Grade C <80% (recycle). (4) Cell replacement: Remove weak cells (cut or unsolder tabs, cylindrical cells easier than pouch), source replacement cells (matched capacity ±3%, IR ±20%, from same chemistry family), reassemble with new cells (spot weld tabs, resistance weld <10 mΩ per joint, polarity checks). (5) BMS reprogramming: Update firmware for new application (voltage limits: EV 2.8-4.2V, stationary 3.0-4.1V for longer calendar life), recalibrate SOC (full charge-discharge cycle with data logging), adjust balancing thresholds (±50 mV typical, tighter for high-power apps). (6) Thermal interface refresh: Replace thermal pads (degraded after 8-10 years), apply thermal paste to cooling plate interfaces (0.2-0.5 mm gap), verify contact pressure (torque spec on compression bolts). (7) Electrical testing: Insulation resistance (>100 MΩ at 500V per IEC 62619), high-potential (hi-pot) test (1500V AC for 60 seconds, no breakdown), functional test (charge/discharge cycles, BMS communication, balancing operation). (8) Repackaging: Clean and refurbish housing (remove corrosion, repaint if needed), install new connectors (Anderson, Deutsch, or original OEM type), apply new labels (capacity, voltage, warnings, traceability QR code), seal with gaskets (IP54 rating minimum for outdoor use). Warranty framework: Limited warranty 3-5 years or 2000 cycles (vs 8-10 years for new), exclude abuse (overvoltage, thermal runaway, physical damage), require periodic inspections (annual BMS log download for degradation tracking), warranty reserve 15-25% of revenue (cover replacement modules). Quality control: 100% electrical testing (no sampling), 10% capacity validation (full C/3 discharge, compare to claimed rating), random thermal cycling (5 modules per 100, -10°C to +45°C, 10 cycles, detect latent defects). Economics: remanufacturing cost $30-60/kWh (labor 40%, cells 30%, BMS/connectors 20%, testing 10%), sell price $100-180/kWh (vs $200-350 for new stationary modules), margin $40-120/kWh. Cell sourcing challenges: OEM cells not available (must reverse-engineer specs), aftermarket cells (quality variance ±10-20%, require incoming inspection), matching IR critical (mismatch causes uneven degradation, one weak cell limits module). BMS reprogramming: Requires OEM tools (CAN adapters, proprietary software) or reverse-engineer protocol (CAN bus sniffing, identify SOC/voltage/temperature messages), open-source BMS (if original not re-programmable, replace with Orion/REC/Batrium, $200-500). Case studies: Nissan/4R Energy (joint venture for Leaf module remanufacturing, Japan, 300 MWh/year), Renault Flins Re-Factory (module refurb + second-life packs, France, 5000 tons/year target), BMW Group Plant Leipzig (remanufacturing pilot, replace cells in i3 modules).
+'
+constraints:
+- Cell sourcing difficult (OEM cells unavailable, aftermarket quality variance)
+- BMS reprogramming requires OEM tools or reverse engineering
+- Labor-intensive (15-30 min per module) limits scalability
+- Warranty risk from hidden defects (latent cell damage from EV abuse)
+- Regulatory uncertainty (is remanufactured module "new" or "used"?)
+tools_required:
+- Cell testers (Arbin, Neware, Digatron for capacity/IR)
+- Spot welding equipment (ultrasonic or resistance, 1-5 kA pulses)
+- BMS programming tools (CAN adapters, OEM software, or open-source)
+- Thermal imaging cameras (FLIR, Seek for hot spot detection)
+- Hi-pot testers (insulation resistance, 1500V AC)
+- Assembly tools (torque wrenches, multimeters, oscilloscopes)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- battery-lifecycle
+- second-life
+- remanufacturing
+- bms
+- cell-replacement
+- automotive

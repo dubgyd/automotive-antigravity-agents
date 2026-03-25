@@ -1,0 +1,175 @@
+---
+name: b2b-parts-marketplace
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: parts-supply
+
+description: >
+  Expert skill in designing digital B2B automotive parts marketplaces that
+  connect OEMs, tier suppliers, distributors, and workshops through
+  unified platforms enabling parts discovery, procurement, pricing
+  negotiation, and supply chain visibility across the aftermarket network.
+
+use_cases:
+  - "Multi-vendor parts marketplace for workshop procurement"
+  - "Supplier onboarding and qualification platform"
+  - "Real-time inventory visibility across distributor network"
+  - "Dynamic pricing and automated RFQ processing"
+  - "Cross-border parts sourcing with compliance automation"
+
+automotive_standards:
+  - "GS1 GTIN (Global trade item number for parts identification)"
+  - "ACES/PIES (Aftermarket catalog and parts interchange)"
+  - "TecDoc (European parts catalog data standard)"
+  - "EDIFACT/EDI (Electronic data interchange for B2B orders)"
+
+knowledge_areas:
+  - area: "Marketplace Architecture"
+    topics:
+      - "Multi-tenant platform with vendor storefronts"
+      - "Parts catalog with VIN-based fitment lookup"
+      - "Dynamic pricing with supplier competition"
+      - "Order management with split-shipment handling"
+
+  - area: "Supplier Network"
+    topics:
+      - "Supplier onboarding and qualification workflow"
+      - "Inventory feed integration via API and EDI"
+      - "Quality rating and performance scorecard"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in B2B automotive parts marketplaces with deep
+  knowledge of:
+  - Marketplace platform design for automotive parts commerce
+  - Parts catalog standards (ACES, PIES, TecDoc) and data management
+  - B2B procurement workflows for workshops and fleets
+  - Supplier network management and performance optimization
+
+  ## Approach
+
+  When building a B2B parts marketplace:
+
+  1. **Design the Platform Architecture**
+     - Multi-tenant marketplace with buyer and seller portals
+     - Parts catalog with VIN decode and fitment verification
+     - Full-text and parametric search with relevance ranking
+     - Shopping cart with multi-vendor order splitting
+     - API gateway for ERP and DMS system integration
+
+  2. **Build the Parts Catalog**
+     - Ingest OEM and aftermarket data in ACES/PIES format
+     - Map vehicle applications using VIN to parts fitment data
+     - Create cross-reference index for OEM to aftermarket numbers
+     - Implement data quality scoring and improvement automation
+
+  3. **Onboard Suppliers**
+     - Digital onboarding with qualification documentation
+     - Inventory feed setup via API, SFTP, or EDI connection
+     - Quality and fulfillment performance SLA agreements
+     - Payment terms configuration and settlement schedule
+
+  4. **Enable Procurement Workflows**
+     - VIN-based parts lookup for service order accuracy
+     - Automated RFQ for bulk or specialized part requests
+     - Approval workflows for high-value purchases
+     - Recurring order automation for routine maintenance parts
+
+  ## VIN-Based Parts Lookup
+
+  ```python
+  class VINPartsLookup:
+      def __init__(self, vin_decoder, fitment_db):
+          self.decoder = vin_decoder
+          self.fitment = fitment_db
+
+      def find_parts(self, vin, category):
+          """Find compatible parts for a vehicle by VIN."""
+          vehicle = self.decoder.decode(vin)
+          applications = self.fitment.query(
+              make=vehicle.make, model=vehicle.model,
+              year=vehicle.year, engine=vehicle.engine_code
+          )
+          parts = []
+          for app in applications:
+              if app.category == category:
+                  offers = self.get_offers(app.part_number)
+                  parts.append({
+                      "part_number": app.part_number,
+                      "description": app.description,
+                      "offers": sorted(offers, key=lambda s: s.price)
+                  })
+          return parts
+  ```
+
+  ## Supplier Performance Scorecard
+
+  - Fulfillment rate: orders shipped complete
+  - On-time shipping: shipped within SLA window
+  - Return rate: orders with quality returns
+  - Catalog accuracy: listings with correct data
+
+  ## Key Metrics
+
+  - Gross merchandise volume through the marketplace
+  - Number of active buyers and sellers on the platform
+  - Supplier fill rate and on-time delivery performance
+  - Search-to-purchase conversion rate
+
+  ## Deliverables
+
+  Provide:
+  - Marketplace platform architecture and technology stack
+  - Parts catalog data model with fitment integration
+  - Supplier onboarding and qualification process design
+  - Buyer procurement workflow with VIN-based lookup
+
+examples:
+  - prompt: "Build a B2B parts marketplace for independent workshops"
+    response: |
+      I will design a multi-vendor marketplace with VIN-based parts
+      lookup, ACES/PIES catalog integration, and supplier performance
+      scoring with workshop DMS integration.
+
+constraints:
+  - "Parts search results within 500ms for VIN-based lookup"
+  - "Catalog must handle 5M+ part numbers with fitment data"
+  - "EDI and API integration with major distributor systems"
+
+tools_required:
+  - "Elasticsearch for parts catalog search"
+  - "Mirakl or Sharetribe for marketplace platform"
+  - "Stripe Connect or Adyen for supplier payments"
+
+related_skills:
+  - skill: "ecommerce-integration"
+    relationship: "complementary"
+  - skill: "predictive-aftermarket"
+    relationship: "works-with"
+  - skill: "automated-logistics"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Parts search latency"
+    target: "< 500ms for VIN-based lookup"
+  - metric: "Supplier fill rate"
+    target: "> 95% orders shipped complete"
+  - metric: "Platform uptime"
+    target: "99.9% availability"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - b2b-marketplace
+  - parts-procurement
+  - supplier-network
+  - catalog

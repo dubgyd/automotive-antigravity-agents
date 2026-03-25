@@ -1,0 +1,322 @@
+---
+name: prometheus-setup
+version: 1.0.0
+description: Deploy Prometheus monitoring stack for automotive Kubernetes clusters
+category: kubernetes
+subcategory: monitoring
+tags: [prometheus, monitoring, metrics, alerting, automotive]
+
+instructions: |
+  ## Prometheus Monitoring for Automotive Kubernetes
+
+  ### Overview
+
+  Prometheus is the standard metrics collection and alerting system for
+  Kubernetes. For automotive cloud infrastructure, Prometheus monitors
+  cluster health, application performance, and automotive-specific metrics
+  (telemetry ingestion rates, OTA distribution progress, fleet connectivity).
+
+  ### Monitoring Stack Architecture
+
+  ```
+  ┌─────────────────────────────────────────────────────────────┐
+  │                  Monitoring Stack                            │
+  │                                                             │
+  │  ┌──────────┐   ┌──────────┐   ┌──────────┐               │
+  │  │Prometheus│──►│Alertmgr  │──►│PagerDuty │               │
+  │  │ Server   │   │          │   │Slack/Email│               │
+  │  └────┬─────┘   └──────────┘   └──────────┘               │
+  │       │                                                     │
+  │       ▼                                                     │
+  │  ┌──────────┐   ┌──────────┐   ┌──────────┐               │
+  │  │ Grafana  │   │ Thanos   │   │ Loki     │               │
+  │  │Dashboards│   │Long-term │   │Log Aggr  │               │
+  │  └──────────┘   │ Storage  │   └──────────┘               │
+  │                 └──────────┘                               │
+  └─────────────────────────────────────────────────────────────┘
+       ▲                ▲                ▲
+       │   scrape       │   remote write │   push
+  ┌────┴────┐    ┌──────┴────┐    ┌──────┴────┐
+  │ Pods    │    │ Node      │    │ Service   │
+  │/metrics │    │ Exporter  │    │ Monitors  │
+  └─────────┘    └───────────┘    └───────────┘
+  ```
+
+  ### Deployment Methods
+
+  | Method | Complexity | Features |
+  |--------|-----------|----------|
+  | Prometheus Operator | Medium | CRDs, ServiceMonitor, auto-discovery |
+  | kube-prometheus-stack | Low | Operator + Grafana + Alertmanager + dashboards |
+  | Raw manifests | High | Full control, no CRD dependency |
+  | Helm chart | Low | Quick setup, configurable values |
+
+  The **kube-prometheus-stack** Helm chart is recommended for most deployments
+  as it includes Prometheus Operator, Grafana, Alertmanager, and pre-built
+  dashboards for Kubernetes monitoring.
+
+  ### Key Metrics for Automotive
+
+  | Metric | Source | Alert Threshold |
+  |--------|--------|----------------|
+  | Telemetry ingestion rate | Custom app metric | < 1000 msg/s |
+  | OTA download success rate | Custom app metric | < 99% |
+  | Fleet connectivity ratio | Custom app metric | < 95% online |
+  | API response latency (p99) | Ingress/app metric | > 500ms |
+  | Pod restart count | kube-state-metrics | > 5 in 10 min |
+  | Node CPU utilization | node-exporter | > 85% sustained |
+  | PVC usage | kubelet metrics | > 80% capacity |
+  | Certificate expiry | cert-manager | < 14 days |
+
+  ### ServiceMonitor CRD
+
+  The Prometheus Operator uses ServiceMonitor CRDs to discover scrape targets:
+
+  ```yaml
+  apiVersion: monitoring.coreos.com/v1
+  kind: ServiceMonitor
+  metadata:
+    name: adas-service-monitor
+    labels:
+      release: prometheus    # Must match Prometheus selector
+  spec:
+    selector:
+      matchLabels:
+        app: adas-processing
+    endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+  ```
+
+  ### PrometheusRule for Alerting
+
+  ```yaml
+  apiVersion: monitoring.coreos.com/v1
+  kind: PrometheusRule
+  metadata:
+    name: automotive-alerts
+  spec:
+    groups:
+    - name: automotive.rules
+      rules:
+      - alert: TelemetryIngestionDrop
+        expr: rate(telemetry_messages_total[5m]) < 100
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Telemetry ingestion rate dropped below threshold
+      - alert: FleetConnectivityLow
+        expr: fleet_connected_vehicles / fleet_total_vehicles < 0.95
+        for: 15m
+        labels:
+          severity: warning
+  ```
+
+  ### Long-Term Storage
+
+  Prometheus local storage has limited retention (default 15 days). For
+  automotive compliance and analytics, use long-term storage:
+  - **Thanos**: Sidecar-based, S3/GCS/Azure Blob backend
+  - **Cortex**: Multi-tenant, horizontally scalable
+  - **Mimir**: Grafana's scalable metrics backend
+  - **VictoriaMetrics**: High-performance, drop-in replacement
+
+  ### Grafana Dashboards
+
+  Essential dashboards for automotive operations:
+  1. **Cluster Overview**: Node status, CPU/memory, pod counts
+  2. **Fleet Connectivity**: Online/offline vehicles, sync lag
+  3. **Telemetry Pipeline**: Ingestion rate, processing latency, backlog
+  4. **OTA Distribution**: Download progress, success/failure rates
+  5. **Application SLOs**: Error budget, availability, latency percentiles
+
+  ### Best Practices
+
+  - Use the Prometheus Operator for CRD-based configuration management
+  - Set appropriate scrape intervals (15s for infrastructure, 30s for apps)
+  - Use recording rules to pre-compute expensive queries
+  - Implement alerting with meaningful thresholds (avoid alert fatigue)
+  - Use labels consistently for filtering and aggregation
+  - Configure Alertmanager routing to appropriate channels per severity
+  - Enable long-term storage for compliance and trend analysis
+  - Monitor Prometheus itself (meta-monitoring) for reliability
+
+metadata:
+  author: SRE Engineer
+  created: 2026-03-19
+  stability: stable
+  use_cases:
+    - Cluster monitoring
+    - Application metrics
+    - Alerting
+    - Capacity planning
+
+parameters:
+  deployment_method:
+    type: enum
+    description: Deployment method
+    values: [operator, helm, manifests]
+    default: operator
+
+  retention_period:
+    type: string
+    description: Metrics retention period
+    default: 30d
+
+  storage_size:
+    type: string
+    description: Storage size for metrics
+    default: 50Gi
+
+  enable_alertmanager:
+    type: boolean
+    description: Enable Alertmanager
+    default: true
+
+  enable_grafana:
+    type: boolean
+    description: Enable Grafana dashboards
+    default: true
+
+steps:
+  - id: install_operator
+    name: Install Prometheus Operator
+    type: deployment
+    condition: deployment_method == 'operator'
+    commands:
+      - name: Install operator
+        command: |
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml
+
+          kubectl wait --for=condition=Available deployment/prometheus-operator -n default --timeout=300s
+
+  - id: deploy_prometheus
+    name: Deploy Prometheus instance
+    type: deployment
+    depends_on: [install_operator]
+    commands:
+      - name: Create Prometheus instance
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: monitoring.coreos.com/v1
+          kind: Prometheus
+          metadata:
+            name: automotive-prometheus
+            namespace: monitoring
+          spec:
+            replicas: 2
+            retention: {{retention_period}}
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: [ReadWriteOnce]
+                  resources:
+                    requests:
+                      storage: {{storage_size}}
+            serviceAccountName: prometheus
+            serviceMonitorSelector:
+              matchLabels:
+                monitoring: automotive
+            ruleSelector:
+              matchLabels:
+                monitoring: automotive
+            alerting:
+              alertmanagers:
+              - namespace: monitoring
+                name: alertmanager
+                port: web
+          EOF
+
+  - id: configure_automotive_alerts
+    name: Configure automotive-specific alerts
+    type: configuration
+    commands:
+      - name: Create alert rules
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          metadata:
+            name: automotive-alerts
+            namespace: monitoring
+            labels:
+              monitoring: automotive
+          spec:
+            groups:
+            - name: adas_processing
+              interval: 30s
+              rules:
+              - alert: AdasProcessingLatencyHigh
+                expr: histogram_quantile(0.99, rate(adas_processing_duration_seconds_bucket[5m])) > 0.1
+                for: 5m
+                labels:
+                  severity: warning
+                  component: adas
+                annotations:
+                  summary: "ADAS processing latency is high"
+                  description: "99th percentile latency is {{ \$value }}s"
+
+            - name: battery_management
+              interval: 30s
+              rules:
+              - alert: BatteryVoltageAnomaly
+                expr: battery_voltage_volts < 10 or battery_voltage_volts > 15
+                for: 2m
+                labels:
+                  severity: critical
+                  component: battery
+                annotations:
+                  summary: "Battery voltage out of range"
+                  description: "Voltage: {{ \$value }}V"
+
+            - name: kubernetes_resources
+              interval: 30s
+              rules:
+              - alert: PodMemoryUsageHigh
+                expr: |
+                  (sum(container_memory_usage_bytes{pod!=""}) by (pod, namespace) /
+                   sum(container_spec_memory_limit_bytes{pod!=""}) by (pod, namespace)) > 0.9
+                for: 10m
+                labels:
+                  severity: warning
+                annotations:
+                  summary: "Pod memory usage high"
+          EOF
+
+automotive_dashboards:
+  - name: Vehicle Fleet Overview
+    metrics:
+      - Total vehicles online
+      - Data processing rate
+      - Error rate by component
+      - Network bandwidth usage
+
+  - name: ADAS Performance
+    metrics:
+      - Object detection latency
+      - Sensor fusion rate
+      - Path planning execution time
+      - Safety intervention count
+
+  - name: Battery Analytics
+    metrics:
+      - State of charge
+      - Temperature distribution
+      - Voltage per cell
+      - Charge/discharge cycles
+
+related_skills:
+  - grafana-dashboards
+  - alerts-configuration
+  - k8s-monitoring-setup
+
+examples:
+  - name: Deploy Prometheus for automotive cluster
+    command: |
+      prometheus-setup \
+        --deployment-method=operator \
+        --retention-period=30d \
+        --storage-size=100Gi \
+        --enable-alertmanager=true

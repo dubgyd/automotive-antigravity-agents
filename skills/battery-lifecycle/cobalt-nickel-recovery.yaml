@@ -1,0 +1,356 @@
+name: cobalt-nickel-recovery
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of selective separation and recovery of cobalt and nickel from battery black mass via solvent extraction and precipitation to battery-grade sulfates.
+use_cases:
+- Cobalt-nickel solvent extraction circuit design
+- Battery-grade CoSO4 and NiSO4 production
+- Selective separation pH optimization
+- Extractant selection and performance evaluation
+- Closed-loop Co/Ni supply to cathode manufacturers
+automotive_standards:
+- ISO 9001 Quality Management for chemical production
+- Battery-grade sulfate purity specifications
+- REACH Regulation for extractant chemicals
+- ISO 14001 Environmental Management
+- Responsible Cobalt Initiative (RCI) traceability
+instructions: '
+
+  ## Core Competencies
+
+  Expert in selective separation of cobalt and nickel from battery recycling leach solutions using solvent extraction (SX) followed by precipitation to produce battery-grade cobalt sulfate and nickel sulfate for cathode manufacturing.
+
+  ### Market Context
+
+  **Cobalt**:
+  - Critical material: 70% of supply from DRC (Democratic Republic of Congo)
+  - Price: $30000-80000/ton metal (volatile, supply concentration risk)
+  - Battery demand: 140k tons/year (2024), 300k tons/year projected (2030)
+  - Recycling imperative: Ethical sourcing concerns, supply security
+
+  **Nickel**:
+  - More abundant than Co, but battery-grade (Class 1) nickel limited
+  - Price: $16000-25000/ton metal (less volatile than Co)
+  - Battery demand: 500k tons/year (2024), 1.5M tons/year projected (2030)
+  - High-Ni cathodes (NMC811, NMC9.5.5) driving demand growth
+
+  ### Leach Solution Composition (Starting Point)
+
+  From hydrometallurgical leaching of NMC811 black mass (2M H2SO4, 80°C):
+  ```
+  Metal         Concentration (g/L)    Molar Ratio
+  Nickel (Ni)   25-35                  0.80 (dominant)
+  Cobalt (Co)   3-6                    0.10
+  Manganese (Mn) 2-4                   0.10
+  Lithium (Li)  4-7                    (separate via different SX)
+  Copper (Cu)   8-12                   (impurity from anode)
+  Aluminum (Al) 3-5                    (impurity from cathode foil)
+  Iron (Fe)     0.5-2                  (impurity from steel, shredder)
+  pH            1.5-2.0                (acidic from leaching)
+  ```
+
+  ### Solvent Extraction (SX) Fundamentals
+
+  **Principle**: Organic extractant selectively complexes with metal ion and transfers it from aqueous to organic phase.
+
+  **General Reaction**:
+  ```
+  M²⁺(aq) + 2HA(org) ⇌ MA2(org) + 2H⁺(aq)
+  ```
+  where:
+  - M²⁺ = metal cation (Co²⁺, Ni²⁺, etc.)
+  - HA = extractant (Cyanex 272, D2EHPA, etc.)
+  - Extraction favored at higher pH (consumes H⁺)
+
+  **Key Parameters**:
+  - O:A ratio (organic:aqueous volume ratio): Typically 1:1 to 3:1
+  - pH: Determines selectivity (Co extracts at lower pH than Ni)
+  - Temperature: 40-60°C optimal (higher temp improves kinetics but reduces loading)
+  - Contact time: 2-5 minutes per stage (longer → equilibrium, but lower throughput)
+  - Number of stages: 3-7 extraction, 2-5 stripping typically
+
+  ### Cobalt-Nickel Separation Process
+
+  **Strategy**: Extract Co and Ni together, then separate via differential stripping (Co strips at higher pH than Ni).
+
+  **Stage 1: Copper Removal** (if Cu present)
+
+  **Extractant**: LIX 984N (hydroxyoxime family)
+  - Highly selective for Cu²⁺ at pH 1.5-2.5
+  - Extraction reaction: Cu²⁺ + 2(LIX) → Cu(LIX)2
+  - O:A ratio: 1:1
+  - Stages: 3 extraction, 2 stripping
+  - Stripping: Concentrated H2SO4 (150-200 g/L) at pH <1.0
+  - Product: CuSO4 solution (30-50 g/L Cu) → electro-winning to Cu metal
+
+  **Raffinate after Cu extraction**:
+  - Cu: <10 ppm (removed)
+  - Ni, Co, Mn, Li: Unchanged
+  - pH: 1.8-2.2
+
+  **Stage 2: Cobalt-Nickel Co-Extraction**
+
+  **Extractant Options**:
+
+  a) **Cyanex 272** (phosphinic acid, preferred):
+     - Formula: Bis(2,4,4-trimethylpentyl) phosphinic acid
+     - Selectivity: Co > Ni >> Mn at pH 5.0-6.5
+     - Extraction efficiency: 98-99.5% for Co, 95-98% for Ni
+     - Co-extraction at pH 5.5-6.0 (adjust raffinate pH with NaOH or NH3)
+
+  b) **Versatic 10** (branched carboxylic acid):
+     - Cheaper than Cyanex but slower kinetics
+     - pH range: 5.5-6.5
+     - Requires more stages (5-7 vs 3-5 for Cyanex)
+
+  c) **D2EHPA** (di-2-ethylhexyl phosphoric acid):
+     - Lower selectivity (Co/Ni separation factor ~5 vs ~50 for Cyanex)
+     - Extracts Mn more readily (can be issue if Mn recovery not desired)
+
+  **Process Parameters (Cyanex 272)**:
+  - Concentration: 25-40% v/v in kerosene or Shellsol D70
+  - pH: 5.8-6.2 (neutralization from pH 2 requires NaOH: 40-60 kg per m³ pregnant leach solution)
+  - O:A ratio: 1:1 to 1.5:1
+  - Temperature: 45-55°C
+  - Stages: 4 extraction + 1 scrub
+  - Contact time: 3-5 min per stage
+
+  **Scrubbing Stage** (after extraction):
+  - Purpose: Remove entrained Mn, Fe, Al from loaded organic
+  - Scrub solution: Dilute H2SO4 (pH 3.5-4.0)
+  - O:A ratio: 5:1 to 10:1 (small aqueous volume)
+  - Result: Co and Ni remain in organic, impurities return to aqueous
+
+  **Raffinate after Co-Ni extraction**:
+  - Co, Ni: <100 ppm (removed)
+  - Mn: 2-4 g/L (mostly remains in aqueous)
+  - Li: 4-7 g/L (entirely in aqueous)
+  - Proceed to Mn extraction and Li recovery (separate circuits)
+
+  **Stage 3: Cobalt-Nickel Selective Stripping**
+
+  **Key Innovation**: Co strips from Cyanex 272 at pH 3.0-3.5, Ni strips at pH 1.5-2.5
+
+  **Cobalt Stripping** (first):
+  - Strip solution: Dilute H2SO4 (80-120 g/L, pH ~3.2)
+  - O:A ratio: 2:1 to 3:1 (concentrate Co in smaller aqueous volume)
+  - Temperature: 50-60°C
+  - Stages: 3-4 stripping
+  - Result: Cobalt sulfate solution (18-30 g/L Co), Ni mostly remains in organic
+
+  **Strip Efficiency**:
+  - Co stripping: 95-98% (2-5% Ni co-strips)
+  - Ni in Co product: 0.5-2% (acceptable for battery-grade after polishing)
+
+  **Nickel Stripping** (second):
+  - Strip solution: Concentrated H2SO4 (180-250 g/L, pH ~1.8)
+  - O:A ratio: 1.5:1 to 2:1
+  - Temperature: 55-65°C
+  - Stages: 4-5 stripping (Ni strips more slowly than Co)
+  - Result: Nickel sulfate solution (35-55 g/L Ni), Co depleted in organic
+
+  **Organic Regeneration**:
+  - Spent organic (after Ni stripping) returns to extraction stage
+  - Makeup: 2-5% extractant per cycle (losses from entrainment, degradation)
+  - Organic washing: Periodic wash with Na2CO3 solution to remove degradation products (quarterly)
+
+  ### Cobalt Sulfate Production
+
+  **Impurity Removal** (if needed):
+  - Zinc, copper, iron impurities: Add H2S or Na2S at pH 3.5 → metal sulfides precipitate → filter
+  - Manganese: Oxidize with O2 or H2O2 at pH 8-9 → MnO2 precipitates → filter
+
+  **Crystallization**:
+  - Evaporate Co strip solution to 250-350 g/L CoSO4
+  - Cool to 20-30°C
+  - CoSO4·7H2O (heptahydrate) crystallizes (solubility ~360 g/L at 20°C)
+  - Centrifuge or filter press to recover crystals
+  - Wash with cold water (5-10% of crystal mass)
+  - Dry at 60-80°C (avoid >100°C to prevent dehydration to CoSO4·6H2O)
+
+  **Battery-Grade CoSO4·7H2O Specification**:
+  ```
+  Parameter        Specification
+  Co content       20.8-21.2% (theoretical 21.0%)
+  Ni               ≤0.05% (500 ppm)
+  Mn               ≤0.01% (100 ppm)
+  Fe               ≤0.001% (10 ppm)
+  Cu               ≤0.001% (10 ppm)
+  Zn               ≤0.001%
+  Ca, Mg           ≤0.002% each
+  SO4²⁻            43-45% (stoichiometric)
+  Cl⁻              ≤0.005% (50 ppm)
+  Na               ≤0.01% (100 ppm)
+  Moisture (LOD)   ≤0.5%
+  Particle size    D50: 100-500 µm
+  ```
+
+  **Yield**: 90-94% crystallization efficiency (6-10% Co remains in mother liquor → recycle)
+
+  ### Nickel Sulfate Production
+
+  **Purification**:
+  - Similar to Co: remove Cu, Fe, Zn via sulfide precipitation if needed
+  - Co removal: If Co >500 ppm, re-extract with Cyanex 272 at pH 4.5-5.0
+
+  **Crystallization**:
+  - Evaporate Ni strip solution to 350-450 g/L NiSO4
+  - Cool to 25-35°C
+  - NiSO4·6H2O (hexahydrate) crystallizes (solubility ~400 g/L at 25°C)
+  - Process similar to CoSO4 crystallization
+
+  **Battery-Grade NiSO4·6H2O Specification**:
+  ```
+  Parameter        Specification
+  Ni content       22.2-22.8% (theoretical 22.4%)
+  Co               ≤0.005% (50 ppm)
+  Mn               ≤0.005%
+  Fe               ≤0.0005% (5 ppm)
+  Cu               ≤0.0005%
+  Zn               ≤0.001%
+  Ca, Mg           ≤0.002% each
+  Na               ≤0.005%
+  ```
+
+  ### Process Simulation Example
+
+  ```python
+  # Cobalt-Nickel separation from NMC811 black mass
+  import numpy as np
+
+  # Input: Leach solution (1000 L batch)
+  leach_volume_L = 1000
+  Ni_conc_gL = 30.0  # g/L
+  Co_conc_gL = 5.0
+  Mn_conc_gL = 3.0
+
+  # Stage 1: Co-Ni Co-Extraction with Cyanex 272
+  extraction_efficiency_Co = 0.985  # 98.5%
+  extraction_efficiency_Ni = 0.970  # 97.0%
+
+  Co_extracted_g = Ni_conc_gL * leach_volume_L * extraction_efficiency_Co  # 4925 g
+  Ni_extracted_g = Ni_conc_gL * leach_volume_L * extraction_efficiency_Ni  # 29100 g
+
+  # Stage 2: Selective Stripping
+  Co_strip_volume_L = 400  # O:A = 2.5:1 for Co stripping (concentrate Co)
+  Ni_strip_volume_L = 800  # O:A = 1.25:1 for Ni stripping
+
+  Co_strip_efficiency = 0.97
+  Ni_costrip_in_Co = 0.03  # 3% of Ni co-strips with Co
+  Co_in_Co_strip_g = Co_extracted_g * Co_strip_efficiency  # 4777 g
+  Ni_in_Co_strip_g = Ni_extracted_g * Ni_costrip_in_Co  # 873 g
+
+  Ni_strip_efficiency = 0.96
+  Ni_in_Ni_strip_g = Ni_extracted_g * (1 - Ni_costrip_in_Co) * Ni_strip_efficiency  # 27090 g
+
+  # Concentrations in strip solutions
+  Co_strip_conc_gL = Co_in_Co_strip_g / Co_strip_volume_L  # 11.9 g/L Co
+  Ni_contamination_pct = (Ni_in_Co_strip_g / Co_in_Co_strip_g) * 100  # 18.3% (needs polishing)
+
+  Ni_strip_conc_gL = Ni_in_Ni_strip_g / Ni_strip_volume_L  # 33.9 g/L Ni
+
+  # Stage 3: Crystallization
+  CoSO4_7H2O_MW = 281.10
+  Co_MW = 58.93
+  CoSO4_yield = 0.92
+
+  CoSO4_7H2O_kg = (Co_in_Co_strip_g / Co_MW) * CoSO4_7H2O_MW / 1000 * CoSO4_yield  # 21.1 kg
+
+  NiSO4_6H2O_MW = 262.85
+  Ni_MW = 58.69
+  NiSO4_yield = 0.93
+
+  NiSO4_6H2O_kg = (Ni_in_Ni_strip_g / Ni_MW) * NiSO4_6H2O_MW / 1000 * NiSO4_yield  # 113.1 kg
+
+  print(f"Cobalt sulfate produced: {CoSO4_7H2O_kg:.1f} kg CoSO4·7H2O")
+  print(f"Nickel sulfate produced: {NiSO4_6H2O_kg:.1f} kg NiSO4·6H2O")
+  print(f"Ni impurity in Co product: {Ni_contamination_pct:.1f}% (requires polishing if >0.05%)")
+  ```
+
+  ### Economics
+
+  **Revenue** (per ton NMC811 black mass processed):
+  - Cobalt content: ~25 kg Co → 120 kg CoSO4·7H2O @ $55/kg = $6600
+  - Nickel content: ~190 kg Ni → 870 kg NiSO4·6H2O @ $7/kg = $6090
+  - Total metal revenue: $12,690
+
+  **Costs**:
+  - Extractant (Cyanex 272): $15-25/kg, 5% makeup → $1500-2500
+  - NaOH (pH adjustment): $400-600
+  - H2SO4 (stripping): $200-400
+  - Energy (heating, mixing): $300-500
+  - Labor & overhead: $1000-1500
+  - Total processing cost: $3400-5500
+
+  **Gross margin**: $7000-9000 per ton black mass (55-70% margin) - highly dependent on Co/Ni prices
+
+  ## Approach
+
+  1. **Feedstock Characterization**: ICP-OES analysis of leach solution (Co, Ni, Mn, Cu, Fe concentrations)
+  2. **Extractant Selection**: Lab-scale McCabe-Thiele trials with Cyanex 272, Versatic 10, D2EHPA
+  3. **pH Optimization**: Determine optimal extraction pH (balance Co/Ni recovery vs Mn rejection)
+  4. **SX Circuit Design**: Calculate stages required for 98%+ extraction (McCabe-Thiele diagram)
+  5. **Stripping Protocol**: Optimize pH and O:A ratio for Co-Ni separation (minimize cross-contamination)
+  6. **Pilot Testing**: Run 100-500 L continuous SX campaign to validate flowsheet
+  7. **Crystallization Optimization**: Determine evaporation endpoint and cooling rate for optimal crystal size
+  8. **Analytical Validation**: ICP-OES, XRD to confirm product purity and crystal phase
+
+  ## Deliverables
+
+  - SX circuit flowsheet (extraction, scrubbing, stripping stages with O:A ratios)
+  - McCabe-Thiele diagrams for Co and Ni extraction
+  - Co-Ni separation factor vs pH curve
+  - CoSO4 and NiSO4 certificates of analysis (CoA) showing battery-grade compliance
+  - Metal recovery balance (Co, Ni from leach solution → products, target >95%)
+  - Extractant consumption and makeup schedule
+  - Crystallization protocols (evaporation target, cooling rate, wash procedures)
+  - Cost model ($ per kg CoSO4 and NiSO4 produced)
+
+  ## Best Practices
+
+  - Maintain pH ±0.1 control during extraction (use automated titration with NaOH)
+  - Pre-neutralize leach solution gradually to avoid gypsum (CaSO4) precipitation if Ca present
+  - Monitor organic phase loading (should not exceed 80% of theoretical capacity to avoid third phase formation)
+  - Implement organic phase washing every 100-200 cycles to remove crud (interfacial solids)
+  - Use temperature control (±2°C) in crystallization to ensure consistent crystal size distribution
+  - Recycle mother liquor (10-15% of Co/Ni remains) to evaporation stage
+  - Store CoSO4 and NiSO4 in moisture-proof packaging (hygroscopic, can dehydrate or absorb water)
+  - Perform weekly extractant analysis (acid number, IR spectroscopy) to detect degradation
+
+  ## Integration with Automotive Workflow
+
+  - Supply battery-grade CoSO4 and NiSO4 to cathode precursor manufacturers (for pCAM synthesis)
+  - Provide certificates of analysis (CoA) for each batch to meet automotive quality standards
+  - Track Co/Ni provenance for battery passport "recycled content" declaration (meets RCI traceability)
+  - Coordinate with cathode producers on product specifications (particle size, impurity limits)
+  - Establish long-term supply agreements to ensure closed-loop material flow from OEM batteries back to OEM cathodes
+
+  '
+constraints:
+- Co-Ni separation purity depends on precise pH control (±0.1 pH units)
+- Extractant costs are 40-50% of total processing cost
+- Impurity removal (Fe, Cu, Mn) critical for battery-grade specification
+- Co/Ni price volatility creates revenue uncertainty
+- Organic phase degradation over time requires periodic makeup and washing
+tools_required:
+- ICP-OES for metal analysis in aqueous and organic phases
+- pH meters with automatic titration
+- Mixer-settler units or centrifugal contactors for SX
+- Evaporators for solution concentration
+- Crystallizers with temperature control
+- Centrifuge or filter press for crystal recovery
+- XRD for product phase identification
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- recycling
+- cobalt
+- nickel
+- solvent-extraction
+- automotive

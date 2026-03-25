@@ -1,0 +1,165 @@
+name: holographic-displays
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "3D floating interface elements using holographic and light-field display technologies for in-cabin interaction, covering volumetric rendering and depth-correct UI design."
+use_cases:
+  - "Designing volumetric 3D interfaces for climate and media controls"
+  - "Implementing light-field displays that show depth without glasses"
+  - "Creating holographic vehicle status visualizations viewable from multiple angles"
+  - "Building mid-air holographic buttons with gesture and haptic feedback pairing"
+  - "Integrating holographic elements with traditional 2D displays in a hybrid cockpit"
+automotive_standards:
+  - "ISO 9241-331 - Optical characteristics of autostereoscopic displays"
+  - "SAE J2365 - Driver visual behavior considerations for display placement"
+  - "IEC 62471 - Photobiological safety of lamps and lamp systems"
+  - "ISO 15008 - Visual presentation ergonomics for transport"
+  - "ISO 26262 - Functional safety for display control systems"
+instructions: |
+  # Holographic Displays
+
+  ## Overview
+  Holographic and light-field displays create three-dimensional floating interface
+  elements visible without special glasses. In automotive cockpits, these technologies
+  transform flat control panels into volumetric interfaces where virtual buttons, dials,
+  and status indicators appear to hover in mid-air. The driver can perceive depth,
+  parallax, and spatial relationships, enabling more intuitive interaction with vehicle
+  systems.
+
+  ## Key Concepts
+
+  ### Display Technologies
+  Several approaches create the illusion of floating 3D content:
+  - Light-field displays use micro-lens arrays to emit light in controlled directions,
+    creating different views for each eye position without tracking
+  - Digital holography uses spatial light modulators to reconstruct wavefronts that
+    produce true 3D images with natural focus cues
+  - Pepper's ghost variants use angled semi-transparent mirrors to project 2D screens
+    into a volume, giving a convincing 3D appearance from certain angles
+  - Volumetric displays use rotating screens or layered transparent panels to emit
+    light from actual 3D positions in space
+
+  ### Depth Budget
+  The usable depth range for in-cabin holographic elements:
+  - Near plane at 300 mm from the display surface, avoiding accommodation conflict
+  - Far plane at 1500 mm, beyond which depth discrimination decreases rapidly
+  - Sweet spot between 500 mm and 1000 mm for primary interactive controls
+  - Depth budget allocation prioritizes frequently used controls at comfortable distances
+
+  ### Interaction Paradigms
+  Users interact with floating elements through complementary input modalities:
+  - Mid-air gesture recognition using ToF cameras or radar sensors
+  - Eye tracking to determine which holographic element has user focus
+  - Haptic feedback via ultrasonic phased arrays creating tactile sensation in air
+  - Voice commands as a fallback for eyes-free operation
+
+  ## Implementation Guide
+
+  ### Step 1 - Select Display Technology
+  Choose based on vehicle integration constraints:
+  - Light-field displays fit within standard DIN slot dimensions for center stack
+  - Pepper's ghost setups require careful angle geometry and ambient light control
+  - Evaluate viewing angle requirements for driver-only versus shared occupant viewing
+  - Assess power consumption against vehicle electrical budget allocation
+
+  ### Step 2 - Design the Volumetric UI
+  Create interface elements optimized for 3D perception:
+  - Use depth to encode information hierarchy, with critical controls closest to user
+  - Maintain minimum 20 mm separation between interactive elements in depth axis
+  - Apply familiar metaphors like physical knobs and sliders rendered as holograms
+  - Design for worst-case eye position within the expected eyebox volume
+
+  ### Step 3 - Implement the Rendering Engine
+  Build a rendering pipeline optimized for multi-view or holographic output:
+  - For light-field displays, render 40 to 100 views simultaneously
+  - Use view-dependent shading to ensure correct specular highlights per viewpoint
+  - Implement level-of-detail management based on depth plane and gaze direction
+  - Target consistent frame rates across all views to prevent depth flicker
+
+  ### Step 4 - Integrate Haptic Feedback
+  Pair holographic elements with tactile confirmation:
+  - Ultrasonic phased arrays create focal points of pressure in mid-air
+  - Synchronize haptic pulse timing with visual button press animation
+  - Calibrate haptic focal point position to match the visual element location
+  - Provide distinct haptic patterns for different interaction types
+
+  ### Step 5 - Validate Usability
+  Run structured testing with diverse user populations:
+  - Measure task completion time compared to physical and touchscreen controls
+  - Assess depth perception accuracy across different ambient lighting conditions
+  - Test with users wearing corrective lenses and bifocals
+  - Evaluate distraction potential using ISO 16673 occlusion method
+
+  ## Best Practices
+
+  ### Visual Comfort
+  - Never place interactive elements closer than 300 mm to the display surface
+  - Avoid rapid depth transitions that force accommodation changes
+  - Use smooth animations when elements move between depth planes
+  - Limit holographic content brightness to avoid afterimage effects
+
+  ### Ambient Light Resilience
+  - Holographic elements must remain visible in 40000 lux direct sunlight
+  - Use high-brightness laser or LED illumination sources
+  - Implement ambient light sensors to adjust hologram intensity dynamically
+  - Consider a physical hood or visor to shade the display area from direct sun
+
+  ### Graceful Degradation
+  - If holographic display fails, fall back to a 2D touch panel backup
+  - Monitor display health continuously and warn the driver of degraded performance
+  - Maintain critical vehicle controls accessible through redundant input paths
+  - Store last-known-good display calibration for rapid recovery after reset
+
+  ## Troubleshooting
+
+  ### Holographic Elements Appear Flat
+  Verify the multi-view rendering pipeline is generating distinct perspectives. Check
+  that the lens array or diffractive element is correctly aligned with the pixel grid.
+  Measure inter-view angular separation to confirm it matches the display specification.
+
+  ### Ghost Images or Crosstalk Between Views
+  Inspect the angular selectivity of the optical element. Reduce content brightness in
+  peripheral views where crosstalk is highest. Apply crosstalk compensation matrices to
+  pre-correct the rendered views.
+
+  ### Haptic Feedback Misaligned with Visual
+  Recalibrate the phased array coordinate system to the display coordinate system. Check
+  that the hand tracking camera and display share the same reference frame. Verify
+  ultrasonic focal point position with a microphone array measurement.
+
+  ### Users Cannot Find Controls in 3D Space
+  Add visual affordances like glow effects and subtle animation to draw attention.
+  Implement a guided onboarding sequence for first-time users. Reduce the number of
+  depth planes to simplify the spatial layout.
+
+  ## Integration Patterns
+
+  ### Hybrid 2D/3D Display Architecture
+  Combining holographic elements with traditional flat displays:
+  - Use flat touchscreens for information-dense content like maps and lists
+  - Reserve holographic elements for controls that benefit from depth like dials and sliders
+  - Implement a unified input routing layer that dispatches events to 2D or 3D UI
+  - Maintain consistent visual language between flat and volumetric interface elements
+
+  ### Hand Tracking Coordination
+  Gesture input for holographic elements requires tight sensor integration:
+  - Share the ToF camera feed between gesture recognition and holographic rendering
+  - Calibrate the hand tracking coordinate system to the holographic display volume
+  - Implement occlusion rendering where virtual objects appear behind the user's hand
+  - Synchronize gesture recognition latency with holographic frame rendering timing
+
+  ## Testing and Validation
+
+  ### Depth Perception Assessment
+  Quantify how accurately users perceive holographic element positions:
+  - Use a reaching task where users point to holographic targets at known depths
+  - Measure pointing error as a function of target depth and lateral position
+  - Compare task completion time between holographic and touchscreen equivalents
+  - Test with users at various ages as depth perception changes with aging
+
+  ### Optical Safety Verification
+  Confirm the holographic display meets photobiological safety standards:
+  - Measure retinal irradiance at the closest expected eye distance per IEC 62471
+  - Verify that no laser-based illumination source exceeds Class 1 eye safety limits
+  - Test for stroboscopic effects that could trigger photosensitive conditions
+  - Validate that display failure modes do not produce concentrated light output

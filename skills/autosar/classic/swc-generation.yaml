@@ -1,0 +1,516 @@
+name: "AUTOSAR Classic SWC Generation"
+version: "1.0.0"
+description: "Comprehensive skills for AUTOSAR Classic Software Component generation and configuration"
+category: "autosar"
+
+instructions: |
+  ## AUTOSAR Classic Platform SWC Development Guide
+
+  ### Overview
+
+  AUTOSAR Classic Platform defines a layered software architecture for embedded
+  automotive ECUs. Software Components (SWCs) are the application-level building
+  blocks that communicate through the Runtime Environment (RTE). This guide covers
+  SWC creation, BSW configuration, RTE generation, and integration.
+
+  ### Architecture
+
+  ```
+  Application Layer
+  ┌──────────┐  ┌──────────┐  ┌──────────┐
+  │  App SWC │  │ Sensor   │  │ Actuator │
+  │          │  │ Actuator │  │ SWC      │
+  │          │  │ SWC      │  │          │
+  └────┬─────┘  └────┬─────┘  └────┬─────┘
+       │              │              │
+  ─────┴──────────────┴──────────────┴────── RTE
+       │              │              │
+  ┌────┴─────┐  ┌────┴─────┐  ┌────┴─────┐
+  │  Com     │  │  OS      │  │  DEM     │
+  │  Stack   │  │  (SchM)  │  │  NvM     │
+  └──────────┘  └──────────┘  └──────────┘
+  Basic Software (BSW)
+  ```
+
+  ### SWC Types
+
+  - **ApplicationSWC**: Standard application logic (e.g., control algorithms)
+  - **SensorActuatorSWC**: Direct hardware I/O access (sensor reading, actuator driving)
+  - **ComplexDeviceDriverSWC**: Bypass BSW for special hardware
+  - **ParameterSWC**: Calibration parameter storage
+  - **CompositionSWC**: Groups multiple SWCs into a single unit
+
+  ### Port Interface Types
+
+  **Sender-Receiver (SR) Interface**:
+  - Asynchronous data exchange between SWCs
+  - Supports queued or last-is-best semantics
+  - Data elements defined with application data types
+  - Init values required for startup safety
+
+  **Client-Server (CS) Interface**:
+  - Synchronous request-response operations
+  - Client calls operation, server executes and returns result
+  - Supports typed error responses (ApplicationErrors)
+  - Can be synchronous or asynchronous
+
+  ### Runnable Entity Configuration
+
+  Runnables are the execution units within an SWC. Each runnable maps to a C function:
+  - **TimingEvent**: Periodic execution (e.g., every 10ms)
+  - **DataReceivedEvent**: Triggered when new data arrives on an SR port
+  - **OperationInvokedEvent**: Triggered when a CS operation is called
+  - **ModeSwitchEvent**: Triggered on mode transitions
+
+  Key properties per runnable:
+  - Minimum start interval (prevents re-entry)
+  - Data access points (read/write permissions)
+  - Exclusive area usage for mutual exclusion
+  - Inter-runnable variable access
+
+  ### RTE API Patterns
+
+  ```c
+  /* Sender-Receiver Read */
+  Std_ReturnType ret;
+  SpeedType speed;
+  ret = Rte_Read_RpSpeed_Speed(&speed);
+  if (ret == RTE_E_OK) { /* use speed */ }
+
+  /* Sender-Receiver Write */
+  Rte_Write_PpTorque_TorqueRequest(requestedTorque);
+
+  /* Client-Server Call */
+  CalibResult result;
+  ret = Rte_Call_RpCalibrate_Calibrate(sensorId, &result);
+
+  /* Inter-Runnable Variable */
+  uint16 filteredValue = Rte_IrvRead_Runnable10ms_FilteredSignal();
+  Rte_IrvWrite_Runnable10ms_FilteredSignal(newValue);
+
+  /* Exclusive Area */
+  Rte_Enter_ExclusiveArea_0();
+  /* critical section */
+  Rte_Exit_ExclusiveArea_0();
+  ```
+
+  ### BSW Module Stack Configuration
+
+  **CAN Communication Stack** (bottom to top):
+  1. Can Driver (CanDrv) - Hardware register access
+  2. CAN Interface (CanIf) - Abstraction, HOH mapping
+  3. CAN Transport Protocol (CanTp) - Segmented transfers
+  4. PDU Router (PduR) - Routes PDUs between modules
+  5. COM module - Signal-level access for application
+
+  **Memory Stack**:
+  1. Flash Driver (Fls) - Raw flash operations
+  2. Flash EEPROM Emulation (Fee) - Block-based abstraction
+  3. NV RAM Manager (NvM) - Application-level persistent data
+
+  **Diagnostic Stack**:
+  1. CAN Transport (CanTp) - UDS transport
+  2. Diagnostic Communication Manager (DCM) - UDS services
+  3. Diagnostic Event Manager (DEM) - Fault memory
+
+  ### AUTOSAR OS Configuration
+
+  - Tasks with fixed priorities (OSEK/VDX-based)
+  - Events for synchronization between tasks
+  - Alarms for periodic task activation
+  - Resources for mutual exclusion (ceiling protocol)
+  - ISR Category 1 (no OS calls) and Category 2 (OS calls allowed)
+  - Application partitions for memory protection (ISO 26262)
+
+  ### Safety Mechanisms
+
+  **End-to-End Protection (E2E)**:
+  - Profile 1: CRC-8 + counter (4-byte overhead)
+  - Profile 2: CRC-8 + counter + data ID (4-byte)
+  - Profile 4: CRC-32 + counter + data ID (12-byte)
+  - Profile 11: CRC-8 + counter (compact)
+  - Configured per signal or signal group
+
+  **Watchdog Supervision (SafeWdgM)**:
+  - Alive supervision: Checks periodic execution
+  - Deadline supervision: Checks execution time
+  - Logical supervision: Checks control flow sequence
+  - Reports to DEM on supervision failures
+
+  ### Secure Onboard Communication (SecOC)
+
+  - CMAC authentication for CAN messages
+  - Freshness value management (counter or timestamp)
+  - Configured per PDU (not per signal)
+  - Key management through Crypto Service Manager (CSM)
+
+  ### Code Generation and Validation
+
+  1. Define service interfaces and SWCs in ARXML
+  2. Configure BSW modules (EB tresos, DaVinci Configurator)
+  3. Generate RTE code (Rte.h, Rte_<SWC>.h, Rte.c)
+  4. Implement SWC runnables using generated API
+  5. Generate BSW configuration code
+  6. Compile and link complete ECU software
+  7. Validate with MISRA-C checker and static analysis
+
+  ### Testing Strategy
+
+  - **Unit Test**: Mock RTE with stubs, test runnable logic in isolation
+  - **Integration Test**: CANoe/dSPACE for signal-level validation
+  - **System Test**: Hardware-in-the-loop with real ECU
+  - **Regression**: Automated test suite run on every build
+
+  ### Best Practices
+
+  - Keep runnables short (< 50 lines) and focused on one responsibility
+  - Use exclusive areas sparingly; prefer data flow over shared state
+  - Define clear init values for all SR data elements
+  - Version your ARXML files alongside source code
+  - Validate ARXML consistency before RTE generation
+  - Document the mapping between SWC ports and CAN signals
+  - Use calibration parameters (not constants) for tunable values
+  - Configure E2E protection for all safety-critical signals
+
+skills:
+  # SWC Architecture Skills
+  - id: "autosar-classic-swc-create"
+    name: "Create AUTOSAR Classic SWC"
+    description: "Generate Software Component with ports and runnables"
+    tags: ["autosar", "swc", "architecture"]
+    implementation: |
+      Create AUTOSAR Classic Software Component with:
+      1. Define SWC atomic type (ApplicationSWC, SensorActuatorSWC, etc.)
+      2. Configure provided/required ports with interfaces
+      3. Define internal behavior with runnables
+      4. Set up timing events and data receive events
+      5. Configure inter-runnable variables
+      6. Generate ARXML description
+
+      Use tresos_adapter.py for integration with EB tresos.
+
+  - id: "autosar-classic-port-interface"
+    name: "Define Port Interface"
+    description: "Create sender-receiver or client-server interface"
+    tags: ["autosar", "interface", "ports"]
+    implementation: |
+      Define AUTOSAR port interface:
+      1. Choose interface type (Sender-Receiver or Client-Server)
+      2. For SR: Define data elements with data types
+      3. For CS: Define operations with arguments and return types
+      4. Set init values and invalidation policies
+      5. Configure queue length for SR interfaces
+      6. Generate interface ARXML
+
+  - id: "autosar-classic-runnable-config"
+    name: "Configure Runnable"
+    description: "Define runnable entity with events and data access"
+    tags: ["autosar", "runnable", "behavior"]
+    implementation: |
+      Configure AUTOSAR runnable:
+      1. Define runnable name and symbol
+      2. Set minimum start interval
+      3. Configure data read/write access points
+      4. Set up inter-runnable variables
+      5. Define exclusive areas for concurrency
+      6. Map to RTE events (timing, data receive, operation invoked)
+
+  # BSW Configuration Skills
+  - id: "autosar-classic-can-stack"
+    name: "Configure CAN Stack"
+    description: "Setup CAN driver, interface, transport, and communication manager"
+    tags: ["autosar", "bsw", "can"]
+    implementation: |
+      Configure AUTOSAR CAN communication stack:
+      1. Can module: Configure controllers, baudrate, filters
+      2. CanIf module: Setup channels, transceivers, HOH mapping
+      3. CanTp module: Configure transport channels, N-SDUs, timing
+      4. Com module: Define signals, I-PDUs, signal groups
+      5. PduR module: Setup routing tables
+      6. ComM module: Configure communication modes
+
+      Use tresos_adapter to import and configure modules.
+
+  - id: "autosar-classic-dcm-config"
+    name: "Configure Diagnostics (DCM)"
+    description: "Setup UDS diagnostic services"
+    tags: ["autosar", "bsw", "diagnostics"]
+    implementation: |
+      Configure AUTOSAR Diagnostic Communication Manager:
+      1. Define diagnostic session controls
+      2. Configure security access levels
+      3. Setup read/write DID services (0x22/0x2E)
+      4. Configure routine control services (0x31)
+      5. Setup fault memory services (0x19)
+      6. Configure communication control (0x28)
+      7. Define NRC handling
+
+  - id: "autosar-classic-memory-stack"
+    name: "Configure Memory Stack"
+    description: "Setup NvM, Fee, Fls for non-volatile data"
+    tags: ["autosar", "bsw", "memory"]
+    implementation: |
+      Configure AUTOSAR memory abstraction:
+      1. Fls module: Configure flash sectors, timing parameters
+      2. Fee module: Define virtual sectors, block configuration
+      3. NvM module: Setup blocks, redundancy, CRC
+      4. Configure RAM mirror blocks
+      5. Setup immediate/explicit synchronization
+      6. Define write protection and error handling
+
+  - id: "autosar-classic-os-config"
+    name: "Configure AUTOSAR OS"
+    description: "Setup tasks, events, alarms, and resources"
+    tags: ["autosar", "bsw", "os"]
+    implementation: |
+      Configure AUTOSAR Operating System:
+      1. Define tasks with priorities and schedules
+      2. Configure events for task activation
+      3. Setup alarms for cyclic execution
+      4. Define resources for mutex protection
+      5. Configure ISR categories and priorities
+      6. Setup stack sizes and error hooks
+      7. Define application partitions for safety
+
+  # RTE Generation Skills
+  - id: "autosar-classic-rte-generate"
+    name: "Generate RTE Code"
+    description: "Generate Runtime Environment from SWC configuration"
+    tags: ["autosar", "rte", "generation"]
+    implementation: |
+      Generate AUTOSAR RTE code:
+      1. Parse SWC ARXML descriptions
+      2. Generate Rte.h with API declarations
+      3. Generate Rte_<Component>.h for each SWC
+      4. Generate Rte.c with implementation
+      5. Create Rte_Type.h with data types
+      6. Generate SchM scheduler module
+      7. Configure memory mapping sections
+
+  - id: "autosar-classic-rte-api-usage"
+    name: "Use RTE APIs"
+    description: "Implement SWC using RTE read/write/call APIs"
+    tags: ["autosar", "rte", "implementation"]
+    implementation: |
+      Use RTE APIs in SWC implementation:
+      1. Rte_Read_<port>_<data>() for SR port reads
+      2. Rte_Write_<port>_<data>() for SR port writes
+      3. Rte_Call_<port>_<operation>() for CS calls
+      4. Rte_IrvRead/Write for inter-runnable variables
+      5. Rte_Enter/ExitExclusiveArea for critical sections
+      6. Handle return codes (RTE_E_OK, RTE_E_NO_DATA, etc.)
+
+  # Integration Skills
+  - id: "autosar-classic-ecu-extract"
+    name: "Create ECU Extract"
+    description: "Extract ECU-specific configuration from system"
+    tags: ["autosar", "integration", "ecu"]
+    implementation: |
+      Create ECU extract from system description:
+      1. Identify SWCs mapped to target ECU
+      2. Extract relevant port connections
+      3. Filter communication signals for this ECU
+      4. Extract diagnostic services configuration
+      5. Create ECU-specific ARXML
+      6. Resolve inter-ECU communication routing
+
+  - id: "autosar-classic-bsw-integration"
+    name: "Integrate BSW Modules"
+    description: "Link BSW with RTE and application layer"
+    tags: ["autosar", "integration", "bsw"]
+    implementation: |
+      Integrate Basic Software modules:
+      1. Configure BSW module initialization sequence
+      2. Setup BSW scheduler (SchM) task mapping
+      3. Link communication stack to Com/PduR
+      4. Configure mode management callbacks
+      5. Setup DEM event reporting
+      6. Configure BSW memory sections
+      7. Generate EcuC module with ECU configuration
+
+  # Composition Skills
+  - id: "autosar-classic-composition"
+    name: "Create SWC Composition"
+    description: "Compose multiple SWCs into assembly"
+    tags: ["autosar", "composition", "architecture"]
+    implementation: |
+      Create AUTOSAR composition:
+      1. Define CompositionSWC type
+      2. Add component prototypes
+      3. Setup assembly connectors between ports
+      4. Define delegation connectors to outer ports
+      5. Configure port delegation paths
+      6. Validate connector compatibility
+      7. Generate composition ARXML
+
+  - id: "autosar-classic-mode-management"
+    name: "Configure Mode Management"
+    description: "Setup mode declaration groups and switches"
+    tags: ["autosar", "modes", "behavior"]
+    implementation: |
+      Configure AUTOSAR mode management:
+      1. Define mode declaration groups
+      2. Create mode declarations (states)
+      3. Configure mode switch interfaces
+      4. Define mode-dependent runnable execution
+      5. Setup mode transition triggers
+      6. Configure BswM mode arbitration
+      7. Define mode-dependent BSW behavior
+
+  # Data Type Skills
+  - id: "autosar-classic-data-types"
+    name: "Define AUTOSAR Data Types"
+    description: "Create application and implementation data types"
+    tags: ["autosar", "datatypes", "modeling"]
+    implementation: |
+      Define AUTOSAR data types:
+      1. Create primitive data types (uint8-uint64, float, boolean)
+      2. Define application data types with semantics
+      3. Create implementation data types for memory layout
+      4. Setup data type mappings
+      5. Define record types (structures)
+      6. Create array types with dimensions
+      7. Define value constraints and enumeration
+
+  # Calibration Skills
+  - id: "autosar-classic-calibration-params"
+    name: "Define Calibration Parameters"
+    description: "Setup calibration parameters with ranges"
+    tags: ["autosar", "calibration", "parameters"]
+    implementation: |
+      Define AUTOSAR calibration parameters:
+      1. Create parameter SWC or use existing component
+      2. Define parameter data elements
+      3. Set min/max/default values
+      4. Configure parameter variants
+      5. Setup parameter memory segments
+      6. Link to A2L file generation
+      7. Configure XCP access
+
+  # Safety Skills
+  - id: "autosar-classic-safety-mechanisms"
+    name: "Implement Safety Mechanisms"
+    description: "Add E2E protection and supervision"
+    tags: ["autosar", "safety", "iso26262"]
+    implementation: |
+      Implement AUTOSAR safety mechanisms:
+      1. Configure E2E profiles for critical signals
+      2. Setup alive counters and sequence numbers
+      3. Configure CRC calculation
+      4. Define timeout supervision
+      5. Setup SafeWdgM watchdog entities
+      6. Configure supervision checkpoints
+      7. Define safety-related error handling
+
+  - id: "autosar-classic-dem-config"
+    name: "Configure Diagnostic Event Manager"
+    description: "Setup DEM events and fault memory"
+    tags: ["autosar", "diagnostics", "dem"]
+    implementation: |
+      Configure AUTOSAR DEM:
+      1. Define diagnostic events with DTCs
+      2. Configure event priorities and thresholds
+      3. Setup freeze frame data records
+      4. Configure extended data records
+      5. Define event dependencies
+      6. Setup fault memory (primary/secondary)
+      7. Configure aging and displacement strategies
+
+  # Timing Skills
+  - id: "autosar-classic-timing-config"
+    name: "Configure Timing Constraints"
+    description: "Define timing requirements and analysis"
+    tags: ["autosar", "timing", "scheduling"]
+    implementation: |
+      Configure AUTOSAR timing:
+      1. Define timing events (periodic, sporadic)
+      2. Set execution time budgets
+      3. Configure chain timing constraints
+      4. Setup age constraints for data elements
+      5. Define synchronization timing
+      6. Configure worst-case execution time (WCET)
+      7. Perform timing analysis and validation
+
+  # Network Management Skills
+  - id: "autosar-classic-nm-config"
+    name: "Configure Network Management"
+    description: "Setup NM coordination and sleep management"
+    tags: ["autosar", "nm", "network"]
+    implementation: |
+      Configure AUTOSAR Network Management:
+      1. Setup CanNm module per channel
+      2. Configure NM PDU and node identifier
+      3. Define timeout and repeat message times
+      4. Setup passive/active mode
+      5. Configure partial networking clusters
+      6. Define ComM channel mapping
+      7. Setup CanSM state machine
+
+  # Security Skills
+  - id: "autosar-classic-secoc-config"
+    name: "Configure Secure Onboard Communication"
+    description: "Add message authentication and freshness"
+    tags: ["autosar", "security", "secoc"]
+    implementation: |
+      Configure AUTOSAR SecOC:
+      1. Define secured PDUs requiring authentication
+      2. Configure authentication algorithms (CMAC, HMAC)
+      3. Setup freshness value management
+      4. Configure authentication build/verify
+      5. Define key management and distribution
+      6. Setup authentication failure handling
+      7. Configure freshness timestamps
+
+  # Code Generation Skills
+  - id: "autosar-classic-code-gen-validation"
+    name: "Validate Generated Code"
+    description: "Check RTE and BSW generated code quality"
+    tags: ["autosar", "validation", "quality"]
+    implementation: |
+      Validate AUTOSAR generated code:
+      1. Check API signature consistency
+      2. Verify memory section placement
+      3. Validate interrupt lock timing
+      4. Check for unused code/data
+      5. Verify MISRA-C compliance
+      6. Validate call graph consistency
+      7. Check for race conditions
+
+  # Testing Skills
+  - id: "autosar-classic-swc-unit-test"
+    name: "Unit Test SWC"
+    description: "Create unit tests for SWC runnables"
+    tags: ["autosar", "testing", "unit"]
+    implementation: |
+      Unit test AUTOSAR SWC:
+      1. Create RTE mock/stub for isolated testing
+      2. Define test cases for each runnable
+      3. Setup input stimulation via RTE APIs
+      4. Verify output via port writes
+      5. Test error conditions and edge cases
+      6. Measure code coverage
+      7. Automate regression testing
+
+  - id: "autosar-classic-integration-test"
+    name: "Integration Test ECU"
+    description: "Test integrated BSW and application"
+    tags: ["autosar", "testing", "integration"]
+    implementation: |
+      Integration test AUTOSAR ECU:
+      1. Setup CAN vector box or CANoe environment
+      2. Stimulate input signals via network
+      3. Monitor output signals and responses
+      4. Test diagnostic services end-to-end
+      5. Validate mode transitions
+      6. Test error injection and recovery
+      7. Perform load and stress testing
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  created: "2026-03-19"
+  autosar_version: "4.2.2"
+  compatible_tools: ["EB tresos", "Arctic Core", "Davinci Configurator"]
+  references:
+    - "AUTOSAR_SWS_RTE.pdf"
+    - "AUTOSAR_TPS_SoftwareComponentTemplate.pdf"
+    - "AUTOSAR_EXP_LayeredSoftwareArchitecture.pdf"

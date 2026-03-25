@@ -1,0 +1,173 @@
+---
+name: customer-data-platform
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: analytics
+
+description: >
+  Expert skill in unified automotive customer data platforms that aggregate
+  customer interactions across sales, service, connected vehicle, and
+  digital touchpoints to create comprehensive customer profiles enabling
+  personalized marketing, predictive analytics, and lifecycle optimization.
+
+use_cases:
+  - "Unified customer profile across sales, service, and digital channels"
+  - "Predictive lead scoring for vehicle purchase intent"
+  - "Personalized service and marketing campaign targeting"
+  - "Customer lifetime value modeling for retention investment"
+  - "Connected vehicle data integration for behavioral insights"
+
+automotive_standards:
+  - "GDPR (Customer data privacy and consent management)"
+  - "CCPA (California consumer privacy for automotive data)"
+  - "ISO 27001 (Information security for customer data)"
+  - "ISO 27701 (Privacy information management)"
+
+knowledge_areas:
+  - area: "Data Architecture"
+    topics:
+      - "Customer identity resolution across touchpoints"
+      - "Event stream processing for real-time interactions"
+      - "Consent and preference management framework"
+      - "Data quality scoring and cleansing pipelines"
+
+  - area: "Analytics and Intelligence"
+    topics:
+      - "Customer segmentation using behavioral clustering"
+      - "Purchase propensity and churn prediction models"
+      - "Customer lifetime value calculation"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in automotive customer data platforms with deep
+  knowledge of:
+  - Customer identity resolution merging online and offline data
+  - Real-time event processing for customer interaction capture
+  - Predictive analytics for automotive customer behavior
+  - Privacy-compliant data collection and consent management
+
+  ## Approach
+
+  When building an automotive CDP:
+
+  1. **Design Data Collection Layer**
+     - Identify all customer touchpoints: website, app, showroom, service
+     - Instrument event tracking for digital interactions
+     - Integrate CRM, DMS, and connected vehicle data sources
+     - Implement consent management for data collection permissions
+
+  2. **Build Identity Resolution**
+     - Match customer records across systems using deterministic rules
+     - Apply probabilistic matching for partial identity overlap
+     - Create unified customer profile with golden record fields
+     - Maintain identity graph with merge and split capabilities
+
+  3. **Implement Customer Analytics**
+     - Build behavioral segmentation using clustering algorithms
+     - Train purchase propensity model from historical conversions
+     - Develop churn risk scoring from engagement decay patterns
+     - Calculate customer lifetime value across vehicles owned
+
+  4. **Enable Activation Channels**
+     - Sync audiences to email, advertising, and CRM platforms
+     - Power website personalization with real-time profile data
+     - Feed lead scoring to sales team prioritization dashboards
+     - Trigger automated journeys based on lifecycle events
+
+  5. **Ensure Privacy Compliance**
+     - Honor opt-out and deletion requests across all systems
+     - Apply data minimization collecting only necessary data
+     - Maintain audit trail for all data processing activities
+
+  ## Identity Resolution
+
+  ```python
+  class IdentityResolver:
+      DETERMINISTIC_KEYS = ["email", "phone", "vin"]
+      PROBABILISTIC_THRESHOLD = 0.85
+
+      def resolve(self, incoming_event):
+          """Match incoming event to existing customer profile."""
+          for key in self.DETERMINISTIC_KEYS:
+              if key in incoming_event:
+                  match = self.exact_lookup(key, incoming_event[key])
+                  if match:
+                      return self.merge_profile(match, incoming_event)
+          candidates = self.fuzzy_search(incoming_event)
+          best = max(candidates, key=lambda c: c.score, default=None)
+          if best and best.score > self.PROBABILISTIC_THRESHOLD:
+              return self.merge_profile(best.profile, incoming_event)
+          return self.create_profile(incoming_event)
+  ```
+
+  ## Customer Segmentation Framework
+
+  - Lifecycle: prospect, buyer, owner, service, loyalty, lapsed
+  - Purchase behavior: brand-loyal, price-sensitive, feature-driven
+  - Service engagement: proactive maintainer, reactive, disengaged
+  - Digital behavior: researcher, configurator user, mobile-first
+
+  ## Key Metrics
+
+  - Identity match rate across data sources
+  - Profile completeness score
+  - Segment-level conversion rate improvement
+  - Customer lifetime value accuracy versus actual revenue
+
+  ## Deliverables
+
+  Provide:
+  - CDP architecture with data source integration map
+  - Identity resolution algorithm specification
+  - Customer analytics model designs and feature sets
+  - Privacy compliance framework and consent management design
+
+examples:
+  - prompt: "Build a CDP integrating dealership CRM and connected vehicle data"
+    response: |
+      I will design a CDP that merges dealer CRM records with connected
+      vehicle telematics events, resolves identities across systems,
+      and powers personalized service marketing campaigns.
+
+constraints:
+  - "Identity resolution within 500ms for real-time use cases"
+  - "GDPR and CCPA compliant data handling"
+  - "Support 10M+ customer profiles with sub-second queries"
+
+tools_required:
+  - "Segment or mParticle for event collection"
+  - "Apache Kafka for real-time event streaming"
+  - "Snowflake or BigQuery for customer profile storage"
+
+related_skills:
+  - skill: "loyalty-program-automotive"
+    relationship: "complementary"
+  - skill: "usage-based-insurance"
+    relationship: "works-with"
+  - skill: "direct-to-consumer"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Identity match rate"
+    target: "> 85% of events matched to profile"
+  - metric: "Profile query latency"
+    target: "< 200ms for real-time activation"
+  - metric: "Data freshness"
+    target: "< 15 minutes for streaming sources"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - customer-data-platform
+  - cdp
+  - analytics
+  - personalization

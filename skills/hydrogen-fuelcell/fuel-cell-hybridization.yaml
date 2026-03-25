@@ -1,0 +1,776 @@
+name: fuel-cell-hybridization
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: hybrid-control
+description: Expert skill in FC+Battery hybrid control strategies, power split algorithms, regenerative braking, and optimization for efficiency and durability.
+use_cases:
+- Fuel cell and battery power split control
+- Load following vs load leveling strategies
+- Regenerative braking energy recovery
+- Battery state-of-charge (SOC) management
+- Optimal power dispatch for efficiency
+- FC lifetime extension through load smoothing
+automotive_standards:
+- ISO 23828 (Fuel cell road vehicles - Energy consumption)
+- SAE J1711 (Recommended practice for measuring exhaust emissions)
+- ISO 26262 (Functional safety for hybrid control)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in fuel cell and battery hybrid control, power split optimization, regenerative braking, and energy management strategies. Deep understanding of FC transient limitations, battery SOC targets, and lifetime trade-offs.
+
+
+  ### Hybridization Rationale
+
+
+  **Why hybrid FC+Battery?**
+
+  - **FC limitations**: Slow transient response (5-10 kW/s ramp rate), degradation from cycling
+
+  - **Battery advantages**: Fast transient response (50-100 kW/s), regenerative braking capture
+
+  - **Synergy**: FC provides baseload, battery handles peaks and regen
+
+
+  **Typical sizing**:
+
+  - **Fuel cell**: 80-120 kW (sized for highway cruising + margin)
+
+  - **Battery**: 1-2 kWh, 30-50 kW peak (Li-ion, NMC or LFP)
+
+  - **Battery SOC operating range**: 40-80% (avoid extremes for longevity)
+
+
+  ### Power Split Strategies
+
+
+  **1. Load Following**: FC tracks load demand directly
+
+  - **Pros**: Simpler control, no battery needed
+
+  - **Cons**: FC experiences full transients, faster degradation
+
+
+  **2. Load Leveling (State Machine)**: FC operates at fixed power levels, battery handles transients
+
+  - **Pros**: Minimizes FC cycling, extends lifetime
+
+  - **Cons**: Requires battery sizing for peak power
+
+
+  **3. Optimal Power Split**: Real-time optimization for efficiency or cost
+
+  - **Pros**: Best efficiency, adaptive to conditions
+
+  - **Cons**: Higher computational complexity
+
+
+  ```python
+
+  class HybridPowerManager:
+
+      def __init__(self):
+
+          self.P_fc_max = 100e3  # W
+
+          self.P_batt_max = 30e3  # W
+
+          self.batt_soc = 0.6    # State of charge (0-1)
+
+          self.strategy = "load_leveling"  # or "load_following", "optimal"
+
+
+
+      def load_following_strategy(self, P_demand):
+
+          """
+
+          FC tracks load demand directly.
+
+
+
+          Args:
+
+              P_demand: Power demand from driver [W]
+
+
+
+          Returns:
+
+              P_fc, P_batt: Power from FC and battery [W]
+
+          """
+
+          # FC provides most of demand, battery for peaks
+
+          P_fc = min(P_demand * 0.9, self.P_fc_max)
+
+          P_batt = P_demand - P_fc
+
+
+
+          # Clamp battery power to limits
+
+          P_batt = max(-self.P_batt_max, min(self.P_batt_max, P_batt))
+
+
+
+          return P_fc, P_batt
+
+
+
+      def load_leveling_strategy(self, P_demand):
+
+          """
+
+          FC operates at fixed power levels, battery handles transients.
+
+
+
+          Strategy:
+
+          - FC power levels: 0, 30, 60, 90 kW (discrete steps)
+
+          - Battery fills gap between FC power and demand
+
+          """
+
+          # Determine FC power level based on demand
+
+          if P_demand < 20e3:
+
+              P_fc = 0  # FC off, battery only
+
+          elif P_demand < 45e3:
+
+              P_fc = 30e3
+
+          elif P_demand < 75e3:
+
+              P_fc = 60e3
+
+          else:
+
+              P_fc = 90e3
+
+
+
+          # Battery provides difference
+
+          P_batt = P_demand - P_fc
+
+
+
+          # Adjust FC level if battery SOC out of bounds
+
+          if self.batt_soc < 0.3 and P_batt < 0:
+
+              # Battery low, increase FC power
+
+              P_fc = min(P_fc + 30e3, self.P_fc_max)
+
+              P_batt = P_demand - P_fc
+
+
+
+          if self.batt_soc > 0.8 and P_batt > 0:
+
+              # Battery high, reduce FC power
+
+              P_fc = max(P_fc - 30e3, 0)
+
+              P_batt = P_demand - P_fc
+
+
+
+          return P_fc, P_batt
+
+
+
+      def optimal_power_split(self, P_demand):
+
+          """
+
+          Minimize operating cost (H2 consumption + battery degradation).
+
+
+
+          Cost function: J = C_H2 * m_H2 + C_batt * P_batt²
+
+          """
+
+          import numpy as np
+
+          from scipy.optimize import minimize
+
+
+
+          def cost_function(P_fc):
+
+              P_batt = P_demand - P_fc
+
+
+
+              # H2 consumption cost
+
+              eta_fc = self.fc_efficiency(P_fc)
+
+              m_H2 = (P_fc / eta_fc) / 120e6  # kg/s (LHV H2 = 120 MJ/kg)
+
+              C_H2 = 10  # $/kg (H2 cost)
+
+              cost_H2 = C_H2 * m_H2
+
+
+
+              # Battery degradation cost (quadratic)
+
+              C_batt = 0.001  # $/W² (degradation cost)
+
+              cost_batt = C_batt * (P_batt ** 2)
+
+
+
+              return cost_H2 + cost_batt
+
+
+
+          # Optimize FC power
+
+          result = minimize(cost_function, x0=P_demand*0.7,
+
+                            bounds=[(0, self.P_fc_max)])
+
+
+
+          P_fc = result.x[0]
+
+          P_batt = P_demand - P_fc
+
+
+
+          return P_fc, P_batt
+
+
+
+      def fc_efficiency(self, P_fc):
+
+          """
+
+          FC efficiency map (simplified).
+
+
+
+          Args:
+
+              P_fc: FC power [W]
+
+
+
+          Returns:
+
+              Efficiency (0-1)
+
+          """
+
+          # Peak efficiency at ~30-50% power
+
+          P_rated = self.P_fc_max
+
+          load_fraction = P_fc / P_rated
+
+
+
+          # Polynomial fit (typical FC efficiency curve)
+
+          eta = -0.3 * load_fraction**2 + 0.5 * load_fraction + 0.3
+
+
+
+          return max(0.3, min(0.6, eta))
+
+  ```
+
+
+  ### Battery SOC Management
+
+
+  **SOC targets**:
+
+  - **Nominal**: 60% (mid-range for bi-directional power)
+
+  - **Low threshold**: 30% (prevent deep discharge)
+
+  - **High threshold**: 80% (prevent overcharge, accept regen)
+
+
+  ```c
+
+  typedef struct {
+
+      float SOC;             // State of charge [0-1]
+
+      float SOC_target;      // 0.6 (nominal)
+
+      float SOC_min;         // 0.3
+
+      float SOC_max;         // 0.8
+
+      float capacity_Wh;     // Battery capacity [Wh]
+
+      float P_charge_max;    // W (max charging power)
+
+      float P_discharge_max; // W (max discharging power)
+
+  } BatterySOC_t;
+
+
+
+  void manage_battery_soc(BatterySOC_t *batt, float *P_fc, float P_demand) {
+
+      // Adjust FC power to maintain SOC within bounds
+
+
+
+      if (batt->SOC < batt->SOC_min) {
+
+          // Battery low - increase FC power to charge
+
+          *P_fc = P_demand + 5000.0f;  // Add 5 kW charging
+
+
+
+      } else if (batt->SOC > batt->SOC_max) {
+
+          // Battery high - reduce FC power (discharge battery)
+
+          *P_fc = fmaxf(0.0f, P_demand - 10000.0f);  // Reduce by 10 kW
+
+
+
+      } else {
+
+          // SOC within bounds - normal operation
+
+      }
+
+
+
+      // Clamp FC power to limits
+
+      *P_fc = fmaxf(0.0f, fminf(*P_fc, 100000.0f));
+
+  }
+
+  ```
+
+
+  ### Regenerative Braking
+
+
+  **Control strategy**:
+
+  - **Brake blending**: Combine motor regen with friction brakes
+
+  - **Regen power limit**: Based on battery SOC and power limit
+
+  - **Safety**: Friction brakes always available (regen is supplemental)
+
+
+  ```python
+
+  class RegenerativeBraking:
+
+      def __init__(self):
+
+          self.P_regen_max = 30e3  # W (motor regen limit)
+
+          self.batt_soc = 0.6
+
+          self.brake_pedal_position = 0.0  # 0-1
+
+
+
+      def calculate_regen_power(self, vehicle_speed, brake_pedal):
+
+          """
+
+          Calculate regenerative braking power.
+
+
+
+          Args:
+
+              vehicle_speed: Vehicle speed [km/h]
+
+              brake_pedal: Brake pedal position [0-1]
+
+
+
+          Returns:
+
+              P_regen: Regenerative power [W] (negative)
+
+          """
+
+          # No regen below 10 km/h (motor efficiency too low)
+
+          if vehicle_speed < 10:
+
+              return 0.0
+
+
+
+          # No regen if battery SOC > 80% (prevent overcharge)
+
+          if self.batt_soc > 0.8:
+
+              return 0.0
+
+
+
+          # Regen proportional to brake pedal and speed
+
+          P_regen = -brake_pedal * self.P_regen_max * (vehicle_speed / 100)
+
+
+
+          # Clamp to motor limit
+
+          P_regen = max(-self.P_regen_max, P_regen)
+
+
+
+          return P_regen
+
+
+
+      def blend_brakes(self, P_regen, total_brake_force_req):
+
+          """
+
+          Blend regenerative and friction brakes.
+
+
+
+          Args:
+
+              P_regen: Regenerative power [W] (negative)
+
+              total_brake_force_req: Total braking force required [N]
+
+
+
+          Returns:
+
+              P_friction: Friction brake power [W]
+
+          """
+
+          # Convert regen power to equivalent braking force
+
+          F_regen = abs(P_regen) / (vehicle_speed / 3.6)  # N (simplified)
+
+
+
+          # Remaining force from friction brakes
+
+          F_friction = total_brake_force_req - F_regen
+
+
+
+          # Ensure friction brakes provide at least 30% (safety)
+
+          F_friction = max(F_friction, 0.3 * total_brake_force_req)
+
+
+
+          return F_friction
+
+  ```
+
+
+  ### FC Lifetime Extension
+
+
+  **Degradation minimization strategies**:
+
+  - **Avoid high voltage**: Keep FC below 0.85V/cell (reduces Pt dissolution)
+
+  - **Minimize start/stop**: Keep FC in idle mode rather than full shutdown
+
+  - **Smooth load transients**: Battery buffers FC load changes
+
+  - **Avoid low power**: Operate FC above 20% load (prevents flooding)
+
+
+  ```c
+
+  void optimize_fc_lifetime(float *P_fc_target, float P_demand, float SOC_batt) {
+
+      // Constraint 1: Avoid very low power (< 20% rated)
+
+      if (*P_fc_target < 20000.0f && *P_fc_target > 0.0f) {
+
+          // Either turn off FC or operate at minimum stable power
+
+          if (SOC_batt > 0.5f) {
+
+              *P_fc_target = 0.0f;  // Battery sufficient, turn off FC
+
+          } else {
+
+              *P_fc_target = 20000.0f;  // Minimum stable power
+
+          }
+
+      }
+
+
+
+      // Constraint 2: Rate limit FC power changes (max 5 kW/s)
+
+      static float P_fc_prev = 0.0f;
+
+      float max_delta = 5000.0f * 0.1f;  // 5 kW/s × 100 ms timestep
+
+
+
+      if (*P_fc_target > P_fc_prev + max_delta) {
+
+          *P_fc_target = P_fc_prev + max_delta;
+
+      } else if (*P_fc_target < P_fc_prev - max_delta) {
+
+          *P_fc_target = P_fc_prev - max_delta;
+
+      }
+
+
+
+      P_fc_prev = *P_fc_target;
+
+  }
+
+  ```
+
+
+  ### Drive Cycle Simulation
+
+
+  ```python
+
+  import numpy as np
+
+  import matplotlib.pyplot as plt
+
+
+
+  def simulate_drive_cycle(cycle_name="WLTC"):
+
+      """
+
+      Simulate hybrid FC+Battery powertrain on standard drive cycle.
+
+
+
+      Args:
+
+          cycle_name: "WLTC", "NEDC", "US06", "Highway"
+
+
+
+      Returns:
+
+          Results dict with power traces, H2 consumption, SOC trajectory
+
+      """
+
+      # Load drive cycle (speed vs time)
+
+      if cycle_name == "WLTC":
+
+          time = np.arange(0, 1800, 1)  # 30 minutes, 1 Hz
+
+          speed = generate_wltc_speed(time)  # km/h
+
+
+
+      # Vehicle parameters
+
+      m_vehicle = 2000  # kg
+
+      Cd = 0.28
+
+      A_front = 2.5  # m²
+
+
+
+      # Initialize hybrid controller
+
+      hpm = HybridPowerManager()
+
+
+
+      # Storage for results
+
+      P_demand_trace = []
+
+      P_fc_trace = []
+
+      P_batt_trace = []
+
+      SOC_trace = []
+
+
+
+      for t, v in zip(time, speed):
+
+          # Calculate power demand
+
+          P_demand = calculate_power_demand(v, m_vehicle, Cd, A_front)
+
+
+
+          # Power split
+
+          P_fc, P_batt = hpm.load_leveling_strategy(P_demand)
+
+
+
+          # Update battery SOC
+
+          hpm.batt_soc += (P_batt / (1.5e6)) * 1.0  # 1.5 kWh battery, 1 s timestep
+
+
+
+          # Store results
+
+          P_demand_trace.append(P_demand)
+
+          P_fc_trace.append(P_fc)
+
+          P_batt_trace.append(P_batt)
+
+          SOC_trace.append(hpm.batt_soc)
+
+
+
+      # Calculate H2 consumption
+
+      H2_consumed_kg = sum([P / hpm.fc_efficiency(P) / 120e6 for P in P_fc_trace])
+
+
+
+      return {
+
+          "time": time,
+
+          "P_demand": P_demand_trace,
+
+          "P_fc": P_fc_trace,
+
+          "P_batt": P_batt_trace,
+
+          "SOC": SOC_trace,
+
+          "H2_kg": H2_consumed_kg
+
+      }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Component Sizing**: Determine FC and battery power/energy ratings
+
+  2. **Strategy Selection**: Choose load following, load leveling, or optimal control
+
+  3. **SOC Management**: Define target SOC range and charging/discharging logic
+
+  4. **Regen Integration**: Design brake blending and regen power limits
+
+  5. **Lifetime Optimization**: Implement FC power rate limiting and minimum load constraints
+
+  6. **Drive Cycle Simulation**: Validate strategy on WLTC, US06, highway cycles
+
+  7. **Real-time Implementation**: Code control algorithm for AUTOSAR/embedded platform
+
+
+  ## Deliverables
+
+
+  - Hybrid control strategy specification (load leveling, optimal split)
+
+  - Power split algorithm (C/Python code)
+
+  - Battery SOC management logic
+
+  - Regenerative braking controller
+
+  - FC lifetime extension rules (rate limits, voltage limits)
+
+  - Drive cycle simulation results (H2 consumption, efficiency)
+
+  - Real-time controller code (AUTOSAR Adaptive or Classic)
+
+
+  ## Best Practices
+
+
+  - Design battery capacity for 5-10 minutes of peak power (not full drive cycle)
+
+  - Target battery SOC mid-range (50-60%) for bi-directional flexibility
+
+  - Implement hysteresis in SOC thresholds (avoid chattering between states)
+
+  - Rate-limit FC power changes to 5-10 kW/s (minimize transient stress)
+
+  - Log power split decisions for diagnostics and strategy tuning
+
+  - Validate regen blending in fail-safe mode (full friction brakes on fault)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface with vehicle dynamics model (speed, acceleration, grade)
+
+  - Coordinate with FC stack controller for power setpoint
+
+  - Interface with battery BMS for SOC, voltage, current, temperature
+
+  - Provide H2 consumption estimate to fuel gauge
+
+  - Support OTA updates for strategy tuning (efficiency vs performance modes)
+
+  '
+constraints:
+- FC transient response (5-10 kW/s ramp rate limit)
+- Battery power and energy limits
+- SOC operating window (30-80%)
+- Regen efficiency at low vehicle speeds
+tools_required:
+- MATLAB/Simulink for drive cycle simulation
+- Python for optimization algorithms
+- AUTOSAR Platform for embedded control
+- dSPACE/ETAS HIL for validation
+- Vehicle dynamics model (AVL Cruise, GT-Suite)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- hybridization
+- power-split
+- battery-soc
+- regenerative-braking
+- energy-management
+- automotive

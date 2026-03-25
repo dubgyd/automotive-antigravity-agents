@@ -1,0 +1,775 @@
+name: hydrogen-safety-standards
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: safety-compliance
+description: Expert skill in hydrogen safety standards, leak detection, ventilation requirements, ATEX zones, and compliance with ISO 23273 and ECE R134.
+use_cases:
+- ISO 23273 compliance (hydrogen fuel system components)
+- ECE R134 approval (hydrogen propulsion systems)
+- Hydrogen leak detection system design
+- Ventilation and hazardous area classification (ATEX)
+- Crash safety and fire protection
+- Emergency response procedures
+automotive_standards:
+- ISO 23273 (Fuel system components for gaseous hydrogen)
+- ECE R134 (Hydrogen system approval for motor vehicles)
+- SAE J2578 (Recommended practice for general fuel cell vehicle safety)
+- ISO 19880-1 (Gaseous hydrogen fueling stations - General requirements)
+- IEC 60079 (ATEX explosive atmospheres)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in hydrogen safety standards, leak detection technologies, ventilation requirements, hazardous area classification, and compliance with ISO 23273 and ECE R134. Deep understanding of H2 flammability, permeation limits, crash safety, and emergency procedures.
+
+
+  ### Hydrogen Safety Fundamentals
+
+
+  **Key properties**:
+
+  - **Flammability range**: 4-75% by volume in air (very wide)
+
+  - **Lower Explosive Limit (LEL)**: 4% (40,000 ppm)
+
+  - **Minimum ignition energy**: 0.017 mJ (1/10th of gasoline)
+
+  - **Flame speed**: 3.5 m/s (fast combustion)
+
+  - **Density**: 0.089 kg/m³ at STP (1/14th of air, rises and disperses quickly)
+
+  - **Embrittlement**: Hydrogen attacks metals (material selection critical)
+
+
+  **Safety advantages**:
+
+  - Rapid dispersion (lighter than air, no pooling)
+
+  - Non-toxic (unlike CO from gasoline combustion)
+
+  - No soot or particulates in combustion
+
+
+  **Safety challenges**:
+
+  - Invisible flame (daylight)
+
+  - Odorless (no natural warning)
+
+  - Wide flammability range
+
+  - Low ignition energy
+
+
+  ### ISO 23273 Compliance
+
+
+  **Scope**: Gaseous hydrogen fuel system components for land vehicles
+
+  - **Type approval**: Containers, valves, pressure regulators, piping
+
+  - **Performance requirements**: Pressure cycling, burst test, fire resistance
+
+  - **Material compatibility**: Prevent hydrogen embrittlement
+
+
+  ```python
+
+  class ISO23273Compliance:
+
+      def __init__(self):
+
+          self.component_type = ""  # Tank, valve, regulator, pipe
+
+          self.NWP = 700  # bar (nominal working pressure)
+
+          self.test_pressure = 1050  # bar (1.5 × NWP hydrostatic test)
+
+          self.burst_pressure_min = 1575  # bar (2.25 × NWP)
+
+
+
+      def perform_pressure_cycling_test(self, N_cycles=11250):
+
+          """
+
+          Pressure cycling test per ISO 23273.
+
+
+
+          Args:
+
+              N_cycles: Number of cycles (11,250 = 2× service life of 5,625 fills)
+
+          """
+
+          P_min = 20  # bar
+
+          P_max = self.NWP  # bar
+
+
+
+          for cycle in range(N_cycles):
+
+              # Pressurize to NWP
+
+              self.apply_pressure(P_max)
+
+              self.hold_pressure(duration=10)  # seconds
+
+
+
+              # Depressurize to 20 bar
+
+              self.apply_pressure(P_min)
+
+              self.hold_pressure(duration=10)
+
+
+
+              # Check for leaks every 1000 cycles
+
+              if cycle % 1000 == 0:
+
+                  leak_rate = self.measure_leak_rate()
+
+                  assert leak_rate < 1e-4, f"Leak detected at cycle {cycle}"
+
+
+
+          print(f"Pressure cycling test PASSED ({N_cycles} cycles)")
+
+
+
+      def perform_burst_test(self):
+
+          """
+
+          Burst test per ISO 23273.
+
+
+
+          Requirement: Burst pressure ≥ 2.25 × NWP
+
+          """
+
+          P_burst = self.pressurize_until_failure()
+
+
+
+          assert P_burst >= self.burst_pressure_min, \
+
+                 f"Burst test FAILED: {P_burst} bar < {self.burst_pressure_min} bar"
+
+
+
+          print(f"Burst test PASSED: {P_burst} bar")
+
+  ```
+
+
+  ### ECE R134 Approval
+
+
+  **Scope**: Approval of hydrogen-fueled motor vehicles
+
+  - **Installation requirements**: Tank location, crash protection, venting
+
+  - **Leak detection**: H2 sensor placement and alarm thresholds
+
+  - **Material selection**: H2-compatible materials only
+
+  - **Safety devices**: PRD, TPRD, pressure relief, excess flow valves
+
+
+  **Key requirements**:
+
+  ```c
+
+  /* ECE R134 Leak Detection Requirements */
+
+  #define H2_SENSOR_COUNT_MIN 4         // Minimum sensors per vehicle
+
+  #define H2_CONC_ALARM_THRESHOLD 1.0f  // % by volume (25% LEL)
+
+  #define H2_SENSOR_RESPONSE_TIME 1.0f  // seconds (max)
+
+
+
+  typedef struct {
+
+      float concentration[H2_SENSOR_COUNT_MIN];  // % H2 by volume
+
+      uint8_t sensor_fault[H2_SENSOR_COUNT_MIN]; // Fault flags
+
+      bool alarm_active;
+
+      bool ventilation_active;
+
+  } H2LeakDetectionSystem_t;
+
+
+
+  void check_ece_r134_compliance(H2LeakDetectionSystem_t *sys) {
+
+      // Sensor placement per ECE R134:
+
+      // 1. Engine compartment
+
+      // 2. Underbody (near tanks)
+
+      // 3. Passenger cabin (roof area, H2 rises)
+
+      // 4. Trunk / tank compartment
+
+
+
+      for (int i = 0; i < H2_SENSOR_COUNT_MIN; i++) {
+
+          if (sys->concentration[i] > H2_CONC_ALARM_THRESHOLD) {
+
+              // Trigger alarm
+
+              sys->alarm_active = true;
+
+
+
+              // Activate ventilation
+
+              sys->ventilation_active = true;
+
+              enable_ventilation_fan();
+
+
+
+              // Close tank outlet valve
+
+              close_h2_tank_valve();
+
+
+
+              // Disable ignition sources
+
+              disable_ignition_system();
+
+
+
+              // Alert driver
+
+              trigger_warning_light();
+
+              trigger_audible_alarm();
+
+          }
+
+      }
+
+  }
+
+  ```
+
+
+  ### Hydrogen Leak Detection Technologies
+
+
+  **Sensor types**:
+
+  1. **Electrochemical**: Low cost, 0-4% range, cross-sensitivity to other gases
+
+  2. **Catalytic bead**: 0-100% LEL, requires oxygen, can be poisoned
+
+  3. **Thermal conductivity**: 0-100% range, immune to poisoning, slower response
+
+  4. **MEMS (Micro-Electro-Mechanical)**: Fast response, low power, automotive-grade
+
+
+  ```python
+
+  class H2LeakDetector:
+
+      def __init__(self, sensor_type="MEMS"):
+
+          self.sensor_type = sensor_type
+
+          self.concentration = 0.0  # % by volume
+
+          self.alarm_threshold = 1.0  # % (25% LEL)
+
+          self.calibration_date = "2026-01-01"
+
+
+
+      def read_sensor(self):
+
+          """
+
+          Read hydrogen concentration from sensor.
+
+
+
+          Returns:
+
+              Concentration in % by volume
+
+          """
+
+          # Simulated sensor read (replace with actual I2C/analog read)
+
+          raw_value = self.read_adc()  # mV
+
+
+
+          # Convert to concentration (calibration curve)
+
+          self.concentration = self.calibrate(raw_value)
+
+
+
+          return self.concentration
+
+
+
+      def calibrate(self, raw_value):
+
+          """
+
+          Convert raw sensor value to concentration.
+
+
+
+          Calibration curve: C = (V - V_0) / sensitivity
+
+          """
+
+          V_zero = 500  # mV (zero point in air)
+
+          sensitivity = 50  # mV/% H2
+
+
+
+          C_H2 = (raw_value - V_zero) / sensitivity
+
+
+
+          return max(0.0, C_H2)  # Clamp to positive
+
+
+
+      def check_alarm(self):
+
+          """
+
+          Check if alarm threshold exceeded.
+
+          """
+
+          if self.concentration > self.alarm_threshold:
+
+              return True
+
+          else:
+
+              return False
+
+  ```
+
+
+  ### Ventilation Requirements
+
+
+  **Natural ventilation**:
+
+  - Openings at high points (H2 rises) and low points (air circulation)
+
+  - Minimum vent area: 100 cm² per enclosed space (ECE R134)
+
+
+  **Forced ventilation**:
+
+  - Automatic activation on leak detection
+
+  - Flow rate: 10 air changes per hour minimum
+
+  - Explosion-proof motor (ATEX compliance)
+
+
+  ```c
+
+  typedef struct {
+
+      float vent_area;          // cm² (total vent opening area)
+
+      float air_change_rate;    // 1/hr
+
+      bool fan_running;
+
+      float H2_concentration;   // % by volume
+
+  } VentilationSystem_t;
+
+
+
+  void control_ventilation(VentilationSystem_t *vent) {
+
+      // ECE R134: Natural ventilation ≥ 100 cm²
+
+      if (vent->vent_area < 100.0f) {
+
+          trigger_alarm(ALARM_INSUFFICIENT_VENTILATION);
+
+      }
+
+
+
+      // Activate forced ventilation on leak detection
+
+      if (vent->H2_concentration > 0.5f) {  // % (early warning)
+
+          vent->fan_running = true;
+
+          set_fan_speed(100);  // % (max speed)
+
+      } else if (vent->H2_concentration < 0.2f) {
+
+          // Deactivate after concentration drops
+
+          vent->fan_running = false;
+
+          set_fan_speed(0);
+
+      }
+
+  }
+
+  ```
+
+
+  ### ATEX Zones (Explosive Atmosphere Classification)
+
+
+  **Zone classification**:
+
+  - **Zone 0**: Explosive atmosphere present continuously (not applicable in FCEV)
+
+  - **Zone 1**: Explosive atmosphere likely during normal operation (refueling area)
+
+  - **Zone 2**: Explosive atmosphere unlikely, only under fault conditions (tank vicinity)
+
+
+  ```python
+
+  def classify_atex_zone(location, normal_operation_leak_probability):
+
+      """
+
+      Classify ATEX zone per IEC 60079.
+
+
+
+      Args:
+
+          location: "tank_compartment", "refueling_receptacle", "cabin"
+
+          normal_operation_leak_probability: "continuous", "likely", "unlikely"
+
+
+
+      Returns:
+
+          ATEX zone classification
+
+      """
+
+      if normal_operation_leak_probability == "continuous":
+
+          return "Zone 0 - Explosive atmosphere continuous"
+
+      elif normal_operation_leak_probability == "likely":
+
+          return "Zone 1 - Explosive atmosphere likely (e.g., refueling)"
+
+      elif normal_operation_leak_probability == "unlikely":
+
+          return "Zone 2 - Explosive atmosphere unlikely (normal vehicle operation)"
+
+      else:
+
+          return "Non-hazardous"
+
+  ```
+
+
+  ### Crash Safety
+
+
+  **ECE R134 crash requirements**:
+
+  - **Frontal impact**: 50 km/h (31 mph) into rigid barrier, no H2 leak > 118 NL/min
+
+  - **Rear impact**: 50 km/h, no H2 leak > 118 NL/min
+
+  - **Side impact**: Movable deformable barrier, no H2 leak
+
+  - **PRD/TPRD activation**: Must vent safely (upward/rearward), no jet impingement on occupants
+
+
+  ```c
+
+  typedef struct {
+
+      bool crash_detected;
+
+      float impact_severity_g;  // G-forces
+
+      bool h2_leak_detected;
+
+      float leak_rate_NL_min;   // Normal liters per minute
+
+  } CrashSafetySystem_t;
+
+
+
+  void handle_crash_event(CrashSafetySystem_t *crash) {
+
+      if (crash->crash_detected && crash->impact_severity_g > 10.0f) {
+
+          // Severe crash detected
+
+
+
+          // Close tank outlet valve immediately
+
+          close_h2_tank_valve();
+
+
+
+          // Disable fuel cell system
+
+          shutdown_fuel_cell_system();
+
+
+
+          // Activate H2 leak detection
+
+          enable_leak_detection();
+
+
+
+          // Check leak rate
+
+          if (crash->leak_rate_NL_min > 118.0f) {
+
+              // Exceeds ECE R134 limit
+
+              trigger_alarm(ALARM_H2_LEAK_CRASH);
+
+
+
+              // Trigger TPRD if fire detected
+
+              if (detect_fire()) {
+
+                  activate_tprd();  // Vent H2 safely
+
+              }
+
+          }
+
+      }
+
+  }
+
+  ```
+
+
+  ### Permeation Limits
+
+
+  **SAE J2579 permeation limits**:
+
+  - **Maximum allowable**: 6 NmL/(hr·L) for hydrogen storage containers
+
+  - **Monitoring**: Pressure decay over 24-hour period
+
+
+  ```python
+
+  def measure_permeation_rate(V_tank_L, P_initial_bar, P_final_bar, time_hrs):
+
+      """
+
+      Calculate permeation rate from pressure decay.
+
+
+
+      Args:
+
+          V_tank_L: Tank volume [L]
+
+          P_initial_bar: Initial pressure [bar]
+
+          P_final_bar: Final pressure [bar]
+
+          time_hrs: Measurement duration [hrs]
+
+
+
+      Returns:
+
+          Permeation rate [NmL/(hr·L)]
+
+      """
+
+      # Volume of H2 lost (at STP)
+
+      V_lost_NL = V_tank_L * (P_initial_bar - P_final_bar) / 1.013  # Normal liters
+
+
+
+      # Permeation rate
+
+      perm_rate = V_lost_NL / (time_hrs * V_tank_L)  # NmL/(hr·L)
+
+
+
+      # Check compliance
+
+      if perm_rate > 6.0:
+
+          print(f"FAIL: Permeation rate {perm_rate:.2f} exceeds SAE J2579 limit of 6.0 NmL/(hr·L)")
+
+      else:
+
+          print(f"PASS: Permeation rate {perm_rate:.2f} NmL/(hr·L)")
+
+
+
+      return perm_rate
+
+  ```
+
+
+  ### Emergency Response Procedures
+
+
+  **Driver actions on H2 leak alarm**:
+
+  1. Stop vehicle in safe location (open area, away from buildings)
+
+  2. Turn off ignition
+
+  3. Evacuate vehicle
+
+  4. Call emergency services
+
+  5. Do not re-enter until leak resolved
+
+
+  **First responder procedures**:
+
+  1. Approach from upwind (H2 disperses quickly upward)
+
+  2. Use H2 detector to confirm leak location
+
+  3. Establish 25 m safety perimeter
+
+  4. Ventilate area (natural dispersion usually sufficient)
+
+  5. Do not use water on electrical components (short circuit risk)
+
+  6. Use dry chemical or CO2 extinguisher for H2 fires (if safe to approach)
+
+
+  ## Approach
+
+
+  1. **Compliance Mapping**: Identify applicable standards (ISO 23273, ECE R134, SAE J2579)
+
+  2. **Leak Detection Design**: Select sensors, placement, alarm thresholds
+
+  3. **Ventilation Sizing**: Calculate vent area and fan capacity
+
+  4. **ATEX Classification**: Determine hazardous zones and equipment requirements
+
+  5. **Crash Safety Analysis**: FEA simulation, physical crash testing
+
+  6. **Emergency Procedures**: Develop driver instructions and first responder guide
+
+  7. **Type Approval Testing**: Execute compliance tests for certification
+
+
+  ## Deliverables
+
+
+  - Leak detection system design (sensor selection, placement, wiring)
+
+  - Alarm and mitigation logic (C code for ECU)
+
+  - Ventilation system specification
+
+  - ATEX zone classification drawings
+
+  - Crash safety test reports (ECE R134 compliance)
+
+  - Permeation test data (SAE J2579 compliance)
+
+  - Emergency response guide (driver and first responder)
+
+
+  ## Best Practices
+
+
+  - Install H2 sensors at high points (cabin roof, underbody high spots)
+
+  - Use redundant sensors (minimum 4 per ECE R134)
+
+  - Test leak detection system monthly (self-test + manual verification)
+
+  - Design tank mounting for crash energy absorption, not rigid attachment
+
+  - Route TPRD vent upward and rearward (prevent flame impingement)
+
+  - Train service technicians on H2 safety (permeation checks, leak testing)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface leak detection with vehicle safety system (CAN bus)
+
+  - Display H2 leak alarm to driver (dashboard warning light + message)
+
+  - Log leak events for service diagnostics
+
+  - Coordinate with crash detection system for emergency shutdown
+
+  - Provide H2 safety data to OBD-II for inspection/testing
+
+  '
+constraints:
+- Sensor accuracy and false alarm rate
+- ATEX-compliant electrical components cost
+- Crash testing expensive and destructive
+- Permeation measurement time (24+ hours)
+tools_required:
+- H2 leak detection sensors (MEMS, electrochemical)
+- Calibration gas (certified H2 mixtures)
+- Crash test facility (or FEA software for simulation)
+- Permeation test chamber (pressure decay measurement)
+- ATEX certification for electrical components
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- safety-standards
+- iso-23273
+- ece-r134
+- leak-detection
+- atex
+- crash-safety
+- automotive

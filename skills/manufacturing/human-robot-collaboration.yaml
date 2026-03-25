@@ -1,0 +1,229 @@
+name: human-robot-collaboration
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: human robot collaboration
+description: Expert skill in designing and deploying collaborative robot (cobot) applications in automotive assembly where humans and robots share workspace and tasks. Covers safety-rated monitored stop, speed and separation monitoring, hand guiding, and power/force limiting per ISO/TS 15066.
+use_cases:
+- Cobot-assisted windshield and sunroof installation with force-controlled placement
+- Collaborative screw driving for cockpit and dashboard assembly
+- Ergonomic lift-assist for heavy component handling (seats, spare wheels, batteries)
+- Flexible bin picking with human-in-the-loop quality verification
+- Collaborative adhesive dispensing with operator-guided path teaching
+- Shared inspection stations where cobots handle parts and operators assess quality
+- Dynamic task allocation between human and robot based on real-time cycle balance
+- Exoskeleton integration for overhead and repetitive strain tasks
+automotive_standards:
+- ISO 10218-1/2 Industrial Robot Safety
+- ISO/TS 15066 Collaborative Robot Safety
+- ISO 13849-1 Safety of Machinery (PL rating)
+- IEC 62443 Industrial Cybersecurity for Robot Networks
+- IATF 16949 (Process Control Requirements)
+- ISO 12100 Risk Assessment for Machinery
+- EU Machinery Regulation 2023/1230
+instructions: |
+
+  ## Overview
+
+  Human-robot collaboration (HRC) enables automotive assembly operations where humans and robots
+  work in shared workspaces without traditional safety fencing. This skill covers the complete
+  lifecycle from risk assessment and cobot selection through cell design, safety validation,
+  and continuous performance optimization.
+
+  Industry 5.0 HRC goes beyond simple cobot deployment -- it designs truly collaborative workflows
+  where human cognitive skills (judgment, dexterity, adaptation) complement robot strengths
+  (precision, repeatability, force control) to exceed what either achieves alone.
+
+
+  ## Key Concepts
+
+  ### Collaborative Operation Modes (ISO/TS 15066)
+
+  - **Safety-Rated Monitored Stop (SMS)**: Robot stops when human enters collaborative zone
+  - **Hand Guiding (HG)**: Operator physically guides robot through teach or assist mode
+  - **Speed and Separation Monitoring (SSM)**: Robot slows/stops based on proximity to human
+  - **Power and Force Limiting (PFL)**: Robot limits contact force below injury thresholds
+
+  ### Biomechanical Force Limits (ISO/TS 15066 Annex A)
+
+  - **Hand/Finger**: Max 140 N transient, 65 N quasi-static contact
+  - **Forearm**: Max 160 N transient, 110 N quasi-static contact
+  - **Upper arm/Shoulder**: Max 210 N transient, 150 N quasi-static contact
+  - **Chest**: Max 280 N transient, 140 N quasi-static contact
+  - **Head/Forehead**: Max 130 N transient, 65 N quasi-static contact
+
+  ### Cobot Payload Classes for Automotive
+
+  - **Light (3-5 kg)**: Screw driving, small part placement, adhesive dispensing
+  - **Medium (10-16 kg)**: Component handling, sealant application, sensor installation
+  - **Heavy (20-35 kg)**: Seat installation, wheel mounting, battery module handling
+
+
+  ## Implementation Guide
+
+  ### Step 1: Task Analysis and Allocation
+
+  ```python
+  # Human-robot task allocation scoring
+  class TaskAllocator:
+      HUMAN_STRENGTHS = ["judgment", "dexterity", "adaptation", "inspection"]
+      ROBOT_STRENGTHS = ["precision", "repeatability", "force", "endurance"]
+
+      def score_task(self, task: dict) -> dict:
+          """Score task suitability for human, robot, or collaborative execution."""
+          human_score = sum(task.get(s, 0) for s in self.HUMAN_STRENGTHS)
+          robot_score = sum(task.get(s, 0) for s in self.ROBOT_STRENGTHS)
+          ratio = human_score / max(robot_score, 1)
+          if ratio > 2.0:
+              allocation = "human_only"
+          elif ratio < 0.5:
+              allocation = "robot_only"
+          else:
+              allocation = "collaborative"
+          return {
+              "task": task["name"],
+              "allocation": allocation,
+              "human_score": human_score,
+              "robot_score": robot_score,
+          }
+  ```
+
+  ### Step 2: Risk Assessment (ISO 12100)
+
+  ```yaml
+  risk_assessment:
+    hazard_identification:
+      - contact_with_robot_arm
+      - contact_with_workpiece
+      - contact_with_tool_end_effector
+      - clamping_between_robot_and_fixture
+      - unexpected_robot_restart
+    severity_levels:
+      S1: minor_reversible_injury
+      S2: serious_irreversible_injury
+    probability_levels:
+      P1: rare_exposure
+      P2: frequent_exposure
+    required_performance_level:
+      collaborative_zone: PLd  # minimum for HRC applications
+      emergency_stop: PLe
+  ```
+
+  ### Step 3: Cell Layout Design
+
+  ```
+  +--------------------------------------------------+
+  |  Material     |  Collaborative Zone   | Finished  |
+  |  Staging      |  (No fencing)         | Parts     |
+  |               |                       | Buffer    |
+  |  [Parts Rack] |  [Cobot]  [Operator]  | [Rack]    |
+  |               |   F/T     Workbench   |           |
+  |               |  Sensor               |           |
+  |  Safety       |  [3D Safety Camera]   | Quality   |
+  |  Scanner      |                       | Check     |
+  +--------------------------------------------------+
+       Entry/Exit with light curtain
+  ```
+
+  ### Step 4: Force/Torque Control Programming
+
+  ```python
+  # Cobot force-controlled insertion example
+  class ForceControlledAssembly:
+      def __init__(self, robot_controller, ft_sensor):
+          self.robot = robot_controller
+          self.ft = ft_sensor
+
+      def windshield_placement(self, target_pose: list, max_force_n: float = 50.0):
+          """Force-controlled windshield insertion with compliance."""
+          self.robot.set_force_mode(
+              frame=target_pose,
+              selection_vector=[0, 0, 1, 0, 0, 0],  # compliant in Z
+              wrench=[0, 0, -30, 0, 0, 0],  # 30N push force
+              limits=[0.01, 0.01, 0.05, 0.05, 0.05, 0.05],
+          )
+          while self.ft.get_force_z() < max_force_n:
+              if self.ft.get_force_z() > max_force_n * 0.8:
+                  self.robot.reduce_speed(factor=0.3)
+          self.robot.end_force_mode()
+          return self.verify_placement()
+  ```
+
+  ### Step 5: Safety System Integration
+
+  - Deploy 3D safety cameras (SICK, Pilz) for speed and separation monitoring
+  - Configure safety-rated soft axis limits in robot controller
+  - Implement safety PLC with PLd/PLe rated circuits for emergency stop
+  - Validate contact force with calibrated force measurement at all exposed surfaces
+
+
+  ## Best Practices
+
+  - Always perform contact force measurement with body-region-specific test equipment
+  - Design end effectors with rounded edges and compliant covers (no pinch points)
+  - Use safety-rated 3D vision for dynamic speed scaling (not just light curtains)
+  - Involve operators in cell design from day one -- acceptance determines success
+  - Start with simple collaborative tasks and increase complexity incrementally
+  - Maintain minimum 250mm separation between robot path and operator head height
+  - Log all safety stop events and analyze for cell layout optimization
+  - Retrain operators quarterly on HRC safety procedures and emergency protocols
+
+
+  ## Common Patterns
+
+  ### Collaborative Assembly Sequence
+
+  1. Operator loads component onto fixture and signals ready (button or gesture)
+  2. Cobot approaches at reduced speed (SSM active, 250mm/s max)
+  3. Cobot positions component with force/torque control
+  4. Operator performs final quality check and confirms acceptance
+  5. Cobot retracts to home position; operator unloads finished assembly
+
+  ### Safety System Architecture
+
+  ```
+  3D Safety Cameras (x2, redundant)
+       |
+  Safety PLC (Pilz PSS 4000 / Siemens F-CPU)
+       |
+  +----+----+----+
+  |    |    |    |
+  STO  SLS  SLP  SSM
+  (Safe (Safe (Safe (Speed &
+  Torque Limited Limited Separation
+  Off)  Speed) Position) Monitoring)
+  ```
+
+
+  ## Troubleshooting
+
+  - **Frequent safety stops disrupting cycle time**: Optimize zone boundaries, adjust SSM thresholds
+  - **Force control oscillation during insertion**: Tune compliance gains, reduce approach speed
+  - **Operator fatigue despite cobot assist**: Review task allocation, check ergonomic scoring
+  - **Cobot TCP drift over time**: Calibrate tool center point weekly, check mounting bolts
+  - **Safety validation failure**: Re-measure contact forces after any end-effector change
+  - **Network latency in safety camera**: Use dedicated safety Ethernet, verify response time <50ms
+
+constraints:
+- PFL mode limits robot speed to 250mm/s and payload handling capability
+- Safety validation required after any cell modification (tooling, layout, program)
+- Operator acceptance and training critical for adoption
+- Contact force testing requires specialized body-region measurement equipment
+tools_required:
+- Collaborative robots (Universal Robots, FANUC CRX, KUKA LBR iiwa)
+- 3D safety cameras (SICK safeVisionary2, Pilz SafetyEYE)
+- Safety PLCs (Pilz PSS 4000, Siemens S7-1500F)
+- Force/torque sensors (ATI, OnRobot, Robotiq)
+- Contact force measurement (CBSF, PFL measurement devices)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- cobot
+- human-robot-collaboration
+- safety
+- iso-ts-15066
+- automotive

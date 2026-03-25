@@ -1,0 +1,665 @@
+name: sotif-algorithm-insufficiency
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: functional-insufficiency
+description: Analysis of ML model and algorithm limitations including false positives/negatives, domain shift, adversarial inputs, and ODD boundary behavior.
+use_cases:
+- ML model safety assurance for perception/planning
+- False positive/negative analysis
+- Out-of-distribution detection
+- Adversarial robustness testing
+- Domain adaptation validation
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO/TR 4804 Safety of AI
+- ISO 26262-6 (Software Development)
+- UL 4600 Autonomous Systems
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in analyzing algorithm insufficiencies, particularly ML-based perception and planning algorithms, which are a major source of SOTIF hazards in modern ADAS/AD systems.
+
+
+  ### Algorithm Insufficiency Types
+
+
+  **Classical Algorithms**:
+
+  - Lane detection: Failures on faded/missing markings, shadows, construction zones
+
+  - Object tracking: Track loss in occlusion, ID switches
+
+  - Path planning: Suboptimal routes, oscillations, local minima
+
+
+  **ML-Based Algorithms**:
+
+  - False negatives: Missed detections (pedestrian, vehicle, obstacle)
+
+  - False positives: Phantom objects (shadows, reflections)
+
+  - Misclassification: VRU misclassified as vehicle, vice versa
+
+  - Domain shift: Performance degradation on out-of-distribution data
+
+  - Adversarial vulnerability: Physical adversarial patches
+
+
+  ### ML Model Failure Modes
+
+
+  **Training Data Insufficiency**:
+
+  - Underrepresented scenarios (rare edge cases)
+
+  - Geographic bias (trained on sunny California, tested in snowy Michigan)
+
+  - Temporal bias (trained on summer data, tested in winter)
+
+  - Sensor bias (trained on one camera model, deployed on another)
+
+
+  **Model Architecture Limitations**:
+
+  - Limited receptive field (cannot see distant small objects)
+
+  - Insufficient capacity (underfitting)
+
+  - Overfitting (memorizes training data, poor generalization)
+
+  - Computational constraints (latency, throughput)
+
+
+  **Out-of-Distribution (OOD) Data**:
+
+  - Novel object categories not in training data
+
+  - Unusual lighting conditions
+
+  - Extreme weather not represented in training
+
+  - Infrastructure variations (road markings, signs)
+
+
+  **Adversarial Examples**:
+
+  - Physical adversarial patches (fool object detector)
+
+  - Perturbations to sensor inputs
+
+  - Spoofing attacks (fake objects injected)
+
+
+  ## False Positive/Negative Analysis
+
+
+  ```python
+
+  import numpy as np
+
+  from sklearn.metrics import confusion_matrix, precision_recall_curve
+
+
+  class DetectionPerformanceAnalyzer:
+
+      """Analyze false positive and false negative rates for object detection"""
+
+
+      def __init__(self, ground_truth, predictions, confidence_threshold=0.5):
+
+          """
+
+          Parameters:
+
+          - ground_truth: List of ground truth bounding boxes
+
+          - predictions: List of predicted bounding boxes with confidence scores
+
+          - confidence_threshold: Confidence threshold for positive detection
+
+          """
+
+          self.ground_truth = ground_truth
+
+          self.predictions = predictions
+
+          self.threshold = confidence_threshold
+
+
+
+      def calculate_metrics(self):
+
+          """Calculate detection metrics"""
+
+          tp = 0  # True positives
+
+          fp = 0  # False positives
+
+          fn = 0  # False negatives
+
+
+          # Match predictions to ground truth (simplified IoU matching)
+
+          matched_gt = set()
+
+          for pred in self.predictions:
+
+              if pred[''confidence''] < self.threshold:
+
+                  continue
+
+              matched = False
+
+              for i, gt in enumerate(self.ground_truth):
+
+                  if i in matched_gt:
+
+                      continue
+
+                  iou = self._calculate_iou(pred[''bbox''], gt[''bbox''])
+
+                  if iou > 0.5:  # IoU threshold
+
+                      tp += 1
+
+                      matched_gt.add(i)
+
+                      matched = True
+
+                      break
+
+              if not matched:
+
+                  fp += 1  # False positive
+
+
+          fn = len(self.ground_truth) - len(matched_gt)  # False negatives
+
+
+          precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+
+          recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+
+          f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+
+
+          return {
+
+              "true_positives": tp,
+
+              "false_positives": fp,
+
+              "false_negatives": fn,
+
+              "precision": precision,
+
+              "recall": recall,
+
+              "f1_score": f1_score
+
+          }
+
+
+
+      def _calculate_iou(self, box1, box2):
+
+          """Calculate Intersection over Union"""
+
+          x1_min, y1_min, x1_max, y1_max = box1
+
+          x2_min, y2_min, x2_max, y2_max = box2
+
+
+          inter_xmin = max(x1_min, x2_min)
+
+          inter_ymin = max(y1_min, y2_min)
+
+          inter_xmax = min(x1_max, x2_max)
+
+          inter_ymax = min(y1_max, y2_max)
+
+
+          inter_area = max(0, inter_xmax - inter_xmin) * max(0, inter_ymax - inter_ymin)
+
+          box1_area = (x1_max - x1_min) * (y1_max - y1_min)
+
+          box2_area = (x2_max - x2_min) * (y2_max - y2_min)
+
+          union_area = box1_area + box2_area - inter_area
+
+
+          return inter_area / union_area if union_area > 0 else 0
+
+
+
+      def analyze_fn_scenarios(self):
+
+          """Analyze scenarios where false negatives occur"""
+
+          fn_scenarios = []
+
+          for i, gt in enumerate(self.ground_truth):
+
+              matched = any(
+
+                  self._calculate_iou(pred[''bbox''], gt[''bbox'']) > 0.5 and pred[''confidence''] >= self.threshold
+
+                  for pred in self.predictions
+
+              )
+
+              if not matched:
+
+                  fn_scenarios.append({
+
+                      "object_class": gt.get(''class'', ''unknown''),
+
+                      "size": self._get_bbox_size(gt[''bbox'']),
+
+                      "distance": gt.get(''distance'', 0),
+
+                      "occlusion": gt.get(''occlusion'', 0)
+
+                  })
+
+          return fn_scenarios
+
+
+
+      def _get_bbox_size(self, bbox):
+
+          """Calculate bounding box area"""
+
+          x1, y1, x2, y2 = bbox
+
+          return (x2 - x1) * (y2 - y1)
+
+
+  # Example usage
+
+  ground_truth = [
+
+      {''bbox'': [100, 150, 200, 300], ''class'': ''pedestrian'', ''distance'': 50},
+
+      {''bbox'': [500, 200, 600, 400], ''class'': ''vehicle'', ''distance'': 30},
+
+  ]
+
+
+  predictions = [
+
+      {''bbox'': [105, 155, 205, 305], ''confidence'': 0.85, ''class'': ''pedestrian''},
+
+      # Missing vehicle detection (false negative)
+
+  ]
+
+
+  analyzer = DetectionPerformanceAnalyzer(ground_truth, predictions)
+
+  metrics = analyzer.calculate_metrics()
+
+  print(f"Precision: {metrics[''precision'']:.2f}, Recall: {metrics[''recall'']:.2f}")
+
+  print(f"False negatives: {metrics[''false_negatives'']}")
+
+
+  fn_scenarios = analyzer.analyze_fn_scenarios()
+
+  for scenario in fn_scenarios:
+
+      print(f"FN: {scenario[''object_class'']} at {scenario[''distance'']}m, size {scenario[''size'']:.0f}px²")
+
+  ```
+
+
+  ## Out-of-Distribution (OOD) Detection
+
+
+  ```python
+
+  import torch
+
+  import torch.nn as nn
+
+
+  class OODDetector:
+
+      """Detect out-of-distribution inputs to perception model"""
+
+
+      def __init__(self, model, ood_threshold=0.8):
+
+          self.model = model
+
+          self.ood_threshold = ood_threshold
+
+
+
+      def detect_ood(self, input_data):
+
+          """
+
+          Detect if input is OOD using maximum softmax probability
+
+
+          Low max probability indicates OOD (model uncertain)
+
+          """
+
+          with torch.no_grad():
+
+              output = self.model(input_data)
+
+              probabilities = torch.softmax(output, dim=1)
+
+              max_prob, predicted_class = torch.max(probabilities, dim=1)
+
+
+          is_ood = max_prob < self.ood_threshold
+
+          return is_ood.item(), max_prob.item(), predicted_class.item()
+
+
+
+      def detect_ood_mahalanobis(self, input_data, class_means, class_covariance):
+
+          """
+
+          Detect OOD using Mahalanobis distance (more robust than softmax)
+
+
+          Measures distance from input to nearest class distribution
+
+          """
+
+          with torch.no_grad():
+
+              features = self.model.extract_features(input_data)
+
+
+          min_distance = float(''inf'')
+
+          for class_id, mean in class_means.items():
+
+              diff = features - mean
+
+              distance = torch.sqrt(diff @ torch.inverse(class_covariance) @ diff.T)
+
+              min_distance = min(min_distance, distance.item())
+
+
+          is_ood = min_distance > self.ood_threshold
+
+          return is_ood, min_distance
+
+
+  # Example usage
+
+  # model = load_perception_model()
+
+  # ood_detector = OODDetector(model, ood_threshold=0.75)
+
+  # is_ood, confidence, pred_class = ood_detector.detect_ood(camera_image)
+
+  # if is_ood:
+
+  #     print(f"Warning: OOD input detected, confidence {confidence:.2f}")
+
+  #     # Trigger fallback strategy or driver warning
+
+  ```
+
+
+  ## Adversarial Robustness Testing
+
+
+  ```python
+
+  import torch
+
+  import torch.nn as nn
+
+
+  def generate_adversarial_example(model, input_image, true_label, epsilon=0.03):
+
+      """
+
+      Generate adversarial example using FGSM (Fast Gradient Sign Method)
+
+
+      Parameters:
+
+      - model: Neural network model
+
+      - input_image: Clean input (torch tensor)
+
+      - true_label: Ground truth label
+
+      - epsilon: Perturbation magnitude
+
+
+      Returns:
+
+      - Adversarial image that fools the model
+
+      """
+
+      input_image.requires_grad = True
+
+
+      # Forward pass
+
+      output = model(input_image)
+
+      loss = nn.CrossEntropyLoss()(output, true_label)
+
+
+      # Backward pass to get gradients
+
+      model.zero_grad()
+
+      loss.backward()
+
+
+      # Generate adversarial perturbation
+
+      perturbation = epsilon * input_image.grad.sign()
+
+      adversarial_image = input_image + perturbation
+
+
+      # Clip to valid image range [0, 1]
+
+      adversarial_image = torch.clamp(adversarial_image, 0, 1)
+
+
+      return adversarial_image
+
+
+
+  def test_adversarial_robustness(model, test_dataset, epsilon_values=[0.01, 0.03, 0.05]):
+
+      """
+
+      Test model robustness against adversarial attacks
+
+      """
+
+      results = {}
+
+      for epsilon in epsilon_values:
+
+          correct_clean = 0
+
+          correct_adversarial = 0
+
+
+          for image, label in test_dataset:
+
+              # Test on clean image
+
+              output_clean = model(image)
+
+              pred_clean = output_clean.argmax(dim=1)
+
+              correct_clean += (pred_clean == label).sum().item()
+
+
+              # Generate adversarial example
+
+              adv_image = generate_adversarial_example(model, image, label, epsilon)
+
+
+              # Test on adversarial image
+
+              output_adv = model(adv_image)
+
+              pred_adv = output_adv.argmax(dim=1)
+
+              correct_adversarial += (pred_adv == label).sum().item()
+
+
+          accuracy_clean = correct_clean / len(test_dataset)
+
+          accuracy_adversarial = correct_adversarial / len(test_dataset)
+
+
+          results[epsilon] = {
+
+              "clean_accuracy": accuracy_clean,
+
+              "adversarial_accuracy": accuracy_adversarial,
+
+              "accuracy_drop": accuracy_clean - accuracy_adversarial
+
+          }
+
+
+      return results
+
+  ```
+
+
+  ## Mitigation Strategies
+
+
+  **Training Data Enhancement**:
+
+  - Increase coverage of edge cases (rain, night, occlusion)
+
+  - Data augmentation (lighting, weather, sensor noise)
+
+  - Synthetic data generation (CARLA, Unity)
+
+  - Active learning (label high-uncertainty samples)
+
+
+  **Model Architecture**:
+
+  - Ensemble models (combine multiple models)
+
+  - Uncertainty quantification (Bayesian neural networks, dropout)
+
+  - Attention mechanisms (focus on relevant regions)
+
+  - Multi-task learning (joint detection + segmentation)
+
+
+  **Runtime Monitoring**:
+
+  - OOD detection (flag uncertain inputs)
+
+  - Prediction confidence thresholding
+
+  - Temporal consistency checks (track smoothness)
+
+  - Multi-sensor cross-validation
+
+
+  **Fallback Strategies**:
+
+  - Graceful degradation (reduce speed when confidence low)
+
+  - Fallback to classical algorithms (if ML fails)
+
+  - Driver warning and takeover request
+
+  - Minimal risk maneuver (if no driver response)
+
+
+  ## Deliverables
+
+
+  - Algorithm performance specification (precision, recall, latency)
+
+  - False positive/negative analysis by scenario
+
+  - OOD detection strategy and thresholds
+
+  - Adversarial robustness test results
+
+  - Training data coverage analysis
+
+  - Runtime monitoring and fallback architecture
+
+
+  ## Best Practices
+
+
+  - Test on diverse datasets (not just training distribution)
+
+  - Analyze failure modes by scenario (distance, lighting, occlusion)
+
+  - Implement uncertainty quantification (model should know when uncertain)
+
+  - Use multi-sensor fusion (reduce dependency on single algorithm)
+
+  - Continuous learning pipeline (update model with field data)
+
+  - Validate domain adaptation (test on target deployment region)
+
+  - Red team adversarial testing (dedicated team tries to fool system)
+
+
+  ## Common Pitfalls
+
+
+  - Overfit to training data (poor generalization)
+
+  - Not testing on OOD data (deployed region different from training)
+
+  - Ignoring uncertainty (model overconfident on edge cases)
+
+  - No runtime monitoring (cannot detect degraded performance)
+
+  - Single model dependency (no redundancy)
+
+  '
+constraints:
+- Cannot eliminate all false positives/negatives
+- Training data never fully represents real world
+- Adversarial robustness vs accuracy tradeoff
+- Computational limits on model complexity
+tools_required:
+- ML frameworks (PyTorch, TensorFlow)
+- Adversarial testing libraries (Foolbox, CleverHans)
+- Dataset management (Roboflow, Scale AI)
+- Model monitoring (Weights & Biases, MLflow)
+- Statistical analysis (Python, R)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- algorithm-insufficiency
+- ml-safety
+- false-positives
+- out-of-distribution
+- adversarial-robustness
+- perception

@@ -1,0 +1,159 @@
+name: esg-governance
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: esg_governance
+description: Carbon neutrality roadmap, sustainability reporting, GRI standards, CSRD compliance for automotive OEMs
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  ESG (Environmental, Social, and Governance) governance in the automotive sector addresses how OEMs
+  and suppliers manage sustainability risks and opportunities at the board level. With the EU Corporate
+  Sustainability Reporting Directive (CSRD) mandating detailed ESG disclosures, automotive companies
+  face mandatory reporting on carbon emissions (Scope 1-3), supply chain due diligence, workforce
+  diversity, and governance practices. This skill covers carbon neutrality roadmaps, sustainability
+  reporting frameworks, green financing, circular economy strategies, and ESG integration into
+  corporate decision-making for automotive organizations.
+
+  ## Key Concepts
+
+  ### Reporting Frameworks and Standards
+  - **CSRD/ESRS**: EU mandatory sustainability reporting with double materiality assessment
+  - **GRI Standards**: Global Reporting Initiative for comprehensive sustainability disclosure
+  - **TCFD/ISSB**: Climate-related financial disclosures now consolidated under IFRS S1/S2
+  - **CDP**: Carbon Disclosure Project for climate, water, and forest impact reporting
+  - **Science Based Targets initiative (SBTi)**: Validated emission reduction pathways aligned with 1.5C
+  - **EU Taxonomy**: Classification of environmentally sustainable economic activities
+
+  ### Carbon Emission Scopes in Automotive
+  - **Scope 1**: Direct emissions from owned facilities (factories, test tracks, company fleet)
+  - **Scope 2**: Indirect emissions from purchased energy (electricity, heat, steam for manufacturing)
+  - **Scope 3 Upstream**: Supply chain emissions (raw materials, components, logistics, business travel)
+  - **Scope 3 Downstream**: Use-phase emissions (fuel combustion for ICE), end-of-life treatment
+  - **Well-to-wheel vs. tank-to-wheel**: Full lifecycle vs. tailpipe-only emission accounting
+  - **Carbon intensity metrics**: gCO2/km (vehicle), tCO2/vehicle produced (manufacturing)
+
+  ### ESG Governance Structure
+  - **Board-level ESG committee**: Oversight of sustainability strategy and risk management
+  - **Chief Sustainability Officer (CSO)**: Executive accountability for ESG targets and reporting
+  - **ESG integration in compensation**: Linking executive pay to sustainability KPIs (15-25% weight)
+  - **Materiality assessment**: Double materiality identifying impacts on business and on society
+  - **Stakeholder engagement**: Structured dialogue with investors, NGOs, regulators, employees, communities
+
+  ## Implementation Guide
+
+  ### Step 1: ESG Materiality Assessment
+  - Conduct double materiality analysis per CSRD requirements (financial and impact materiality)
+  - Engage stakeholders through surveys, interviews, and workshops to validate material topics
+  - Map material ESG topics to business strategy, risks, and value creation drivers
+  - Prioritize topics for reporting and action based on significance and stakeholder expectations
+
+  ### Step 2: Carbon Neutrality Roadmap
+  - Establish Scope 1+2 baseline and set SBTi-validated near-term (2030) and net-zero targets
+  - Develop Scope 3 inventory with supplier engagement program for upstream emission reduction
+  - Create decarbonization pathway: energy efficiency, renewable energy, electrification of fleet
+  - Plan for residual emissions: high-quality carbon removal credits, not just offsets
+  - Model financial impact: carbon pricing scenarios, EU ETS exposure, green premium opportunities
+
+  ### Step 3: Supply Chain ESG Due Diligence
+  - Implement supplier ESG assessment aligned with German Supply Chain Due Diligence Act (LkSG)
+  - Require critical mineral traceability (cobalt, lithium, nickel) per EU Battery Regulation
+  - Establish supplier code of conduct covering human rights, environment, and anti-corruption
+  - Deploy digital supply chain mapping tools for risk identification beyond Tier-1
+
+  ### Step 4: ESG Reporting and Disclosure
+  - Implement data collection infrastructure for ESG metrics across all operations and supply chain
+  - Prepare CSRD-compliant sustainability report with ESRS topic standards
+  - Obtain limited assurance on ESG data (moving to reasonable assurance by 2028)
+  - Integrate ESG disclosure into annual report and investor communications
+
+  ## Decision Frameworks
+
+  ### ESG Investment Prioritization
+  | Initiative | CO2 Reduction | Cost | Payback | Priority |
+  |-----------|--------------|------|---------|----------|
+  | Renewable energy PPA | High (Scope 2) | Medium | 3-5 years | High |
+  | Manufacturing energy efficiency | Medium (Scope 1) | Low-Medium | 1-3 years | High |
+  | Supplier decarbonization program | Very High (Scope 3) | High | 5-10 years | Strategic |
+  | Fleet electrification | Very High (Scope 3) | Product cost | Vehicle life | Core strategy |
+  | Circular economy (recycling) | Medium | Medium | 5-7 years | Growing |
+  | Carbon capture/removal credits | Variable | High | No payback | Residual only |
+
+  ### Green vs. Greenwashing Assessment
+  - Are targets science-based and independently validated (SBTi)?
+  - Does the roadmap include Scope 3 with concrete supplier engagement actions?
+  - Are carbon credits used only for residual emissions after maximum reduction effort?
+  - Is progress tracked with audited data and transparent reporting?
+  - Are trade-offs acknowledged honestly (e.g., EV battery mining impacts)?
+
+  ### ESG Rating Agency Strategy
+  - **MSCI ESG**: Focus on key issue scores (carbon, product safety, supply chain labor)
+  - **Sustainalytics**: Minimize ESG risk rating through management gap closure
+  - **CDP**: Target A-list through comprehensive climate strategy and supply chain engagement
+  - **ISS ESG**: Governance quality focus, board composition, executive compensation alignment
+
+  ## Best Practices
+
+  - Embed ESG into corporate strategy, not as a separate sustainability silo
+  - Set absolute emission reduction targets, not just intensity-based improvements
+  - Engage top 100 suppliers (typically 80% of Scope 3) in joint decarbonization programs
+  - Use internal carbon pricing (50-150 EUR/tCO2) in investment decisions to drive low-carbon choices
+  - Prepare for EU Battery Regulation requirements: carbon footprint declaration, recycled content, passport
+  - Implement circular economy design principles: design for disassembly, recycled materials, remanufacturing
+  - Track and report on social metrics: workforce diversity, safety incidents, community impact
+  - Conduct climate scenario analysis (1.5C, 2C, 4C) for strategic resilience testing
+  - Align lobbying positions with stated climate commitments to avoid credibility risks
+  - Invest in ESG data infrastructure early; CSRD audit requirements demand robust data quality
+
+  ## Examples
+
+  ### Example 1: SBTi-Validated Net-Zero Roadmap
+  A European OEM commits to net-zero by 2040. Roadmap: 100% renewable electricity by 2028 (PPA and
+  on-site solar), manufacturing energy intensity reduction of 40% by 2030, 100% BEV sales by 2035,
+  supplier engagement program covering top 200 suppliers (90% of Scope 3 upstream). Residual emissions
+  addressed through verified carbon dioxide removal. Annual investment: 200M EUR in decarbonization.
+
+  ### Example 2: Battery Supply Chain Due Diligence
+  An OEM must comply with EU Battery Regulation traceability requirements. Implementation: deploy
+  blockchain-based mineral traceability from mine to cell, conduct annual on-site audits of cobalt
+  and lithium suppliers, require IRMA or Copper Mark certification for mining operations, establish
+  grievance mechanism accessible to affected communities. Cost: 5M EUR/year for supply chain program.
+
+  ### Example 3: CSRD First-Year Reporting
+  A Tier-1 supplier falls under CSRD scope for the first time. Approach: conduct double materiality
+  assessment identifying 8 material topics, implement ESG data collection across 35 global sites,
+  engage EY for limited assurance, prepare sustainability statement per ESRS standards. Timeline:
+  12 months from gap analysis to published report. Key challenge: Scope 3 data quality from sub-tier
+  suppliers, addressed through industry initiative (Catena-X) for standardized data exchange.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- esg-governance
+- automotive
+- oem

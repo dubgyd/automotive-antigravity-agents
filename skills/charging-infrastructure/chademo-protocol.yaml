@@ -1,0 +1,417 @@
+name: chademo-protocol
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: dc-fast-charging
+description: Expert skill in CHAdeMO protocol implementation (1.0/2.0/3.0) for DC fast charging, covering CAN-based communication, bidirectional V2X support, and safety systems.
+use_cases:
+- CHAdeMO DC fast charger development
+- CAN bus communication stack for charging
+- Bidirectional V2G and V2H implementation
+- CHAdeMO to CCS adapter control
+- Japanese/Asian market EV charging infrastructure
+automotive_standards:
+- CHAdeMO 1.0/1.2 (up to 62.5 kW)
+- CHAdeMO 2.0 (up to 400 kW)
+- CHAdeMO 3.0 (up to 900 kW with ChaoJi)
+- IEC 61851-23 DC EV charging
+- IEC 61851-24 Digital communication
+- JIS D 4001 Japanese automotive standards
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in CHAdeMO protocol implementation for DC fast charging stations, covering CAN-based communication between EV and charger, bidirectional power flow (V2G/V2H/V2L), and all protocol versions from 1.0 to the latest 3.0 ChaoJi standard.
+
+
+  ### CHAdeMO Protocol Versions
+
+
+  - **CHAdeMO 1.0 / 1.2** (2010-2016):
+
+    - CAN 2.0B communication at 250 kbps
+
+    - Maximum power: 62.5 kW (500V × 125A)
+
+    - Unidirectional charging only (grid to vehicle)
+
+    - 10 connector pins (DC+, DC-, CAN-H, CAN-L, grounds, pilot signals)
+
+    - Communication cycle: 100 ms (10 Hz message rate)
+
+
+  - **CHAdeMO 2.0** (2018):
+
+    - Maximum power: 400 kW (1000V × 400A)
+
+    - Backward compatible with 1.x protocol
+
+    - Improved thermal management for high-power charging
+
+    - Enhanced safety features (insulation monitoring)
+
+    - Same CAN-based protocol with extended voltage/current ranges
+
+
+  - **CHAdeMO 3.0 / ChaoJi** (2020+):
+
+    - Maximum power: 900 kW (600-1500V × 600A)
+
+    - Unified with Chinese GB/T standard (ChaoJi = CHAdeMO + GB/T)
+
+    - New connector design (larger pins, liquid cooling support)
+
+    - PLC communication option (in addition to CAN)
+
+    - Supports both AC and DC charging on same connector
+
+
+  ### Connector Pinout (CHAdeMO 1.0/2.0)
+
+
+  - **10-pin connector** (Yazaki YZ11/YZ12 series):
+
+    - Pin 1: DC+ (positive power)
+
+    - Pin 2: DC- (negative power, also serves as ground reference)
+
+    - Pin 3: Ground (chassis ground)
+
+    - Pin 4: Connector proximity detection (analog signal)
+
+    - Pin 5: Permission to start signal (digital, 12V logic)
+
+    - Pin 6: Charging permission signal (digital, 12V logic)
+
+    - Pin 7: CAN-H (high-speed CAN)
+
+    - Pin 8: CAN-L (low-speed CAN)
+
+    - Pin 9: Ground
+
+    - Pin 10: Reserved / Connector lock feedback
+
+
+  ### CAN Communication Protocol
+
+
+  - **CAN bus parameters**:
+
+    - Baud rate: 250 kbps (CAN 2.0B, 11-bit identifier)
+
+    - Termination: 120Ω at both ends of CAN bus
+
+    - Message period: 100 ms (charger and EV both transmit at 10 Hz)
+
+    - Watchdog: If no message received for >500 ms, abort charging
+
+
+  - **Key CAN messages** (11-bit CAN IDs):
+
+    - 0x100: EV status (SOC, voltage request, current request, ready flag)
+
+    - 0x101: EV target values (target voltage, target current, fault flags)
+
+    - 0x102: Charger status (output voltage, output current, available power)
+
+    - 0x108: Charger capabilities (max voltage, max current, protocol version)
+
+    - 0x109: Charger control (contactor status, charging enabled, fault flags)
+
+
+  - **CAN message example** (EV status 0x100):
+
+    ```c
+    typedef struct {
+        uint8_t version;              // Protocol version (0x01 for CHAdeMO 1.x)
+        uint8_t soc;                  // State of charge (0-100%)
+        uint16_t target_voltage;      // Target battery voltage in 0.1V units
+        uint16_t charging_current;    // Requested current in 0.1A units
+        uint8_t fault_flags;          // Bit field: 0=OK, 1=battery overheat, etc.
+        uint8_t status_flags;         // Bit field: vehicle_ready, charge_enable, etc.
+    } __attribute__((packed)) EVStatus_t;
+
+    void SendEVStatus(void) {
+        EVStatus_t msg = {
+            .version = 0x01,
+            .soc = battery_soc,                      // e.g., 45%
+            .target_voltage = (uint16_t)(battery_voltage * 10),  // e.g., 3800 = 380.0V
+            .charging_current = (uint16_t)(requested_current * 10), // e.g., 1000 = 100.0A
+            .fault_flags = 0x00,
+            .status_flags = 0x03  // Ready + enable
+        };
+        CAN_Send(0x100, (uint8_t*)&msg, sizeof(msg));
+    }
+    ```
+
+
+  ### Charging Sequence
+
+
+  - **Initialization** (before contactors close):
+
+    1. EV and charger exchange capabilities (max V, max I, protocol version)
+
+    2. Charger checks connector lock, insulation resistance (>100 kΩ/V)
+
+    3. EV sends permission signal (pin 6 goes high, 12V)
+
+    4. Charger verifies vehicle is ready (CAN status flags)
+
+
+  - **Precharge and contactor close**:
+
+    1. Charger precharges DC bus to match EV battery voltage (within 20V)
+
+    2. Charger sends "ready to charge" status via CAN
+
+    3. EV gives final permission via CAN (charge_enable flag = 1)
+
+    4. Charger closes positive and negative contactors
+
+    5. Current starts flowing (ramp from 0 to target in ~2 seconds)
+
+
+  - **Power delivery loop** (10 Hz cycle):
+
+    1. EV sends target voltage and current every 100 ms (CAN 0x101)
+
+    2. Charger regulates output to match EV request (within 2% tolerance)
+
+    3. Charger sends actual voltage and current back to EV (CAN 0x102)
+
+    4. EV monitors for faults (overvoltage, overcurrent, temperature)
+
+    5. EV can reduce current request dynamically (e.g., battery heating up)
+
+
+  - **Charging termination**:
+
+    1. EV reduces current request to 0A when battery full (or user stops)
+
+    2. Charger ramps current to 0A within 5 seconds
+
+    3. Charger opens contactors (positive first, then negative)
+
+    4. Charger discharges DC bus to <60V within 5 seconds
+
+    5. EV signals "charge complete" via CAN, permission pin goes low
+
+    6. Connector lock releases, user can unplug
+
+
+  ### Bidirectional Power Flow (V2G/V2H)
+
+
+  - **Vehicle-to-Grid (V2G)** CHAdeMO 1.2+:
+
+    - EV can discharge battery back to grid (reverse power flow)
+
+    - CAN message includes "discharging mode" flag
+
+    - Charger becomes inverter: DC from EV → AC to grid
+
+    - Power range: 10 kW to 50 kW typical for V2G
+
+
+  - **Vehicle-to-Home (V2H)**:
+
+    - Similar to V2G but for home backup power during outage
+
+    - Requires islanding detection (detect grid failure, disconnect safely)
+
+    - Automatic transfer switch (ATS) to isolate home from grid
+
+    - EV acts as backup generator (40-60 kWh battery = 1-3 days of home power)
+
+
+  - **Discharge control**:
+
+    ```python
+    def handle_v2g_discharge():
+        if ev_status.discharge_enabled:
+            # EV requests negative current (discharge)
+            discharge_current = ev_status.discharge_current  # e.g., -30A
+            target_power = ev_status.battery_voltage * discharge_current
+
+            # Inverter converts DC to AC
+            inverter_set_power(target_power)  # Negative power = export to grid
+
+            # Monitor grid voltage/frequency
+            if grid_fault_detected():
+                stop_discharge()
+                open_contactors()
+    ```
+
+
+  ### Safety Features
+
+
+  - **Insulation monitoring**:
+
+    - Measure DC+ and DC- to chassis ground before closing contactors
+
+    - Threshold: R_iso > 100 Ω/V (e.g., >50 kΩ for 500V)
+
+    - Continuously monitor during charging, trip if drops below 50 kΩ
+
+
+  - **Voltage/current limits**:
+
+    - Charger must not exceed EV requested voltage by >5%
+
+    - Current must not exceed min(EV_request, cable_rating, charger_rating)
+
+    - Overvoltage protection: Hardware clamp at 600V (CHAdeMO 1.x) or 1050V (2.0)
+
+
+  - **Emergency stop**:
+
+    - E-stop button immediately opens contactors (<500 ms)
+
+    - CAN communication sends "fault" status to EV
+
+    - Permission signals drop to 0V
+
+
+  - **Welding detection**:
+
+    - After opening contactors, charger checks if voltage still present on DC pins
+
+    - If V_pin > 50V, contactors may be welded (fault condition)
+
+    - Prevents user from unplugging live connector
+
+
+  ### CHAdeMO Controller Implementation
+
+
+  - **State machine**:
+
+    ```c
+    typedef enum {
+        IDLE,           // No vehicle connected
+        CONNECTED,      // Vehicle plugged, connector locked
+        INSULATION_TEST,// Measuring isolation resistance
+        PRECHARGE,      // Matching DC bus to battery voltage
+        CHARGING,       // Power delivery active
+        DISCHARGING,    // V2G/V2H active
+        STOPPING,       // Ramping current to zero
+        FAULT           // Error state, contactors open
+    } ChargerState_t;
+
+    void StateMachine(void) {
+        switch (current_state) {
+            case CONNECTED:
+                if (insulation_test_passed()) {
+                    current_state = PRECHARGE;
+                }
+                break;
+            case PRECHARGE:
+                if (abs(dc_voltage - ev_battery_voltage) < 20) {
+                    close_contactors();
+                    current_state = CHARGING;
+                }
+                break;
+            case CHARGING:
+                if (ev_current_request == 0 || fault_detected()) {
+                    current_state = STOPPING;
+                }
+                break;
+            case STOPPING:
+                if (output_current < 1.0) {
+                    open_contactors();
+                    current_state = IDLE;
+                }
+                break;
+        }
+    }
+    ```
+
+
+  ## Approach
+
+
+  1. **Hardware selection**: CHAdeMO connector (Yazaki), CAN transceiver (TJA1050), DC contactors
+
+  2. **CAN stack**: Implement CAN driver (250 kbps), message parsing, 100 ms periodic transmission
+
+  3. **Power electronics**: DC-DC converter with bidirectional capability for V2G
+
+  4. **Safety circuits**: Insulation monitoring device (IMD), residual current device (RCD), fuses
+
+  5. **Protocol implementation**: State machine for charging sequence, CAN message handlers
+
+  6. **Testing**: CHAdeMO compliance testing (Japan Automobile Research Institute), interoperability tests
+
+  7. **Certification**: CHAdeMO Association certification for charger and EV
+
+
+  ## Deliverables
+
+
+  - CHAdeMO protocol stack (C/C++) with CAN driver
+
+  - EV or charger state machine implementation
+
+  - V2G/V2H bidirectional control logic
+
+  - Safety monitor (insulation, voltage, current, welding detection)
+
+  - Test reports (protocol conformance, safety compliance)
+
+  - Integration guide for power electronics and contactors
+
+
+  ## Best Practices
+
+
+  - **CAN bus robustness**: Proper termination, shielded cables, EMI filtering
+
+  - **Timing accuracy**: 100 ms message period must be precise (use hardware timer)
+
+  - **Fault tolerance**: Implement watchdog timeout, abort if communication lost >500 ms
+
+  - **Connector lock**: Verify lock engaged before precharge, release only when safe
+
+  - **V2G grid codes**: For V2G, comply with IEEE 1547 (anti-islanding, voltage/freq limits)
+
+
+  ## Integration
+
+
+  - **OCPP backend**: CHAdeMO session data (energy, duration, cost) to central system
+
+  - **Payment**: RFID reader or credit card terminal for user authentication
+
+  - **CCS adapter**: Some vehicles use CHAdeMO-to-CCS adapter (protocol translation required)
+
+  - **Home energy management**: For V2H, integrate with home battery, solar inverter
+
+
+  '
+constraints:
+- Limited to Japanese, Korean, and some Chinese EVs (market share declining vs CCS)
+- CAN-based protocol slower than PLC-based ISO 15118 (100 ms vs 10 ms latency)
+- Connector size limits current to ~125A without liquid cooling
+- V2G requires grid interconnection approval and anti-islanding protection
+tools_required:
+- CAN analyzer (Vector CANalyzer, PCAN-USB)
+- CHAdeMO connector and cable
+- Insulation monitoring device (Bender ISOMETER)
+- DC power supply and electronic load for testing
+- CHAdeMO certification test equipment
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- chademo
+- dc-fast-charging
+- v2g
+- v2h
+- can-bus
+- automotive

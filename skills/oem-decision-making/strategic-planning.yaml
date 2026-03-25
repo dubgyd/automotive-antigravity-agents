@@ -1,0 +1,147 @@
+name: strategic-planning
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: strategic_planning
+description: "Platform strategy, modular toolkits, portfolio management, technology roadmap development for automotive OEMs"
+use_cases:
+  - "Product portfolio and platform strategy development"
+  - "Technology roadmapping aligned with regulatory drivers"
+  - "Business case development for strategic investments"
+  - "Risk management and scenario planning for mobility trends"
+  - "Organizational change management for EV and SW transformation"
+automotive_standards:
+  - "ISO 9001"
+  - "IATF 16949"
+  - "APQP"
+  - "PPAP"
+instructions: |
+  ## Overview
+
+  Strategic planning for automotive OEMs defines the long-term direction for product portfolio, technology
+  investment, market positioning, and organizational capabilities across a 5-15 year planning horizon.
+  The automotive industry is undergoing simultaneous disruptions in powertrain (electrification), driving
+  (automation), connectivity (software-defined vehicles), and business models (mobility services). Strategic
+  planning must navigate these transitions while maintaining profitability in legacy business. This skill
+  covers platform strategy, modular toolkit architecture, portfolio management, technology roadmapping,
+  scenario planning, and strategic resource allocation for automotive companies.
+
+  ## Key Concepts
+
+  ### Platform Strategy
+  - **Dedicated BEV platform**: Purpose-built for electric vehicles (flat floor, skateboard architecture)
+  - **Multi-energy platform**: Supports ICE, PHEV, and BEV on shared architecture (transition strategy)
+  - **Software-defined platform**: Centralized compute with zonal architecture enabling OTA feature delivery
+  - **Modular toolkit (MQB/CLAR/MEB model)**: Scalable components shared across segments and brands
+  - **Platform sharing between OEMs**: Cost-sharing through partnerships (e.g., Toyota-Subaru, Renault-Nissan)
+  - **Platform lifecycle**: Typically 8-12 years with mid-cycle hardware refresh and continuous SW updates
+
+  ### Portfolio Management Dimensions
+  - **Segment coverage**: Which segments to compete in (A through F, SUV, pickup, van, sports)
+  - **Powertrain mix**: ICE phase-out timeline, PHEV bridge strategy, BEV ramp-up by segment
+  - **Geographic allocation**: Volume and investment allocation across regions (EU, China, US, emerging)
+  - **Brand management**: Multi-brand portfolio optimization, brand differentiation, cannibalization control
+  - **Lifecycle planning**: Model introduction cadence, facelift timing, derivative spacing, run-out
+
+  ### Technology Roadmapping
+  - **Powertrain roadmap**: Battery chemistry evolution, e-motor technology, power electronics, charging
+  - **ADAS/AD roadmap**: L2+ to L3/L4 progression, sensor suite evolution, compute platform scaling
+  - **Software roadmap**: Vehicle OS development, middleware standardization, app ecosystem
+  - **E/E architecture roadmap**: Domain to zone architecture migration, centralized compute adoption
+  - **Manufacturing technology roadmap**: Gigacasting, dry battery electrode, smart factory evolution
+
+  ## Implementation Guide
+
+  ### Step 1: Strategic Situation Analysis
+  - Conduct comprehensive external analysis: PESTLE, Porter's Five Forces, competitive landscape mapping
+  - Perform internal capability assessment: technology, manufacturing, talent, financial resources
+  - Develop market scenarios with quantified assumptions (EV adoption curves, regulatory timelines)
+  - Benchmark against competitors on key dimensions: technology, cost, brand, geographic presence
+
+  ### Step 2: Strategic Direction Setting
+  - Define corporate vision and mission aligned with industry transformation
+  - Set quantified strategic targets: revenue, margin, market share, EV mix, software revenue
+  - Identify strategic pillars (typically 4-6) that will drive transformation
+  - Establish investment allocation framework across strategic pillars
+
+  ### Step 3: Platform and Portfolio Strategy
+  - Define target vehicle architecture strategy: number of platforms, segment coverage, timeline
+  - Create product portfolio roadmap: model introductions, facelifts, derivatives for next 10 years
+  - Plan powertrain transition: ICE sunset dates by segment, BEV launch cadence, PHEV bridge duration
+  - Model financial impact: investment requirements, margin evolution, free cash flow trajectory
+
+  ### Step 4: Execution Planning and Governance
+  - Translate strategy into 3-year rolling business plan with annual milestones
+  - Establish strategic KPIs and balanced scorecard for tracking execution
+  - Create strategy review cadence: quarterly progress reviews, annual strategy refresh
+  - Build change management program to align organization behind strategic direction
+
+  ## Decision Frameworks
+
+  ### Portfolio Investment Prioritization (McKinsey 3-Horizons)
+  - **Horizon 1 (0-3 years)**: Optimize core business (ICE profitability, current EV programs, cost reduction)
+  - **Horizon 2 (3-7 years)**: Build emerging businesses (software services, new BEV segments, new markets)
+  - **Horizon 3 (7+ years)**: Seed future options (solid-state battery, L4 autonomy, mobility-as-a-service)
+  - **Budget allocation guide**: 70% H1 / 20% H2 / 10% H3 (adjust based on transformation urgency)
+
+  ### Platform Architecture Decision Matrix
+  | Factor | Dedicated BEV | Multi-Energy | Software-Defined |
+  |--------|-------------|-------------|-----------------|
+  | BEV optimization | Maximum | Compromised | Depends on HW |
+  | Investment efficiency | Lower (parallel) | Higher (shared) | Highest (reuse) |
+  | Transition flexibility | Low | High | High |
+  | Time to market | Medium | Faster | Faster for SW |
+  | Long-term competitiveness | Highest | Medium | Highest |
+
+  ### Scenario Planning Framework
+  - **Scenario A (Accelerated EV)**: BEV >70% by 2030, ICE bans enforced, battery cost <60 $/kWh
+  - **Scenario B (Gradual Transition)**: BEV 40-50% by 2030, hybrids persist, infrastructure lags
+  - **Scenario C (Disrupted)**: Chinese OEMs dominate value segment, tech companies capture SW value
+  - **Scenario D (Fragmented)**: Regional divergence, US ICE resilience, EU BEV mandate, China mix
+  - **Robust strategy**: Must perform adequately across all scenarios, not optimize for one
+
+  ## Best Practices
+
+  - Refresh strategic plan annually but avoid complete rewrites; consistency builds organizational alignment
+  - Use scenario planning to stress-test strategy against multiple futures rather than betting on one
+  - Balance ambition with realism: strategy must be executable given current capabilities and resources
+  - Involve cross-functional leadership in strategy development to build ownership and commitment
+  - Maintain strategic flexibility through modular investments that can be scaled up or down
+  - Track leading indicators (not just lagging financial results) for early strategy course correction
+  - Communicate strategy simply and consistently to all levels of the organization
+  - Separate strategic planning from budgeting; budget serves strategy, not the other way around
+  - Allocate explicit R&D and CapEx budgets for Horizon 3 initiatives protected from short-term cuts
+  - Benchmark execution speed against fastest competitors (often Chinese or tech-native companies)
+
+  ## Examples
+
+  ### Example 1: Multi-Brand BEV Platform Strategy
+  A multi-brand OEM group defines platform strategy: 2 BEV platforms (small/medium and large/premium)
+  serving 6 brands and 12 models. Platform development cost: 4B EUR shared across brands. Each brand
+  differentiates through upper body, interior, software features, and calibration. Volume amortization:
+  2M units over 10-year lifecycle. Result: 30% lower per-vehicle platform cost vs. brand-specific
+  development, 18-month faster time-to-market for derivative models.
+
+  ### Example 2: ICE-to-BEV Transition Financial Bridge
+  An OEM models the financial transition from profitable ICE (12% EBIT margin) to initially unprofitable
+  BEV (negative 5% EBIT margin at launch). Strategy: maximize ICE cash generation through 2028, invest
+  in BEV cost reduction (battery, manufacturing), target BEV break-even by 2027, BEV margin parity by
+  2030. Bridge plan requires 1.5B EUR annual cost reduction in legacy business to fund EV investment
+  while maintaining 5% group EBIT margin during transition.
+
+  ### Example 3: Technology Roadmap for L3 Autonomy
+  An OEM sets strategic target to offer L3 highway driving by 2027 model year. Technology roadmap:
+  2024 - select sensor suite and compute platform (TRL 6), 2025 - integrate in B-sample vehicle,
+  2026 - validation fleet of 200 vehicles accumulating 10M km, 2027 - type approval and SOP.
+  Investment: 1.2B EUR over 4 years. Risk mitigation: maintain L2+ as fallback if regulatory approval
+  delays, modular sensor architecture allowing upgrade to L4-ready hardware in future generation.
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: advanced
+tags:
+  - "oem-decision-making"
+  - "strategic-planning"
+  - "automotive"
+  - "oem"

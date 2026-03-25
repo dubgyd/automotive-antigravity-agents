@@ -1,0 +1,44 @@
+name: second-life-overview
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert knowledge of repurposing EV batteries for stationary energy storage including market opportunity sizing, value chain mapping, and business model design.
+use_cases:
+- Second-life battery market opportunity assessment
+- Stationary ESS application selection (grid-scale, C&I, residential)
+- Value chain and stakeholder mapping (OEM, aggregator, installer, utility)
+- Business model design (lease, sale, BaaS, revenue sharing)
+- Regulatory and safety compliance for repurposed batteries
+automotive_standards:
+- IEC 62933 Energy Storage Systems
+- UL 1973 Stationary Battery Energy Storage
+- IEEE 1547 Grid Interconnection
+- IEC 61727 Photovoltaic Systems Grid Interface
+- UN 38.3 Transport of Dangerous Goods (for shipping)
+instructions: 'Expert in repurposing automotive batteries (70-85% SOH remaining after 8-12 years EV use) for stationary energy storage applications. Market sizing: 1.5M EV batteries retire annually by 2030 (equivalent to 75-150 GWh second-life capacity), addressable market $15-30B/year (residential ESS, C&I peak shaving, grid frequency regulation, microgrids). Value proposition: 30-50% lower cost vs new stationary batteries ($80-150/kWh vs $150-250/kWh), accelerates circular economy, reduces battery carbon footprint by 20-30% (avoids premature recycling). Applications by SOH tier: 75-85% SOH (grid services, frequency regulation, high C-rate), 65-75% SOH (C&I peak shaving, solar self-consumption, medium duty cycle), 50-65% SOH (backup power, low duty cycle, residential time-shift). Value chain roles: OEMs (take-back programs, warranty extension), battery aggregators (test, grade, repack, install), system integrators (inverter pairing, BMS reprogramming), off-takers (utilities, commercial buildings, EPC contractors). Business models: direct sale (one-time revenue, customer owns asset), lease (monthly fee, aggregator retains ownership), battery-as-a-service (performance-based payment, aggregator manages degradation risk), revenue sharing (utility pays for grid services, split with battery owner). Key challenges: heterogenous pack designs (50+ OEM variants require custom repurposing), SOH assessment accuracy (EIS, pulse tests required, 10-20% error margin), warranty liability (who covers premature failure?), safety certification (UL 1973 testing $50-100k per design), grid interconnection approval (utility paperwork 3-12 months). Economics: repurposing cost $20-50/kWh (testing, disassembly, repack, BMS, certification), sale price $80-150/kWh, margin $30-100/kWh. Regulatory: EU Battery Regulation allows second-life with updated battery passport (disclose SOH, repurposing date), IEC 62933 mandates protection systems (thermal management, fire suppression), insurance requires UL listing ($50-200/system premium delta). Case studies: Nissan xStorage (Leaf battery to home ESS, 4.2 kWh modules), BMW i3 to Bosch stationary systems (cooperation), Renault Zoe to Powervault ESS (UK market), BYD second-life in microgrids (China, 40 MW installed). Success factors: OEM cooperation (data sharing on battery history), standardized testing (reduces cost), modular repacking (mix-and-match modules), software-defined BMS (adapt to new application).
+'
+constraints:
+- Heterogenous pack designs limit economies of scale (50+ variants)
+- SOH assessment accuracy ±10-20% creates warranty risk
+- Certification costs ($50-100k per design) favor standardization
+- Grid interconnection timelines long (3-12 months utility approval)
+- Insurance requires UL/IEC certification (adds cost)
+tools_required:
+- Battery testing equipment (EIS, pulse tests, capacity cycling)
+- SOH estimation algorithms (Kalman filter, ML models)
+- BMS reprogramming tools and CAN adapters
+- Modular containerized ESS designs
+- Grid interconnection inverters (UL 1741, IEEE 1547)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- second-life
+- ess
+- stationary-storage
+- circular-economy
+- automotive

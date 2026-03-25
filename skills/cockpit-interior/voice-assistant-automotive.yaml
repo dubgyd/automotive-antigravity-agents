@@ -1,0 +1,161 @@
+name: voice-assistant-automotive
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "In-vehicle voice AI systems covering wake word detection, natural language understanding, multi-zone voice capture, and offline speech processing for automotive environments."
+use_cases:
+  - "Designing multi-zone voice capture that isolates driver from passenger speech"
+  - "Implementing hybrid on-device and cloud NLU for reliable voice control"
+  - "Building conversational flows for vehicle-specific commands and queries"
+  - "Creating noise-robust speech recognition for highway and open-window conditions"
+  - "Integrating OEM voice assistants with third-party services like Alexa Auto"
+automotive_standards:
+  - "ISO 15006 - Auditory presentation of information in vehicles"
+  - "ISO 15005 - Dialogue principles for in-vehicle information systems"
+  - "SAE J2988 - Speech recognition test methodology for automotive"
+  - "W3C Voice Interaction Community Group standards"
+  - "Amazon Alexa Auto SDK and Google Assistant Automotive integration guidelines"
+instructions: |
+  # Voice Assistant Automotive
+
+  ## Overview
+  In-vehicle voice assistants enable hands-free control of navigation, media, climate,
+  phone calls, and vehicle functions through natural speech. Automotive voice systems
+  face unique challenges including road noise, wind noise, multiple simultaneous
+  speakers, and the need for reliable operation in areas without cellular connectivity.
+  Modern systems combine on-device processing for responsiveness with cloud NLU for
+  broad language understanding.
+
+  ## Key Concepts
+
+  ### Audio Capture and Enhancement
+  Producing clean speech signals from the noisy cabin environment:
+  - Microphone arrays with 2 to 8 elements enable beamforming toward the speaker
+  - Acoustic echo cancellation removes the vehicle audio system output from the mic input
+  - Noise reduction algorithms suppress road, wind, and engine noise
+  - Dereverberation compensates for cabin reflections that smear speech clarity
+
+  ### Wake Word Detection
+  Always-on listening for the activation phrase:
+  - Runs on a low-power DSP consuming under 50 mW continuously
+  - Uses a small neural network trained on the specific wake phrase
+  - False accept rate must be below 1 per 24 hours of ambient cabin audio
+  - False reject rate must stay below 5% under typical driving noise conditions
+
+  ### Natural Language Understanding
+  Interpreting the driver's intent from transcribed speech:
+  - On-device NLU handles a defined command set without connectivity
+  - Cloud NLU provides broader understanding for complex queries
+  - Domain-specific models understand vehicle terminology and function names
+  - Context management tracks conversation state across multi-turn dialogues
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Microphone Array
+  Select and position microphones for optimal speech capture:
+  - Place a linear array in the headliner above the driver for closest proximity
+  - Add secondary arrays near the passenger and rear seats for multi-zone support
+  - Use MEMS microphones with matched sensitivity for reliable beamforming
+  - Target signal-to-noise ratio improvement of 12 dB through array processing
+
+  ### Step 2 - Build the Audio Pipeline
+  Implement the signal processing chain:
+  - Sample at 16 kHz with 16-bit depth for speech processing
+  - Apply acoustic echo cancellation referencing all cabin audio outputs
+  - Run adaptive beamforming steered toward the detected active speaker
+  - Feed enhanced audio to both wake word detector and speech recognizer
+
+  ### Step 3 - Implement Speech Recognition
+  Deploy ASR (automatic speech recognition) for transcription:
+  - Use an on-device ASR model for core command recognition under 500 ms
+  - Fall back to cloud ASR for extended vocabulary and complex utterances
+  - Support the primary market language plus at least one additional language
+  - Handle code-switching where drivers mix languages in a single utterance
+
+  ### Step 4 - Build the Dialogue Manager
+  Create the conversational flow controller:
+  - Define intent schemas for each vehicle function domain (climate, media, nav, phone)
+  - Implement slot filling for commands requiring parameters like temperature or station
+  - Support follow-up questions when the initial command is ambiguous
+  - Provide contextual suggestions based on recent actions and current vehicle state
+
+  ### Step 5 - Integrate Vehicle Control
+  Connect voice commands to vehicle function execution:
+  - Map NLU intents to vehicle API calls through a command dispatcher
+  - Implement confirmation prompts for safety-critical commands like window and door
+  - Provide audio and visual feedback confirming command execution
+  - Log command success rates for continuous improvement analytics
+
+  ## Best Practices
+
+  ### Noise Robustness
+  - Test speech recognition at 70 dB road noise (highway) and 80 dB (open window)
+  - Train acoustic models with in-vehicle noise augmentation
+  - Adapt beamforming parameters based on vehicle speed and window state
+  - Provide visual feedback of listening state so users know when to speak
+
+  ### Response Latency
+  - Wake word to listening indicator must appear within 300 ms
+  - On-device command execution should complete within 1 second end-to-end
+  - Cloud NLU round-trip should stay below 2 seconds including network transit
+  - Use streaming ASR to begin processing before the user finishes speaking
+
+  ### Privacy by Design
+  - Process wake word detection entirely on-device with no audio leaving the vehicle
+  - Transmit to cloud only after wake word confirmation and only the command utterance
+  - Provide a physical microphone mute button that electrically disconnects the array
+  - Allow users to review and delete voice interaction history
+
+  ## Troubleshooting
+
+  ### Voice Assistant Does Not Activate
+  Check microphone array connections and verify DSP power state. Test wake word
+  detection in a quiet environment to isolate noise versus hardware issues. Review wake
+  word model version and confirm it matches the expected activation phrase.
+
+  ### Commands Misunderstood Frequently
+  Analyze ASR transcription logs for systematic errors. Check acoustic echo
+  cancellation effectiveness when music is playing. Verify the NLU domain models
+  include the vocabulary the user is attempting.
+
+  ### Echo of Vehicle Audio in Responses
+  Tune the acoustic echo cancellation reference signal delay to match the speaker to
+  microphone acoustic path. Verify the reference signal tap point includes all audio
+  sources. Check for nonlinear distortion in cabin speakers that defeats linear AEC.
+
+  ### Voice Works for Driver But Not Passengers
+  Verify the secondary microphone array is active and beamforming to the passenger zone.
+  Check that the zone selection logic correctly identifies which occupant is speaking.
+  Ensure the passenger wake word model has the same sensitivity as the driver model.
+
+  ## Integration Patterns
+
+  ### Multi-Assistant Coexistence
+  Supporting both OEM and third-party voice assistants simultaneously:
+  - Define a wake word router that directs activation to the correct assistant engine
+  - Implement audio focus management so only one assistant speaks at a time
+  - Share vehicle control APIs with third-party assistants through a sandboxed interface
+  - Maintain a unified conversation history across assistant switches for context continuity
+
+  ### Multilingual and Accent Handling
+  Supporting diverse driver populations in global markets:
+  - Deploy language packs that can be downloaded and switched without restart
+  - Train acoustic models on accented speech data for the top accents per market
+  - Handle mixed-language input where speakers switch between languages mid-sentence
+  - Provide pronunciation customization for uncommon proper nouns and place names
+
+  ## Testing and Validation
+
+  ### Speech Recognition Accuracy Testing
+  Measure ASR performance under automotive-specific conditions:
+  - Test with standardized sentence lists spoken at normal, fast, and slow rates
+  - Measure word error rate at idle, 60 km/h, 120 km/h, and with windows open
+  - Include non-native speaker test groups for each supported language
+  - Benchmark against competitive systems using identical test utterance sets
+
+  ### Intent Classification Validation
+  Verify NLU correctly interprets driver commands:
+  - Build a test set of 500 utterances per intent domain with paraphrase variety
+  - Measure precision, recall, and F1 score for each intent and slot type
+  - Test ambiguous utterances that could match multiple intents for correct disambiguation
+  - Validate negative examples that should be rejected rather than matched to any intent

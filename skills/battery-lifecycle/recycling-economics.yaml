@@ -1,0 +1,42 @@
+name: recycling-economics
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert in battery recycling economic modeling including cost-per-ton analysis, break-even calculations, commodity price sensitivity, and logistics cost optimization.
+use_cases:
+- Recycling plant economic feasibility study
+- Break-even analysis by battery chemistry
+- Commodity price sensitivity modeling
+- Logistics cost optimization (collection network design)
+- Recycled material vs virgin material cost comparison
+automotive_standards:
+- ISO 15686 Life Cycle Costing
+- ISO 14040/14044 Economic Analysis in LCA
+- Financial modeling best practices
+- TCO (Total Cost of Ownership) frameworks
+instructions: 'Expert in comprehensive economic modeling of battery recycling operations covering CAPEX (mechanical recycling: $5-15M for 10k ton/year, hydrometallurgy: $30-100M for 25k ton/year, pyrometallurgy: $100-200M for 50k ton/year), OPEX breakdown (chemicals 30-40%, energy 15-25%, labor 20-30%, maintenance 10-15%), revenue streams (metal sales: Co $25-40/kg, Ni $18-28/kg, Li2CO3 $15-25/kg, Cu/Al scrap $2-4/kg, second-life modules $20-80/kWh), break-even analysis (NMC811: profitable at all scales, NMC622: break-even at 10k+ ton/year, LFP: unprofitable unless >$25/kg Li price or second-life diversion), commodity price sensitivity (Co volatility ±50%/year creates revenue uncertainty, Li price 10x variation 2020-2026, Ni more stable ±30%), logistics costs (collection: $50-150 per pack, transport: $0.10-0.30 per kg-km, storage: $5-10/m² warehouse/month, total logistics 15-25% of recycling cost), scale economics (fixed costs dominate <5k ton/year, variable costs dominate >50k ton/year, optimal plant size 25-75k ton/year), financing structures (debt/equity 60/40 typical, IRR target 15-20%, payback 5-8 years, offtake agreements reduce risk), subsidies and policy support (IRA $10-50 per kWh recycled in US, EU green finance available, China mandates drive volume), comparison to virgin material (recycled Co 40-60% lower carbon footprint, cost-competitive at $35k+ ton Co price, recycled Li competitive with spodumene but not brine). Models include NPV analysis (20-year horizon, discount rate 8-12%), Monte Carlo for commodity price uncertainty, sensitivity tornado charts (identify top 5 cost/revenue drivers), scenario analysis (base/bull/bear commodity prices), circular economy value capture (OEM willingness-to-pay for recycled content: 5-15% premium initially, decreasing to parity by 2030).
+'
+constraints:
+- Commodity price volatility creates revenue uncertainty (Co ±50%/year)
+- Requires scale (>10k ton/year) for profitability on most chemistries
+- Logistics costs scale non-linearly (rural collection 2-3x urban)
+- Financing challenging (unproven technology risk for lenders)
+- Policy support varies by region (US vs EU vs China incentives differ)
+tools_required:
+- Financial modeling (Excel, Python pandas)
+- Commodity price databases (Bloomberg, LME, Fastmarkets)
+- NPV/IRR calculators
+- Monte Carlo simulation (Crystal Ball, @RISK)
+- Logistics optimization (Google OR-Tools, Python PuLP)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- recycling
+- economics
+- financial-modeling
+- automotive

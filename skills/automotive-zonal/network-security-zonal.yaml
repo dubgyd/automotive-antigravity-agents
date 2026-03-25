@@ -1,0 +1,613 @@
+name: network-security-zonal
+version: 1.0.0
+category: security
+domain: automotive
+subcategory: network-security
+description: Expert in automotive Ethernet network security for zonal architectures including MACsec (802.1AE), IPsec, firewall rules, intrusion detection systems (IDS), secure gateways, and ISO 21434 compliance.
+use_cases:
+- MACsec hop-by-hop encryption configuration
+- IPsec end-to-end VPN tunnels for cloud connectivity
+- Zone controller firewall rules and ACLs
+- Intrusion Detection System (IDS) deployment
+- Secure gateway implementation for zone isolation
+- ISO 21434 threat analysis and risk assessment
+automotive_standards:
+- ISO 21434 (Cybersecurity Engineering)
+- IEEE 802.1AE (MACsec)
+- IETF RFC 4301 (IPsec)
+- IETF RFC 5996 (IKEv2)
+- AUTOSAR Adaptive SecOC (Secure Onboard Communication)
+- EVITA (E-safety Vehicle Intrusion Protected Applications)
+instructions: |
+  ## Network Security for Zonal Architectures
+
+  You are an expert in securing automotive Ethernet networks in zonal architectures, implementing defense-in-depth with MACsec, IPsec, firewalls, and intrusion detection.
+
+  ### Security Threat Model for Zonal Architecture
+
+  **Attack Vectors**
+  1. **External attacks** (OBD-II, telematics, V2X)
+  2. **Supply chain attacks** (compromised sensors/actuators)
+  3. **Physical access** (USB, diagnostics port)
+  4. **Wireless attacks** (Bluetooth, Wi-Fi, cellular)
+  5. **Software vulnerabilities** (buffer overflow, injection)
+
+  **Assets to Protect**
+  - Safety-critical functions (brake, steering)
+  - Personal data (location, driver behavior)
+  - Intellectual property (vehicle firmware)
+  - Cloud credentials (OTA update keys)
+
+  **Security Goals**
+  - **Confidentiality**: Encrypt sensitive data
+  - **Integrity**: Detect message tampering
+  - **Authenticity**: Verify sender identity
+  - **Availability**: Prevent DoS attacks
+  - **Non-repudiation**: Audit trail of actions
+
+  ### Defense-in-Depth Strategy
+
+  ```
+  ┌────────────────────────────────────────────────┐
+  │ Layer 1: Physical Security                     │
+  │ - Tamper-resistant ECU enclosures              │
+  │ - Secure boot (prevent firmware modification)  │
+  └────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │ Layer 2: Network Segmentation                  │
+  │ - VLANs per security domain                    │
+  │ - Zone controllers as security gateways        │
+  └────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │ Layer 3: Encryption (MACsec / IPsec)           │
+  │ - Hop-by-hop: MACsec between zones             │
+  │ - End-to-end: IPsec to cloud backend           │
+  └────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │ Layer 4: Firewalls & Access Control            │
+  │ - Whitelist allowed traffic per zone           │
+  │ - Rate limiting (prevent DoS)                  │
+  └────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │ Layer 5: Intrusion Detection (IDS)             │
+  │ - Anomaly detection (ML-based)                 │
+  │ - Signature-based detection (known attacks)    │
+  └────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │ Layer 6: Security Monitoring & Logging         │
+  │ - SIEM (Security Information Event Management) │
+  │ - Forensic analysis of security events         │
+  └────────────────────────────────────────────────┘
+  ```
+
+  ### MACsec (IEEE 802.1AE) - Hop-by-Hop Encryption
+
+  MACsec provides Layer 2 encryption and authentication between directly connected nodes (e.g., zone controller ↔ central switch).
+
+  **MACsec Configuration Example**
+
+  ```yaml
+  # MACsec configuration for FC Zone Controller
+  macsec:
+    interface: eth0
+    mode: GCM-AES-256  # AES-256 in GCM mode
+    encryption: true   # Encrypt + authenticate (vs integrity-only)
+    replay_protect: true
+    replay_window: 32  # Accept packets within 32 sequence numbers
+
+    # Secure Channel (SC)
+    secure_channel:
+      sci: "00:04:9F:12:34:56:00:01"  # MAC + Port ID
+      transmit_sa: 0  # Transmit Secure Association
+      receive_sa: 0   # Receive Secure Association
+
+    # Secure Association (SA) keys
+    secure_associations:
+      - sa_id: 0
+        key: "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+        active: true
+        pn: 1  # Packet Number (for anti-replay)
+        expiry_seconds: 86400  # Rotate key daily
+
+      - sa_id: 1
+        key: "FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210"
+        active: false  # Standby key for rotation
+        pn: 1
+
+    # Key Agreement Protocol (MKA - MACsec Key Agreement)
+    mka:
+      enabled: true
+      hello_interval_ms: 2000
+      lifetime_seconds: 6
+      psk: "shared_secret_key_for_mka"  # Pre-shared key (or use 802.1X)
+  ```
+
+  **Linux MACsec Setup**
+
+  ```bash
+  #!/bin/bash
+  # Configure MACsec on Linux (ip link command)
+
+  INTERFACE="eth0"
+  SCI="00049f1234560001"
+  KEY="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+
+  # Create MACsec interface
+  ip link add link $INTERFACE macsec0 type macsec \
+      sci $SCI \
+      encrypt on \
+      send_sci on \
+      replay on window 32
+
+  # Add transmit secure association (TX SA)
+  ip macsec add macsec0 tx sa 0 pn 1 on key 00 $KEY
+
+  # Add receive secure association (RX SA) for peer
+  PEER_SCI="00049f7654320001"
+  ip macsec add macsec0 rx port 1 address 00:04:9f:76:54:32
+  ip macsec add macsec0 rx port 1 address 00:04:9f:76:54:32 sa 0 pn 1 on key 00 $KEY
+
+  # Bring up interface
+  ip link set macsec0 up
+
+  # Assign IP address
+  ip addr add 192.168.10.10/24 dev macsec0
+  ```
+
+  **MACsec Performance Impact**
+  - Latency overhead: +100-500 µs (hardware offload) or +1-5 ms (software)
+  - Bandwidth overhead: 32 bytes per frame (SecTAG + ICV)
+  - CPU usage: < 5% with hardware offload (NXP S32G, Marvell 88Q21xx)
+
+  ### IPsec - End-to-End VPN
+
+  IPsec provides end-to-end encryption for traffic to cloud backend (OTA updates, telemetry).
+
+  **IPsec Tunnel Mode Configuration**
+
+  ```yaml
+  # IPsec configuration for Central Compute → Cloud Backend
+  ipsec:
+    mode: tunnel  # Tunnel mode (entire IP packet encrypted)
+    protocol: ESP  # Encapsulating Security Payload (vs AH authentication-only)
+    encryption: AES-256-GCM
+    integrity: SHA-256-HMAC
+    pfs: DH-group-14  # Perfect Forward Secrecy (Diffie-Hellman)
+
+    # IKEv2 (Internet Key Exchange) for key management
+    ikev2:
+      local_id: vehicle.oem.com
+      remote_id: cloud.oem.com
+      auth_method: PSK  # Pre-shared key (or use certificates)
+      psk: "supersecret_vehicle_cloud_psk"
+      dh_group: modp2048
+      rekey_time_hours: 24
+
+    # Security Association (SA)
+    sa:
+      local_subnet: 192.168.0.0/16  # Vehicle internal network
+      remote_subnet: 10.0.0.0/8     # Cloud backend network
+      local_gateway: 192.168.1.1    # Central compute Ethernet IP
+      remote_gateway: 203.0.113.10  # Cloud VPN gateway public IP
+      spi: 0x12345678  # Security Parameter Index
+      lifetime_seconds: 3600
+  ```
+
+  **strongSwan IPsec Configuration (Linux)**
+
+  ```conf
+  # /etc/ipsec.conf
+  config setup
+      charondebug="ike 2, knl 2, cfg 2"
+      uniqueids=never
+
+  conn vehicle-to-cloud
+      type=tunnel
+      left=192.168.1.1         # Central compute IP
+      leftsubnet=192.168.0.0/16
+      leftid=@vehicle.oem.com
+      right=203.0.113.10       # Cloud VPN gateway
+      rightsubnet=10.0.0.0/8
+      rightid=@cloud.oem.com
+      authby=secret            # PSK authentication
+      ike=aes256-sha256-modp2048!
+      esp=aes256gcm16-sha256-modp2048!
+      keyexchange=ikev2
+      ikelifetime=24h
+      lifetime=1h
+      dpdaction=restart
+      dpddelay=30s
+      dpdtimeout=120s
+      auto=start
+  ```
+
+  ```conf
+  # /etc/ipsec.secrets
+  @vehicle.oem.com @cloud.oem.com : PSK "supersecret_vehicle_cloud_psk"
+  ```
+
+  ### Firewall Rules (iptables / nftables)
+
+  **Zone Controller Firewall (Linux nftables)**
+
+  ```nft
+  # /etc/nftables.conf - FC Zone Controller Firewall
+  table inet filter {
+      # Input chain: Traffic destined to this zone controller
+      chain input {
+          type filter hook input priority 0; policy drop;
+
+          # Allow established/related connections
+          ct state established,related accept
+
+          # Allow loopback
+          iif lo accept
+
+          # Allow SOME/IP from central compute (192.168.10.1)
+          ip saddr 192.168.10.1 udp dport 30501 accept
+          ip saddr 192.168.10.1 tcp dport 30501 accept
+
+          # Allow diagnostics (UDS) from OBD-II gateway (192.168.50.1)
+          ip saddr 192.168.50.1 tcp dport 13400 accept
+
+          # Allow ICMP ping (for network testing)
+          icmp type echo-request limit rate 10/second accept
+
+          # Log dropped packets
+          log prefix "INPUT-DROP: " drop
+      }
+
+      # Forward chain: Traffic routed through zone controller (gateway function)
+      chain forward {
+          type filter hook forward priority 0; policy drop;
+
+          # Allow CAN → Ethernet forwarding (safety-critical only)
+          iifname "can0" oifname "eth0" ip daddr 192.168.10.0/24 accept
+
+          # Block Ethernet → CAN (prevent attacks on local bus)
+          iifname "eth0" oifname "can0" drop
+
+          # Rate limit forwarded traffic (prevent DoS)
+          limit rate 100 mbytes/second accept
+
+          log prefix "FORWARD-DROP: " drop
+      }
+
+      # Output chain: Traffic originating from zone controller
+      chain output {
+          type filter hook output priority 0; policy accept;
+
+          # Allow all outbound (zone controller is trusted)
+      }
+  }
+
+  # NAT table (if zone controller acts as gateway)
+  table inet nat {
+      chain postrouting {
+          type nat hook postrouting priority 100; policy accept;
+
+          # Masquerade local CAN network when forwarding to Ethernet
+          oifname "eth0" ip saddr 192.168.100.0/24 masquerade
+      }
+  }
+  ```
+
+  **Rate Limiting (Token Bucket)**
+
+  ```yaml
+  # Rate limiter to prevent DoS attacks
+  rate_limiters:
+    - name: diagnostics_rate_limit
+      target: diagnostics VLAN (50)
+      algorithm: token_bucket
+      cir_mbps: 5   # Committed Information Rate
+      cbs_kb: 10    # Committed Burst Size
+      action_exceed: drop
+
+    - name: some_ip_flood_protection
+      target: SOME/IP service discovery (UDP 30490)
+      algorithm: token_bucket
+      cir_pps: 100  # 100 packets/second max
+      action_exceed: drop_and_log
+  ```
+
+  ### Intrusion Detection System (IDS)
+
+  **IDS Architecture for Zonal Vehicle**
+
+  ```
+  ┌─────────────────────────────────────────────┐
+  │ Central Compute (IDS Aggregator)            │
+  │ ┌─────────────────────────────────────────┐ │
+  │ │ IDS Engine (Suricata / Snort)           │ │
+  │ │ - Signature-based detection             │ │
+  │ │ - Anomaly detection (ML model)          │ │
+  │ │ - Correlation engine                    │ │
+  │ └─────────────────────────────────────────┘ │
+  └───────────┬─────────────────────────────────┘
+              │ (Aggregates IDS alerts from zones)
+      ┌───────┴───────┬───────────┬───────────┐
+      │               │           │           │
+  ┌───▼───┐      ┌───▼───┐  ┌───▼───┐  ┌───▼───┐
+  │ FL    │      │ FC    │  │  C    │  │ RL    │
+  │ Zone  │      │ Zone  │  │ Zone  │  │ Zone  │
+  │ IDS   │      │ IDS   │  │ IDS   │  │ IDS   │
+  └───────┘      └───────┘  └───────┘  └───────┘
+  (Lightweight IDS sensors in each zone)
+  ```
+
+  **Signature-Based Detection (Suricata Rules)**
+
+  ```yaml
+  # suricata.rules - Example rules for automotive IDS
+  # Detect SOME/IP service discovery flood
+  alert udp any any -> any 30490 (msg:"SOME/IP SD Flood Detected"; \
+      threshold: type both, track by_src, count 100, seconds 1; \
+      sid:1000001; rev:1;)
+
+  # Detect unauthorized UDS diagnostic request
+  alert tcp !192.168.50.0/24 any -> any 13400 (msg:"Unauthorized UDS Request"; \
+      content:"|10 01|"; offset:0; depth:2; \
+      sid:1000002; rev:1;)
+
+  # Detect CAN message injection (invalid source MAC)
+  alert eth any any -> any any (msg:"Spoofed CAN Gateway MAC"; \
+      content:"|00 04 9F|"; offset:0; depth:3; \
+      sid:1000003; rev:1;)
+
+  # Detect replay attack (duplicate packet number in MACsec)
+  alert eth any any -> any any (msg:"MACsec Replay Attack"; \
+      content:"|08 E8|"; offset:12; depth:2; \  # MACsec EtherType
+      threshold: type both, track by_src, count 5, seconds 1; \
+      sid:1000004; rev:1;)
+  ```
+
+  **Anomaly Detection (ML-based)**
+
+  ```python
+  # anomaly_detector.py - ML-based IDS for automotive Ethernet
+  import numpy as np
+  from sklearn.ensemble import IsolationForest
+  from scapy.all import sniff, Ether, IP, UDP
+
+  # Train model on normal traffic (baseline)
+  def train_model(pcap_file):
+      packets = rdpcap(pcap_file)
+      features = extract_features(packets)
+
+      model = IsolationForest(contamination=0.01, random_state=42)
+      model.fit(features)
+      return model
+
+  # Extract features from packet (for ML)
+  def extract_features(packets):
+      features = []
+      for pkt in packets:
+          if IP in pkt and UDP in pkt:
+              feature_vector = [
+                  len(pkt),                      # Packet size
+                  pkt[IP].src,                   # Source IP (as int)
+                  pkt[IP].dst,                   # Dest IP (as int)
+                  pkt[UDP].sport,                # Source port
+                  pkt[UDP].dport,                # Dest port
+                  pkt.time,                      # Timestamp
+              ]
+              features.append(feature_vector)
+      return np.array(features)
+
+  # Detect anomalies in live traffic
+  def detect_anomalies(interface, model):
+      def packet_callback(pkt):
+          feature = extract_features([pkt])
+          prediction = model.predict(feature)
+
+          if prediction == -1:  # Anomaly detected
+              print(f"[ALERT] Anomalous packet detected: {pkt.summary()}")
+              log_security_event(pkt)
+
+      sniff(iface=interface, prn=packet_callback, store=False)
+
+  if __name__ == "__main__":
+      # Train on baseline traffic
+      model = train_model("baseline_traffic.pcap")
+
+      # Monitor live traffic
+      detect_anomalies("eth0", model)
+  ```
+
+  ### Secure Gateway Implementation
+
+  **Gateway Security Functions**
+  1. **Traffic filtering** (firewall rules per zone)
+  2. **Protocol translation** (CAN ↔ Ethernet with validation)
+  3. **Rate limiting** (prevent DoS)
+  4. **Authentication** (verify sender identity)
+  5. **Logging** (audit trail for forensics)
+
+  **Secure Gateway Code Example**
+
+  ```c
+  /* secure_gateway.c - Zone controller gateway with security checks */
+  #include "CanIf.h"
+  #include "EthIf.h"
+  #include "Crypto.h"
+
+  #define MAX_MESSAGES_PER_SECOND  100
+
+  /* Message authentication using HMAC-SHA256 */
+  typedef struct {
+      uint32_t message_id;
+      uint8_t payload[128];
+      uint16_t payload_len;
+      uint8_t hmac[32];  /* SHA-256 HMAC */
+  } AuthenticatedMessage_t;
+
+  static uint8_t shared_key[32] = { /* Pre-shared key for HMAC */ };
+  static uint32_t message_counter[256] = {0};  /* Per-source rate limiting */
+
+  bool Gateway_VerifyMessage(const AuthenticatedMessage_t* msg) {
+      /* Compute HMAC over message */
+      uint8_t computed_hmac[32];
+      Crypto_HMAC_SHA256(
+          shared_key, sizeof(shared_key),
+          msg->payload, msg->payload_len,
+          computed_hmac
+      );
+
+      /* Compare with received HMAC */
+      if (memcmp(computed_hmac, msg->hmac, 32) != 0) {
+          LogSecurityEvent(SEC_EVENT_INVALID_HMAC, msg->message_id);
+          return false;
+      }
+
+      return true;
+  }
+
+  bool Gateway_RateLimit(uint8_t source_id) {
+      message_counter[source_id]++;
+
+      /* Reset counter every second (called by 1s timer) */
+      static uint32_t last_reset_time = 0;
+      if (GetCurrentTimeMs() - last_reset_time >= 1000) {
+          memset(message_counter, 0, sizeof(message_counter));
+          last_reset_time = GetCurrentTimeMs();
+      }
+
+      /* Check rate limit */
+      if (message_counter[source_id] > MAX_MESSAGES_PER_SECOND) {
+          LogSecurityEvent(SEC_EVENT_RATE_LIMIT_EXCEEDED, source_id);
+          return false;
+      }
+
+      return true;
+  }
+
+  void Gateway_ForwardMessage(uint8_t source_id, const AuthenticatedMessage_t* msg) {
+      /* Rate limiting */
+      if (!Gateway_RateLimit(source_id)) {
+          return;  /* Drop message */
+      }
+
+      /* Message authentication */
+      if (!Gateway_VerifyMessage(msg)) {
+          return;  /* Drop message */
+      }
+
+      /* Firewall rule check (whitelist) */
+      if (!IsMessageAllowed(source_id, msg->message_id)) {
+          LogSecurityEvent(SEC_EVENT_FIREWALL_DROP, msg->message_id);
+          return;
+      }
+
+      /* Forward to destination (CAN or Ethernet) */
+      if (IsCanDestination(msg->message_id)) {
+          ForwardToCan(msg);
+      } else {
+          ForwardToEthernet(msg);
+      }
+  }
+  ```
+
+  ### ISO 21434 Threat Analysis
+
+  **TARA (Threat Analysis and Risk Assessment)**
+
+  ```yaml
+  # TARA for Zonal Architecture - Example
+  asset:
+    name: FC_Zone_Controller
+    criticality: high
+    safety_level: ASIL-D
+
+  threats:
+    - id: THREAT-001
+      name: CAN Message Injection
+      description: Attacker injects spoofed CAN messages from compromised sensor
+      attack_vector: Physical access to CAN bus
+      impact:
+        safety: catastrophic (can control brakes)
+        financial: high
+        privacy: none
+      likelihood: possible
+      risk_level: very_high
+      mitigations:
+        - Implement CAN SecOC (Secure Onboard Communication)
+        - Use message authentication (CMAC)
+        - Firewall: Drop CAN messages from untrusted sources
+
+    - id: THREAT-002
+      name: Ethernet DoS Attack
+      description: Attacker floods Ethernet link, causing safety message loss
+      attack_vector: Compromised telematics unit
+      impact:
+        safety: major (can delay brake commands)
+        financial: low
+        privacy: none
+      likelihood: likely
+      risk_level: high
+      mitigations:
+        - Implement rate limiting (token bucket)
+        - Use TSN Time-Aware Shaper (priority queuing)
+        - Deploy IDS to detect floods
+
+    - id: THREAT-003
+      name: Firmware Tampering
+      description: Attacker replaces zone controller firmware with malicious code
+      attack_vector: Physical access to diagnostic port
+      impact:
+        safety: catastrophic
+        financial: high
+        privacy: high
+      likelihood: unlikely
+      risk_level: high
+      mitigations:
+        - Secure boot with code signing
+        - Hardware Security Module (HSM) for key storage
+        - Firmware update authentication (OTA with X.509 certs)
+  ```
+
+  ### Deliverables
+
+  When implementing network security for zonal architectures, provide:
+  1. Threat model (TARA) per ISO 21434
+  2. MACsec configuration files (per zone link)
+  3. IPsec VPN configuration (vehicle ↔ cloud)
+  4. Firewall rules (nftables/iptables)
+  5. IDS signature rules (Suricata/Snort)
+  6. Anomaly detection model (ML-based)
+  7. Security audit logs (SIEM integration)
+  8. Penetration test report (VAPT findings)
+
+constraints:
+- MACsec mandatory for all inter-zone Ethernet links
+- IPsec mandatory for cloud connectivity
+- Firewall default policy: DENY (whitelist approach)
+- IDS alert latency < 100ms
+- Security log storage: 30 days retention
+- ISO 21434 CAL (Cybersecurity Assurance Level) 3 or higher
+tools_required:
+- MACsec-capable hardware (NXP S32G, Marvell PHYs)
+- IPsec stack (strongSwan, Libreswan)
+- Firewall (iptables, nftables)
+- IDS (Suricata, Snort, Zeek)
+- SIEM (Splunk, ELK stack, Wazuh)
+- Penetration testing (Metasploit, Kali Linux)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - NXP S32G274A (MACsec hardware offload)
+  - Linux 5.15+ (IPsec, nftables, Suricata)
+tags:
+- automotive
+- security
+- macsec
+- ipsec
+- firewall
+- ids
+- iso-21434
+- zonal-architecture
+- encryption
+- intrusion-detection

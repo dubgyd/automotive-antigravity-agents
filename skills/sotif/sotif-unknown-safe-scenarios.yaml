@@ -1,0 +1,481 @@
+name: sotif-unknown-safe-scenarios
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-analysis
+description: Evaluation of Area 4 (unknown safe) scenarios and residual risk acceptance criteria for SOTIF compliance.
+use_cases:
+- Residual risk assessment for SOTIF
+- Acceptance criteria definition for unknown scenarios
+- Statistical confidence calculation for validation
+- Risk tolerance threshold determination
+- Type approval argumentation for residual risk
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-3 (Safety Goals)
+- UN ECE R157 (ALKS)
+- ISO/PAS 21448:2019
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in assessing Area 4 (unknown safe) scenarios and establishing residual risk acceptance criteria for ISO 21448 SOTIF compliance.
+
+
+  ### Area 4 Definition
+
+
+  **Unknown Safe**: Scenarios where:
+
+  - Scenario parameters not fully explored during validation
+
+  - No evidence of hazard, but also no proof of safety
+
+  - Represents residual uncertainty after SOTIF process
+
+  - Accepted risk based on statistical confidence and societal tolerance
+
+
+  **Goal**: Demonstrate that Area 4 residual risk is:
+
+  - Sufficiently low (statistically bounded)
+
+  - Acceptable per societal norms (comparable to human driver)
+
+  - Justified through comprehensive validation effort
+
+
+  ### Residual Risk Concept
+
+
+  **Relationship to Four Areas**:
+
+  - Area 1 (Known Safe): No risk, verified
+
+  - Area 2 (Known Unsafe): Identified and mitigated
+
+  - Area 3 (Unknown Unsafe): Minimized through exploration, but never zero
+
+  - Area 4 (Unknown Safe): Remaining scenarios with uncertain but acceptable risk
+
+
+  **SOTIF Argument**:
+
+  1. Comprehensive triggering condition identification (minimize Area 3)
+
+  2. Extensive validation effort (simulation + field testing)
+
+  3. Statistical demonstration of low failure rate in validation
+
+  4. Acceptance criteria based on societal risk tolerance
+
+
+  ## Acceptance Criteria Development
+
+
+  **Benchmarking to Human Driver**:
+
+  - Baseline: Human driver fatal crash rate ~ 1 per 100 million km (US 2020)
+
+  - Target: AD system should be demonstrably safer (e.g., 10x reduction)
+
+  - Metric: Exposure-adjusted crash rate per million km
+
+
+  **Statistical Confidence**:
+
+  - Confidence level: 99% typical for safety-critical systems
+
+  - Null hypothesis: System crash rate ≥ threshold
+
+  - Alternative hypothesis: System crash rate < threshold
+
+  - Validation mileage required: Function of target rate and confidence
+
+
+  **Example Calculation**:
+
+
+  ```python
+
+  import scipy.stats as stats
+
+  import numpy as np
+
+
+  def calculate_required_mileage(target_crash_rate_per_million_km,
+
+                                  confidence_level=0.99,
+
+                                  max_observed_crashes=0):
+
+      """
+
+      Calculate required validation mileage to demonstrate crash rate below target
+
+      with specified confidence level.
+
+
+      Parameters:
+
+      - target_crash_rate_per_million_km: Acceptable crash rate (e.g., 0.01)
+
+      - confidence_level: Statistical confidence (e.g., 0.99 for 99%)
+
+      - max_observed_crashes: Number of crashes allowed in validation (typically 0)
+
+
+      Returns:
+
+      - Required mileage in millions of km
+
+      """
+
+      # Using Poisson distribution for rare events
+
+      # P(X ≤ max_crashes | λ = rate × mileage) ≥ confidence_level
+
+
+      # Solve for mileage: lambda such that P(X ≤ max_crashes) = confidence_level
+
+      # If max_crashes = 0: P(X = 0) = exp(-lambda) ≥ confidence_level
+
+      # Therefore: lambda ≤ -ln(1 - confidence_level)
+
+
+      lambda_max = -np.log(1 - confidence_level)
+
+      required_mileage_million_km = lambda_max / target_crash_rate_per_million_km
+
+
+      return required_mileage_million_km
+
+
+  # Example: Demonstrate crash rate < 0.01 per million km with 99% confidence
+
+  target_rate = 0.01  # per million km (10x better than human ~0.1)
+
+  confidence = 0.99
+
+  mileage = calculate_required_mileage(target_rate, confidence, max_observed_crashes=0)
+
+  print(f"Required validation mileage: {mileage:.1f} million km")
+
+  # Output: ~460 million km with zero crashes
+
+
+  # More practical: Allow 1 crash
+
+  mileage_1_crash = calculate_required_mileage(target_rate, confidence, max_observed_crashes=1)
+
+  print(f"With 1 allowed crash: {mileage_1_crash:.1f} million km")
+
+  ```
+
+
+  **Simulation vs Field Testing**:
+
+  - Simulation: Generate billions of km, but fidelity limits confidence
+
+  - Field testing: High fidelity, but expensive and time-consuming
+
+  - Hybrid approach: Simulation for coverage, field for validation
+
+
+  **UN ECE R157 Example (ALKS)**:
+
+  - 60 km test track validation for basic scenarios
+
+  - Type approval requires demonstration of ODD compliance
+
+  - Ongoing field monitoring to confirm residual risk assumptions
+
+
+  ## Risk Evaluation Framework
+
+
+  **Quantitative Metrics**:
+
+  - Crash rate per million km (overall safety)
+
+  - False positive rate (unnecessary interventions, mode confusion)
+
+  - Disengagement rate (system reliability)
+
+  - Takeover request frequency (driver burden)
+
+
+  **Qualitative Assessment**:
+
+  - Comparison to human driver performance in same ODD
+
+  - Analysis of crash severity distribution (injury vs property damage)
+
+  - Evaluation of crash preventability (unavoidable scenarios)
+
+
+  **Acceptable Risk Thresholds**:
+
+
+  | Severity | Human Baseline (US) | Target for AD | Metric |
+
+  |----------|---------------------|---------------|--------|
+
+  | Fatal | 1.1 per 100M veh-miles | < 0.5 per 100M | 2x safer |
+
+  | Injury | 60 per 100M veh-miles | < 30 per 100M | 2x safer |
+
+  | Property damage | 100 per 100M veh-miles | < 50 per 100M | 2x safer |
+
+
+  ## Residual Risk Argumentation
+
+
+  **Safety Case Structure**:
+
+
+  1. **Claim**: System residual risk (Area 4) is acceptable
+
+  2. **Evidence**:
+
+     - Validation mileage (simulation + field)
+
+     - Observed crash/disengagement rates
+
+     - Comprehensive triggering condition catalog
+
+  3. **Argument**:
+
+     - Extensive exploration minimized Area 3
+
+     - Statistical analysis shows low failure rate
+
+     - Performance exceeds human driver baseline
+
+  4. **Rebuttals**:
+
+     - Simulation limitations acknowledged, mitigated by field testing
+
+     - ODD restrictions documented, enforced by system
+
+
+  **Example Argument**:
+
+  - Claim: ALKS system residual risk acceptable for highway operation 0-60 km/h
+
+  - Evidence:
+
+    - 10 billion km simulation with 150 crashes identified and mitigated
+
+    - 5 million km field testing with 2 safety driver interventions
+
+    - Intervention rate: 0.4 per million km
+
+  - Argument:
+
+    - Intervention rate << human crash rate (1 per million km)
+
+    - ODD restrictions (highway, low speed) reduce exposure
+
+    - System deactivates outside ODD (fail-safe)
+
+  - Rebuttal:
+
+    - Simulation may not capture all real-world complexity → Field testing validates
+
+    - Rare events not observed → Conservative ODD and continuous monitoring
+
+
+  ## Statistical Methods
+
+
+  **Binomial Confidence Interval**:
+
+
+  ```python
+
+  import scipy.stats as stats
+
+
+  def binomial_confidence_interval(num_failures, num_trials, confidence=0.99):
+
+      """
+
+      Calculate upper bound on failure rate with specified confidence.
+
+
+      Parameters:
+
+      - num_failures: Observed failures (crashes, disengagements)
+
+      - num_trials: Number of scenarios tested
+
+      - confidence: Confidence level (e.g., 0.99)
+
+
+      Returns:
+
+      - Upper bound on failure rate
+
+      """
+
+      # Using Wilson score interval (better for small counts)
+
+      p_hat = num_failures / num_trials
+
+      z = stats.norm.ppf((1 + confidence) / 2)
+
+
+      denominator = 1 + z**2 / num_trials
+
+      center = (p_hat + z**2 / (2 * num_trials)) / denominator
+
+      margin = z * np.sqrt(p_hat * (1 - p_hat) / num_trials + z**2 / (4 * num_trials**2)) / denominator
+
+
+      upper_bound = center + margin
+
+      return upper_bound
+
+
+  # Example: 2 failures in 5 million km (each km is a "trial")
+
+  failures = 2
+
+  trials = 5_000_000
+
+  upper_bound = binomial_confidence_interval(failures, trials, confidence=0.99)
+
+  print(f"Upper bound on failure rate: {upper_bound * 1e6:.2f} per million km with 99% confidence")
+
+  ```
+
+
+  **Bayesian Approach**:
+
+  - Prior: Pessimistic assumption about failure rate
+
+  - Likelihood: Observed data (validation results)
+
+  - Posterior: Updated belief about failure rate
+
+  - Advantage: Incorporate prior knowledge, update with evidence
+
+
+  ## Deliverables
+
+
+  - Residual risk assessment report
+
+  - Statistical validation plan (mileage targets, acceptance criteria)
+
+  - Validation results summary (simulation + field)
+
+  - Safety case argument for Area 4 acceptability
+
+  - Comparison to human driver baseline
+
+  - Continuous monitoring plan for post-deployment risk tracking
+
+
+  ## Best Practices
+
+
+  - Define acceptance criteria early (avoid post-hoc rationalization)
+
+  - Use conservative estimates (do not overstate validation coverage)
+
+  - Benchmark to human performance in same ODD (fair comparison)
+
+  - Consider crash severity, not just frequency
+
+  - Account for ODD restrictions in risk calculation (reduced exposure)
+
+  - Plan for continuous monitoring (residual risk may emerge post-deployment)
+
+  - Document all assumptions in safety case
+
+
+  ## Regulatory Considerations
+
+
+  **UN ECE R157 (ALKS)**:
+
+  - No explicit statistical mileage requirement
+
+  - Requires demonstration of ODD compliance through testing
+
+  - Ongoing monitoring and software update process expected
+
+
+  **ISO 21448**:
+
+  - Does not mandate specific acceptance criteria
+
+  - Requires demonstration of "sufficient" residual risk reduction
+
+  - Acceptance criteria should align with applicable regulations and societal norms
+
+
+  **Future Trends**:
+
+  - Moving toward statistical performance requirements (e.g., NHTSA AV framework)
+
+  - Emphasis on post-deployment monitoring and continuous improvement
+
+  - Scenario-based type approval (demonstrate performance in catalog)
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **ODD Definition** → Restricts exposure, reduces residual risk
+
+  2. **Area 1/2/3 Analysis** → Minimizes unknown unsafe (Area 3)
+
+  3. **Validation** → Provides statistical evidence for Area 4 assessment
+
+  4. **Residual Risk Evaluation** → Demonstrates acceptability
+
+  5. **Field Monitoring** → Confirms residual risk assumptions hold
+
+
+  ## Common Pitfalls
+
+
+  - Claiming zero residual risk (impossible to prove)
+
+  - Insufficient validation mileage for statistical confidence
+
+  - Ignoring ODD restrictions in risk calculation
+
+  - Not comparing to human driver in same ODD (unfair baseline)
+
+  - Post-hoc rationalization of acceptance criteria (should be defined upfront)
+
+  '
+constraints:
+- Cannot eliminate Area 4 (always residual uncertainty)
+- Statistical confidence requires large validation effort
+- Societal risk tolerance not universally defined
+- Human baseline varies by geography, ODD, driver population
+tools_required:
+- Statistical analysis tools (Python scipy, R)
+- Simulation platforms for mileage accumulation
+- Safety case management tools
+- Field data analytics
+- Bayesian inference frameworks
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- area-4
+- unknown-safe
+- residual-risk
+- statistical-validation
+- acceptance-criteria
+- safety-case

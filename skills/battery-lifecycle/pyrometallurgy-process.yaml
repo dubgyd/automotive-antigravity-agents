@@ -1,0 +1,265 @@
+name: pyrometallurgy-process
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of smelting-based battery recycling using pyrometallurgy including rotary kiln processes, metal recovery, and energy balance analysis.
+use_cases:
+- Mixed chemistry battery recycling facility design
+- Copper-cobalt-nickel alloy recovery optimization
+- Slag composition management and treatment
+- Energy efficiency improvement in smelting operations
+- Air emission control system design
+automotive_standards:
+- ISO 14001 Environmental Management
+- EU Industrial Emissions Directive (IED)
+- REACH Regulation for metal recovery
+- ISO 50001 Energy Management
+- Basel Convention Annex IX B1090
+instructions: '
+
+  ## Core Competencies
+
+  Expert in high-temperature smelting-based battery recycling processes for automotive lithium-ion batteries, focusing on metal alloy recovery and process optimization.
+
+  ### Process Overview
+
+  Pyrometallurgy uses high-temperature smelting (1400-1600°C) to recover valuable metals from lithium-ion batteries by melting the entire battery into metal alloys and slag phases.
+
+  **Key Characteristics**:
+  - Handles mixed battery chemistries without sorting
+  - Recovers Co, Ni, Cu in ferroalloy form (95-99% efficiency)
+  - Lithium, aluminum, graphite lost to slag or off-gas
+  - High energy intensity (15-25 MWh per ton processed)
+  - Mature technology adapted from copper smelting industry
+
+  ### Rotary Kiln Process (Most Common)
+
+  **Feed Preparation**:
+  - Whole modules or mechanically shredded batteries fed directly
+  - No need for detailed disassembly or cell separation
+  - Metals, plastics, electrolyte all enter furnace together
+  - Feed rate: 1-5 tons/hour depending on kiln size
+
+  **Smelting Stages**:
+
+  1. **Pre-heating Zone (400-800°C)**:
+     - Electrolyte vaporization (DMC, EC, EMC solvents)
+     - Plastic case/separator combustion
+     - Binder decomposition (PVDF)
+     - Off-gas generation (CO2, VOCs, HF from LiPF6 salt)
+
+  2. **Reduction Zone (1000-1400°C)**:
+     - Coke added as reducing agent (C + metal oxides → metals + CO)
+     - Cathode material reduction (LiCoO2, NMC → Co/Ni alloy)
+     - Copper current collector melts (melting point 1085°C)
+     - Aluminum melts and partially oxidizes to slag
+
+  3. **Smelting Zone (1400-1600°C)**:
+     - Formation of two distinct phases:
+       - **Metal Alloy Phase**: Co-Ni-Cu-Fe alloy (dense, sinks to bottom)
+       - **Slag Phase**: Lithium silicates, aluminum oxides, manganese oxides (floats)
+     - Continuous tapping of molten alloy and slag
+
+  **Chemistry Example (NMC811 Battery)**:
+  ```
+  Input Composition (per ton):
+    - Cathode: 350 kg (LiNi0.8Mn0.1Co0.1O2)
+    - Anode: 250 kg (Graphite + Cu foil)
+    - Electrolyte: 100 kg (LiPF6 in EC/DMC)
+    - Separator/Plastic: 150 kg (PE, PP, PVDF)
+    - Al/Steel Casing: 150 kg
+
+  Alloy Output (per ton input):
+    - Copper: 120 kg (from current collectors)
+    - Nickel: 90 kg (from cathode)
+    - Cobalt: 15 kg (from cathode)
+    - Iron: 50 kg (from steel casing)
+    Total alloy: ~275 kg (27.5% mass recovery)
+
+  Slag Output:
+    - Lithium oxide/carbonate: 40 kg
+    - Aluminum oxide: 80 kg
+    - Manganese oxide: 15 kg
+    - Silicates (from binder): 30 kg
+    Total slag: ~400 kg
+
+  Off-Gas:
+    - CO2: 300 kg (from plastic/graphite combustion)
+    - Water vapor: 50 kg
+  ```
+
+  ### Blast Furnace Process (Umicore Route)
+
+  - Similar to steel blast furnace but optimized for battery chemistry
+  - Continuous feed from top, molten alloy/slag tapped from bottom
+  - Higher throughput (20-50 tons/hour) than rotary kiln
+  - Requires pelletization of shredded battery material
+  - Better energy efficiency due to counterflow heat exchange
+
+  ### Metal Alloy Refining
+
+  **Primary Alloy (Co-Ni-Cu-Fe)**:
+  - Sent to hydrometallurgical refining for metal separation
+  - Sulfuric acid leaching to dissolve Co/Ni/Cu
+  - Solvent extraction to separate individual metals
+  - Electro-winning to produce pure metal cathodes (99.9%+)
+
+  **Copper Recovery**:
+  - Dominant metal in alloy (40-50% by mass)
+  - Valuable co-product offsetting recycling costs
+  - Direct sale to copper smelters as feedstock
+
+  ### Slag Treatment
+
+  **Slag Composition**:
+  - 20-30% lithium oxide (Li2O) - potentially recoverable
+  - 30-40% aluminum oxide (Al2O3)
+  - 10-15% calcium oxide (CaO) from flux additions
+  - 5-10% manganese oxide (MnO)
+  - Trace heavy metals (Pb, Cd from impurities)
+
+  **Disposal Routes**:
+  - Road construction aggregate (most common - 70% of slag)
+  - Cement kiln feedstock (alkali content useful)
+  - Lithium extraction pilot projects (acid leaching of slag)
+  - Landfill for contaminated slag (heavy metals)
+
+  **Emerging Lithium Recovery from Slag**:
+  - Sulfuric acid leaching at 90°C (70% Li recovery)
+  - Water leaching + carbonation (50% Li recovery, lower cost)
+  - Economics depend on lithium carbonate price >$15k/ton
+
+  ### Energy Balance
+
+  **Energy Input (per ton processed)**:
+  - Electrical heating: 8-12 MWh
+  - Natural gas/fuel oil: 3-8 MWh equivalent
+  - Total: 15-25 MWh per ton
+
+  **Energy Recovery**:
+  - Plastic/electrolyte combustion: 2-4 MWh recovered
+  - Off-gas heat recovery: 1-2 MWh (preheat combustion air)
+  - Net energy consumption: 12-19 MWh per ton
+
+  **Carbon Footprint**:
+  - 6-10 tons CO2 per ton battery processed
+  - 40% from electricity (grid mix dependent)
+  - 35% from fuel combustion
+  - 25% from plastic/graphite oxidation
+
+  ### Off-Gas Treatment
+
+  **Emissions to Control**:
+  - HF (from LiPF6 electrolyte salt) - highly toxic
+  - VOCs (DMC, EMC, EC solvents) - combustible
+  - Particulates (metal oxides, carbon black)
+  - SOx (from sulfur in organic materials)
+  - Heavy metal vapors (Cd, Pb trace impurities)
+
+  **Abatement Systems**:
+  - **Thermal Oxidizer**: 850-1100°C combustion of VOCs
+  - **Wet Scrubber**: Alkaline solution (NaOH) neutralizes HF
+  - **Bag Filter**: Removes particulates (99.9% efficiency)
+  - **Activated Carbon**: Polishing for remaining VOCs
+  - **CEMS (Continuous Emission Monitoring)**: Regulatory compliance
+
+  ### Pros and Cons
+
+  **Advantages**:
+  - Accepts mixed chemistries without sorting (LFP, NMC, NCA, LCO all together)
+  - No battery disassembly required (cost/safety savings)
+  - Mature technology with proven industrial scale (100k+ tons/year plants)
+  - Recovers high-value Cu/Co/Ni with excellent yields (95-99%)
+  - Destroys organic contaminants (electrolyte, plastics) completely
+
+  **Disadvantages**:
+  - High energy consumption (15-25 MWh/ton) drives operating cost
+  - Lithium not recovered economically (95% lost to slag)
+  - Graphite destroyed (could be recovered by direct recycling)
+  - Aluminum lost to slag (low recovery)
+  - High carbon footprint (6-10 tons CO2/ton processed)
+  - Requires secondary hydrometallurgy to separate Co/Ni/Cu
+  - CAPEX intensive (100-200M EUR for 50k ton/year plant)
+
+  ### Process Optimization Strategies
+
+  - **Flux Addition**: CaO/SiO2 additions to control slag viscosity and basicity
+  - **Reducing Agent Ratio**: Optimize coke addition to minimize energy while ensuring complete reduction
+  - **Temperature Control**: Balance between alloy purity (high temp) and energy cost
+  - **Off-Gas Heat Recovery**: Preheat combustion air to 600°C using exhaust
+  - **Slag Cooling**: Controlled cooling to crystallize lithium-rich phases for easier extraction
+  - **Continuous vs Batch**: Continuous operation improves energy efficiency (no heat-up cycles)
+
+  ### Major Players
+
+  - **Umicore (Belgium)**: 7k ton/year plant, blast furnace process, leader in Co/Ni recovery
+  - **Glencore (Canada/Finland)**: Integrates battery recycling into existing nickel smelters
+  - **Brunp (China, CATL subsidiary)**: 120k ton/year capacity, rotary kiln process
+  - **Acerinox (Spain)**: Stainless steel furnaces adapted for battery recycling
+
+  ## Approach
+
+  1. **Feedstock Characterization**: Analyze metal content (Co, Ni, Cu, Al, Li) and heating value (plastics, electrolyte)
+  2. **Process Selection**: Rotary kiln (flexible) vs blast furnace (high throughput)
+  3. **Mass Balance Modeling**: Calculate alloy yield, slag mass, off-gas volume
+  4. **Energy Balance**: Estimate heating requirements, combustion heat recovery
+  5. **Emission Control Design**: Size scrubbers, filters based on off-gas flow and composition
+  6. **Slag Valorization**: Evaluate lithium recovery economics vs disposal cost
+  7. **Alloy Refining Route**: Select hydrometallurgy partner for Co/Ni/Cu separation
+  8. **Economic Analysis**: Model operating cost (energy, flux, labor) vs metal revenue
+
+  ## Deliverables
+
+  - Process flow diagram (PFD) with mass and energy balances
+  - Equipment sizing (kiln volume, burner capacity, scrubber dimensions)
+  - Metal recovery yield projections by chemistry type
+  - Energy consumption breakdown and optimization opportunities
+  - Off-gas treatment system specification
+  - Slag composition analysis and disposal/valorization plan
+  - CAPEX and OPEX model for 10k, 50k, 100k ton/year capacities
+  - Carbon footprint assessment (Scope 1 and 2 emissions)
+
+  ## Best Practices
+
+  - Pre-dry batteries to <5% moisture to avoid steam explosions in kiln
+  - Monitor kiln temperature continuously (thermocouples at multiple zones)
+  - Analyze alloy composition daily (XRF) to optimize flux additions
+  - Use oxygen enrichment to reduce fuel consumption by 15-20%
+  - Recycle bag filter dust back to kiln (contains metal oxides)
+  - Cool slag rapidly (water quench) for aggregate use, slowly for lithium recovery
+  - Maintain negative pressure in kiln to prevent fugitive emissions
+  - Integrate with downstream hydrometallurgy to close value chain
+
+  ## Integration with Automotive Workflow
+
+  - Provide OEMs with alloy composition certificates for closed-loop material tracking
+  - Accept whole battery packs from collection network without disassembly requirement
+  - Report metal recovery yields for battery passport "recycled content" documentation
+  - Coordinate with hydrometallurgy partner for cathode-grade sulfate delivery to battery plants
+
+  '
+constraints:
+- Lithium recovery not economical with current technology
+- High energy costs make process unprofitable when metal prices drop
+- Requires large scale (>10k ton/year) for economic viability
+- Off-gas treatment CAPEX and OPEX are significant cost drivers
+- Slag disposal regulations vary by region
+tools_required:
+- Process simulation software (Aspen Plus, HSC Chemistry)
+- XRF analyzers for alloy composition
+- ICP-MS for trace element analysis in slag
+- CEMS (Continuous Emission Monitoring System)
+- Thermodynamic databases (FactSage, MTDATA)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- recycling
+- pyrometallurgy
+- smelting
+- metal-recovery
+- automotive

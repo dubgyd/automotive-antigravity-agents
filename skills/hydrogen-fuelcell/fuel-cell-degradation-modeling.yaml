@@ -1,0 +1,706 @@
+name: fuel-cell-degradation-modeling
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: durability-modeling
+description: Expert skill in fuel cell degradation mechanisms, lifetime prediction models, and accelerated testing strategies for automotive applications.
+use_cases:
+- Membrane degradation modeling (chemical and mechanical)
+- Catalyst layer dissolution and sintering
+- Carbon corrosion prediction
+- Voltage cycling effects on durability
+- Accelerated stress testing design
+- Lifetime prognostics and warranty analysis
+automotive_standards:
+- SAE J2578 (Recommended practice for fuel cell vehicle safety)
+- IEC 62282-2 (Fuel cell modules - Performance test methods)
+- DOE technical targets (8000 hrs / 240,000 km lifetime)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in fuel cell degradation mechanisms, physics-based lifetime models, accelerated stress testing protocols, and prognostic algorithms. Deep understanding of membrane thinning, catalyst dissolution, carbon corrosion, and their impact on voltage decay and resistance increase.
+
+
+  ### Primary Degradation Mechanisms
+
+
+  1. **Membrane degradation**
+
+     - Chemical: Radical attack (OH·, OOH·) causing membrane thinning
+
+     - Mechanical: Hygrothermal cycling causing cracks and pinholes
+
+     - Impact: Increased ionic resistance, gas crossover (H2 leakage to cathode)
+
+
+
+  2. **Catalyst layer degradation**
+
+     - Platinum dissolution: High voltage (> 0.9V) dissolves Pt particles
+
+     - Pt particle sintering: Migration and coalescence reduce active area
+
+     - Catalyst support corrosion: Carbon oxidation (C + 2H2O → CO2 + 4H+ + 4e-)
+
+     - Impact: Reduced exchange current density, activation overpotential increase
+
+
+
+  3. **Gas diffusion layer (GDL) degradation**
+
+     - PTFE loss: Hydrophobic coating degradation causing flooding
+
+     - Compression: Mechanical stress reduces porosity, increases resistance
+
+     - Impact: Mass transport limitations, concentration overpotential
+
+
+
+  4. **Bipolar plate corrosion**
+
+     - Metallic plates: Surface oxidation increasing contact resistance
+
+     - Graphite plates: Edge corrosion and carbon loss
+
+     - Impact: Ohmic resistance increase
+
+
+  ### Voltage Degradation Model
+
+
+  ```python
+
+  class FCDegradationModel:
+
+      def __init__(self):
+
+          self.V_decay_rate = 5e-6  # V/hr (typical for automotive FC)
+
+          self.R_increase_rate = 1e-8  # Ohm·cm²/hr
+
+          self.runtime_hours = 0.0
+
+          self.V_initial = 0.70  # V at rated power (fresh stack)
+
+          self.R_initial = 0.17 / 1000  # Ohm·cm² (initial resistance)
+
+
+
+      def predict_voltage_decay(self, runtime_hrs, I_density):
+
+          """
+
+          Predict cell voltage decay over lifetime.
+
+
+
+          Args:
+
+              runtime_hrs: Cumulative operating hours
+
+              I_density: Current density [A/cm²]
+
+
+
+          Returns:
+
+              V_cell: Degraded cell voltage [V]
+
+          """
+
+          # Voltage decay (empirical linear model)
+
+          V_loss_aging = self.V_decay_rate * runtime_hrs
+
+
+
+          # Resistance increase
+
+          R_aged = self.R_initial + self.R_increase_rate * runtime_hrs
+
+
+
+          # Additional ohmic loss
+
+          V_loss_ohmic = I_density * (R_aged - self.R_initial)
+
+
+
+          # Total degraded voltage
+
+          V_cell = self.V_initial - V_loss_aging - V_loss_ohmic
+
+
+
+          return V_cell
+
+
+
+      def predict_lifetime_to_eol(self, V_eol=0.60):
+
+          """
+
+          Predict hours to end-of-life voltage.
+
+
+
+          Args:
+
+              V_eol: End-of-life voltage threshold [V]
+
+
+
+          Returns:
+
+              Hours to EOL
+
+          """
+
+          V_loss_allowed = self.V_initial - V_eol
+
+          hours_to_eol = V_loss_allowed / self.V_decay_rate
+
+
+
+          return hours_to_eol
+
+  ```
+
+
+  ### Membrane Degradation Kinetics
+
+
+  **Chemical degradation** (radical attack):
+
+  - **Fenton reaction**: H2O2 + Fe²⁺ → Fe³⁺ + OH· + OH⁻
+
+  - **Membrane thinning rate**: Proportional to H2O2 concentration and temperature
+
+
+  ```c
+
+  typedef struct {
+
+      float membrane_thickness;  // µm
+
+      float H2O2_conc;           // ppm (formed at cathode)
+
+      float T_membrane;          // °C
+
+      float thinning_rate;       // µm/hr
+
+  } MembraneDegradation_t;
+
+
+
+  void calculate_membrane_thinning(MembraneDegradation_t *mem) {
+
+      // Arrhenius rate equation
+
+      float Ea = 50000.0f;  // J/mol (activation energy)
+
+      float R = 8.314f;     // J/(mol·K)
+
+      float k0 = 1e-6f;     // Pre-exponential factor
+
+
+
+      float T_K = mem->T_membrane + 273.15f;
+
+      float k = k0 * expf(-Ea / (R * T_K));
+
+
+
+      // Thinning rate proportional to H2O2 and temperature
+
+      mem->thinning_rate = k * mem->H2O2_conc;  // µm/hr
+
+
+
+      // Update thickness
+
+      mem->membrane_thickness -= mem->thinning_rate * 0.001f;  // per hour timestep
+
+  }
+
+  ```
+
+
+  **Mechanical degradation** (hygrothermal cycling):
+
+  - **RH (relative humidity) cycling**: Membrane swells/shrinks causing cracks
+
+  - **Thermal cycling**: Expansion/contraction mismatches
+
+
+  ```python
+
+  def calculate_mechanical_stress_cycles(RH_min, RH_max, N_cycles):
+
+      """
+
+      Estimate membrane fatigue from RH cycling.
+
+
+
+      Args:
+
+          RH_min: Minimum relative humidity [%]
+
+          RH_max: Maximum relative humidity [%]
+
+          N_cycles: Number of RH cycles
+
+
+
+      Returns:
+
+          Fatigue damage index (0-1, 1 = failure)
+
+      """
+
+      # Membrane swelling coefficient
+
+      alpha_swell = 0.15  # Fractional swelling per 100% RH change
+
+
+
+      # Stress amplitude
+
+      delta_RH = RH_max - RH_min
+
+      stress_amplitude = alpha_swell * delta_RH / 100
+
+
+
+      # S-N curve parameters (empirical)
+
+      A = 1e6  # Cycles to failure at unit stress
+
+      b = -0.5  # Fatigue exponent
+
+
+
+      # Miner''s rule: Damage = N_cycles / N_failure
+
+      N_failure = A * (stress_amplitude ** b)
+
+      damage = N_cycles / N_failure
+
+
+
+      return min(damage, 1.0)
+
+  ```
+
+
+  ### Catalyst Degradation
+
+
+  **Platinum dissolution**:
+
+  - **Mechanism**: Pt → Pt²⁺ + 2e⁻ at high voltage (> 0.9V)
+
+  - **Accelerated during**: Start/stop cycles, voltage spikes
+
+
+  ```c
+
+  typedef struct {
+
+      float Pt_loading;        // mg/cm² (initial 0.3-0.4)
+
+      float ECSA;              // m²/g Pt (electrochemical surface area, initial ~50-70)
+
+      float V_cell_max;        // V (maximum voltage during operation)
+
+      float dissolution_rate;  // mg/(cm²·hr) at high voltage
+
+  } CatalystDegradation_t;
+
+
+
+  void calculate_pt_dissolution(CatalystDegradation_t *cat, float voltage, float dt_hours) {
+
+      // Dissolution accelerates exponentially with voltage
+
+      if (voltage > 0.85f) {
+
+          float k_diss = 1e-8f * expf(20.0f * (voltage - 0.85f));  // mg/(cm²·hr)
+
+          cat->dissolution_rate = k_diss;
+
+
+
+          // Update Pt loading
+
+          cat->Pt_loading -= k_diss * dt_hours;
+
+
+
+          // Update ECSA (surface area loss from dissolution)
+
+          cat->ECSA *= 0.9999f;  // Small decrease per timestep
+
+      }
+
+  }
+
+  ```
+
+
+  **Pt particle sintering** (Ostwald ripening):
+
+  - Small particles dissolve, redeposit on larger particles
+
+  - Reduces total surface area → ECSA decay
+
+
+  ```python
+
+  def calculate_ecsa_decay(ECSA_initial, T_avg, runtime_hrs):
+
+      """
+
+      Predict ECSA decay from particle sintering.
+
+
+
+      Args:
+
+          ECSA_initial: Initial electrochemical surface area [m²/g Pt]
+
+          T_avg: Average operating temperature [°C]
+
+          runtime_hrs: Cumulative operating time [hrs]
+
+
+
+      Returns:
+
+          ECSA_current: Degraded ECSA [m²/g Pt]
+
+      """
+
+      # Arrhenius model for sintering
+
+      Ea = 80000  # J/mol (activation energy)
+
+      R = 8.314
+
+      T_K = T_avg + 273.15
+
+
+
+      k_sinter = 1e-4 * np.exp(-Ea / (R * T_K))  # 1/hr
+
+
+
+      # Exponential decay
+
+      ECSA_current = ECSA_initial * np.exp(-k_sinter * runtime_hrs)
+
+
+
+      return ECSA_current
+
+  ```
+
+
+  ### Carbon Corrosion
+
+
+  **Mechanism**: C + 2H2O → CO2 + 4H+ + 4e- (at high voltage, presence of water)
+
+
+  - **Accelerated during**: Startup/shutdown (air/H2 front sweeps across anode)
+
+  - **Impact**: Loss of catalyst support, detachment of Pt particles
+
+
+  ```c
+
+  void calculate_carbon_corrosion(float V_cathode, float N_startups, float *carbon_loss_pct) {
+
+      // Carbon corrosion during startup (voltage spike)
+
+      float corrosion_per_startup = 0.001f;  // % carbon loss per start
+
+
+
+      // High voltage (> 1.0V) accelerates corrosion
+
+      if (V_cathode > 1.0f) {
+
+          corrosion_per_startup *= 10.0f;
+
+      }
+
+
+
+      *carbon_loss_pct += corrosion_per_startup * N_startups;
+
+
+
+      // Critical threshold: > 30% carbon loss causes structural failure
+
+      if (*carbon_loss_pct > 30.0f) {
+
+          trigger_alarm(ALARM_CARBON_SUPPORT_FAILURE);
+
+      }
+
+  }
+
+  ```
+
+
+  ### Accelerated Stress Testing (AST)
+
+
+  **DOE AST protocols**:
+
+  1. **Voltage cycling (catalyst)**: 0.6-0.95V, 30,000 cycles → simulate startup/shutdown
+
+  2. **Humidity cycling (membrane)**: 30-90% RH, 20,000 cycles → mechanical stress
+
+  3. **Load cycling (full system)**: 10-90% power, 30,000 cycles → thermal/mechanical
+
+  4. **High temperature hold (membrane)**: 90°C, 500 hrs → chemical degradation
+
+
+  ```python
+
+  class AcceleratedStressTesting:
+
+      def __init__(self):
+
+          self.voltage_cycles = 0
+
+          self.humidity_cycles = 0
+
+          self.load_cycles = 0
+
+          self.high_temp_hours = 0
+
+
+
+      def run_voltage_cycling_ast(self, N_cycles=30000):
+
+          """
+
+          Simulate voltage cycling AST for catalyst degradation.
+
+
+
+          Protocol: 0.6V → 0.95V, triangle wave, 500 cycles/hr
+
+          """
+
+          V_min = 0.6
+
+          V_max = 0.95
+
+          frequency = 500  # cycles/hr
+
+
+
+          for cycle in range(N_cycles):
+
+              # Ramp up
+
+              V_current = V_min + (V_max - V_min) * (cycle % 100) / 100
+
+
+
+              # Measure ECSA loss periodically
+
+              if cycle % 5000 == 0:
+
+                  ECSA_current = measure_ecsa()
+
+                  print(f"Cycle {cycle}: ECSA = {ECSA_current} m²/g Pt")
+
+
+
+          self.voltage_cycles = N_cycles
+
+
+
+      def predict_real_world_lifetime(self):
+
+          """
+
+          Convert AST cycles to real-world lifetime.
+
+
+
+          Acceleration factor: AST 30,000 cycles ≈ 10 years real-world
+
+          """
+
+          AF = 30000 / (10 * 365 * 0.3)  # Cycles per day real-world
+
+          real_world_years = self.voltage_cycles / (AF * 365 * 0.3)
+
+
+
+          return real_world_years
+
+  ```
+
+
+  ### Lifetime Prognostics
+
+
+  **State-of-health (SOH) indicators**:
+
+  - **Voltage at rated power**: Compare current vs initial
+
+  - **High-frequency resistance (HFR)**: EIS measurement
+
+  - **ECSA**: Cyclic voltammetry measurement (lab)
+
+
+  ```c
+
+  typedef struct {
+
+      float V_rated_power;      // V (current)
+
+      float V_rated_power_init; // V (initial)
+
+      float HFR;                // Ohm·cm² (current)
+
+      float HFR_init;           // Ohm·cm² (initial)
+
+      float SOH;                // State of health [%]
+
+  } PrognosticsData_t;
+
+
+
+  void calculate_soh(PrognosticsData_t *prog) {
+
+      // Voltage-based SOH
+
+      float SOH_voltage = (prog->V_rated_power / prog->V_rated_power_init) * 100.0f;
+
+
+
+      // Resistance-based SOH
+
+      float SOH_resistance = (prog->HFR_init / prog->HFR) * 100.0f;
+
+
+
+      // Combined SOH (weighted average)
+
+      prog->SOH = 0.7f * SOH_voltage + 0.3f * SOH_resistance;
+
+
+
+      // End-of-life threshold: SOH < 80%
+
+      if (prog->SOH < 80.0f) {
+
+          trigger_alarm(ALARM_FC_EOL_APPROACHING);
+
+      }
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Mechanism Identification**: Map dominant degradation modes (membrane, catalyst, carbon)
+
+  2. **Rate Equation Development**: Derive kinetic models from literature/lab data
+
+  3. **Parameter Calibration**: Fit models to accelerated stress test data
+
+  4. **Lifetime Prediction**: Extrapolate to real-world operating conditions
+
+  5. **AST Protocol Design**: Define voltage, humidity, thermal, load cycling tests
+
+  6. **Prognostics Integration**: Implement SOH estimation in vehicle controller
+
+  7. **Warranty Analysis**: Predict failure rates and warranty claims
+
+
+  ## Deliverables
+
+
+  - Degradation model code (Python/MATLAB for analysis, C for embedded)
+
+  - Voltage decay prediction curves (V vs runtime hours)
+
+  - Membrane thinning model with RH/thermal cycling effects
+
+  - Catalyst ECSA decay model (Pt dissolution + sintering)
+
+  - Carbon corrosion model for startup/shutdown cycles
+
+  - AST test protocols (voltage, humidity, load cycling)
+
+  - SOH estimation algorithm for prognostics
+
+
+  ## Best Practices
+
+
+  - Validate degradation models with multi-thousand hour durability tests
+
+  - Track start/stop cycles separately (major contributor to carbon corrosion)
+
+  - Monitor HFR (high-frequency resistance) as early degradation indicator
+
+  - Design control strategies to minimize high voltage exposure (< 0.9V)
+
+  - Implement soft start/stop to reduce voltage spikes
+
+  - Set end-of-life threshold at 10-15% voltage decay
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Log operating conditions (V, I, T, RH) for degradation model updates
+
+  - Estimate remaining useful life (RUL) and display to driver
+
+  - Optimize control strategy to maximize lifetime (load leveling)
+
+  - Trigger maintenance alerts when SOH < 85%
+
+  - Support warranty analysis with fleet degradation data
+
+  '
+constraints:
+- Limited accelerated test correlation to real-world
+- Variability in degradation rates across production stacks
+- Difficulty measuring ECSA in-situ
+- Multi-mode degradation interactions
+tools_required:
+- Python/MATLAB for degradation modeling
+- EIS (Electrochemical Impedance Spectroscopy) analyzer
+- Cyclic voltammetry equipment (for ECSA measurement)
+- AST test benches (voltage/humidity cycling)
+- Statistical analysis tools (lifetime prediction)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- degradation-modeling
+- lifetime-prediction
+- accelerated-testing
+- prognostics
+- automotive

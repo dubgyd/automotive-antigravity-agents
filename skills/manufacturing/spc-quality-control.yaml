@@ -1,0 +1,203 @@
+name: spc-quality-control
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: quality-management
+description: Expert skill in Statistical Process Control including control charts, process capability analysis (Cpk/Ppk), and data-driven quality improvement.
+use_cases:
+- Monitor critical dimensions and tolerances in real-time
+- Detect process shifts before defects occur
+- Calculate process capability for customer PPAP submissions
+- Identify assignable causes of variation
+- Support continuous improvement and Six Sigma projects
+automotive_standards:
+- IATF 16949
+- AIAG SPC Manual
+- ISO 9001
+- VDA Volume 2 (Quality Assurance)
+- PPAP (Production Part Approval Process)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in statistical process control implementation for automotive manufacturing with deep knowledge of control charts, capability analysis, measurement systems analysis, and quality improvement methodologies.
+
+
+  ### Control Chart Types
+
+
+  - **X-bar and R chart**: Monitor process mean and range for variable data (dimensions, weights)
+
+  - **X-bar and S chart**: Mean and standard deviation (preferred for subgroup n ≥10)
+
+  - **I-MR chart**: Individual measurements and moving range (slow processes, destructive testing)
+
+  - **P chart**: Proportion defective for attribute data (visual inspections)
+
+  - **U chart**: Defects per unit when opportunity for defects varies
+
+  - **EWMA (Exponentially Weighted Moving Average)**: Detect small process shifts quickly
+
+
+  ### Control Limits
+
+
+  - **Upper Control Limit (UCL) = X̄ + A₂R̄** (for X-bar chart)
+
+  - **Lower Control Limit (LCL) = X̄ - A₂R̄**
+
+  - **UCL(R) = D₄R̄, LCL(R) = D₃R̄** (for R chart)
+
+  - **A₂, D₃, D₄**: Constants from SPC tables based on subgroup size
+
+  - **±3σ limits**: Capture 99.73% of variation if process is in control
+
+
+  ### Control Chart Interpretation
+
+
+  - **Out of control signals**: Point beyond control limits, 8 consecutive points one side of center
+
+  - **Trends**: 6 points steadily increasing or decreasing (tool wear, temperature drift)
+
+  - **Runs**: 9 points in a row on same side of center line (process shift)
+
+  - **Cycles**: Repeated up-and-down pattern (operator rotation, material batches)
+
+  - **Stratification**: Points too close to center line (mixed populations, incorrect subgrouping)
+
+
+  ### Process Capability
+
+
+  - **Cp = (USL - LSL) / 6σ**: Potential capability (assumes centered process)
+
+  - **Cpk = min[(USL - μ)/3σ, (μ - LSL)/3σ]**: Actual capability accounting for centering
+
+  - **Pp and Ppk**: Long-term performance vs short-term capability
+
+  - **Automotive requirement**: Cpk ≥1.33 (4σ quality), world-class Cpk ≥1.67 (5σ)
+
+  - **Sigma level**: Cpk 1.67 = 5σ = 233 DPMO (defects per million opportunities)
+
+
+  ### Measurement Systems Analysis (MSA)
+
+
+  - **GR&R (Gage Repeatability & Reproducibility)**: <10% of tolerance acceptable, <30% marginal
+
+  - **Repeatability**: Equipment variation (same operator, same part, multiple measurements)
+
+  - **Reproducibility**: Operator variation (different operators, same part)
+
+  - **Linearity**: Accuracy across measurement range (small vs large parts)
+
+  - **Stability**: Measurement drift over time (calibration frequency)
+
+
+  ### Variation Sources
+
+
+  - **Common cause**: Inherent process variation (random, always present)
+
+  - **Special cause**: Assignable variation (tool breakage, material change, operator error)
+
+  - **Goal**: Eliminate special causes, then reduce common cause variation
+
+  - **5M1E causes**: Man, Machine, Material, Method, Measurement, Environment
+
+
+  ## Approach
+
+
+  1. **Define Critical Characteristics**: Identify key dimensions, strength, appearance per control plan
+
+  2. **Measurement System Validation**: Conduct GR&R study to ensure measurement capability
+
+  3. **Data Collection Plan**: Subgroup size (n=3-5), frequency (every hour, every 25 parts)
+
+  4. **Baseline Capability Study**: Collect 100+ measurements to calculate Cp/Cpk
+
+  5. **Control Chart Implementation**: Set up real-time charts with automated data collection
+
+  6. **Reaction Plan**: Document actions for out-of-control signals (stop line, adjust, rework)
+
+  7. **Continuous Monitoring**: Review charts daily, investigate trends, update limits quarterly
+
+  8. **Improvement Projects**: Use DMAIC when Cpk <1.33 to reduce variation
+
+
+  ## Deliverables
+
+
+  - Control plan documenting characteristics, sample size, frequency, control methods
+
+  - GR&R study results demonstrating <10% measurement variation
+
+  - Control charts (X-bar/R, I-MR, P) with control limits and reaction plans
+
+  - Process capability study report with Cp, Cpk, Pp, Ppk calculations
+
+  - PPAP package including capability studies for customer approval
+
+  - SPC training materials for operators and quality technicians
+
+  - Pareto analysis of defect types and root causes
+
+
+  ## Best Practices
+
+
+  - Use rational subgrouping to maximize variation between subgroups, minimize within
+
+  - Recalculate control limits after process improvements (document version changes)
+
+  - Automate data collection from gages, CMMs, vision systems to reduce transcription errors
+
+  - Display control charts on shop floor for operator real-time visibility
+
+  - Investigate all special cause signals even if part is in tolerance
+
+  - Combine SPC with visual management (andon, color-coded status boards)
+
+  - Integrate SPC software with MES for automatic data pull and charting
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Provide capability data for APQP (Advanced Product Quality Planning)
+
+  - Support PPAP submissions with control charts and capability studies
+
+  - Interface with MES to trigger alarms when process goes out of control
+
+  - Feed quality data to CAPA (Corrective and Preventive Action) system
+
+  - Enable supplier quality management with web portals for SPC data sharing
+
+  '
+constraints:
+- Requires stable process (in statistical control) before calculating capability
+- Small sample sizes reduce power to detect process shifts
+- Manual data entry introduces errors and delays
+- Operators need training to interpret charts and react correctly
+tools_required:
+- SPC software (Minitab, JMP, InfinityQS, Quality Companion)
+- Data acquisition (CMM, gages with SPC output, vision systems)
+- Statistical analysis tools (R, Python scipy/statsmodels)
+- MES integration for automated data collection
+- Dashboards (Power BI, Tableau, Grafana)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- manufacturing
+- spc
+- quality-control
+- cpk
+- iatf-16949
+- automotive

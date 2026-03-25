@@ -1,0 +1,151 @@
+name: lithium-recovery
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: "Lithium extraction from brine, hard rock, and recycled battery materials including carbonate and hydroxide production processes"
+use_cases:
+  - "Lithium carbonate production from black mass leach solutions"
+  - "Lithium hydroxide synthesis for cathode precursors"
+  - "Brine vs recycled lithium cost comparison"
+  - "Lithium recovery optimization in hydrometallurgy"
+  - "Battery-grade lithium specification compliance"
+automotive_standards:
+  - "ISO 9001 Quality Management for chemical production"
+  - "Battery-grade lithium purity specifications (>99.5% Li2CO3)"
+  - "REACH Regulation for chemical safety"
+  - "ISO 14001 Environmental Management"
+  - "GMP for battery materials"
+instructions: |
+  # Lithium Recovery for Battery Materials
+
+  ## Overview
+
+  Expert in lithium extraction and purification from primary sources (brine, spodumene) and
+  secondary sources (recycled batteries) to produce battery-grade lithium carbonate (Li2CO3)
+  and lithium hydroxide (LiOH) for automotive cathode production.
+
+  ## Key Concepts
+
+  Lithium sources span primary extraction and secondary recycling routes.
+
+  Brine extraction accounts for 50-60% of global production from locations like Chile, Argentina,
+  and Bolivia. Concentration is 200-1500 ppm Li with solar evaporation over 12-18 months.
+  Production cost is $4000-6000/ton Li2CO3, making it the cheapest route but limited by high
+  water usage and slow processing.
+
+  Hard rock spodumene accounts for 30-40% of production from Australia and China. The mineral
+  LiAlSi2O6 contains 3-7% Li2O, extracted via mining, crushing, and sulfuric acid roasting.
+  Cost is $7000-10000/ton but offers faster production in weeks rather than months.
+
+  Battery black mass from hydrometallurgy contains 3-5% Li. Acid leaching followed by solvent
+  extraction to separate Co/Ni yields Li2CO3 via precipitation. Cost is $5000-8000/ton, which
+  is competitive with brine and provides closed-loop supply benefits.
+
+  ## Lithium Recovery from Battery Recycling
+
+  After Co/Ni/Mn separation via solvent extraction, the raffinate contains lithium sulfate
+  solution that must be concentrated and converted to battery-grade product.
+
+  Concentration methods include multi-effect evaporation (0.6-1.2 MWh per ton water removed),
+  membrane filtration via nanofiltration or reverse osmosis (3-8 kWh per cubic meter), and
+  crystallization of Li2SO4 hydrate for high-purity applications.
+
+  ## Lithium Carbonate Precipitation
+
+  The core reaction converts lithium sulfate to lithium carbonate using sodium carbonate.
+  Li2SO4(aq) + Na2CO3(aq) produces Li2CO3(s) precipitate plus Na2SO4(aq).
+
+  Process parameters require 5-10% excess Na2CO3, temperature of 60-90C (Li2CO3 solubility
+  decreases with temperature), pH of 10-11, and 2-4 hours total residence time.
+
+  ## Implementation Guide
+
+  ```python
+  # Lithium carbonate precipitation calculation
+  Li2SO4_concentration_gL = 50
+  solution_volume_L = 10000
+  Li2SO4_mass_kg = (Li2SO4_concentration_gL * solution_volume_L) / 1000
+
+  MW_Li2SO4 = 109.94
+  MW_Li2CO3 = 73.89
+  MW_Na2CO3 = 105.99
+
+  moles_Li2SO4 = Li2SO4_mass_kg * 1000 / MW_Li2SO4
+  Li2CO3_theoretical_kg = moles_Li2SO4 * MW_Li2CO3 / 1000
+
+  yield_factor = 0.94
+  Li2CO3_actual_kg = Li2CO3_theoretical_kg * yield_factor
+
+  Na2CO3_required_kg = moles_Li2SO4 * 1.10 * MW_Na2CO3 / 1000
+
+  print(f"Li2CO3 produced: {Li2CO3_actual_kg:.0f} kg")
+  print(f"Na2CO3 required: {Na2CO3_required_kg:.0f} kg")
+  ```
+
+  ## Battery-Grade Specifications
+
+  Battery-grade Li2CO3 requires purity of 99.5% minimum with Na at 20 ppm or less, Ca at
+  50 ppm or less, Mg at 20 ppm or less, Fe at 10 ppm or less, SO4 at 500 ppm or less,
+  Cl at 50 ppm or less, moisture at 0.5% or less, and particle size D50 of 8-15 micrometers.
+
+  Impurity impacts on cathode performance are significant. Na and K occupy Li sites causing
+  2-3% capacity loss per 1000 ppm. Ca and Mg form inactive phases increasing impedance. Fe
+  catalyzes electrolyte decomposition reducing cycle life.
+
+  ## Lithium Hydroxide Production
+
+  High-Ni cathodes increasingly use LiOH instead of Li2CO3 as the lithium source in synthesis
+  due to less CO2 evolution during firing.
+
+  The calcium hydroxide route adds Ca(OH)2 slurry to Li2SO4 solution at 80-95C. Gypsum
+  precipitates out and LiOH remains in solution for evaporative crystallization.
+
+  The carbonate-to-hydroxide conversion route reacts Li2CO3 with Ca(OH)2 at 90-100C,
+  precipitating CaCO3 while leaving LiOH in solution. The CaCO3 byproduct can be calcined
+  back to CaO for a circular lime process.
+
+  Battery-grade LiOH monohydrate requires 56.5% minimum purity with Na at 10 ppm or less,
+  Fe at 5 ppm or less, and carbonate impurity at 0.5% or less.
+
+  ## Process Approach
+
+  1. Source Characterization - Analyze Li concentration in leach solution via ICP-OES
+  2. Impurity Profile - Identify Na, Ca, Mg, Fe, Al levels affecting product purity
+  3. Concentration Method - Select evaporation vs membrane based on cost-energy tradeoff
+  4. Precipitation Optimization - Lab trials for Na2CO3 dosage, temperature, and pH
+  5. Washing Protocol - Determine wash cycles needed to meet battery-grade specs
+  6. Analytical Validation - ICP-OES to confirm purity, XRD to check for impurity phases
+  7. Yield Accounting - Track Li from leach solution to product targeting over 90% recovery
+  8. Economic Modeling - Calculate reagent costs versus product price
+
+  ## Best Practices
+
+  - Use hot precipitation at 80-90C to improve Li2CO3 crystal size for easier filtering
+  - Maintain 5-10% excess Na2CO3 monitored with pH sensor above 10.5
+  - Age precipitate for 2-4 hours before filtering to allow crystal growth and reduce fines
+  - Implement countercurrent washing to reduce water usage by 40%
+  - Monitor Na content in every batch as the most common spec exceedance
+  - Recycle mother liquor containing 4-8% of Li by re-evaporation
+  - Store Li2CO3 in moisture-proof bags as it absorbs CO2 from air
+  - For LiOH production, calcine CaCO3 byproduct to CaO and reuse in closed-loop
+
+  ## Troubleshooting
+
+  - Na exceeding spec - Increase wash cycles and use purer Na2CO3 reagent
+  - Low yield below 90% - Check for Li remaining in mother liquor and optimize residence time
+  - Fine particles clogging filters - Increase aging time and precipitation temperature
+  - LiOH carbonate contamination - Store under inert atmosphere and minimize air exposure
+  - High reagent costs - Evaluate membrane concentration to reduce evaporation energy
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: intermediate
+tags:
+  - "battery-lifecycle"
+  - "recycling"
+  - "lithium-recovery"
+  - "carbonate"
+  - "hydroxide"
+  - "automotive"

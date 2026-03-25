@@ -1,0 +1,162 @@
+name: gesture-recognition
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Camera-based gesture control for automotive cockpits, covering ToF sensors, hand tracking algorithms, gesture vocabulary design, and false activation prevention."
+use_cases:
+  - "Implementing hand gesture recognition for contactless infotainment control"
+  - "Designing intuitive gesture vocabularies that minimize driver distraction"
+  - "Building robust hand tracking using time-of-flight and IR camera fusion"
+  - "Creating context-aware gesture interpretation based on cabin zone detection"
+  - "Preventing false gesture activations from natural hand movements and passengers"
+automotive_standards:
+  - "ISO 15005 - Dialogue principles for in-vehicle information systems"
+  - "ISO 16673 - Occlusion method for assessing visual demand of gesture interfaces"
+  - "SAE J2364 - Navigation and route guidance interaction guidelines"
+  - "ISO 15008 - Ergonomic aspects of in-vehicle visual presentation"
+  - "Euro NCAP - Interior sensing requirements for driver monitoring"
+instructions: |
+  # Gesture Recognition
+
+  ## Overview
+  Camera-based gesture recognition enables contactless control of vehicle functions
+  through natural hand and finger movements. Using time-of-flight cameras, structured
+  light sensors, or stereo IR cameras, the system tracks hand position, orientation, and
+  finger articulation in real time. This allows drivers to accept phone calls with a wave,
+  adjust volume with a rotation, or dismiss notifications with a swipe without touching
+  any surface.
+
+  ## Key Concepts
+
+  ### Sensor Technologies
+  Multiple sensor types enable in-cabin gesture detection:
+  - Time-of-flight (ToF) cameras measure depth at each pixel using light flight time
+  - Structured light projects IR dot patterns and triangulates depth from distortion
+  - Stereo IR cameras compute depth from parallax between two viewpoints
+  - Radar-based gesture sensors (e.g., 60 GHz) detect motion through materials
+
+  ### Hand Tracking Pipeline
+  The processing chain from raw sensor data to recognized gesture:
+  - Hand detection locates hands within the depth image using a CNN detector
+  - Hand segmentation isolates hand pixels from background and body
+  - Skeleton estimation fits a 21-joint hand model to the segmented hand region
+  - Gesture classification maps temporal joint trajectories to a gesture vocabulary
+  - Typical end-to-end latency from capture to gesture output is 30 to 80 ms
+
+  ### Gesture Vocabulary Design
+  A well-designed vocabulary balances expressiveness with reliability:
+  - Limit the active vocabulary to 5 to 8 gestures for learnability
+  - Use gestures that differ in at least two dimensions (direction, speed, hand shape)
+  - Avoid gestures that overlap with natural movements like scratching or adjusting hair
+  - Assign the most common actions to the simplest, most distinct gestures
+
+  ## Implementation Guide
+
+  ### Step 1 - Position Sensors
+  Mount cameras to cover the gesture interaction volume:
+  - Overhead mount in the headliner provides the best view of hand movements
+  - Dashboard-mounted sensors offer a frontal view but suffer from hand self-occlusion
+  - Use at least two sensors for robust hand tracking when one view is occluded
+  - Define the interaction volume as a 400 mm cube centered above the center console
+
+  ### Step 2 - Build the Detection Pipeline
+  Implement the real-time hand tracking system:
+  - Deploy a lightweight CNN hand detector optimized for the cockpit compute platform
+  - Use temporal filtering to smooth skeleton estimates and reduce jitter
+  - Implement hand identity tracking to distinguish driver from passenger hands
+  - Run the pipeline at 30 fps minimum to capture dynamic gesture trajectories
+
+  ### Step 3 - Define Context Zones
+  Partition the cabin into gesture interpretation zones:
+  - Driver zone above the steering wheel interprets gestures as vehicle controls
+  - Center zone between driver and passenger handles shared functions like media
+  - Passenger zone recognizes independent gestures for passenger comfort features
+  - Rear cabin zone can support rear-seat entertainment gesture control
+
+  ### Step 4 - Train the Gesture Classifier
+  Build and validate the gesture recognition model:
+  - Collect training data from diverse hand sizes, skin tones, and lighting conditions
+  - Use recurrent networks or temporal convolutions to capture motion patterns
+  - Validate with a held-out test set targeting 95% recognition accuracy
+  - Test with adversarial scenarios like eating, drinking, and animated conversation
+
+  ### Step 5 - Implement Anti-False-Activation
+  Prevent unintended gesture triggers:
+  - Require an activation gesture or dwell before accepting command gestures
+  - Use velocity and acceleration thresholds to distinguish deliberate from casual motion
+  - Inhibit gesture recognition when the hand tracking confidence is below threshold
+  - Suppress gesture detection during steering wheel interactions
+
+  ## Best Practices
+
+  ### Robustness Across Conditions
+  - Test gesture recognition in all cabin lighting conditions including direct sunlight
+  - Validate performance with gloved hands (winter driving scenario)
+  - Ensure skin-tone invariance by testing across a diverse population
+  - Handle partial occlusion when passengers pass objects across the cabin
+
+  ### Feedback Design
+  - Provide immediate visual acknowledgment when a gesture is detected
+  - Use a progress indicator for gestures that require sustained hold
+  - Play subtle audio confirmation for successfully recognized commands
+  - Show a ghost hand visualization on the display to guide new users
+
+  ### Driver Distraction Minimization
+  - Gesture interaction should not require visual attention to initiate
+  - Keep the gesture interaction zone within natural arm reach
+  - Limit gesture-controlled functions to those that genuinely benefit from contactless use
+  - Disable non-critical gesture features at speeds above a configurable threshold
+
+  ## Troubleshooting
+
+  ### Gestures Not Recognized Reliably
+  Check sensor cleanliness and verify IR illumination is functioning. Review the
+  interaction volume definition and confirm the user is gesturing within bounds. Inspect
+  the classification confidence scores to identify which gesture stage is failing.
+
+  ### Too Many False Activations
+  Tighten the activation gesture requirements or increase the confidence threshold.
+  Review the gesture vocabulary for ambiguous gestures that overlap with natural motion.
+  Add negative training examples from common false-trigger scenarios.
+
+  ### System Confuses Driver and Passenger Hands
+  Verify that the hand identity tracker uses spatial zone information correctly. Check
+  that the sensor field of view includes enough of each occupant to disambiguate. Add
+  seat position data as context to the hand identity algorithm.
+
+  ### High Latency Makes Gestures Feel Unresponsive
+  Profile the processing pipeline to identify bottlenecks. Move inference to a dedicated
+  NPU if the main CPU is overloaded. Reduce input resolution if depth accuracy allows
+  it. Implement predictive gesture completion to reduce perceived latency.
+
+  ## Integration Patterns
+
+  ### Multi-Sensor Architecture
+  Combining multiple sensing modalities for robust gesture detection:
+  - Fuse ToF depth data with IR camera intensity for better hand segmentation
+  - Add radar-based coarse motion detection to wake the vision pipeline from sleep mode
+  - Use seat occupancy data to predict which cabin zone will generate gesture input
+  - Implement a sensor health monitor that detects degraded cameras and adapts processing
+
+  ### HMI Framework Integration
+  Connecting gesture recognition output to the vehicle user interface:
+  - Define a gesture event API consumed by the HMI application framework
+  - Map gesture events to the same action identifiers as touch and voice commands
+  - Implement gesture macros that trigger multi-step actions from a single gesture
+  - Support OTA gesture vocabulary updates without requiring full system updates
+
+  ## Testing and Validation
+
+  ### Recognition Accuracy Benchmarking
+  Systematically measure gesture recognition performance:
+  - Collect a test dataset of 1000 gesture samples per gesture type from 50+ users
+  - Report confusion matrices showing recognition versus misrecognition rates
+  - Measure performance degradation in direct sunlight versus nighttime conditions
+  - Test with international gestures to verify no culturally offensive mappings exist
+
+  ### Real-World Driving Validation
+  Test gesture recognition under actual driving conditions:
+  - Measure recognition rates during highway driving with ambient road vibration
+  - Test with winter gloves, surgical gloves, and bare hands for coverage
+  - Validate anti-false-activation during animated passenger conversations
+  - Record driver distraction metrics using eye tracking to verify safety compliance

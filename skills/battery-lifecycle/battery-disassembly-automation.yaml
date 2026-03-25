@@ -1,0 +1,313 @@
+name: battery-disassembly-automation
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of robotic disassembly systems for battery packs including module separation, high-voltage safety, X-ray sorting, and barcode tracking.
+use_cases:
+- Automated battery pack disassembly line design
+- Robotic cell removal and module separation
+- High-voltage safety interlocks and discharge systems
+- X-ray and vision-based pack inspection
+- Barcode tracking for traceability and chemistry sorting
+automotive_standards:
+- ISO 12100 Machinery Safety
+- ISO/TS 15066 Collaborative Robots
+- IEC 61508 Functional Safety for automation
+- ISO 17367 Battery Safety Handling
+- ATEX Directive for explosion protection
+instructions: '
+
+  ## Core Competencies
+
+  Expert in designing and implementing automated robotic systems for safe, efficient disassembly of automotive battery packs to recover modules, cells, and materials while maintaining worker safety and chemistry traceability.
+
+  ### Disassembly Challenges
+
+  **Manual Disassembly Issues**:
+  - Labor-intensive: 15-45 min per pack (cost $20-60)
+  - Safety risks: High-voltage exposure (400-800V), thermal runaway potential
+  - Inconsistent quality: Human error in module damage, incomplete discharge
+  - Scalability limits: Trained technicians scarce, throughput <20 packs/day/worker
+  - Ergonomics: Heavy packs (200-700 kg), repetitive strain injuries
+
+  **Automation Benefits**:
+  - Throughput: 50-200 packs/day per line (3-10x improvement)
+  - Safety: Isolates humans from high-voltage and fire hazards
+  - Consistency: Repeatable disassembly sequences, minimal module damage
+  - Data capture: Automated barcode scanning, weight measurement, voltage logging
+  - Cost reduction: 40-60% lower cost per pack at scale
+
+  ### Automated Disassembly Process Flow
+
+  **Stage 1: Pack Identification & Intake**
+
+  **Barcode/QR Code Scanning**:
+  - Vision system reads pack identifier (VIN-based or OEM code)
+  - Database lookup: Chemistry (NMC811, LFP, NCA), voltage, module count, disassembly procedure
+  - Decision: Route to appropriate station (chemistry-specific tooling)
+
+  **Weight & Dimension Verification**:
+  - Load cells verify pack mass (detect internal damage, electrolyte leakage)
+  - Laser/vision system measures dimensions (detect swelling, deformation)
+  - Acceptance criteria: ±5% of nominal weight/size
+
+  **X-ray Inspection** (optional, high-value packs):
+  - Computed Tomography (CT) scan or 2D X-ray
+  - Detect: Internal shorts, cell swelling, dendrite growth, missing components
+  - Benefit: Avoid opening damaged packs (fire risk), prioritize for direct shredding
+
+  **Stage 2: High-Voltage Discharge & Safety Lockout**
+
+  **Voltage Measurement**:
+  - Robotic arm connects to HV+ and HV- terminals via insulated probe
+  - Measure pack voltage (should be <100V if pre-discharged, up to 400-800V if not)
+  - Decision: If >100V, route to discharge station; if <50V, proceed to disassembly
+
+  **Active Discharge**:
+  - Connect pack to resistive load bank (1-10 kW)
+  - Discharge to 30-50% SOC (not 0% to avoid cell damage)
+  - Time: 30 min to 4 hours depending on pack capacity (50-150 kWh)
+  - Monitoring: Thermal camera detects cell hot spots (>40°C → abort)
+
+  **Safety Lockout**:
+  - Remove service disconnect plug (robotic gripper with 1000V insulation)
+  - Install shorting plug on HV terminals (prevent residual voltage)
+  - Verify <50V with second independent measurement (redundant safety)
+
+  **Stage 3: Enclosure Removal (Pack Opening)**
+
+  **Bolt/Screw Removal**:
+  - Robot arm with automatic tool changer (select screwdriver bit based on pack database)
+  - Torque monitoring: Detect stripped threads, cross-threaded fasteners
+  - Fastener sorting: Steel vs aluminum screws for recycling
+  - Typical: 20-60 fasteners per pack (removal time: 3-8 min with multi-spindle tools)
+
+  **Adhesive/Sealant Cutting** (for glued enclosures):
+  - Ultrasonic knife or hot wire cutter traces seam lines
+  - Vision-guided path following (seam detection via machine learning)
+  - Challenge: OEM-specific adhesives (polyurethane, epoxy, silicone) require different cutting strategies
+
+  **Lid Lift-off**:
+  - Vacuum gripper or magnetic gripper lifts pack top cover (5-30 kg)
+  - Place cover in parts bin (aluminum for recycling)
+
+  **Stage 4: BMS & Wiring Harness Removal**
+
+  **Connector Disconnection**:
+  - Robot identifies connector types via vision (Molex, Amphenol, JST)
+  - Custom end-effector with release mechanism (push-button, slide-lock, twist-lock)
+  - Challenge: 50+ OEM-specific connector designs require modular grippers
+
+  **BMS PCB Extraction**:
+  - Locate BMS board (typically bolted to pack lid or module top)
+  - Unscrew mounting bolts (4-8 per BMS)
+  - Lift BMS → route to electronics recycling (gold recovery from PCB)
+
+  **Cable Cutting**:
+  - Automated wire cutters sever HV cables near bus bars
+  - Copper cable → metal recovery stream
+  - Benefit: Recover clean copper vs mixed in shredder
+
+  **Stage 5: Coolant Drainage** (liquid-cooled packs)
+
+  **Drain Port Access**:
+  - Robot opens coolant drain valve or punctures coolant line
+  - Pump drains coolant (ethylene glycol/water mix, 10-30 L per pack)
+  - Coolant disposal: Recycle glycol or proper hazmat disposal
+
+  **Dry-out**:
+  - Tilt pack to drain residual coolant (passive gravity drain for 5-10 min)
+  - Compressed air purge of cooling channels (optional)
+
+  **Stage 6: Module Separation**
+
+  **Module Lifting**:
+  - Robot gripper (vacuum cup arrays or mechanical clamps) lifts each module (10-40 kg)
+  - Vision system locates module edges (handles dimensional variation between packs)
+  - Lift sequence: Often back-to-front or top-to-bottom depending on pack design
+
+  **Bus Bar Disconnect**:
+  - If modules series-connected via bus bars: robot cuts or unbolts bus bars
+  - High-force cutting tool (hydraulic shear, 2-10 kN) for copper/aluminum bars
+  - Safety: Verify 0V across bus bar before cutting (check for residual charge)
+
+  **Module Weight & Voltage Check**:
+  - Each module placed on weighing station (QC check for internal damage)
+  - Voltage measurement: Verify module is 20-50V (safe for handling)
+  - Data logging: Module ID, weight, voltage → traceability database
+
+  **Chemistry Sorting**:
+  - Based on pack ID or optional XRF analysis, route module to correct bin:
+    - NMC811: Premium value, hydrometallurgy route
+    - NMC622: Standard value, hydro or pyro
+    - LFP: Low value, second-life or pyro
+    - NCA: Tesla-specific, direct recycling pilot programs
+
+  **Stage 7: Cell Extraction** (optional, for second-life or direct recycling)
+
+  **Module Opening**:
+  - Remove module plastic housing (snap fits or screws)
+  - Expose cell pack (cylindrical 21700/4680 or pouch cells)
+
+  **Cell Removal**:
+  - Cylindrical cells: Suction gripper with 18650/21700-sized cups
+  - Pouch cells: Vacuum pad gripper (flexible to avoid puncture)
+  - Welded tabs: Ultrasonic metal welder in reverse (melt and separate) or mechanical shear
+
+  **Cell Testing** (for second-life):
+  - Automated cell tester measures:
+    - Open-circuit voltage (OCV): Should be 3.0-4.2V for lithium-ion
+    - Internal resistance (IR): <50 mΩ for good cell, >100 mΩ for degraded
+    - Capacity test (optional, 1C discharge): Determines SOH
+  - Sorting: Grade A (>80% SOH), Grade B (60-80%), Grade C (<60% → recycle)
+
+  ### Robotic System Design
+
+  **Robot Selection**:
+
+  | Task | Robot Type | Payload | Reach | Speed |
+  |------|-----------|---------|-------|-------|
+  | Pack handling | Articulated 6-axis (KUKA, ABB, Fanuc) | 200-500 kg | 2.5-3.5 m | Slow (safety) |
+  | Fastener removal | Collaborative robot (UR, Franka) | 5-15 kg | 1.3-1.8 m | Medium |
+  | Module extraction | Gantry robot or Cartesian | 50-100 kg | 3-5 m XY, 1 m Z | Medium |
+  | Cell handling | SCARA or delta robot | 1-5 kg | 0.8-1.5 m | Fast (precision) |
+
+  **End-Effectors (custom design critical)**:
+  - Automatic tool changer: Quick swap between screwdriver, gripper, cutter, probe (30 sec changeover)
+  - Screwdriver: Electric or pneumatic, torque monitoring (2-20 Nm range)
+  - Gripper: Vacuum (for flat surfaces), magnetic (ferrous), mechanical (clamp)
+  - Cutter: Hydraulic shear (bus bars), wire stripper (cables), ultrasonic knife (adhesive)
+  - Probe: Insulated voltage measurement probe (1000V rated), temperature sensor
+
+  **Vision Systems**:
+  - 2D cameras: Barcode reading, connector identification, module edge detection
+  - 3D cameras (structured light, stereo): Bolt head location, deformation detection
+  - Thermal cameras: Hot spot detection during discharge, cell temperature monitoring
+  - X-ray: Internal damage assessment (optional for high-value packs)
+
+  **Safety Systems**:
+  - Light curtains: Stop robot if human enters work envelope
+  - Emergency stop buttons: Every 3 meters around line perimeter
+  - Fume extraction: Local exhaust ventilation (LEV) at pack opening (electrolyte vapor risk)
+  - Fire suppression: CO2 or water mist system triggered by smoke/temperature sensors
+  - Electrical isolation: Robot controllers on separate circuit from HV discharge equipment
+
+  ### Traceability & Data Management
+
+  **Battery Passport Integration**:
+  - Scan pack QR code → retrieve battery passport data (chemistry, manufacturing date, OEM, vehicle VIN)
+  - Log disassembly data: Discharge voltage, module weights, visual damage observations
+  - Update passport: "End-of-life → recycling, date: 2026-03-19, facility: XYZ"
+
+  **Chemistry Tracking**:
+  - Critical for maximizing recycling value (NMC811 vs LFP routing)
+  - Database stores: Pack ID → chemistry → module bin assignment
+  - Enables: Homogenous feedstock to hydrometallurgy (avoids chemistry mixing)
+
+  **Module-to-Cell Lineage**:
+  - Each module gets unique ID (laser-etched or RFID tag)
+  - Cell testing results linked to module ID → informs second-life applications
+  - Enables warranty tracking for second-life products
+
+  ### Economics of Automated Disassembly
+
+  **CAPEX (for 50k pack/year line)**:
+  - Robots & end-effectors: $1.5-2.5M (3-5 robots)
+  - Vision systems: $200-500k
+  - Discharge equipment: $300-600k
+  - Conveyors & material handling: $400-700k
+  - Safety systems & enclosures: $300-500k
+  - Control system & software: $200-400k
+  - Total CAPEX: $3-5M
+
+  **OPEX (per pack)**:
+  - Labor: $5-10 (1 operator supervising 4-6 robots)
+  - Energy: $2-4 (robot power, discharge energy recovery possible)
+  - Maintenance: $3-5 (tool wear, robot servicing)
+  - Total OPEX: $10-19 per pack
+
+  **Comparison to Manual**:
+  - Manual: $30-60 per pack
+  - Automated: $10-19 per pack
+  - Savings: 50-70% at 50k+ pack/year scale
+
+  **Payback Period**:
+  - At 50k packs/year: 3-4 years
+  - At 100k packs/year: 2-3 years
+  - Break-even: ~25k packs/year
+
+  ### Case Studies
+
+  - **Duesenfeld (Germany)**: Fully automated line with LN2 cooling, 3k ton/year, 96% recovery rate
+  - **OnTo Technology (USA)**: Collaborative robots (UR) for module extraction, BMW partnership
+  - **Li-Cycle (Canada)**: Semi-automated discharge + manual disassembly, 25k ton/year
+  - **Northvolt (Sweden)**: Gigafactory recycling plant, automated disassembly planned for 125k ton/year by 2030
+
+  ## Approach
+
+  1. **Pack Portfolio Analysis**: Catalog OEM pack designs (fastener types, module layouts, chemistries)
+  2. **Disassembly Sequence Planning**: CAD simulation of robot paths, collision avoidance
+  3. **End-Effector Design**: Custom grippers for highest-volume pack types (Pareto 80/20 rule)
+  4. **Safety Risk Assessment**: HAZOP analysis of discharge, cutting, lifting operations
+  5. **Pilot Line Setup**: Build 1-station prototype, validate cycle time and safety
+  6. **Vision Algorithm Training**: Machine learning for connector/bolt detection (requires 1000+ images per variant)
+  7. **Scale-Up Design**: Multi-station line with buffer storage, throughput balancing
+  8. **Economic Modeling**: CAPEX, OPEX, throughput sensitivity analysis
+
+  ## Deliverables
+
+  - Disassembly sequence flowchart for top 10 pack types
+  - Robot selection justification (payload, reach, speed requirements)
+  - End-effector CAD designs with force analysis
+  - Safety system specification (light curtains, e-stops, fire suppression)
+  - Vision system requirements (resolution, frame rate, lighting)
+  - Traceability database schema (pack ID, module ID, test results)
+  - Line layout (floor plan, robot work envelopes, material flow)
+  - Economic model (CAPEX, OPEX per pack, payback period)
+
+  ## Best Practices
+
+  - Design for flexibility: Use automatic tool changers to handle 80%+ of pack variants with same robot
+  - Implement modular stations: Each station (discharge, opening, module extraction) can operate independently
+  - Use collaborative robots where possible: Lower cost, easier programming, safer human interaction
+  - Capture data at every step: Voltage, weight, temperature → predictive analytics for future packs
+  - Design for graceful degradation: If one robot fails, line continues at reduced throughput
+  - Perform weekly torque calibration: Ensures fastener removal without stripping threads
+  - Train vision systems with synthetic data: CAD-based image generation for rare pack variants
+  - Implement closed-loop force control: Prevents module damage during extraction (esp. pouch cells)
+
+  ## Integration with Automotive Workflow
+
+  - Accept whole battery packs from OEM collection networks with barcode intact
+  - Scan and update battery passport at intake and completion
+  - Route modules to second-life assembly lines or recycling based on SOH results
+  - Provide module-level traceability for closed-loop cathode supply chains
+  - Report disassembly data (module count, chemistry distribution) to OEM for EPR compliance
+
+  '
+constraints:
+- CAPEX ($3-5M) requires high throughput (>25k packs/year) for ROI
+- 50+ pack designs from OEMs require flexible tooling or multiple lines
+- Adhesive-bonded packs difficult to automate (require thermal or ultrasonic cutting)
+- X-ray inspection expensive ($500k+) but valuable for safety screening
+- Vision algorithms require training data (1000+ images per pack variant)
+tools_required:
+- Industrial robots (articulated, gantry, or collaborative)
+- Vision systems (2D, 3D, thermal cameras)
+- Automatic tool changers and custom end-effectors
+- Discharge equipment with load banks and monitoring
+- Barcode/QR scanners for traceability
+- PLC/SCADA for line control and data logging
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- battery-lifecycle
+- recycling
+- automation
+- robotics
+- disassembly
+- automotive

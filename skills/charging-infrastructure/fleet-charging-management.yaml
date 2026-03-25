@@ -1,0 +1,128 @@
+name: fleet-charging-management
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive-ev
+description: "Expert skill in fleet charging management for electric vehicle depots, covering route-based scheduling, priority queuing, load optimization, cost minimization, and multi-vehicle charging orchestration."
+use_cases:
+  - "Electric bus depot charging optimization (50-200 vehicles)"
+  - "Delivery fleet charging management (Amazon, UPS, FedEx)"
+  - "Ride-hailing fleet charging (Uber, Lyft, robotaxis)"
+  - "Municipal fleet charging (garbage trucks, utility vehicles)"
+  - "Corporate fleet charging (company car pools)"
+automotive_standards:
+  - "OCPP 2.0.1 Smart charging and load management"
+  - "ISO 15118-20 Vehicle-to-Grid for fleet applications"
+  - "OpenADR 2.0b Demand response for fleet depots"
+  - "IEEE 2030.1.1 Smart grid integration for EV fleets"
+  - "SAE J2954 Wireless charging for autonomous fleets"
+instructions: |
+  # Fleet Charging Management
+
+  ## Overview
+  Fleet charging management orchestrates the charging of multiple electric vehicles
+  within a depot or distributed network, optimizing for operational requirements,
+  energy costs, grid constraints, and vehicle availability.
+
+  ## Key Concepts
+
+  ### Charging Scheduling
+  - Route-based scheduling aligns charging with departure times
+  - Priority queuing ensures mission-critical vehicles charge first
+  - Staggered charging prevents grid overload during peak demand
+  - Opportunity charging during breaks and layovers
+
+  ### Load Management
+  - Dynamic load balancing across multiple chargers
+  - Peak demand shaving to reduce utility demand charges
+  - Time-of-use rate optimization for lowest cost charging
+  - Grid capacity monitoring and automatic throttling
+
+  ## Implementation Guide
+
+  ### Fleet Charging Scheduler (Python)
+
+  ```python
+  from dataclasses import dataclass
+  from datetime import datetime, timedelta
+  from typing import List
+  import heapq
+
+  @dataclass
+  class Vehicle:
+      id: str
+      soc: float          # Current state of charge (0-100)
+      target_soc: float   # Required SOC at departure
+      departure: datetime  # Scheduled departure time
+      battery_kwh: float  # Battery capacity
+      max_charge_kw: float # Max charging rate
+
+  @dataclass
+  class Charger:
+      id: str
+      max_kw: float
+      available: bool = True
+
+  class FleetChargingScheduler:
+      def __init__(self, grid_limit_kw: float):
+          self.grid_limit_kw = grid_limit_kw
+          self.chargers: List[Charger] = []
+          self.schedule = []
+
+      def calculate_charge_time(self, vehicle: Vehicle) -> float:
+          energy_needed = (vehicle.target_soc - vehicle.soc) / 100.0 * vehicle.battery_kwh
+          return energy_needed / vehicle.max_charge_kw  # hours
+
+      def schedule_fleet(self, vehicles: List[Vehicle]) -> dict:
+          # Priority queue by urgency (earliest departure, lowest SOC first)
+          priority_queue = []
+          for v in vehicles:
+              charge_hours = self.calculate_charge_time(v)
+              slack = (v.departure - datetime.now()).total_seconds() / 3600 - charge_hours
+              heapq.heappush(priority_queue, (slack, v.soc, v.id, v))
+
+          assignments = {}
+          while priority_queue:
+              slack, soc, vid, vehicle = heapq.heappop(priority_queue)
+              for charger in self.chargers:
+                  if charger.available:
+                      assignments[vehicle.id] = {
+                          "charger": charger.id,
+                          "start": datetime.now().isoformat(),
+                          "charge_hours": self.calculate_charge_time(vehicle),
+                          "urgency": "HIGH" if slack < 1.0 else "NORMAL"
+                      }
+                      charger.available = False
+                      break
+          return assignments
+  ```
+
+  ### Load Balancing Algorithm
+
+  ```python
+  def balance_load(chargers, grid_limit_kw):
+      active = [c for c in chargers if c.active]
+      if not active:
+          return
+      fair_share = grid_limit_kw / len(active)
+      for charger in active:
+          charger.set_power(min(fair_share, charger.max_kw))
+  ```
+
+  ## Best Practices
+  - Always maintain minimum SOC buffer (10-15%) for unexpected dispatches
+  - Implement pre-conditioning during charging to optimize battery temperature
+  - Use historical route data to predict energy consumption accurately
+  - Monitor charger health and schedule preventive maintenance
+  - Integrate with fleet management systems via OCPP 2.0.1
+
+  ## Cost Optimization Strategies
+  - Shift charging to off-peak hours (typically 10pm-6am)
+  - Negotiate demand charge reduction with utility through load management
+  - Participate in demand response programs for revenue generation
+  - Use on-site solar and battery storage to reduce grid dependency
+
+  ## Troubleshooting
+  - Charger communication failures - check OCPP WebSocket connections
+  - Uneven load distribution - verify current transformer readings
+  - Missed departure targets - review scheduling algorithm priority weights
+  - High demand charges - analyze 15-minute demand peaks with utility data

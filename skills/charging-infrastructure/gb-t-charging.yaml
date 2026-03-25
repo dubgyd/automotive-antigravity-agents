@@ -1,0 +1,436 @@
+name: gb-t-charging
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: dc-fast-charging
+description: Expert skill in GB/T Chinese charging standard implementation, covering AC/DC variants, CAN-based communication protocol, and compliance with Chinese EV infrastructure requirements.
+use_cases:
+- GB/T charging station deployment for Chinese market
+- AC slow charging (GB/T 20234.2) implementation
+- DC fast charging (GB/T 20234.3) controller development
+- GB/T to CCS/CHAdeMO adapter design
+- Chinese EV export market charging compatibility
+automotive_standards:
+- GB/T 20234.1 General requirements for EV conductive charging
+- GB/T 20234.2 AC charging connector (similar to IEC 62196-2)
+- GB/T 20234.3 DC charging connector
+- GB/T 27930 Communication protocol between EV and off-board charger
+- GB/T 18487.1 Safety requirements for conductive charging
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in GB/T (Guobiao Tuijian, Chinese National Standard) charging system implementation for electric vehicles, covering both AC (GB/T 20234.2) and DC (GB/T 20234.3) charging standards, CAN-based communication protocol (GB/T 27930), and integration with Chinese smart grid and payment systems.
+
+
+  ### GB/T Standards Overview
+
+
+  - **GB/T 20234.1** (General requirements):
+
+    - Overall framework for EV conductive charging
+
+    - Safety requirements, connector specifications
+
+    - Interoperability testing procedures
+
+
+  - **GB/T 20234.2** (AC charging):
+
+    - AC connector: 7-pin design, similar to IEC Type 2 (Mennekes)
+
+    - Single-phase: 230V, up to 32A (7.4 kW)
+
+    - Three-phase: 400V, up to 63A (43 kW)
+
+    - Control pilot: PWM signaling at 1 kHz (like J1772/IEC 61851)
+
+
+  - **GB/T 20234.3** (DC charging):
+
+    - DC connector: 9-pin design (5 power + 4 communication)
+
+    - Voltage range: 200V to 750V (typical: 300-500V)
+
+    - Current range: Up to 250A (125 kW at 500V)
+
+    - Communication: CAN 2.0A at 250 kbps (GB/T 27930 protocol)
+
+
+  - **GB/T 27930** (Communication protocol):
+
+    - CAN-based message exchange between EV and DC charger
+
+    - Handshake, charging parameters, real-time control, fault handling
+
+    - Similar to CHAdeMO but with different CAN IDs and message structure
+
+
+  ### AC Connector (GB/T 20234.2)
+
+
+  - **Pin configuration** (7 pins):
+
+    - Pin 1: Ground (PE, protective earth)
+
+    - Pin 2: Control pilot (CP, PWM signal)
+
+    - Pin 3: L1 (phase 1 / single-phase live)
+
+    - Pin 4: L2 (phase 2, optional for three-phase)
+
+    - Pin 5: L3 (phase 3, optional for three-phase)
+
+    - Pin 6: Neutral (N)
+
+    - Pin 7: Connection confirmation (CC, analog voltage divider)
+
+
+  - **Control pilot signaling**:
+
+    - PWM at 1 kHz, ±12V square wave (identical to IEC 61851-1)
+
+    - Duty cycle encodes available current: I_max = duty × 0.6A
+
+    - States: A (12V, disconnected), B (9V, connected), C (6V, charging), E/F (fault)
+
+
+  ### DC Connector (GB/T 20234.3)
+
+
+  - **Pin configuration** (9 pins):
+
+    - Pin 1: DC+ (positive power, up to 250A)
+
+    - Pin 2: DC- (negative power, return path)
+
+    - Pin 3: Ground (PE, protective earth)
+
+    - Pin 4: A6 (low-voltage auxiliary power +12V from charger)
+
+    - Pin 5: A7 (auxiliary ground)
+
+    - Pin 6: S+ (CAN-H for GB/T 27930 communication)
+
+    - Pin 7: S- (CAN-L for GB/T 27930 communication)
+
+    - Pin 8: A+ (charging enable signal from EV)
+
+    - Pin 9: A- (charging enable ground)
+
+
+  - **Mechanical**:
+
+    - Connector body: Larger than CCS Type 2, smaller than CHAdeMO
+
+    - Latch: Manual release button (some variants have electronic lock)
+
+    - IP rating: IP54 (dust/water protection)
+
+
+  ### GB/T 27930 Communication Protocol
+
+
+  - **CAN bus parameters**:
+
+    - Baud rate: 250 kbps (CAN 2.0A, 11-bit identifier)
+
+    - Bus termination: 120Ω at both ends (EV and charger)
+
+    - Message period: 250 ms for most messages (4 Hz update rate)
+
+    - Watchdog: Abort if no message received for >1 second
+
+
+  - **Key CAN messages** (GB/T 27930):
+
+    - 0x100: Charger handshake (protocol version, charger ID)
+
+    - 0x101: Charger ready (max voltage, max current, charger status)
+
+    - 0x102: EV handshake (EV ID, battery capacity)
+
+    - 0x103: EV charging parameters (max voltage, max current, battery type)
+
+    - 0x104: EV charging demand (target voltage, target current, SOC)
+
+    - 0x105: Charger status (output voltage, output current, faults)
+
+    - 0x106: EV status (battery voltage, battery current, temperature, SOC)
+
+    - 0x107: Charger stop (stop reason, final energy delivered)
+
+
+  - **Message structure example** (0x104: EV charging demand):
+
+    ```c
+    typedef struct {
+        uint16_t target_voltage;     // 0.1V units (e.g., 4000 = 400.0V)
+        uint16_t target_current;     // 0.1A units (e.g., 1000 = 100.0A)
+        uint8_t charging_mode;       // 0x00=constant current, 0x01=constant voltage
+        uint8_t soc;                 // State of charge (0-100%)
+        uint16_t remaining_time;     // Estimated time to full charge (minutes)
+    } __attribute__((packed)) EVChargingDemand_t;
+
+    void SendEVDemand(float v_target, float i_target, uint8_t soc) {
+        EVChargingDemand_t msg = {
+            .target_voltage = (uint16_t)(v_target * 10),
+            .target_current = (uint16_t)(i_target * 10),
+            .charging_mode = (soc < 80) ? 0x00 : 0x01,  // CC until 80%, then CV
+            .soc = soc,
+            .remaining_time = calculate_remaining_time(soc)
+        };
+        CAN_Send(0x104, (uint8_t*)&msg, sizeof(msg));
+    }
+    ```
+
+
+  ### Charging Sequence (DC Fast Charging)
+
+
+  - **Stage 1: Handshake and recognition** (5-10 seconds):
+
+    1. Vehicle plugged in, connector locked
+
+    2. Charger sends handshake (0x100: protocol version, charger ID)
+
+    3. EV responds with handshake (0x102: EV ID, battery capacity)
+
+    4. Charger sends capabilities (0x101: max V, max I)
+
+    5. EV sends requirements (0x103: max acceptable V, max I, battery type)
+
+
+  - **Stage 2: Charging preparation** (10-20 seconds):
+
+    1. Charger performs insulation test (DC+ and DC- to ground >100 kΩ/V)
+
+    2. Charger precharges DC bus to match EV battery voltage (within 20V)
+
+    3. EV sends "ready to charge" signal via A+ pin (12V)
+
+    4. Charger verifies readiness, sends status (0x105: ready flag set)
+
+
+  - **Stage 3: Charging execution** (main loop):
+
+    1. EV sends charging demand (0x104: target V, target I) every 250 ms
+
+    2. Charger regulates output to match demand (PI control loop)
+
+    3. Charger sends actual values (0x105: present V, present I) every 250 ms
+
+    4. EV monitors battery and adjusts demand dynamically (e.g., reduce current if hot)
+
+    5. Typical charging curve: Constant current (CC) to 80% SOC, then constant voltage (CV) to 100%
+
+
+  - **Stage 4: Charging termination**:
+
+    1. EV reduces current demand to <5A (near full charge)
+
+    2. Charger ramps output current to 0A over 5 seconds
+
+    3. Charger opens contactors (positive first, then negative)
+
+    4. Charger sends stop message (0x107: total energy, stop reason)
+
+    5. EV drops A+ signal to 0V (permission to charge removed)
+
+    6. Connector lock releases, user can unplug
+
+
+  ### Safety and Protection
+
+
+  - **Insulation monitoring**:
+
+    - Measure R_iso between DC+ / DC- and PE before closing contactors
+
+    - Threshold: >100 Ω/V (e.g., >40 kΩ for 400V system)
+
+    - Continuous monitoring during charge, abort if drops below threshold
+
+
+  - **Voltage/current limits**:
+
+    - Charger must not exceed EV target voltage by >10V
+
+    - Current limited to min(EV_request, cable_rating, charger_rating)
+
+    - Hardware overvoltage protection: Varistor at 850V (for 750V max systems)
+
+
+  - **Emergency stop**:
+
+    - E-stop button immediately opens contactors and disables output (<500 ms)
+
+    - CAN message sent to EV indicating emergency stop
+
+    - A+ signal drops to 0V
+
+
+  - **Battery protection** (EV side):
+
+    - Overvoltage: Abort if cell voltage >4.25V (for Li-ion NMC)
+
+    - Overcurrent: Limit charge current based on battery temperature and SOC
+
+    - Temperature: Stop if battery >55°C or <0°C
+
+
+  ### GB/T to CCS/CHAdeMO Adapter
+
+
+  - **Protocol translation** (GB/T ↔ CCS):
+
+    - CAN (GB/T 27930) ↔ PLC (ISO 15118) translation
+
+    - Message mapping: EV demand (GB/T) → CurrentDemandReq (ISO 15118)
+
+    - Timing conversion: 250 ms (GB/T) vs 100 ms (ISO 15118) update rates
+
+
+  - **Physical adapter**:
+
+    - GB/T male plug (charger side) → CCS female inlet (vehicle side)
+
+    - Pin mapping: DC+/DC- direct pass-through, CAN to PLC converter module
+
+    - Active electronics required (passive adapter not possible due to protocol difference)
+
+
+  - **ChaoJi unified standard**:
+
+    - Joint GB/T + CHAdeMO development (ChaoJi = "super charging" in Chinese)
+
+    - New connector design supporting up to 900 kW
+
+    - Compatible with both Chinese and Japanese EVs
+
+    - Expected to replace GB/T 20234.3 in future
+
+
+  ### Charger Controller Implementation
+
+
+  - **State machine**:
+
+    ```python
+    class GBTChargerState(Enum):
+        IDLE = 0
+        HANDSHAKE = 1
+        INSULATION_TEST = 2
+        PRECHARGE = 3
+        CHARGING = 4
+        STOPPING = 5
+        FAULT = 6
+
+    def state_machine():
+        if state == GBTChargerState.HANDSHAKE:
+            send_charger_handshake()
+            if ev_handshake_received():
+                state = GBTChargerState.INSULATION_TEST
+
+        elif state == GBTChargerState.INSULATION_TEST:
+            r_iso = measure_insulation()
+            if r_iso > 100000:  # >100 kΩ for 1000V system
+                state = GBTChargerState.PRECHARGE
+
+        elif state == GBTChargerState.PRECHARGE:
+            if abs(dc_voltage - ev_battery_voltage) < 20:
+                close_contactors()
+                state = GBTChargerState.CHARGING
+
+        elif state == GBTChargerState.CHARGING:
+            regulate_output(ev_target_voltage, ev_target_current)
+            if ev_target_current < 5 or fault_detected():
+                state = GBTChargerState.STOPPING
+    ```
+
+
+  ## Approach
+
+
+  1. **Standard compliance**: Study GB/T 20234.3 and 27930 specifications (Chinese language)
+
+  2. **Connector sourcing**: GB/T inlet/outlet from Chinese suppliers (e.g., WOER, Kayal)
+
+  3. **CAN stack**: Implement GB/T 27930 message handlers (250 ms periodic transmission)
+
+  4. **Power electronics**: DC-DC converter (200-750V output, 50-125 kW typical)
+
+  5. **Safety circuits**: IMD (insulation monitoring device), RCD (residual current device)
+
+  6. **Testing**: Interoperability testing with Chinese EV brands (BYD, NIO, XPeng, Li Auto)
+
+  7. **Certification**: CQC (China Quality Certification Centre) approval
+
+
+  ## Deliverables
+
+
+  - GB/T charger controller firmware (C/C++)
+
+  - GB/T 27930 CAN protocol stack
+
+  - Insulation monitoring and safety system
+
+  - Charger to EV handshake and parameter negotiation
+
+  - Test reports (protocol conformance, safety, interoperability)
+
+  - Integration guide for Chinese payment systems (WeChat Pay, Alipay)
+
+
+  ## Best Practices
+
+
+  - **Language barrier**: GB/T standards in Chinese; work with translation or local experts
+
+  - **CAN timing**: Strict 250 ms message period (use hardware timer, not software delay)
+
+  - **Insulation test**: Perform before every charge session (mandatory per GB/T 18487)
+
+  - **SOC accuracy**: Chinese EVs expect accurate SOC reporting (calibrate BMS)
+
+  - **ChaoJi readiness**: Design for future ChaoJi migration (higher power, new connector)
+
+
+  ## Integration
+
+
+  - **Payment**: WeChat Pay, Alipay QR code scanning at charger
+
+  - **Grid**: Integration with State Grid Corporation of China (SGCC) smart grid
+
+  - **Fleet**: API for Chinese fleet operators (DiDi, Geely, BYD fleets)
+
+  - **Roaming**: Cross-operator charging via Chinese roaming platforms
+
+
+  '
+constraints:
+- Limited documentation in English (most standards in Chinese only)
+- Connector availability outside China may be limited
+- Protocol incompatible with CCS/CHAdeMO (adapter complexity)
+- Certification requires CQC approval (testing in China)
+tools_required:
+- GB/T DC connector and cable
+- CAN analyzer (Vector, PEAK, or Chinese brands like ZLG)
+- Insulation tester (Megger, Fluke)
+- DC power supply (0-750V, 0-250A) for testing
+- CQC certification test equipment
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- gb-t
+- dc-fast-charging
+- china
+- can-bus
+- automotive

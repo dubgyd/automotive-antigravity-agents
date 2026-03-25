@@ -1,0 +1,143 @@
+name: lean-manufacturing
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: continuous-improvement
+description: "Lean manufacturing principles including kaizen, 5S, value stream mapping, waste elimination, and kanban pull systems"
+use_cases:
+  - "Value stream mapping to identify waste and flow obstacles"
+  - "5S workplace organization for safety and efficiency"
+  - "Kaizen events for rapid process improvement"
+  - "Kanban implementation for pull-based material replenishment"
+  - "SMED for quick changeover and setup time reduction"
+automotive_standards:
+  - "Toyota Production System (TPS)"
+  - "IATF 16949"
+  - "ISO 9001"
+  - "Lean Enterprise Institute Standards"
+instructions: |
+  # Lean Manufacturing for Automotive Production
+
+  ## Overview
+
+  Expert in lean manufacturing implementation for automotive production with deep expertise
+  in Toyota Production System principles, waste elimination, continuous improvement, and
+  pull-based production systems for maximizing value and minimizing waste.
+
+  ## Key Concepts
+
+  The Eight Wastes (DOWNTIME) form the foundation of lean thinking.
+
+  Defects include scrap, rework, inspection failures, and warranty claims. Overproduction
+  means making more than customer demand and is considered the worst waste as it triggers
+  all other wastes. Waiting covers idle operators, machines, and WIP queues. Non-utilized
+  talent refers to ignored skills, creativity, and improvement ideas from the workforce.
+  Transportation means excessive material movement and forklift travel. Inventory excess
+  in raw material, WIP, and finished goods hides underlying problems. Motion covers
+  unnecessary operator walking, reaching, and bending. Extra processing means features
+  the customer does not value or rework activities.
+
+  ## 5S Workplace Organization
+
+  A systematic approach to workplace organization and standardization.
+
+  Sort (Seiri) removes unnecessary items through red tag campaigns. Set in Order (Seiton)
+  organizes tools and parts with visual locations using shadow boards. Shine (Seiso) means
+  cleaning workspace and equipment while identifying leaks and wear. Standardize (Seiketsu)
+  documents best practices and visual standards. Sustain (Shitsuke) maintains compliance
+  through audits, continuous discipline, and culture building. Implementation uses 5S audit
+  checklists, before/after photos, and monthly scoring.
+
+  ## Value Stream Mapping (VSM)
+
+  The primary tool for seeing the whole production flow and identifying improvement targets.
+
+  Current state mapping documents all process steps, cycle times, WIP inventory, and lead
+  time. Value-added vs non-value-added analysis separates activities the customer pays for
+  from waste. Key metrics include cycle time, changeover time, uptime, first-pass yield,
+  and WIP levels. Future state mapping designs the ideal flow with waste eliminated and
+  pull systems in place. Kaizen bursts mark improvement opportunities as quick wins or
+  projects. The implementation plan prioritizes improvements, assigns owners, and sets
+  deadlines.
+
+  ## Kanban Pull System
+
+  Replacing push-based scheduling with demand-driven replenishment.
+
+  Supermarkets are controlled inventory points where parts are replenished as consumed.
+  Kanban cards or bins signal production or delivery when a container is emptied. Two-bin
+  systems keep one bin in use while the other is in the replenishment queue. Kanban
+  quantity is calculated as demand multiplied by lead time multiplied by safety factor,
+  divided by container size. Visual management uses color-coded bins where green means OK,
+  yellow means order, and red means critical.
+
+  ## Kaizen (Continuous Improvement)
+
+  Structured approaches to incremental and breakthrough improvement.
+
+  Kaizen events are 3-5 day focused improvement workshops with cross-functional teams.
+  The PDCA cycle follows Plan-Do-Check-Act for iterative problem solving. A3 thinking
+  provides one-page problem solving covering background, current state, goals, analysis,
+  and countermeasures. Gemba walks involve going to the actual workplace to observe the
+  process and talk to operators. Suggestion systems capture operator improvement ideas
+  with recognition and rewards.
+
+  ## SMED (Single-Minute Exchange of Die)
+
+  Reducing changeover time to under 10 minutes through systematic analysis.
+
+  External setup covers activities done while the machine is still running such as
+  preparing tools and materials. Internal setup covers activities requiring machine stop
+  such as removing and installing tooling. The key technique is converting internal to
+  external activities through pre-heating dies, pre-staging parts, and using quick-release
+  clamps. Standardization documents the best changeover sequence and trains all operators.
+
+  ## Standard Work
+
+  The foundation for stable, repeatable, and improvable processes.
+
+  Takt time sets the pace of production to match customer demand. Work sequence documents
+  steps in optimal order. Standard WIP defines minimum parts between stations to maintain
+  flow. Visual aids include job instruction sheets, photos, and videos at each workstation.
+  Standard work is updated whenever kaizen improves the process.
+
+  ## Implementation Guide
+
+  1. Leadership Commitment - Train executives on lean principles and secure resources
+  2. Pilot Line Selection - Choose high-volume line with supportive management
+  3. Value Stream Mapping - Current state analysis identifying waste and constraints
+  4. Quick Wins - Implement 5S and visual management for immediate results
+  5. Kaizen Events - Focused improvement on bottlenecks, changeovers, and quality
+  6. Pull System - Implement kanban for material replenishment from supermarkets
+  7. Training - Educate all employees on lean principles and tools
+  8. Sustain - Daily management system with tier meetings, KPI tracking, and audits
+
+  ## Best Practices
+
+  - Start with one model line before expanding to the entire plant
+  - Involve operators in kaizen events because they know the waste best
+  - Focus on flow first, then pull, then level production (heijunka)
+  - Use visual management extensively with color codes, andon, and kanban cards
+  - Measure before and after for all improvements with data-driven decisions
+  - Sustain improvements with daily audits and tier meetings
+  - Celebrate successes publicly to build momentum and engagement
+
+  ## Troubleshooting
+
+  - Cultural resistance to change - Start with visible quick wins and engage champions
+  - Improvements not sustained - Implement daily management audits and leader standard work
+  - Kanban system breaks down - Retrain on rules and audit card discipline weekly
+  - VSM analysis paralysis - Time-box mapping to 2 days and focus on top 3 wastes
+  - Management impatience - Set expectations that full benefits take 2-3 years
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: intermediate
+tags:
+  - "manufacturing"
+  - "lean"
+  - "kaizen"
+  - "5s"
+  - "value-stream-mapping"
+  - "automotive"

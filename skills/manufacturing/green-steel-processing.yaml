@@ -1,0 +1,173 @@
+name: green-steel-processing
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+description: "Hydrogen-based steelmaking and low-carbon steel qualification for automotive structures"
+use_cases:
+  - "Evaluate hydrogen direct reduced iron processes for automotive steel supply"
+  - "Qualify green steel grades for crash-critical body-in-white applications"
+  - "Calculate Scope 3 steel carbon footprint across vehicle bill of materials"
+  - "Navigate CBAM compliance for steel imports into European markets"
+  - "Build green steel adoption roadmaps aligned with OEM decarbonization targets"
+automotive_standards:
+  - "ISO 14064 - Greenhouse Gas Accounting"
+  - "EU CBAM Regulation - Carbon Border Adjustment Mechanism"
+  - "VDA 239-100 - Steel Flat Products for Cold Forming"
+  - "ResponsibleSteel Certification Standard"
+  - "ISO 14404 - Carbon Intensity of Steelmaking"
+instructions: |
+  # Green Steel Processing for Automotive
+
+  ## Overview
+  Steel constitutes 50-60 percent of vehicle mass and 20-30 percent of vehicle
+  manufacturing carbon footprint at Scope 3. Green steel replaces coal-based blast
+  furnace reduction with hydrogen direct reduction or maximizes recycled scrap through
+  electric arc furnaces powered by renewable electricity. This transition is critical
+  for OEMs targeting net-zero supply chains while maintaining demanding mechanical
+  property specifications for crash-critical body structures.
+
+  ## Key Concepts
+
+  ### Steel Production Routes Compared
+  Three primary production routes exist with dramatically different carbon intensities:
+
+  - Conventional BF-BOF: Iron ore plus coal coke in blast furnace at 1500C, producing
+    1.8-2.2 tonnes CO2 per tonne of steel
+  - Scrap-EAF with renewables: Sorted steel scrap in electric arc furnace powered by
+    green electricity, producing 0.1-0.3 tonnes CO2 per tonne
+  - Hydrogen DRI plus EAF: Iron ore reduced by hydrogen gas in shaft furnace at 900C
+    then melted in EAF, producing 0.05-0.2 tonnes CO2 per tonne
+
+  ### Automotive Steel Grades
+  Key grades used in vehicle body structures:
+
+  - Mild steel DC01-DC06: Outer panels with 140-300 MPa yield strength
+  - HSLA HC340-HC460: Structural reinforcements at 340-460 MPa
+  - Dual Phase DP500-DP1000: Crash structures at 500-1000 MPa tensile
+  - Press Hardened PHS 22MnB5: A and B pillars at 1500-2000 MPa after hot stamping
+
+  ## Implementation Guide
+
+  ### Step 1 - Scope 3 Steel Carbon Footprint Assessment
+  Calculate the total steel-related carbon footprint for a vehicle program.
+
+  ```python
+  class SteelCarbonCalculator:
+      ROUTE_FACTORS = {
+          "BF-BOF": 2.0,
+          "BF-BOF-CCS": 1.0,
+          "Scrap-EAF-grid": 0.5,
+          "Scrap-EAF-renewable": 0.2,
+          "H-DRI-EAF-green": 0.1,
+      }
+
+      def calculate_vehicle_steel_footprint(self, bom: list) -> dict:
+          """Calculate total steel carbon footprint for a vehicle BOM."""
+          total_co2_kg = 0.0
+          breakdown = []
+          for part in bom:
+              if part["material_family"] != "steel":
+                  continue
+              route = part.get("production_route", "BF-BOF")
+              co2_kg = part["weight_kg"] * self.ROUTE_FACTORS[route]
+              total_co2_kg += co2_kg
+              breakdown.append({
+                  "part": part["name"],
+                  "weight_kg": part["weight_kg"],
+                  "grade": part["grade"],
+                  "route": route,
+                  "co2_kg": round(co2_kg, 1),
+              })
+          total_weight = sum(p["weight_kg"] for p in breakdown)
+          return {
+              "total_steel_weight_kg": total_weight,
+              "total_co2_kg": round(total_co2_kg, 1),
+              "avg_intensity": round(total_co2_kg / max(1, total_weight), 3),
+              "breakdown": breakdown,
+          }
+  ```
+
+  ### Step 2 - Green Steel Supplier Qualification
+  Qualify green steel grades against full automotive mechanical specifications.
+
+  ```python
+  class GreenSteelQualification:
+      REQUIRED_TESTS = [
+          "tensile_properties",
+          "chemical_composition",
+          "surface_roughness",
+          "coating_weight",
+          "formability_erichsen",
+          "bake_hardening_bh2",
+          "weldability_spot_weld_range",
+          "crash_test_component_level",
+      ]
+
+      def run_qualification(self, supplier_samples: dict) -> dict:
+          """Qualify green steel against automotive specification."""
+          results = {}
+          for test in self.REQUIRED_TESTS:
+              measured = supplier_samples[test]
+              spec = self._get_specification(test, supplier_samples["grade"])
+              results[test] = {
+                  "measured": measured,
+                  "specification": spec,
+                  "pass": spec["min"] <= measured["value"] <= spec["max"],
+              }
+          all_passed = all(r["pass"] for r in results.values())
+          return {
+              "supplier": supplier_samples["supplier"],
+              "grade": supplier_samples["grade"],
+              "co2_intensity": supplier_samples["co2_t_per_t"],
+              "status": "approved" if all_passed else "conditional",
+              "test_results": results,
+          }
+  ```
+
+  ### Step 3 - CBAM Impact Analysis
+  Calculate carbon border adjustment costs for steel imports into the EU.
+
+  ```
+  CBAM Calculation:
+    Charge = (embedded emissions - free allocation) x EU ETS carbon price
+
+  Example comparison at EUR 80 per tonne CO2:
+    BF-BOF steel from Turkey: 2.0 t CO2/t x EUR 80 = EUR 160/t surcharge
+    H-DRI steel from Sweden:  0.1 t CO2/t x EUR 80 = EUR 8/t surcharge
+    Delta: EUR 152/t making green steel cost-competitive under CBAM
+  ```
+
+  ### Step 4 - Green Steel Adoption Roadmap
+  Phase the transition starting with less critical parts and advancing to crash
+  structures as qualification and supply capacity mature:
+
+  ```
+  Phase 1 (2024-2025): 10% green steel in non-structural applications
+  Phase 2 (2026-2027): 30% green steel with structural parts qualified
+  Phase 3 (2028-2030): 60% green steel including crash-critical parts
+  Phase 4 (2030+):     100% green steel across full vehicle BOM
+  ```
+
+  ## Best Practices
+  - Engage with steelmakers early as green steel capacity is constrained through 2030
+  - Sign long-term offtake agreements of 5-10 years to secure supply
+  - Require ResponsibleSteel certification or equivalent third-party verification
+  - Test every new green steel heat against full automotive specification before approval
+  - Monitor hydrogen DRI steel for different residual element profiles versus conventional
+  - Account for CBAM when comparing sourcing options for EU-destined vehicles
+  - Start transition with brackets and reinforcements then advance to crash parts
+  - Track green steel premium cost versus carbon credit value for business case
+
+  ## Troubleshooting
+  - Green steel surface quality differs from conventional: Adjust pickling and skin
+    pass parameters to account for different oxide scale characteristics
+  - Weldability variation with H-DRI steel: Check residual copper and tin levels that
+    may differ from blast furnace route due to scrap mix in EAF
+  - Limited availability of green press-hardened grades: Collaborate directly with
+    steelmaker on development timeline and share qualification requirements early
+  - Cost premium makes business case difficult: Include CBAM savings, carbon credit
+    value, and customer willingness-to-pay for sustainability in total cost analysis
+  - Chain of custody verification is complex: Accept mass balance approach with annual
+    third-party audit rather than requiring physical segregation
+  - Forming simulation parameters need updating: Run new forming limit curves and
+    bake hardening response tests for each green steel heat

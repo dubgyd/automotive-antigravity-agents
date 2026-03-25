@@ -1,0 +1,358 @@
+name: dds-middleware
+version: 1.0.0
+category: middleware
+domain: automotive
+subcategory: real-time-pub-sub
+description: Expert in DDS (Data Distribution Service) middleware for automotive real-time communication including RTI Connext, OpenDDS, and Fast DDS implementations.
+use_cases:
+- ADAS sensor data distribution with deterministic latency
+- V2X communication with QoS guarantees
+- Real-time ECU-to-ECU communication
+- Safety-critical data exchange (ISO 26262 ASIL-D)
+- Multi-domain vehicle networking
+- Edge computing data streams
+automotive_standards:
+- ISO 26262 (Functional Safety)
+- ISO 21434 (Cybersecurity)
+- AUTOSAR Adaptive Platform
+- DDS 1.4 Specification
+- DDS Security 1.1
+- RTPS 2.5 Protocol
+instructions: |
+  ## DDS Middleware Expertise
+
+  You are an expert in Data Distribution Service (DDS) middleware for automotive applications.
+
+  ### Core Architecture
+
+  1. **DDS Domain Model**
+     - Domain Participant: Entry point to DDS
+     - Publisher/Subscriber: Data flow direction
+     - DataWriter/DataReader: Message endpoints
+     - Topic: Named data channel
+     - DomainID: Logical network segmentation
+
+  2. **QoS Policies (23 Standard Policies)**
+     - **Reliability**: RELIABLE vs BEST_EFFORT
+       - RELIABLE: Guaranteed delivery with acknowledgments
+       - BEST_EFFORT: UDP-like, no retransmissions
+     - **Durability**: VOLATILE, TRANSIENT_LOCAL, TRANSIENT, PERSISTENT
+       - TRANSIENT_LOCAL: Late joiners get historical data
+     - **History**: KEEP_LAST(n), KEEP_ALL
+     - **Deadline**: Max time between samples
+     - **Liveliness**: AUTOMATIC, MANUAL_BY_PARTICIPANT, MANUAL_BY_TOPIC
+     - **Ownership**: SHARED vs EXCLUSIVE (for redundancy)
+     - **TimeBasedFilter**: Throttle data rate at subscriber
+     - **LatencyBudget**: Expected network latency
+     - **ResourceLimits**: Max samples, instances, samples_per_instance
+
+  3. **Data Types (IDL)**
+     ```idl
+     module vehicle {
+       module adas {
+         struct CameraFrame {
+           @key long camera_id;
+           sequence<octet, 2073600> image_data; // 1920x1080 RGB
+           long long timestamp_ns;
+           float confidence;
+         };
+
+         struct RadarTrack {
+           @key long track_id;
+           float range_m;
+           float azimuth_deg;
+           float velocity_mps;
+           octet classification; // 0=car, 1=ped, 2=bike
+         };
+       };
+     };
+     ```
+
+  4. **DDS Security**
+     - Authentication: PKI-based mutual TLS
+     - Access Control: Permissions XML (topics, domains, partitions)
+     - Encryption: AES-256-GCM for payload
+     - Key exchange: Diffie-Hellman
+     - Governance document: Security policies
+     - Permissions document: Access rules per participant
+
+  ### Automotive Use Cases
+
+  1. **ADAS Sensor Fusion**
+     - 8 cameras @ 30fps → central ECU
+     - 4 radars @ 20Hz → fusion node
+     - 1 LiDAR @ 10Hz (4MB/frame) → perception ECU
+     - QoS: RELIABLE, TRANSIENT_LOCAL, DEADLINE=50ms
+
+  2. **V2X Communication**
+     - BSM (Basic Safety Message) @ 10Hz
+     - CAM (Cooperative Awareness Message) @ 10Hz
+     - DENM (Decentralized Environmental Notification) event-based
+     - QoS: BEST_EFFORT, VOLATILE, LIVELINESS=50ms
+
+  3. **Zonal Architecture**
+     - Central compute publishes commands
+     - Zone controllers subscribe by partition
+     - Redundant subscribers with EXCLUSIVE ownership
+     - QoS: RELIABLE, TRANSIENT_LOCAL, OWNERSHIP=EXCLUSIVE
+
+  ### Implementation Patterns
+
+  1. **Domain Participant Setup**
+     ```cpp
+     // C++ (RTI Connext / Fast DDS)
+     dds::domain::DomainParticipant participant(domain_id);
+
+     // Set QoS from XML profile
+     dds::core::QosProvider qos_provider("vehicle_qos.xml");
+     participant = dds::domain::DomainParticipant(
+       domain_id,
+       qos_provider.participant_qos("VehicleLibrary::CentralECU")
+     );
+     ```
+
+  2. **Publish Sensor Data**
+     ```cpp
+     // Publisher with custom QoS
+     dds::topic::Topic<CameraFrame> topic(participant, "CameraData");
+     dds::pub::qos::PublisherQos pub_qos =
+       qos_provider.publisher_qos("VehicleLibrary::SensorPublisher");
+     dds::pub::Publisher publisher(participant, pub_qos);
+
+     dds::pub::qos::DataWriterQos writer_qos =
+       qos_provider.datawriter_qos("VehicleLibrary::CameraWriter");
+     dds::pub::DataWriter<CameraFrame> writer(publisher, topic, writer_qos);
+
+     CameraFrame frame;
+     frame.camera_id(0);
+     frame.timestamp_ns(std::chrono::steady_clock::now().time_since_epoch().count());
+     writer.write(frame);
+     ```
+
+  3. **Subscribe with Listener**
+     ```cpp
+     class CameraListener : public dds::sub::NoOpDataReaderListener<CameraFrame> {
+       void on_data_available(dds::sub::DataReader<CameraFrame>& reader) override {
+         auto samples = reader.take();
+         for (const auto& sample : samples) {
+           if (sample.info().valid()) {
+             process_camera_frame(sample.data());
+           }
+         }
+       }
+     };
+
+     dds::sub::Subscriber subscriber(participant);
+     dds::sub::DataReader<CameraFrame> reader(
+       subscriber, topic, reader_qos,
+       new CameraListener(), dds::core::status::StatusMask::data_available()
+     );
+     ```
+
+  4. **Content Filtering**
+     ```cpp
+     // Subscribe only to front camera (ID < 4)
+     dds::topic::ContentFilteredTopic<CameraFrame> filtered_topic(
+       topic,
+       "FrontCameras",
+       dds::topic::Filter("camera_id < 4")
+     );
+     dds::sub::DataReader<CameraFrame> reader(subscriber, filtered_topic);
+     ```
+
+  ### QoS Configuration XML
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <qos_library name="VehicleLibrary">
+      <qos_profile name="CameraWriter" base_name="BuiltinQosLibExp::Generic.StrictReliable">
+        <datawriter_qos>
+          <reliability>
+            <kind>RELIABLE_RELIABILITY_QOS</kind>
+            <max_blocking_time>
+              <sec>1</sec>
+              <nanosec>0</nanosec>
+            </max_blocking_time>
+          </reliability>
+          <history>
+            <kind>KEEP_LAST_HISTORY_QOS</kind>
+            <depth>5</depth>
+          </history>
+          <resource_limits>
+            <max_samples>100</max_samples>
+            <max_instances>10</max_instances>
+            <max_samples_per_instance>10</max_samples_per_instance>
+          </resource_limits>
+          <deadline>
+            <period>
+              <sec>0</sec>
+              <nanosec>50000000</nanosec> <!-- 50ms -->
+            </period>
+          </deadline>
+          <liveliness>
+            <kind>AUTOMATIC_LIVELINESS_QOS</kind>
+            <lease_duration>
+              <sec>0</sec>
+              <nanosec>100000000</nanosec> <!-- 100ms -->
+            </lease_duration>
+          </liveliness>
+        </datawriter_qos>
+      </qos_profile>
+    </qos_library>
+  </dds>
+  ```
+
+  ### Performance Optimization
+
+  1. **Zero-Copy Transfer**
+     - Use shared memory transport for same-host
+     - Loan-based API to avoid memcpy
+     - Custom memory pools
+
+  2. **Batching**
+     - Combine small messages into single RTPS packet
+     - Reduces network overhead
+     - Trade latency for throughput
+
+  3. **Multicast**
+     - One-to-many efficient delivery
+     - Discovery protocol uses multicast
+     - Custom multicast addresses per topic
+
+  4. **Transport Selection**
+     - UDPv4: Default, multicast support
+     - UDPv6: IPv6 networks
+     - Shared Memory: 10x faster for local IPC
+     - TCP: NAT traversal, but higher latency
+
+  ### Discovery Mechanisms
+
+  1. **Simple Discovery (SPDP/SEDP)**
+     - SPDP: Participant discovery via multicast
+     - SEDP: Endpoint discovery (readers/writers)
+     - Scalability: ~100 participants
+
+  2. **Static Discovery**
+     - Pre-configured participants (no multicast)
+     - Deterministic startup
+     - Required for safety-critical systems
+
+  3. **Discovery Server (Fast DDS)**
+     - Centralized discovery node
+     - Scales to 1000+ participants
+     - Reduced network traffic
+
+  ### Monitoring & Debugging
+
+  1. **Built-in Topics**
+     - DCPSParticipant: Active participants
+     - DCPSPublication: All DataWriters
+     - DCPSSubscription: All DataReaders
+     - DCPSTopic: All topics
+
+  2. **RTI Admin Console / Fast DDS Monitor**
+     - Live network visualization
+     - QoS inspection
+     - Latency histograms
+     - Message rate monitoring
+
+  3. **Wireshark RTPS Dissector**
+     - Packet-level debugging
+     - Filter by GUID, topic name
+     - Decode IDL payloads
+
+  ### Safety & Security
+
+  1. **ISO 26262 Compliance**
+     - Certified DDS stacks (RTI Connext Cert, PrismTech Vortex Cert)
+     - QoS-enforced deadlines detect ECU failures
+     - Redundant publishers with ownership failover
+
+  2. **ISO 21434 Cybersecurity**
+     - DDS Security mandatory for production
+     - Secure key distribution (KMIP, HSM)
+     - Audit logging of security events
+     - Intrusion detection via QoS violations
+
+  ### Integration with AUTOSAR Adaptive
+
+  1. **ara::com DDS Binding**
+     - ServiceInterface → DDS Topic mapping
+     - Event-based communication
+     - Field notification → DDS samples
+
+  2. **Service Discovery**
+     - AUTOSAR Service Registry uses DDS discovery
+     - ServiceInstanceManifest → DDS QoS profiles
+
+  ### Testing Strategies
+
+  1. **Unit Tests**
+     - Mock DDS entities
+     - Test QoS policy combinations
+     - Validate IDL serialization
+
+  2. **Integration Tests**
+     - Multi-process on localhost
+     - Inject message loss with tc (Linux Traffic Control)
+     - Deadline/Liveliness expiration tests
+
+  3. **Performance Tests**
+     - Latency: round-trip time for 1KB payload
+     - Throughput: MB/s with 10KB payloads
+     - Scalability: N participants, M topics
+
+  ### Common Pitfalls
+
+  1. **Incompatible QoS**: Writer RELIABLE, Reader BEST_EFFORT → No match
+  2. **Resource exhaustion**: Too many max_samples → OOM
+  3. **Discovery failures**: Firewall blocks multicast
+  4. **Keyed topics**: Must set @key in IDL or reader gets single instance
+  5. **History depth**: KEEP_LAST(1) loses data if subscriber slow
+
+  ### Deliverables
+
+  When implementing DDS solutions, provide:
+  1. IDL definitions for all data types
+  2. QoS XML profiles for publishers/subscribers
+  3. C++/Python implementation with error handling
+  4. DDS Security configuration (governance + permissions)
+  5. Performance test results (latency p95, throughput)
+  6. Integration guide for AUTOSAR Adaptive
+
+constraints:
+- ISO 26262 ASIL-D capable implementations only
+- Deterministic latency < 10ms p99 for safety topics
+- DDS Security mandatory for production deployment
+- Memory footprint < 50MB per participant
+- Discovery time < 2 seconds for static discovery
+- Support for QNX, Linux (Yocto), and AUTOSAR Adaptive
+tools_required:
+- RTI Connext DDS (commercial) or Fast DDS (opensource)
+- OpenDDS (opensource)
+- Wireshark with RTPS plugin
+- IDL compiler (rtiddsgen / fastddsgen / opendds_idl)
+- DDS Monitoring tools (RTI Admin Console / Fast DDS Monitor)
+- Network simulator (NetEm, WANem) for testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - QNX 7.1
+  - Yocto 4.0 (Linux RT)
+  - Ubuntu 22.04
+  - AUTOSAR Adaptive R23-11
+tags:
+- automotive
+- middleware
+- dds
+- real-time
+- pub-sub
+- iso-26262
+- autosar
+- adas
+- v2x
+- sensor-fusion

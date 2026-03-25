@@ -1,0 +1,989 @@
+name: virtual-ethernet
+version: 1.0.0
+category: network
+tags: [veth, virtual-network, namespace, bridge, testing, automotive]
+description: |
+  Comprehensive virtual Ethernet networking skills for automotive HIL/SIL testing.
+  Covers veth pairs, network namespaces, bridges, VLANs, and traffic shaping.
+
+instructions: |
+  ## Virtual Ethernet Networking for Automotive Testing
+
+  ### Overview
+
+  Virtual Ethernet (veth) interfaces and Linux network namespaces enable software-
+  defined networking for automotive HIL (Hardware-in-the-Loop) and SIL (Software-
+  in-the-Loop) testing. They allow simulating multi-ECU Ethernet topologies on a
+  single host without physical hardware, supporting protocols like SOME/IP, DoIP,
+  and Automotive Ethernet (100BASE-T1, 1000BASE-T1).
+
+  ### Architecture
+
+  ```
+  ┌─────────────────────────────────────────────────────────┐
+  │                    Host Machine                          │
+  │                                                         │
+  │  ┌──────────┐     ┌──────────┐     ┌──────────┐        │
+  │  │ NS: ECU1 │     │ NS: ECU2 │     │ NS: ECU3 │        │
+  │  │ veth-e1  │     │ veth-e2  │     │ veth-e3  │        │
+  │  └────┬─────┘     └────┬─────┘     └────┬─────┘        │
+  │       │                │                │               │
+  │  ┌────┴────┐     ┌────┴────┐     ┌────┴────┐          │
+  │  │ br-v1   │     │ br-v2   │     │ br-v3   │          │
+  │  └────┬────┘     └────┬────┘     └────┬────┘          │
+  │       └────────────┬───┘───────────────┘               │
+  │              ┌─────┴─────┐                              │
+  │              │ br-switch │  (Linux bridge = L2 switch)  │
+  │              └───────────┘                              │
+  └─────────────────────────────────────────────────────────┘
+  ```
+
+  ### Key Concepts
+
+  | Concept | Linux Tool | Purpose |
+  |---------|-----------|---------|
+  | veth pair | `ip link add type veth` | Point-to-point virtual cable |
+  | Network namespace | `ip netns add` | Isolated network stack per ECU |
+  | Bridge | `ip link add type bridge` | L2 switch connecting veth endpoints |
+  | VLAN | `ip link add type vlan` | Network segmentation (powertrain, chassis) |
+  | Traffic control | `tc qdisc add netem` | Latency, loss, bandwidth simulation |
+  | TAP interface | `ip tuntap add mode tap` | Userspace networking (QEMU VMs) |
+  | MACVLAN | `ip link add type macvlan` | Multiple MACs on one physical NIC |
+  | VXLAN | `ip link add type vxlan` | Overlay network across physical hosts |
+
+  ### Automotive Network Domains
+
+  Typical automotive Ethernet topology uses VLANs or separate bridges to isolate
+  safety-critical traffic from non-critical:
+
+  ```
+  VLAN 10: Powertrain (ASIL-D) — Engine ECU, Transmission ECU
+  VLAN 20: Chassis (ASIL-C)    — ABS, ESC, EPS
+  VLAN 30: ADAS (ASIL-B)       — Camera ECU, Radar ECU, Fusion ECU
+  VLAN 40: Body (QM)           — BCM, Seat Control, Lights
+  VLAN 50: Infotainment (QM)   — HU, Telematics, Connectivity
+  VLAN 99: Diagnostics         — DoIP gateway, OBD access
+  ```
+
+  ### Traffic Shaping for Realistic Testing
+
+  Use `tc netem` to simulate real-world network conditions:
+
+  ```bash
+  # Automotive Ethernet (100BASE-T1): low latency, minimal loss
+  tc qdisc add dev veth-ecu root netem delay 0.5ms 0.1ms rate 100mbit
+
+  # Wireless link (V2X / telematics): variable latency, packet loss
+  tc qdisc add dev veth-tcu root netem delay 50ms 20ms loss 2% rate 10mbit
+
+  # Congested backbone: high utilization effects
+  tc qdisc add dev veth-gw root netem delay 2ms 1ms loss 0.1% rate 1gbit
+  ```
+
+  ### SOME/IP Service Discovery
+
+  SOME/IP-SD uses multicast (default 224.244.224.245:30490). Virtual networks
+  must enable multicast on bridges and configure IGMP snooping:
+
+  ```bash
+  ip link set br-someip multicast on
+  ip route add 224.0.0.0/4 dev br-someip
+  echo 1 > /sys/class/net/br-someip/bridge/multicast_snooping
+  ```
+
+  ### Performance Considerations
+
+  - veth pairs add ~2-5 microseconds of latency per hop
+  - Bridges add ~5-10 microseconds of forwarding latency
+  - Network namespaces have negligible overhead (kernel data structure only)
+  - For high-throughput testing, consider XDP/eBPF instead of tc for filtering
+  - Jumbo frames (MTU 9000) improve throughput for large transfers but all
+    devices in the path must support the same MTU
+
+  ### Integration with Container Runtimes
+
+  Docker and Podman use veth pairs and bridges internally. For automotive
+  testing, custom Docker networks provide isolation between ECU containers:
+
+  ```bash
+  docker network create --subnet 172.20.0.0/16 can-domain
+  docker network create --subnet 192.168.0.0/16 eth-domain
+  ```
+
+  A gateway ECU container can be attached to multiple networks to simulate
+  the central gateway routing between domains.
+
+  ### Best Practices
+
+  - Document IP address allocation schemes for reproducibility
+  - Use consistent naming (veth-ecu1, br-powertrain, ns-gateway)
+  - Always clean up virtual interfaces after test sessions
+  - Use traffic shaping to match real automotive Ethernet conditions
+  - Combine virtual Ethernet with virtual CAN (vcan) for full-stack testing
+  - Capture with tcpdump/Wireshark for protocol validation
+  - Use network namespaces for process isolation rather than just IP separation
+  - Monitor resource usage; large numbers of namespaces consume kernel memory
+
+skills:
+  - name: create-veth-pair
+    description: Create a virtual Ethernet pair for point-to-point connection
+    usage: |
+      # Basic veth pair creation
+      ip link add veth0 type veth peer name veth1
+
+      # Bring interfaces up
+      ip link set veth0 up
+      ip link set veth1 up
+
+      # Assign IP addresses
+      ip addr add 192.168.100.1/24 dev veth0
+      ip addr add 192.168.100.2/24 dev veth1
+
+      # Verify connectivity
+      ping -c 3 192.168.100.2
+    example: |
+      # Create veth pair for ECU simulation
+      ip link add ecu1-eth type veth peer name host-ecu1
+      ip link set ecu1-eth up
+      ip link set host-ecu1 up
+      ip addr add 172.16.1.10/24 dev ecu1-eth
+      ip addr add 172.16.1.1/24 dev host-ecu1
+    notes:
+      - veth pairs are always created as a pair
+      - One end can be moved to a different network namespace
+      - Useful for Docker/container networking
+      - MTU must match on both ends
+
+  - name: create-network-namespace
+    description: Create isolated network namespace for ECU simulation
+    usage: |
+      # Create namespace
+      ip netns add ecu1
+
+      # List namespaces
+      ip netns list
+
+      # Execute command in namespace
+      ip netns exec ecu1 ip addr show
+
+      # Delete namespace
+      ip netns delete ecu1
+    example: |
+      # Create namespace for gateway ECU
+      ip netns add gateway-ecu
+
+      # Create veth pair and move one end to namespace
+      ip link add veth-gw type veth peer name veth-host
+      ip link set veth-gw netns gateway-ecu
+
+      # Configure interface in namespace
+      ip netns exec gateway-ecu ip addr add 192.168.50.1/24 dev veth-gw
+      ip netns exec gateway-ecu ip link set veth-gw up
+      ip netns exec gateway-ecu ip link set lo up
+
+      # Configure host side
+      ip addr add 192.168.50.10/24 dev veth-host
+      ip link set veth-host up
+
+      # Test from namespace
+      ip netns exec gateway-ecu ping -c 3 192.168.50.10
+    notes:
+      - Each namespace has its own routing table
+      - Loopback interface must be enabled manually
+      - Processes can be run in namespace with 'ip netns exec'
+      - Useful for multi-ECU simulation
+
+  - name: assign-veth-to-namespace
+    description: Move veth interface to network namespace
+    usage: |
+      # Create veth pair
+      ip link add veth0 type veth peer name veth1
+
+      # Create namespace
+      ip netns add myns
+
+      # Move veth1 to namespace
+      ip link set veth1 netns myns
+
+      # Configure in namespace
+      ip netns exec myns ip addr add 10.0.0.2/24 dev veth1
+      ip netns exec myns ip link set veth1 up
+      ip netns exec myns ip link set lo up
+
+      # Configure host side
+      ip addr add 10.0.0.1/24 dev veth0
+      ip link set veth0 up
+    example: |
+      # Multi-ECU setup: 3 ECUs in separate namespaces
+      for i in 1 2 3; do
+        ip netns add ecu$i
+        ip link add veth-ecu$i type veth peer name veth-host$i
+        ip link set veth-ecu$i netns ecu$i
+        ip netns exec ecu$i ip addr add 192.168.100.$((10+i))/24 dev veth-ecu$i
+        ip netns exec ecu$i ip link set veth-ecu$i up
+        ip netns exec ecu$i ip link set lo up
+        ip addr add 192.168.100.$i/24 dev veth-host$i
+        ip link set veth-host$i up
+      done
+    notes:
+      - Interface disappears from default namespace after move
+      - Cannot move interface back directly (delete and recreate)
+      - Namespace must exist before moving interface
+
+  - name: create-bridge-network
+    description: Create bridge for connecting multiple virtual ECUs
+    usage: |
+      # Create bridge
+      ip link add br-ecu type bridge
+      ip link set br-ecu up
+      ip addr add 192.168.200.1/24 dev br-ecu
+
+      # Create veth pairs for ECUs
+      ip link add veth-ecu1 type veth peer name br-veth1
+      ip link add veth-ecu2 type veth peer name br-veth2
+
+      # Attach to bridge
+      ip link set br-veth1 master br-ecu
+      ip link set br-veth2 master br-ecu
+      ip link set br-veth1 up
+      ip link set br-veth2 up
+
+      # Configure ECU sides
+      ip addr add 192.168.200.11/24 dev veth-ecu1
+      ip addr add 192.168.200.12/24 dev veth-ecu2
+      ip link set veth-ecu1 up
+      ip link set veth-ecu2 up
+    example: |
+      # Gateway ECU connecting CAN and Ethernet domains
+      ip link add br-automotive type bridge
+      ip link set br-automotive up
+      ip addr add 172.20.0.1/16 dev br-automotive
+
+      # Connect 3 ECUs to bridge
+      for i in 1 2 3; do
+        ip link add veth-ecu$i type veth peer name br-veth$i
+        ip link set br-veth$i master br-automotive
+        ip link set br-veth$i up
+        ip addr add 172.20.0.$((10+i))/16 dev veth-ecu$i
+        ip link set veth-ecu$i up
+      done
+    notes:
+      - Bridge acts like a network switch
+      - All connected devices can communicate
+      - Bridge can have its own IP address
+      - STP can be enabled for loop prevention
+
+  - name: configure-vlan-tagging
+    description: Configure VLAN tagging on virtual interfaces
+    usage: |
+      # Create veth pair
+      ip link add veth0 type veth peer name veth1
+      ip link set veth0 up
+      ip link set veth1 up
+
+      # Create VLAN interface on veth0
+      ip link add link veth0 name veth0.100 type vlan id 100
+      ip link set veth0.100 up
+      ip addr add 192.168.100.1/24 dev veth0.100
+
+      # Create VLAN interface on veth1
+      ip link add link veth1 name veth1.100 type vlan id 100
+      ip link set veth1.100 up
+      ip addr add 192.168.100.2/24 dev veth1.100
+    example: |
+      # Multiple VLANs for different automotive domains
+      # VLAN 10: Powertrain, VLAN 20: Chassis, VLAN 30: Infotainment
+
+      ip link add trunk-host type veth peer name trunk-switch
+      ip link set trunk-host up
+      ip link set trunk-switch up
+
+      for vlan in 10 20 30; do
+        ip link add link trunk-host name trunk-host.$vlan type vlan id $vlan
+        ip link set trunk-host.$vlan up
+        ip addr add 192.168.$vlan.1/24 dev trunk-host.$vlan
+      done
+    notes:
+      - VLAN IDs range from 1 to 4094
+      - Parent interface must be up
+      - Useful for network segmentation
+      - Required for SOME/IP service discovery
+
+  - name: setup-routing-between-namespaces
+    description: Configure routing between network namespaces
+    usage: |
+      # Create two namespaces
+      ip netns add ns1
+      ip netns add ns2
+
+      # Create veth pairs
+      ip link add veth1 type veth peer name veth1-br
+      ip link add veth2 type veth peer name veth2-br
+
+      # Move to namespaces
+      ip link set veth1 netns ns1
+      ip link set veth2 netns ns2
+
+      # Create bridge
+      ip link add br0 type bridge
+      ip link set br0 up
+      ip link set veth1-br master br0
+      ip link set veth2-br master br0
+      ip link set veth1-br up
+      ip link set veth2-br up
+
+      # Configure namespace interfaces
+      ip netns exec ns1 ip addr add 10.0.1.10/24 dev veth1
+      ip netns exec ns1 ip link set veth1 up
+      ip netns exec ns1 ip route add default via 10.0.1.1
+
+      ip netns exec ns2 ip addr add 10.0.2.10/24 dev veth2
+      ip netns exec ns2 ip link set veth2 up
+      ip netns exec ns2 ip route add default via 10.0.2.1
+    example: |
+      # Gateway ECU routing between CAN and Ethernet domains
+      ip netns add can-domain
+      ip netns add eth-domain
+
+      # Create gateway namespace
+      ip netns add gateway
+
+      # Connect can-domain to gateway
+      ip link add veth-can type veth peer name veth-can-gw
+      ip link set veth-can netns can-domain
+      ip link set veth-can-gw netns gateway
+
+      # Connect eth-domain to gateway
+      ip link add veth-eth type veth peer name veth-eth-gw
+      ip link set veth-eth netns eth-domain
+      ip link set veth-eth-gw netns gateway
+
+      # Configure gateway routing
+      ip netns exec gateway ip addr add 10.0.1.1/24 dev veth-can-gw
+      ip netns exec gateway ip addr add 10.0.2.1/24 dev veth-eth-gw
+      ip netns exec gateway ip link set veth-can-gw up
+      ip netns exec gateway ip link set veth-eth-gw up
+      ip netns exec gateway sysctl -w net.ipv4.ip_forward=1
+    notes:
+      - Enable IP forwarding in gateway namespace
+      - Routing tables are per-namespace
+      - Can use iptables for NAT/firewall
+
+  - name: configure-traffic-shaping
+    description: Apply traffic control for network simulation
+    usage: |
+      # Add latency to interface
+      tc qdisc add dev veth0 root netem delay 10ms
+
+      # Add packet loss
+      tc qdisc add dev veth0 root netem loss 2%
+
+      # Add bandwidth limit
+      tc qdisc add dev veth0 root tbf rate 100mbit burst 32kbit latency 400ms
+
+      # Combine effects
+      tc qdisc add dev veth0 root netem delay 10ms loss 1% rate 100mbit
+
+      # Show configuration
+      tc qdisc show dev veth0
+
+      # Remove traffic control
+      tc qdisc del dev veth0 root
+    example: |
+      # Simulate real automotive network conditions
+      # 100Mbit/s Ethernet with 1ms latency and 0.1% packet loss
+
+      ip link add veth-ecu type veth peer name veth-host
+      ip link set veth-ecu up
+      ip link set veth-host up
+
+      tc qdisc add dev veth-ecu root netem \
+        delay 1ms \
+        loss 0.1% \
+        rate 100mbit
+
+      # Simulate worse conditions (wireless link)
+      tc qdisc add dev veth-host root netem \
+        delay 50ms 10ms distribution normal \
+        loss 5% 25% \
+        rate 10mbit
+    notes:
+      - netem = Network Emulator
+      - Can simulate latency, jitter, loss, duplication
+      - Useful for robustness testing
+      - Requires tc (traffic control) utility
+
+  - name: setup-tap-interface
+    description: Create TAP interface for userspace networking
+    usage: |
+      # Create TAP interface
+      ip tuntap add dev tap0 mode tap
+      ip link set tap0 up
+      ip addr add 192.168.150.1/24 dev tap0
+
+      # Delete TAP interface
+      ip tuntap del dev tap0 mode tap
+    example: |
+      # TAP interface for QEMU VM networking
+      ip tuntap add dev tap-qemu0 mode tap user $USER
+      ip link set tap-qemu0 up
+
+      # Add to bridge for VM connectivity
+      ip link add br-vm type bridge
+      ip link set br-vm up
+      ip link set tap-qemu0 master br-vm
+      ip addr add 192.168.122.1/24 dev br-vm
+
+      # Start QEMU with TAP interface
+      qemu-system-x86_64 \
+        -netdev tap,id=net0,ifname=tap-qemu0,script=no,downscript=no \
+        -device e1000,netdev=net0 \
+        ...
+    notes:
+      - TAP = Layer 2 (Ethernet frame) interface
+      - TUN = Layer 3 (IP packet) interface
+      - Used for VM and container networking
+      - Requires appropriate permissions
+
+  - name: setup-macvlan
+    description: Create MACVLAN interfaces for multiple MAC addresses
+    usage: |
+      # Create MACVLAN interface
+      ip link add link eth0 name macvlan0 type macvlan mode bridge
+      ip link set macvlan0 up
+      ip addr add 192.168.1.100/24 dev macvlan0
+
+      # MACVLAN modes:
+      # - private: no communication between macvlans
+      # - vepa: hairpin mode via external switch
+      # - bridge: local bridge between macvlans
+      # - passthru: one macvlan takes over physical interface
+    example: |
+      # Multiple ECU IP addresses on single physical interface
+      for i in 1 2 3; do
+        ip link add link eth0 name ecu$i type macvlan mode bridge
+        ip link set ecu$i up
+        ip addr add 192.168.1.$((100+i))/24 dev ecu$i
+      done
+    notes:
+      - Each MACVLAN has unique MAC address
+      - Useful for multi-tenant scenarios
+      - Parent interface must support multiple MACs
+      - Better performance than bridge for some use cases
+
+  - name: configure-port-mirroring
+    description: Mirror traffic for debugging and analysis
+    usage: |
+      # Create veth pair for monitoring
+      ip link add veth-src type veth peer name veth-monitor
+      ip link set veth-src up
+      ip link set veth-monitor up
+
+      # Add to bridge
+      ip link add br0 type bridge
+      ip link set br0 up
+      ip link set veth-src master br0
+
+      # Use tc mirred for port mirroring
+      tc qdisc add dev veth-src ingress
+      tc filter add dev veth-src parent ffff: \
+        protocol all u32 match u32 0 0 \
+        action mirred egress mirror dev veth-monitor
+
+      # Capture mirrored traffic
+      tcpdump -i veth-monitor -w capture.pcap
+    example: |
+      # Mirror all traffic between two ECUs to analyzer interface
+      ip link add br-ecu type bridge
+      ip link add veth-ecu1 type veth peer name br-veth1
+      ip link add veth-ecu2 type veth peer name br-veth2
+      ip link add veth-monitor type veth peer name monitor-cap
+
+      ip link set br-ecu up
+      ip link set br-veth1 master br-ecu
+      ip link set br-veth2 master br-ecu
+      ip link set br-veth1 up
+      ip link set br-veth2 up
+      ip link set veth-monitor up
+      ip link set monitor-cap up
+
+      # Mirror traffic from bridge
+      tc qdisc add dev br-ecu ingress
+      tc filter add dev br-ecu parent ffff: \
+        protocol all u32 match u32 0 0 \
+        action mirred egress mirror dev veth-monitor
+    notes:
+      - Uses tc (traffic control) mirred action
+      - Can mirror ingress and/or egress traffic
+      - Useful for protocol analysis
+      - Wireshark can capture on mirror interface
+
+  - name: setup-multicast-routing
+    description: Configure multicast routing for SOME/IP service discovery
+    usage: |
+      # Enable multicast on interface
+      ip link set veth0 multicast on
+
+      # Add multicast route
+      ip route add 224.0.0.0/4 dev veth0
+
+      # Join multicast group (application level)
+      # Python example:
+      # import socket
+      # import struct
+      # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+      # mreq = struct.pack("4sl", socket.inet_aton("224.244.224.245"), socket.INADDR_ANY)
+      # sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    example: |
+      # SOME/IP service discovery multicast setup
+      # Multicast address: 224.244.224.245:30490
+
+      ip link add br-someip type bridge
+      ip link set br-someip up
+      ip link set br-someip multicast on
+      ip addr add 192.168.220.1/24 dev br-someip
+
+      # Add multicast route
+      ip route add 224.0.0.0/4 dev br-someip
+
+      # Enable IGMP snooping
+      echo 1 > /sys/class/net/br-someip/bridge/multicast_snooping
+    notes:
+      - Multicast address range: 224.0.0.0 - 239.255.255.255
+      - SOME/IP SD uses 224.244.224.245
+      - IGMP snooping optimizes multicast on bridge
+      - Required for SOME/IP service discovery
+
+  - name: setup-jumbo-frames
+    description: Configure jumbo frames for high-performance testing
+    usage: |
+      # Set MTU to 9000 (jumbo frames)
+      ip link set veth0 mtu 9000
+
+      # Verify MTU
+      ip link show veth0 | grep mtu
+
+      # Test with large ping
+      ping -M do -s 8972 -c 3 192.168.1.2
+    example: |
+      # Configure jumbo frames on virtual network
+      ip link add veth-ecu type veth peer name veth-host
+      ip link set veth-ecu mtu 9000
+      ip link set veth-host mtu 9000
+      ip link set veth-ecu up
+      ip link set veth-host up
+
+      # Add to bridge with jumbo frame support
+      ip link add br-jumbo type bridge
+      ip link set br-jumbo mtu 9000
+      ip link set br-jumbo up
+    notes:
+      - Standard Ethernet MTU: 1500 bytes
+      - Jumbo frames: typically 9000 bytes
+      - All devices in path must support same MTU
+      - Improves throughput for large transfers
+
+  - name: configure-qos-priority
+    description: Configure Quality of Service priority queuing
+    usage: |
+      # Create priority queue
+      tc qdisc add dev veth0 root handle 1: prio bands 3
+
+      # Add filters for different priorities
+      tc filter add dev veth0 parent 1:0 protocol ip prio 1 u32 \
+        match ip sport 80 0xffff flowid 1:1
+
+      tc filter add dev veth0 parent 1:0 protocol ip prio 2 u32 \
+        match ip sport 443 0xffff flowid 1:2
+
+      # Show QoS configuration
+      tc -s qdisc show dev veth0
+      tc -s class show dev veth0
+    example: |
+      # Automotive QoS: High priority for safety, low for infotainment
+      ip link add veth-ecu type veth peer name veth-host
+      ip link set veth-ecu up
+      ip link set veth-host up
+
+      # Setup priority queueing
+      tc qdisc add dev veth-ecu root handle 1: prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
+
+      # High priority (band 0): ADAS/safety (port 13400)
+      tc filter add dev veth-ecu parent 1:0 protocol ip prio 1 u32 \
+        match ip dport 13400 0xffff flowid 1:1
+
+      # Medium priority (band 1): Diagnostics (port 13400)
+      tc filter add dev veth-ecu parent 1:0 protocol ip prio 2 u32 \
+        match ip dport 6801 0xffff flowid 1:2
+
+      # Low priority (band 2): Infotainment
+      tc filter add dev veth-ecu parent 1:0 protocol ip prio 3 u32 \
+        match ip dport 8080 0xffff flowid 1:3
+    notes:
+      - prio qdisc has multiple bands (queues)
+      - Lower band numbers = higher priority
+      - Can use DSCP/TOS bits for classification
+      - Essential for real-time automotive systems
+
+  - name: setup-network-monitoring
+    description: Monitor network traffic on virtual interfaces
+    usage: |
+      # Basic traffic monitoring
+      ip -s link show veth0
+
+      # Continuous monitoring
+      watch -n 1 'ip -s link show veth0'
+
+      # Detailed statistics
+      ethtool -S veth0
+
+      # Capture with tcpdump
+      tcpdump -i veth0 -w capture.pcap
+
+      # Real-time traffic analysis
+      tcpdump -i veth0 -n
+    example: |
+      # Monitor all virtual ECU interfaces
+      for iface in $(ip link show type veth | grep -o 'veth-ecu[0-9]'); do
+        echo "=== $iface ==="
+        ip -s link show $iface | grep -E 'RX|TX'
+      done
+
+      # Capture DoIP traffic on port 13400
+      tcpdump -i veth-ecu1 -n 'tcp port 13400' -w doip-capture.pcap
+
+      # Monitor SOME/IP service discovery
+      tcpdump -i br-someip -n 'udp port 30490 and dst 224.244.224.245' -v
+    notes:
+      - tcpdump requires appropriate permissions
+      - Wireshark can analyze .pcap files
+      - Consider using tshark for automation
+      - Monitor dropped packets for troubleshooting
+
+  - name: setup-network-isolation
+    description: Isolate network traffic using firewall rules
+    usage: |
+      # Block traffic between interfaces
+      iptables -A FORWARD -i veth0 -o veth1 -j DROP
+      iptables -A FORWARD -i veth1 -o veth0 -j DROP
+
+      # Allow specific ports
+      iptables -A FORWARD -i veth0 -o veth1 -p tcp --dport 13400 -j ACCEPT
+
+      # NAT configuration
+      iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
+
+      # List rules
+      iptables -L -v -n
+    example: |
+      # Isolate ECU domains with selective connectivity
+      # Allow gateway to communicate with all, but isolate ECUs from each other
+
+      # Enable forwarding
+      sysctl -w net.ipv4.ip_forward=1
+
+      # Drop inter-ECU traffic by default
+      iptables -P FORWARD DROP
+
+      # Allow ECU to gateway traffic
+      iptables -A FORWARD -s 192.168.100.0/24 -d 192.168.1.1 -j ACCEPT
+      iptables -A FORWARD -s 192.168.1.1 -d 192.168.100.0/24 -j ACCEPT
+
+      # Allow specific ECU-to-ECU communication (e.g., ADAS to camera)
+      iptables -A FORWARD -s 192.168.100.10 -d 192.168.100.20 -j ACCEPT
+      iptables -A FORWARD -s 192.168.100.20 -d 192.168.100.10 -j ACCEPT
+    notes:
+      - iptables rules are evaluated in order
+      - Use namespaces for better isolation
+      - Can use nftables as modern alternative
+      - Essential for security testing
+
+  - name: configure-link-aggregation
+    description: Setup bonding for link redundancy testing
+    usage: |
+      # Create bond interface
+      ip link add bond0 type bond mode active-backup
+      ip link set bond0 up
+
+      # Add veth pairs as slaves
+      ip link add veth0 type veth peer name veth0-peer
+      ip link add veth1 type veth peer name veth1-peer
+      ip link set veth0 master bond0
+      ip link set veth1 master bond0
+      ip link set veth0 up
+      ip link set veth1 up
+
+      # Configure bond IP
+      ip addr add 192.168.100.1/24 dev bond0
+    example: |
+      # Simulate redundant automotive Ethernet links
+      ip link add bond-ecu type bond mode active-backup miimon 100
+      ip link set bond-ecu up
+
+      # Create two paths to ECU
+      ip link add link1-ecu type veth peer name link1-host
+      ip link add link2-ecu type veth peer name link2-host
+
+      # Add to bond
+      ip link set link1-ecu master bond-ecu
+      ip link set link2-ecu master bond-ecu
+      ip link set link1-ecu up
+      ip link set link2-ecu up
+
+      # Configure bond
+      ip addr add 172.16.0.1/24 dev bond-ecu
+
+      # Test failover by disabling primary link
+      ip link set link1-ecu down
+    notes:
+      - Bonding modes: active-backup, 802.3ad (LACP), balance-rr, etc.
+      - miimon monitors link status
+      - Useful for testing redundancy
+      - Some modes require switch support
+
+  - name: setup-vxlan-tunnel
+    description: Create VXLAN overlay network for distributed testing
+    usage: |
+      # Create VXLAN interface
+      ip link add vxlan0 type vxlan \
+        id 100 \
+        remote 10.0.0.2 \
+        local 10.0.0.1 \
+        dstport 4789 \
+        dev eth0
+
+      ip link set vxlan0 up
+      ip addr add 192.168.100.1/24 dev vxlan0
+    example: |
+      # VXLAN tunnel between two test machines
+      # Machine 1 (10.0.1.10):
+      ip link add vxlan-ecu type vxlan \
+        id 42 \
+        remote 10.0.1.20 \
+        local 10.0.1.10 \
+        dstport 4789 \
+        dev eth0
+      ip link set vxlan-ecu up
+      ip addr add 192.168.200.1/24 dev vxlan-ecu
+
+      # Machine 2 (10.0.1.20):
+      ip link add vxlan-ecu type vxlan \
+        id 42 \
+        remote 10.0.1.10 \
+        local 10.0.1.20 \
+        dstport 4789 \
+        dev eth0
+      ip link set vxlan-ecu up
+      ip addr add 192.168.200.2/24 dev vxlan-ecu
+
+      # Now ECUs on different machines can communicate
+      ping -c 3 192.168.200.2
+    notes:
+      - VXLAN encapsulates L2 frames in UDP
+      - Standard VXLAN port: 4789
+      - VNI (VXLAN Network Identifier) must match
+      - Useful for distributed HIL/SIL testing
+
+  - name: configure-packet-timestamping
+    description: Enable precise packet timestamping for timing analysis
+    usage: |
+      # Enable hardware timestamping
+      ethtool -T veth0
+
+      # Enable software timestamping in capture
+      tcpdump -i veth0 -j adapter_unsynced -tt -v
+
+      # Use SO_TIMESTAMP socket option in code
+      # Python example:
+      # sock.setsockopt(socket.SOL_SOCKET, socket.SO_TIMESTAMP, 1)
+    example: |
+      # Capture with precise timestamps for timing analysis
+      ip link add veth-ecu type veth peer name veth-host
+      ip link set veth-ecu up
+      ip link set veth-host up
+
+      # Capture with timestamps
+      tcpdump -i veth-ecu -tt -v -w capture-timestamped.pcap
+
+      # Analyze timing in Wireshark or tshark
+      tshark -r capture-timestamped.pcap -T fields -e frame.time_relative
+    notes:
+      - Virtual interfaces use software timestamping
+      - Physical NICs may support hardware timestamping
+      - Essential for timing validation
+      - Use PTP for synchronization across systems
+
+  - name: setup-network-emulation
+    description: Complete network emulation for realistic testing
+    usage: |
+      # Create realistic automotive Ethernet simulation
+      ip link add veth-ecu type veth peer name veth-test
+      ip link set veth-ecu up
+      ip link set veth-test up
+
+      # Apply realistic parameters
+      tc qdisc add dev veth-ecu root netem \
+        delay 0.5ms 0.1ms distribution normal \
+        loss 0.01% \
+        rate 1000mbit \
+        limit 1000
+
+      # Add jitter
+      tc qdisc add dev veth-test root netem \
+        delay 0.5ms 0.1ms distribution normal
+    example: |
+      # Simulate 100BASE-TX Automotive Ethernet conditions
+      ip link add veth-ecu-100m type veth peer name veth-host-100m
+      ip link set veth-ecu-100m up
+      ip link set veth-host-100m up
+
+      tc qdisc add dev veth-ecu-100m root netem \
+        delay 1ms 0.2ms distribution normal \
+        loss 0.05% 25% \
+        duplicate 0.01% \
+        corrupt 0.001% \
+        rate 100mbit \
+        limit 2000
+
+      # Simulate varying conditions (e.g., EMI interference)
+      tc qdisc change dev veth-ecu-100m root netem \
+        delay 2ms 1ms distribution normal \
+        loss 1% 50%
+    notes:
+      - netem supports delay, loss, duplication, corruption, reordering
+      - Can apply different conditions per direction
+      - Use for stress testing and validation
+      - Combine with real CAN networks for hybrid testing
+
+  - name: docker-network-integration
+    description: Integrate virtual networks with Docker containers
+    usage: |
+      # Create custom Docker network
+      docker network create --driver bridge \
+        --subnet 192.168.100.0/24 \
+        --gateway 192.168.100.1 \
+        ecu-network
+
+      # Run container with specific IP
+      docker run -d --name ecu1 \
+        --network ecu-network \
+        --ip 192.168.100.10 \
+        automotive-ecu:latest
+
+      # Inspect network
+      docker network inspect ecu-network
+    example: |
+      # Multi-ECU setup with Docker
+      # Create separate networks for CAN and Ethernet domains
+      docker network create --driver bridge \
+        --subnet 172.20.0.0/16 \
+        can-domain
+
+      docker network create --driver bridge \
+        --subnet 192.168.0.0/16 \
+        eth-domain
+
+      # Gateway ECU on both networks
+      docker run -d --name gateway-ecu \
+        --network can-domain --ip 172.20.0.10 \
+        automotive-ecu:gateway
+      docker network connect eth-domain gateway-ecu --ip 192.168.0.10
+
+      # CAN ECUs
+      docker run -d --name bms-ecu \
+        --network can-domain --ip 172.20.0.20 \
+        automotive-ecu:bms
+
+      # Ethernet ECUs
+      docker run -d --name adas-ecu \
+        --network eth-domain --ip 192.168.0.20 \
+        automotive-ecu:adas
+    notes:
+      - Docker uses veth pairs and bridges internally
+      - Containers can be on multiple networks
+      - Use --network host for direct host network access
+      - Useful for containerized ECU simulation
+
+  - name: cleanup-virtual-networks
+    description: Clean up virtual network interfaces and namespaces
+    usage: |
+      # Delete veth pair (deletes both ends)
+      ip link delete veth0
+
+      # Delete network namespace
+      ip netns delete myns
+
+      # Delete bridge
+      ip link delete br0
+
+      # Remove all traffic control
+      tc qdisc del dev eth0 root
+
+      # List all virtual interfaces
+      ip link show type veth
+      ip link show type bridge
+    example: |
+      # Complete cleanup script
+      #!/bin/bash
+
+      # Delete all veth interfaces
+      for veth in $(ip link show type veth | grep -o 'veth[^:@]*'); do
+        echo "Deleting $veth"
+        ip link delete $veth 2>/dev/null
+      done
+
+      # Delete all namespaces
+      for ns in $(ip netns list | awk '{print $1}'); do
+        echo "Deleting namespace $ns"
+        ip netns delete $ns 2>/dev/null
+      done
+
+      # Delete all bridges
+      for br in $(ip link show type bridge | grep -o 'br-[^:@]*'); do
+        echo "Deleting bridge $br"
+        ip link delete $br 2>/dev/null
+      done
+
+      # Clean up Docker networks
+      docker network prune -f
+
+      echo "Cleanup complete"
+    notes:
+      - Deleting one veth end deletes the pair
+      - Namespaces are automatically cleaned when last process exits
+      - Be careful with production networks
+      - Use 2>/dev/null to suppress error messages
+
+best_practices:
+  - Always document IP address allocation scheme
+  - Use consistent naming conventions (e.g., veth-ecu1, br-automotive)
+  - Clean up virtual networks after testing
+  - Monitor resource usage (network namespaces consume resources)
+  - Use traffic shaping to simulate realistic conditions
+  - Combine with CAN simulation for complete testing
+  - Use Wireshark for protocol validation
+  - Document network topology for team reference
+
+troubleshooting:
+  - "Cannot create veth pair": Check if name already exists
+  - "Cannot move interface to namespace": Ensure namespace exists and interface is down
+  - "No connectivity between namespaces": Check routing and IP forwarding
+  - "High packet loss": Check MTU mismatch or buffer sizes
+  - "Traffic shaping not working": Ensure tc (iproute2) is installed
+  - "Docker container cannot reach host": Check Docker network configuration and firewall rules
+
+tools_required:
+  - iproute2 (ip command)
+  - iptables or nftables
+  - tc (traffic control, part of iproute2)
+  - tcpdump for packet capture
+  - ethtool for interface statistics
+  - docker for container networking
+  - bridge-utils (optional, legacy)
+
+references:
+  - Linux Advanced Routing & Traffic Control HOWTO
+  - Docker Networking Documentation
+  - IEEE 802.1Q VLAN Tagging
+  - SOME/IP Service Discovery Specification
+  - Automotive Ethernet Standards (IEEE 802.3bw, 802.1AS)

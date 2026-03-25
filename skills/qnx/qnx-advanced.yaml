@@ -1,0 +1,816 @@
+name: qnx-advanced
+version: 1.0.0
+category: embedded-systems
+description: Advanced QNX Neutrino RTOS development patterns for automotive applications
+
+instructions: |
+  ## Advanced QNX Neutrino RTOS Development Guide
+
+  ### Overview
+
+  QNX Neutrino is a POSIX-compliant, microkernel-based RTOS widely used in
+  safety-critical automotive systems (ADAS, digital cockpits, gateways). Its
+  microkernel architecture runs device drivers and file systems as user-space
+  processes, providing fault isolation that is essential for ISO 26262 compliance.
+  QNX is pre-certified to IEC 61508 SIL 3, making it suitable for ASIL-D
+  automotive applications.
+
+  ### Microkernel Architecture
+
+  ```
+  User Space:
+  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+  │ App:ADAS │ │ App:Diag │ │ Driver:  │ │ Driver:  │ │  File    │
+  │ Control  │ │ Service  │ │ CAN      │ │ Ethernet │ │  System  │
+  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
+       │            │            │            │            │
+  ═════╪════════════╪════════════╪════════════╪════════════╪════════
+       │       Message Passing (MsgSend/MsgReceive/MsgReply)
+  ═════╪════════════╪════════════╪════════════╪════════════╪════════
+       │            │            │            │            │
+  ┌────┴────────────┴────────────┴────────────┴────────────┴────┐
+  │                    QNX Neutrino Microkernel                  │
+  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+  │  │ Threads  │ │ Signals  │ │ Timers   │ │ Interrupt│       │
+  │  │ Scheduling│ │ Sync     │ │ Clock    │ │ Dispatch │       │
+  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+  └─────────────────────────────────────────────────────────────┘
+  ```
+
+  ### IPC Mechanisms
+
+  QNX provides several IPC mechanisms, each suited for different use cases:
+
+  | Mechanism | Latency | Data Size | Blocking | Use Case |
+  |-----------|---------|-----------|----------|----------|
+  | Messages | ~1-5 us | Arbitrary | Synchronous | Client-server communication |
+  | Pulses | ~0.5 us | 32-bit value | Asynchronous | Event notification, ISR to thread |
+  | Shared Memory | ~0 (direct) | Arbitrary | None (needs sync) | Large data (sensor, video) |
+  | Signals | ~1 us | Signal number | Asynchronous | Legacy POSIX compatibility |
+
+  ### Message Passing Model
+
+  QNX message passing is synchronous and forms the basis of the entire OS:
+
+  ```
+  Client                    Server
+    │                         │
+    │  MsgSend(coid, ...)     │
+    ├────────────────────────►│ MsgReceive(chid, ...)
+    │     (client BLOCKED)    │
+    │                         │ Process request...
+    │  MsgReply(rcvid, ...)   │
+    │◄────────────────────────┤
+    │  (client UNBLOCKED)     │
+  ```
+
+  The three-phase send-receive-reply protocol ensures that:
+  1. The client knows the server received the message (no lost messages)
+  2. The server knows which client to reply to (rcvid)
+  3. Priority inheritance is automatic (server runs at client priority)
+
+  ### Pulses for Asynchronous Notification
+
+  Pulses are lightweight (40-byte), non-blocking notifications ideal for:
+  - Interrupt service routines notifying handler threads
+  - Timer expiration events
+  - Asynchronous event signaling between processes
+
+  Pulse codes from `_PULSE_CODE_MINAVAIL` to `_PULSE_CODE_MAXAVAIL` are
+  available for application use. System pulses use codes below MINAVAIL.
+
+  ### Resource Manager Framework
+
+  Resource managers are QNX's device driver framework. Any process can register
+  a pathname (e.g., `/dev/can0`) and handle POSIX I/O operations:
+
+  - `open()` -> `io_open` handler
+  - `read()` -> `io_read` handler
+  - `write()` -> `io_write` handler
+  - `devctl()` -> `io_devctl` handler (ioctl equivalent)
+  - `close()` -> `io_close` handler
+
+  This allows applications to interact with custom hardware using standard
+  POSIX file operations, simplifying application-level code.
+
+  ### Thread Scheduling
+
+  QNX supports three POSIX scheduling policies:
+
+  | Policy | Behavior | Use Case |
+  |--------|----------|----------|
+  | SCHED_FIFO | Run until blocked or preempted by higher priority | Safety-critical real-time |
+  | SCHED_RR | Round-robin among same-priority threads | Fair sharing |
+  | SCHED_OTHER | System-defined (sporadic in QNX) | Non-real-time tasks |
+
+  Priority range: 1 (lowest) to 255 (highest). Priority 0 is the idle thread.
+  Typical automotive allocation:
+  - 200-255: Interrupt handler threads
+  - 100-199: Safety-critical control loops (ADAS, brake-by-wire)
+  - 50-99: Normal real-time tasks (CAN processing, diagnostics)
+  - 10-49: Non-critical tasks (logging, HMI updates)
+  - 1-9: Background tasks
+
+  ### Interrupt Handling
+
+  QNX interrupt handling follows a two-level model:
+  1. **ISR (InterruptAttach)**: Runs at interrupt level, minimal work only
+     (read status, clear interrupt, return event)
+  2. **Handler thread**: Receives pulse from ISR, does actual processing in
+     user space with full OS services available
+
+  This model keeps interrupt latency low while allowing complex processing
+  in a safe, preemptible context.
+
+  ### Shared Memory with Synchronization
+
+  For large data transfers (camera frames, LIDAR point clouds), shared memory
+  avoids copying. Always use synchronization:
+  - `pthread_mutex` with `PTHREAD_PROCESS_SHARED` attribute for cross-process
+  - Atomic operations (`atomic_add`, `atomic_cmpxchg`) for lock-free counters
+  - Condition variables for producer-consumer patterns
+
+  ### Best Practices
+
+  - Prefer message passing over shared memory for control data (automatic priority inheritance)
+  - Use pulses for ISR-to-thread notification (never do heavy work in ISR context)
+  - Set explicit scheduling policy and priority for all real-time threads
+  - Use `ThreadCtl(_NTO_TCTL_RUNMASK, ...)` for CPU affinity on multi-core SoCs
+  - Always handle MsgReceive return codes: 0 = pulse, >0 = message, -1 = error
+  - Clean up channels and connections properly to avoid resource leaks
+  - Use `tracelogger` and `pidin` for debugging scheduling and timing issues
+  - Test interrupt latency with oscilloscope on real hardware
+
+skills:
+  - id: qnx-message-passing
+    name: QNX Message Passing
+    description: Implement QNX message-based IPC between processes
+    tags: [qnx, ipc, messaging]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Message Passing - Client
+          #include <sys/neutrino.h>
+          #include <errno.h>
+
+          typedef struct {
+              int command;
+              int data;
+          } request_msg_t;
+
+          typedef struct {
+              int status;
+              int result;
+          } reply_msg_t;
+
+          int send_message_to_server(int server_pid, int command, int data) {
+              int coid;
+              request_msg_t msg;
+              reply_msg_t reply;
+
+              // Connect to server channel
+              coid = ConnectAttach(0, server_pid, 1, _NTO_SIDE_CHANNEL, 0);
+              if (coid == -1) {
+                  perror("ConnectAttach");
+                  return -1;
+              }
+
+              // Prepare message
+              msg.command = command;
+              msg.data = data;
+
+              // Send message and wait for reply
+              if (MsgSend(coid, &msg, sizeof(msg), &reply, sizeof(reply)) == -1) {
+                  perror("MsgSend");
+                  ConnectDetach(coid);
+                  return -1;
+              }
+
+              ConnectDetach(coid);
+              return reply.result;
+          }
+
+      - language: c
+        example: |
+          // QNX Message Passing - Server
+          #include <sys/neutrino.h>
+          #include <pthread.h>
+
+          typedef struct {
+              int command;
+              int data;
+          } request_msg_t;
+
+          typedef struct {
+              int status;
+              int result;
+          } reply_msg_t;
+
+          void* message_server_thread(void* arg) {
+              int chid, rcvid;
+              request_msg_t msg;
+              reply_msg_t reply;
+
+              // Create channel
+              chid = ChannelCreate(0);
+              if (chid == -1) {
+                  perror("ChannelCreate");
+                  return NULL;
+              }
+
+              printf("Server ready, channel ID: %d\n", chid);
+
+              // Message receive loop
+              while (1) {
+                  rcvid = MsgReceive(chid, &msg, sizeof(msg), NULL);
+                  if (rcvid == -1) {
+                      perror("MsgReceive");
+                      continue;
+                  }
+
+                  // Process command
+                  reply.status = 0;
+                  switch (msg.command) {
+                      case 1:
+                          reply.result = msg.data * 2;
+                          break;
+                      case 2:
+                          reply.result = msg.data + 100;
+                          break;
+                      default:
+                          reply.status = -1;
+                          reply.result = 0;
+                  }
+
+                  // Send reply
+                  MsgReply(rcvid, reply.status, &reply, sizeof(reply));
+              }
+
+              ChannelDestroy(chid);
+              return NULL;
+          }
+
+  - id: qnx-pulses
+    name: QNX Pulses and Events
+    description: Use QNX pulses for lightweight asynchronous notifications
+    tags: [qnx, events, pulses]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Pulse Sender
+          #include <sys/neutrino.h>
+          #include <sys/netmgr.h>
+
+          #define PULSE_CODE_ALARM  _PULSE_CODE_MINAVAIL
+          #define PULSE_CODE_STATUS (_PULSE_CODE_MINAVAIL + 1)
+
+          int send_pulse(int coid, int code, int value) {
+              // Send pulse to connection
+              if (MsgSendPulse(coid, -1, code, value) == -1) {
+                  perror("MsgSendPulse");
+                  return -1;
+              }
+              return 0;
+          }
+
+          // Timer-triggered pulse
+          int setup_timer_pulse(timer_t* timer_id, int coid, int pulse_code) {
+              struct sigevent event;
+              struct itimerspec timer_spec;
+
+              // Configure pulse event
+              SIGEV_PULSE_INIT(&event, coid, SIGEV_PULSE_PRIO_INHERIT,
+                               pulse_code, 0);
+
+              // Create timer
+              if (timer_create(CLOCK_REALTIME, &event, timer_id) == -1) {
+                  perror("timer_create");
+                  return -1;
+              }
+
+              // Set timer interval (1 second)
+              timer_spec.it_value.tv_sec = 1;
+              timer_spec.it_value.tv_nsec = 0;
+              timer_spec.it_interval.tv_sec = 1;
+              timer_spec.it_interval.tv_nsec = 0;
+
+              if (timer_settime(*timer_id, 0, &timer_spec, NULL) == -1) {
+                  perror("timer_settime");
+                  return -1;
+              }
+
+              return 0;
+          }
+
+      - language: c
+        example: |
+          // QNX Pulse Receiver
+          #include <sys/neutrino.h>
+
+          typedef union {
+              struct _pulse pulse;
+              // Add your message structures here if needed
+          } recv_msg_t;
+
+          void* pulse_receiver_thread(void* arg) {
+              int chid, rcvid;
+              recv_msg_t msg;
+
+              // Create channel
+              chid = ChannelCreate(0);
+              if (chid == -1) {
+                  perror("ChannelCreate");
+                  return NULL;
+              }
+
+              while (1) {
+                  rcvid = MsgReceive(chid, &msg, sizeof(msg), NULL);
+
+                  if (rcvid == 0) {
+                      // Received a pulse
+                      switch (msg.pulse.code) {
+                          case PULSE_CODE_ALARM:
+                              printf("Alarm pulse received: value=%d\n",
+                                     msg.pulse.value.sival_int);
+                              handle_alarm();
+                              break;
+
+                          case PULSE_CODE_STATUS:
+                              printf("Status pulse: %d\n",
+                                     msg.pulse.value.sival_int);
+                              update_status(msg.pulse.value.sival_int);
+                              break;
+
+                          default:
+                              printf("Unknown pulse code: %d\n", msg.pulse.code);
+                      }
+                  } else if (rcvid > 0) {
+                      // Regular message - reply to unblock sender
+                      MsgReply(rcvid, EOK, NULL, 0);
+                  }
+              }
+
+              ChannelDestroy(chid);
+              return NULL;
+          }
+
+  - id: qnx-shared-memory
+    name: QNX Shared Memory
+    description: Implement shared memory communication between QNX processes
+    tags: [qnx, shared-memory, ipc]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Shared Memory - Producer
+          #include <sys/mman.h>
+          #include <fcntl.h>
+          #include <unistd.h>
+          #include <string.h>
+
+          #define SHM_NAME "/automotive_data"
+          #define SHM_SIZE 4096
+
+          typedef struct {
+              int speed;
+              int rpm;
+              float temperature;
+              int valid;
+          } vehicle_data_t;
+
+          int create_shared_memory() {
+              int fd;
+              vehicle_data_t* shm_ptr;
+
+              // Create shared memory object
+              fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
+              if (fd == -1) {
+                  perror("shm_open");
+                  return -1;
+              }
+
+              // Set size
+              if (ftruncate(fd, SHM_SIZE) == -1) {
+                  perror("ftruncate");
+                  close(fd);
+                  return -1;
+              }
+
+              // Map shared memory
+              shm_ptr = mmap(NULL, SHM_SIZE, PROT_READ | PROT_WRITE,
+                            MAP_SHARED, fd, 0);
+              if (shm_ptr == MAP_FAILED) {
+                  perror("mmap");
+                  close(fd);
+                  return -1;
+              }
+
+              // Initialize data
+              memset(shm_ptr, 0, sizeof(vehicle_data_t));
+              shm_ptr->valid = 0;
+
+              // Update vehicle data
+              shm_ptr->speed = 60;
+              shm_ptr->rpm = 2500;
+              shm_ptr->temperature = 85.5;
+              shm_ptr->valid = 1;  // Mark as valid
+
+              munmap(shm_ptr, SHM_SIZE);
+              close(fd);
+              return 0;
+          }
+
+      - language: c
+        example: |
+          // QNX Shared Memory - Consumer
+          #include <sys/mman.h>
+          #include <fcntl.h>
+          #include <unistd.h>
+
+          typedef struct {
+              int speed;
+              int rpm;
+              float temperature;
+              int valid;
+          } vehicle_data_t;
+
+          int read_shared_memory() {
+              int fd;
+              vehicle_data_t* shm_ptr;
+
+              // Open existing shared memory
+              fd = shm_open(SHM_NAME, O_RDONLY, 0666);
+              if (fd == -1) {
+                  perror("shm_open");
+                  return -1;
+              }
+
+              // Map shared memory (read-only)
+              shm_ptr = mmap(NULL, SHM_SIZE, PROT_READ, MAP_SHARED, fd, 0);
+              if (shm_ptr == MAP_FAILED) {
+                  perror("mmap");
+                  close(fd);
+                  return -1;
+              }
+
+              // Read vehicle data
+              if (shm_ptr->valid) {
+                  printf("Speed: %d km/h\n", shm_ptr->speed);
+                  printf("RPM: %d\n", shm_ptr->rpm);
+                  printf("Temperature: %.1f°C\n", shm_ptr->temperature);
+              } else {
+                  printf("Data not valid\n");
+              }
+
+              munmap(shm_ptr, SHM_SIZE);
+              close(fd);
+              return 0;
+          }
+
+  - id: qnx-atomic-operations
+    name: QNX Atomic Operations
+    description: Use QNX atomic operations for lock-free programming
+    tags: [qnx, atomic, lock-free]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Atomic Operations
+          #include <atomic.h>
+          #include <stdint.h>
+
+          // Atomic counter
+          volatile unsigned int counter = 0;
+
+          void atomic_increment() {
+              atomic_add(&counter, 1);
+          }
+
+          void atomic_decrement() {
+              atomic_sub(&counter, 1);
+          }
+
+          // Compare and swap
+          int atomic_cas_example(volatile unsigned* ptr,
+                                unsigned old_val,
+                                unsigned new_val) {
+              return atomic_cmpxchg(ptr, old_val, new_val) == old_val;
+          }
+
+          // Atomic flags for multi-process synchronization
+          typedef struct {
+              volatile unsigned int ready_flag;
+              volatile unsigned int error_count;
+              volatile uint64_t timestamp;
+          } atomic_state_t;
+
+          void set_ready_flag(atomic_state_t* state) {
+              atomic_set(&state->ready_flag, 1);
+          }
+
+          int check_ready_flag(atomic_state_t* state) {
+              return atomic_add_value(&state->ready_flag, 0);
+          }
+
+          void increment_error_count(atomic_state_t* state) {
+              atomic_add(&state->error_count, 1);
+          }
+
+  - id: qnx-interrupt-handling
+    name: QNX Interrupt Handling
+    description: Implement interrupt service routines in QNX
+    tags: [qnx, interrupt, hardware]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Interrupt Handler
+          #include <sys/neutrino.h>
+          #include <sys/syspage.h>
+          #include <hw/inout.h>
+
+          #define IRQ_CAN_CONTROLLER 35
+
+          // Interrupt handler structure
+          typedef struct {
+              int id;
+              struct sigevent event;
+              volatile unsigned int irq_count;
+          } irq_handler_t;
+
+          const struct sigevent* can_interrupt_handler(void* area, int id) {
+              irq_handler_t* handler = (irq_handler_t*)area;
+
+              // Read hardware status
+              // Clear interrupt at hardware level
+              // ...
+
+              // Increment interrupt counter
+              atomic_add(&handler->irq_count, 1);
+
+              // Return event to trigger thread
+              return &handler->event;
+          }
+
+          int setup_interrupt_handler(int irq, int pulse_code) {
+              irq_handler_t* handler;
+              int chid, coid;
+
+              // Get I/O privileges
+              if (ThreadCtl(_NTO_TCTL_IO, 0) == -1) {
+                  perror("ThreadCtl");
+                  return -1;
+              }
+
+              // Allocate handler structure
+              handler = malloc(sizeof(irq_handler_t));
+              if (!handler) return -1;
+
+              handler->irq_count = 0;
+
+              // Create channel for pulses
+              chid = ChannelCreate(0);
+              if (chid == -1) {
+                  perror("ChannelCreate");
+                  free(handler);
+                  return -1;
+              }
+
+              coid = ConnectAttach(0, 0, chid, _NTO_SIDE_CHANNEL, 0);
+              if (coid == -1) {
+                  perror("ConnectAttach");
+                  ChannelDestroy(chid);
+                  free(handler);
+                  return -1;
+              }
+
+              // Configure pulse event
+              SIGEV_PULSE_INIT(&handler->event, coid,
+                              SIGEV_PULSE_PRIO_INHERIT, pulse_code, 0);
+
+              // Attach interrupt handler
+              handler->id = InterruptAttach(irq, can_interrupt_handler,
+                                           handler, sizeof(*handler), 0);
+              if (handler->id == -1) {
+                  perror("InterruptAttach");
+                  ConnectDetach(coid);
+                  ChannelDestroy(chid);
+                  free(handler);
+                  return -1;
+              }
+
+              printf("Interrupt handler attached to IRQ %d\n", irq);
+              return chid;
+          }
+
+  - id: qnx-resource-manager
+    name: QNX Resource Manager
+    description: Create custom device drivers using resource manager framework
+    tags: [qnx, driver, resource-manager]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Resource Manager - Custom Device
+          #include <sys/iofunc.h>
+          #include <sys/dispatch.h>
+
+          // Resource manager attributes
+          typedef struct {
+              iofunc_attr_t attr;
+              int device_state;
+              int read_count;
+          } custom_device_t;
+
+          // Custom read function
+          int custom_read(resmgr_context_t* ctp, io_read_t* msg,
+                         iofunc_ocb_t* ocb) {
+              int status;
+              int nbytes;
+              custom_device_t* dev = (custom_device_t*)ocb->attr;
+
+              // Check if read is valid
+              if ((status = iofunc_read_verify(ctp, msg, ocb, NULL)) != EOK)
+                  return status;
+
+              // Prepare data
+              char buffer[256];
+              nbytes = snprintf(buffer, sizeof(buffer),
+                               "Device state: %d, Reads: %d\n",
+                               dev->device_state, dev->read_count);
+
+              dev->read_count++;
+
+              // Set up return message
+              _IO_SET_READ_NBYTES(ctp, nbytes);
+
+              // Return data
+              return resmgr_msgwrite(ctp, buffer, nbytes, 0);
+          }
+
+          // Custom write function
+          int custom_write(resmgr_context_t* ctp, io_write_t* msg,
+                          iofunc_ocb_t* ocb) {
+              int status;
+              custom_device_t* dev = (custom_device_t*)ocb->attr;
+
+              // Verify write
+              if ((status = iofunc_write_verify(ctp, msg, ocb, NULL)) != EOK)
+                  return status;
+
+              // Get write data
+              char buffer[256];
+              resmgr_msgread(ctp, buffer, msg->i.nbytes, sizeof(msg->i));
+              buffer[msg->i.nbytes] = '\0';
+
+              // Process data (update device state)
+              dev->device_state = atoi(buffer);
+
+              _IO_SET_WRITE_NBYTES(ctp, msg->i.nbytes);
+              return EOK;
+          }
+
+          int main() {
+              dispatch_t* dpp;
+              resmgr_attr_t rattr;
+              resmgr_connect_funcs_t connect_funcs;
+              resmgr_io_funcs_t io_funcs;
+              iofunc_attr_t attr;
+              custom_device_t device;
+
+              // Initialize dispatch
+              dpp = dispatch_create();
+              if (!dpp) {
+                  perror("dispatch_create");
+                  return EXIT_FAILURE;
+              }
+
+              // Initialize resource manager attributes
+              memset(&rattr, 0, sizeof(rattr));
+              rattr.nparts_max = 1;
+              rattr.msg_max_size = 2048;
+
+              // Initialize device
+              iofunc_func_init(_RESMGR_CONNECT_NFUNCS, &connect_funcs,
+                              _RESMGR_IO_NFUNCS, &io_funcs);
+
+              // Override default handlers
+              io_funcs.read = custom_read;
+              io_funcs.write = custom_write;
+
+              // Initialize device attributes
+              iofunc_attr_init(&device.attr, S_IFCHR | 0666, NULL, NULL);
+              device.device_state = 0;
+              device.read_count = 0;
+
+              // Register device path
+              if (resmgr_attach(dpp, &rattr, "/dev/custom_device",
+                               _FTYPE_ANY, 0, &connect_funcs,
+                               &io_funcs, &device.attr) == -1) {
+                  perror("resmgr_attach");
+                  return EXIT_FAILURE;
+              }
+
+              printf("Resource manager ready at /dev/custom_device\n");
+
+              // Message receive loop
+              resmgr_context_t* ctp = resmgr_context_alloc(dpp);
+              while (1) {
+                  if ((ctp = resmgr_block(ctp)) == NULL) {
+                      perror("resmgr_block");
+                      break;
+                  }
+                  resmgr_handler(ctp);
+              }
+
+              return EXIT_SUCCESS;
+          }
+
+  - id: qnx-priority-scheduling
+    name: QNX Priority-Based Scheduling
+    description: Configure real-time scheduling policies in QNX
+    tags: [qnx, scheduling, realtime]
+    code_examples:
+      - language: c
+        example: |
+          // QNX Priority Scheduling
+          #include <pthread.h>
+          #include <sched.h>
+          #include <sys/neutrino.h>
+
+          // Set thread priority
+          int set_thread_priority(pthread_t thread, int priority,
+                                  int policy) {
+              struct sched_param param;
+
+              param.sched_priority = priority;
+
+              if (pthread_setschedparam(thread, policy, &param) != 0) {
+                  perror("pthread_setschedparam");
+                  return -1;
+              }
+
+              return 0;
+          }
+
+          // Create high-priority real-time thread
+          int create_rt_thread(pthread_t* thread, void*(*start_routine)(void*),
+                              int priority) {
+              pthread_attr_t attr;
+              struct sched_param param;
+
+              pthread_attr_init(&attr);
+
+              // Set scheduling policy (FIFO for real-time)
+              pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+
+              // Set priority
+              param.sched_priority = priority;
+              pthread_attr_setschedparam(&attr, &param);
+
+              // Inherit scheduling
+              pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+
+              // Create thread
+              if (pthread_create(thread, &attr, start_routine, NULL) != 0) {
+                  perror("pthread_create");
+                  pthread_attr_destroy(&attr);
+                  return -1;
+              }
+
+              pthread_attr_destroy(&attr);
+              return 0;
+          }
+
+          // Automotive CAN processing thread with high priority
+          void* can_processing_thread(void* arg) {
+              // Set CPU affinity for this thread
+              int cpu = 1;  // Run on CPU 1
+              if (ThreadCtl(_NTO_TCTL_RUNMASK, (void*)&cpu) == -1) {
+                  perror("ThreadCtl");
+              }
+
+              // Main processing loop
+              while (1) {
+                  // Process CAN messages with real-time guarantees
+                  process_can_messages();
+
+                  // Yield to allow other threads at same priority
+                  sched_yield();
+              }
+
+              return NULL;
+          }
+
+best_practices:
+  - Use message passing for IPC instead of shared memory when possible
+  - Always handle MsgReceive return codes (pulses vs messages)
+  - Clean up resources (channels, connections) properly
+  - Use atomic operations for lock-free counters and flags
+  - Set appropriate priorities for real-time threads
+  - Validate interrupt handling with oscilloscope
+  - Use resource managers for custom device drivers
+  - Profile interrupt latency with tracelogger
+
+automotive_notes:
+  - CAN/LIN drivers typically use interrupt handlers with pulses
+  - Safety-critical threads should use SCHED_FIFO with high priority
+  - Shared memory useful for large sensor data (camera, LIDAR)
+  - Message passing preferred for control commands between ECUs
+  - Resource managers can implement virtual CAN devices for testing

@@ -1,0 +1,780 @@
+name: "QNX Neutrino RTOS Development"
+version: "1.0.0"
+description: "Comprehensive QNX Neutrino RTOS skills for automotive embedded systems"
+category: "qnx"
+tags: ["qnx", "rtos", "neutrino", "microkernel", "posix", "automotive"]
+
+instructions: |
+  ## QNX Neutrino RTOS Development Guide
+
+  ### Overview
+
+  QNX Neutrino is a commercial, POSIX-compliant, microkernel RTOS used
+  extensively in automotive systems. Unlike monolithic kernels (Linux), QNX
+  runs all drivers, file systems, and protocol stacks as user-space processes
+  communicating via message passing. This architecture provides:
+  - **Fault containment**: A driver crash does not bring down the kernel
+  - **Deterministic timing**: Microkernel interrupt latency < 1 microsecond
+  - **Safety certification**: Pre-certified to IEC 61508 SIL 3
+  - **POSIX compliance**: Applications port easily from Linux
+
+  ### QNX SDP (Software Development Platform)
+
+  The QNX SDP includes compilers, libraries, and tools for multiple targets:
+
+  ```
+  QNX SDP 7.1/8.0
+  ├── host/linux/x86_64/    Host tools (compilers, debuggers)
+  │   └── usr/bin/
+  │       ├── qcc           QNX C/C++ compiler driver
+  │       ├── ntox86_64-g++ Target-specific G++
+  │       └── ntoaarch64le-g++
+  ├── target/qnx7/          Target sysroot
+  │   ├── x86_64/           x86-64 target libraries
+  │   ├── aarch64le/        ARM64 target libraries
+  │   └── armle-v7/         ARMv7 target libraries
+  └── usr/qde/eclipse/      Momentics IDE
+  ```
+
+  ### Cross-Compilation with qcc
+
+  ```bash
+  # qcc is the compiler driver that selects the correct target toolchain
+  # Syntax: qcc -V<compiler>_nto<target> [flags] source.c
+
+  # x86-64 target
+  qcc -Vgcc_ntox86_64 -o app_x86 main.c
+
+  # ARM64 target (i.MX8, R-Car H3)
+  qcc -Vgcc_ntoaarch64le -o app_arm64 main.c
+
+  # ARMv7 target (i.MX6)
+  qcc -Vgcc_ntoarmv7le -o app_armv7 main.c
+
+  # C++ with optimization
+  qcc -Vgcc_ntoaarch64le -std=c++14 -O2 -o app main.cpp -lstdc++
+  ```
+
+  ### Process Model
+
+  Every QNX process is a full POSIX process with:
+  - Its own virtual address space (MMU protection)
+  - One or more threads
+  - Channels for receiving messages
+  - Connections for sending messages to other processes
+
+  ```
+  Process A (Client)              Process B (Server)
+  ┌─────────────────┐            ┌─────────────────┐
+  │  Thread 1       │            │  Thread 1       │
+  │    │            │            │    │            │
+  │    ├─Connection──┼───────────┼──►Channel       │
+  │    │  (coid)     │  message  │    │ (chid)     │
+  │    │            │            │    │            │
+  └─────────────────┘            └─────────────────┘
+  ```
+
+  ### Pathname Space
+
+  QNX unifies all resources under a single pathname space managed by
+  process manager (procnto). Resource managers register pathnames:
+
+  ```
+  /dev/can0        → CAN driver resource manager
+  /dev/ser1        → Serial driver
+  /dev/shmem/data  → Shared memory object
+  /proc/           → Process information pseudo-filesystem
+  /net/            → Network-transparent access to remote nodes
+  ```
+
+  Applications use standard `open()`, `read()`, `write()`, `close()` to
+  interact with any resource manager, whether it is a hardware driver,
+  a file system, or a custom service.
+
+  ### AUTOSAR Adaptive on QNX
+
+  QNX is a primary target for AUTOSAR Adaptive Platform deployments:
+  - ara::com (SOME/IP) maps to QNX message passing + vsomeip
+  - ara::exec uses QNX process manager for application lifecycle
+  - ara::log integrates with QNX slogger2 for system logging
+  - ara::per uses QNX filesystem services for persistence
+  - Thread scheduling maps directly to QNX SCHED_FIFO/SCHED_RR
+
+  ### Debugging and Profiling
+
+  ```bash
+  # Remote debugging via GDB
+  # On target: start pdebug (debug agent)
+  pdebug 8000 &
+
+  # On host: connect GDB
+  ntoaarch64le-gdb app_arm64
+  (gdb) target qnx <target_ip>:8000
+  (gdb) upload app_arm64 /tmp/app_arm64
+  (gdb) run
+
+  # System profiling with tracelogger
+  tracelogger -n 5 -f trace.kev    # Capture 5 buffers
+  traceprinter trace.kev            # Text output
+
+  # Process info
+  pidin                              # Process listing
+  pidin -f aAbBF                     # Detailed thread info
+  pidin mem                          # Memory usage
+  ```
+
+  ### Automotive Use Cases
+
+  | Domain | QNX Application | Key Feature |
+  |--------|----------------|-------------|
+  | Digital Cockpit | Instrument cluster, HMI | GPU composition, Screen Framework |
+  | ADAS | Sensor fusion, planning | Deterministic scheduling, hypervisor |
+  | Gateway | CAN-Ethernet bridge | Resource managers, high throughput |
+  | Telematics | OTA, connectivity | Networking stack, security |
+  | Hypervisor | Multi-OS (QNX + Linux) | QNX Hypervisor for type-1 isolation |
+
+  ### Best Practices
+
+  - Use `qcc` compiler driver instead of calling target compilers directly
+  - Set `QNX_HOST` and `QNX_TARGET` environment variables before building
+  - Use resource managers for all hardware abstraction (not direct register access)
+  - Deploy with `on -f -p<priority>` to set process priority at launch
+  - Use slogger2 for structured logging (not printf to stdout)
+  - Profile with tracelogger to identify scheduling anomalies
+  - Test on both x86-64 (faster development cycle) and target architecture (ARM64)
+  - For AUTOSAR Adaptive, use C++14 standard as required by the specification
+
+skills:
+  - id: "qnx-setup-dev-environment"
+    name: "QNX Development Environment Setup"
+    description: "Set up QNX SDP (Software Development Platform) for automotive development"
+    tags: ["setup", "qnx-sdp", "ide"]
+    difficulty: "intermediate"
+    estimated_time: "2 hours"
+
+    prerequisites:
+      - "Linux/Windows host system"
+      - "QNX SDP 7.1 or 8.0 license"
+      - "VMware/VirtualBox (optional for target testing)"
+
+    standards:
+      - "ISO 26262 (ASIL-D capable with QNX safety extensions)"
+      - "POSIX 1003.1"
+      - "AUTOSAR Adaptive Platform compatible"
+
+    tools:
+      - name: "QNX Momentics IDE"
+        type: "commercial"
+        version: "7.1+"
+        purpose: "Integrated development environment"
+      - name: "QNX SDP"
+        type: "commercial"
+        version: "7.1/8.0"
+        purpose: "Software development platform"
+
+    implementation: |
+      ## QNX Development Environment Setup
+
+      ### 1. Install QNX SDP
+
+      ```bash
+      # Download from QNX Software Center (myQNX account required)
+      # For Linux host:
+      chmod +x qnxsdp-7.1-*.run
+      ./qnxsdp-7.1-*.run
+
+      # Accept license and install to /opt/qnx710
+      # or use default: ~/qnx710
+      ```
+
+      ### 2. Configure Environment Variables
+
+      ```bash
+      # Add to ~/.bashrc or ~/.zshrc
+      export QNX_HOST=/opt/qnx710/host/linux/x86_64
+      export QNX_TARGET=/opt/qnx710/target/qnx7
+      export QNX_CONFIGURATION=/home/$USER/.qnx
+      export PATH=$QNX_HOST/usr/bin:$PATH
+      export LD_LIBRARY_PATH=$QNX_HOST/usr/lib:$LD_LIBRARY_PATH
+
+      # For QNX 8.0:
+      export QNX_HOST=/opt/qnx800/host/linux/x86_64
+      export QNX_TARGET=/opt/qnx800/target/qnx8
+
+      # Reload shell
+      source ~/.bashrc
+      ```
+
+      ### 3. Verify Installation
+
+      ```bash
+      # Check compiler
+      qcc --version
+      # Output: QCC_VERSION=7.1.0
+
+      # Check target info
+      ls $QNX_TARGET/
+      # Output: aarch64le/ armle-v7/ x86_64/
+
+      # Test compile
+      echo 'int main() { return 0; }' > test.c
+      qcc test.c -o test
+      file test
+      # Output: ELF 64-bit LSB executable, x86-64, QNX Neutrino
+      ```
+
+      ### 4. Install Momentics IDE (Eclipse-based)
+
+      ```bash
+      cd $QNX_HOST/usr/qde/eclipse
+      ./qde &
+
+      # First launch:
+      # - Set workspace: ~/qnx_workspace
+      # - Install automotive plugins via Help → Install QNX Software
+      # - Configure target connections (Network, Serial, JTAG)
+      ```
+
+      ### 5. Create First QNX Project
+
+      ```bash
+      # Using IDE: File → New → QNX C Project
+      # Or command line:
+      mkdir -p ~/qnx_projects/hello_qnx
+      cd ~/qnx_projects/hello_qnx
+
+      cat > hello.c << 'EOF'
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <sys/neutrino.h>
+
+      int main(int argc, char *argv[]) {
+          struct _clockperiod clkper;
+
+          printf("Hello from QNX Neutrino!\n");
+          printf("Process ID: %d\n", getpid());
+          printf("Thread ID: %d\n", pthread_self());
+
+          // Get system clock period
+          if (ClockPeriod(CLOCK_REALTIME, NULL, &clkper, 0) == 0) {
+              printf("Clock period: %ld ns\n", clkper.nsec);
+          }
+
+          return EXIT_SUCCESS;
+      }
+      EOF
+
+      # Compile for x86_64 target
+      qcc -Vgcc_ntox86_64 hello.c -o hello_x86_64
+
+      # Compile for ARM (e.g., i.MX6)
+      qcc -Vgcc_ntoarmv7le hello.c -o hello_armv7
+
+      # Compile for AArch64 (e.g., i.MX8)
+      qcc -Vgcc_ntoaarch64le hello.c -o hello_aarch64
+      ```
+
+  - id: "qnx-resource-managers"
+    name: "QNX Resource Manager Development"
+    description: "Develop custom resource managers (device drivers) for QNX"
+    tags: ["resource-manager", "device-driver", "io-manager"]
+    difficulty: "advanced"
+    estimated_time: "8 hours"
+
+    implementation: |
+      ## QNX Resource Manager (Custom Device Driver)
+
+      ### CAN Bus Resource Manager Example
+
+      ```c
+      // can_resmgr.c - Custom CAN device resource manager
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <string.h>
+      #include <errno.h>
+      #include <sys/iofunc.h>
+      #include <sys/dispatch.h>
+      #include <sys/neutrino.h>
+      #include <hw/can.h>
+
+      // OCB (Open Control Block) - per-file-descriptor data
+      typedef struct {
+          iofunc_ocb_t ocb;
+          uint32_t can_id_filter;  // CAN ID filter for this FD
+      } can_ocb_t;
+
+      // Device attributes
+      typedef struct {
+          iofunc_attr_t attr;
+          int can_channel;         // 0 = CAN0, 1 = CAN1
+          uint32_t bitrate;        // e.g., 500000 for 500kbps
+          can_msg_t rx_queue[256]; // RX message queue
+          int rx_head, rx_tail;
+          pthread_mutex_t queue_mutex;
+      } can_attr_t;
+
+      // POSIX I/O functions
+      static iofunc_funcs_t can_ocb_funcs = {
+          _IOFUNC_NFUNCS,
+          NULL,  // ocb_calloc (use default)
+          NULL   // ocb_free (use default)
+      };
+
+      static resmgr_io_funcs_t can_io_funcs;
+      static resmgr_connect_funcs_t can_connect_funcs;
+      static can_attr_t can_attrs[2];  // Support 2 CAN channels
+
+      // Custom open() handler
+      int can_open(resmgr_context_t *ctp, io_open_t *msg,
+                   RESMGR_HANDLE_T *handle, void *extra) {
+          can_attr_t *attr = (can_attr_t *)handle;
+          can_ocb_t *ocb;
+
+          // Allocate OCB
+          ocb = (can_ocb_t *)calloc(1, sizeof(can_ocb_t));
+          if (!ocb) {
+              return ENOMEM;
+          }
+
+          // Initialize OCB
+          ocb->can_id_filter = 0x7FF;  // Accept all CAN IDs by default
+
+          // Call default open
+          return iofunc_open_default(ctp, msg, &attr->attr, extra);
+      }
+
+      // Custom read() handler - read CAN messages
+      int can_read(resmgr_context_t *ctp, io_read_t *msg,
+                   can_ocb_t *ocb) {
+          can_attr_t *attr = (can_attr_t *)ocb->ocb.attr;
+          can_msg_t can_msg;
+          int nbytes = 0;
+          int status;
+
+          // Check for non-blocking mode
+          if ((status = iofunc_read_verify(ctp, msg, &ocb->ocb, NULL)) != EOK) {
+              return status;
+          }
+
+          // Lock queue
+          pthread_mutex_lock(&attr->queue_mutex);
+
+          // Check if data available
+          if (attr->rx_head == attr->rx_tail) {
+              pthread_mutex_unlock(&attr->queue_mutex);
+
+              // No data - block or return EAGAIN
+              if (ocb->ocb.ioflag & O_NONBLOCK) {
+                  return EAGAIN;
+              }
+
+              // Wait for data (implement with condvar in production)
+              return _RESMGR_NPARTS(0);
+          }
+
+          // Get message from queue
+          can_msg = attr->rx_queue[attr->rx_tail];
+          attr->rx_tail = (attr->rx_tail + 1) % 256;
+
+          pthread_mutex_unlock(&attr->queue_mutex);
+
+          // Filter by CAN ID
+          if ((can_msg.mid & 0x7FF) != (ocb->can_id_filter & 0x7FF)) {
+              return _RESMGR_NPARTS(0);  // Skip this message
+          }
+
+          // Copy to client buffer
+          SETIOV(ctp->iov, &can_msg, sizeof(can_msg_t));
+
+          _IO_SET_READ_NBYTES(ctp, sizeof(can_msg_t));
+
+          return _RESMGR_NPARTS(1);
+      }
+
+      // Custom write() handler - send CAN messages
+      int can_write(resmgr_context_t *ctp, io_write_t *msg,
+                    can_ocb_t *ocb) {
+          can_attr_t *attr = (can_attr_t *)ocb->ocb.attr;
+          can_msg_t can_msg;
+          int status;
+
+          // Verify write access
+          if ((status = iofunc_write_verify(ctp, msg, &ocb->ocb, NULL)) != EOK) {
+              return status;
+          }
+
+          // Read CAN message from client
+          if (msg->i.nbytes < sizeof(can_msg_t)) {
+              return EINVAL;
+          }
+
+          resmgr_msgread(ctp, &can_msg, sizeof(can_msg_t),
+                        sizeof(msg->i));
+
+          // TODO: Send to hardware CAN controller
+          // can_hw_transmit(attr->can_channel, &can_msg);
+
+          _IO_SET_WRITE_NBYTES(ctp, sizeof(can_msg_t));
+
+          return _RESMGR_NPARTS(0);
+      }
+
+      // Custom devctl() handler - ioctl equivalent
+      int can_devctl(resmgr_context_t *ctp, io_devctl_t *msg,
+                     can_ocb_t *ocb) {
+          can_attr_t *attr = (can_attr_t *)ocb->ocb.attr;
+          int status, nbytes;
+
+          status = iofunc_devctl_default(ctp, msg, &ocb->ocb);
+          if (status != _RESMGR_DEFAULT) {
+              return status;
+          }
+
+          // Custom devctl commands
+          switch (msg->i.dcmd) {
+              case CAN_DEVCTL_SET_BITRATE:
+                  attr->bitrate = *(uint32_t *)(msg + 1);
+                  // TODO: Configure hardware
+                  nbytes = 0;
+                  break;
+
+              case CAN_DEVCTL_SET_FILTER:
+                  ocb->can_id_filter = *(uint32_t *)(msg + 1);
+                  nbytes = 0;
+                  break;
+
+              default:
+                  return ENOSYS;
+          }
+
+          msg->o.ret_val = EOK;
+          msg->o.nbytes = nbytes;
+
+          return _RESMGR_PTR(ctp, &msg->o, sizeof(msg->o) + nbytes);
+      }
+
+      int main(int argc, char *argv[]) {
+          dispatch_t *dpp;
+          resmgr_attr_t resmgr_attr;
+          resmgr_context_t *ctp;
+          int id;
+
+          // Create dispatch handle
+          dpp = dispatch_create();
+          if (!dpp) {
+              perror("dispatch_create");
+              return EXIT_FAILURE;
+          }
+
+          // Initialize resource manager attributes
+          memset(&resmgr_attr, 0, sizeof(resmgr_attr));
+          resmgr_attr.nparts_max = 1;
+          resmgr_attr.msg_max_size = 2048;
+
+          // Initialize I/O functions
+          iofunc_func_init(_RESMGR_CONNECT_NFUNCS, &can_connect_funcs,
+                          _RESMGR_IO_NFUNCS, &can_io_funcs);
+
+          // Override default functions
+          can_connect_funcs.open = can_open;
+          can_io_funcs.read = (void *)can_read;
+          can_io_funcs.write = (void *)can_write;
+          can_io_funcs.devctl = (void *)can_devctl;
+
+          // Initialize CAN0 attributes
+          iofunc_attr_init(&can_attrs[0].attr, S_IFCHR | 0666, NULL, NULL);
+          can_attrs[0].can_channel = 0;
+          can_attrs[0].bitrate = 500000;
+          can_attrs[0].rx_head = can_attrs[0].rx_tail = 0;
+          pthread_mutex_init(&can_attrs[0].queue_mutex, NULL);
+
+          // Attach /dev/can0
+          id = resmgr_attach(dpp, &resmgr_attr, "/dev/can0",
+                            _FTYPE_ANY, 0,
+                            &can_connect_funcs, &can_io_funcs,
+                            &can_attrs[0]);
+          if (id == -1) {
+              perror("resmgr_attach /dev/can0");
+              return EXIT_FAILURE;
+          }
+
+          printf("CAN resource manager started\n");
+          printf("Device: /dev/can0\n");
+
+          // Allocate context
+          ctp = resmgr_context_alloc(dpp);
+
+          // Message loop
+          while (1) {
+              if ((ctp = resmgr_block(ctp)) == NULL) {
+                  perror("resmgr_block");
+                  break;
+              }
+              resmgr_handler(ctp);
+          }
+
+          return EXIT_SUCCESS;
+      }
+      ```
+
+      ### Compile and Deploy
+
+      ```bash
+      # Compile resource manager
+      qcc -Vgcc_ntox86_64 can_resmgr.c -o can_resmgr -lsocket
+
+      # On QNX target:
+      ./can_resmgr &
+
+      # Test from client:
+      cat > test_can.c << 'EOF'
+      #include <fcntl.h>
+      #include <unistd.h>
+      #include <hw/can.h>
+
+      int main() {
+          int fd = open("/dev/can0", O_RDWR);
+          can_msg_t msg = {
+              .mid = 0x123,
+              .len = 8,
+              .dat = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+          };
+
+          write(fd, &msg, sizeof(msg));
+          read(fd, &msg, sizeof(msg));
+
+          close(fd);
+          return 0;
+      }
+      EOF
+
+      qcc test_can.c -o test_can
+      ./test_can
+      ```
+
+  - id: "qnx-adaptive-autosar"
+    name: "QNX with AUTOSAR Adaptive Platform"
+    description: "Integrate QNX Neutrino with AUTOSAR Adaptive Platform"
+    tags: ["autosar-adaptive", "ara", "qnx", "integration"]
+    difficulty: "expert"
+    estimated_time: "16 hours"
+
+    implementation: |
+      ## QNX + AUTOSAR Adaptive Integration
+
+      ### Architecture Overview
+
+      ```
+      ┌─────────────────────────────────────────────────────────┐
+      │         AUTOSAR Adaptive Applications (AA)              │
+      │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+      │  │ ADAS Control │  │ Diagnostics  │  │   Gateway    │  │
+      │  └──────────────┘  └──────────────┘  └──────────────┘  │
+      └─────────────────────────────────────────────────────────┘
+                               ▲
+                               │ ara:: API calls
+                               ▼
+      ┌─────────────────────────────────────────────────────────┐
+      │     AUTOSAR Adaptive Platform Runtime (ARA)             │
+      │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+      │  │ ara::com │ │ ara::exec│ │ ara::log │ │ ara::per │  │
+      │  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
+      │  ┌──────────┐ ┌──────────┐ ┌──────────┐               │
+      │  │ ara::diag│ │ ara::tsync│ │ ara::phm │   ...         │
+      │  └──────────┘ └──────────┘ └──────────┘               │
+      └─────────────────────────────────────────────────────────┘
+                               ▲
+                               │ POSIX / QNX API
+                               ▼
+      ┌─────────────────────────────────────────────────────────┐
+      │           QNX Neutrino Microkernel                      │
+      │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+      │  │ Process  │ │ Thread   │ │ Message  │ │  Clock   │  │
+      │  │  Mgmt    │ │  Mgmt    │ │ Passing  │ │  Timer   │  │
+      │  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
+      │  ┌──────────┐ ┌──────────┐ ┌──────────┐               │
+      │  │ Resource │ │  Memory  │ │ Interrupt│   Microkernel │
+      │  │ Managers │ │   Mgmt   │ │ Handling │               │
+      │  └──────────┘ └──────────┘ └──────────┘               │
+      └─────────────────────────────────────────────────────────┘
+                               ▲
+                               │ Hardware abstraction
+                               ▼
+      ┌─────────────────────────────────────────────────────────┐
+      │              Hardware (i.MX8, R-Car, etc.)              │
+      └─────────────────────────────────────────────────────────┘
+      ```
+
+      ### ara::com Implementation on QNX
+
+      ```cpp
+      // adaptive_communication.cpp
+      // SOME/IP communication using ara::com on QNX
+
+      #include <ara/com/types.h>
+      #include <ara/com/runtime.h>
+      #include <ara/core/instance_specifier.h>
+      #include <vsomeip/vsomeip.hpp>
+      #include <sys/neutrino.h>
+      #include <pthread.h>
+
+      namespace ara {
+      namespace com {
+
+      class QnxSomeIpBinding : public vsomeip::application {
+      private:
+          std::shared_ptr<vsomeip::application> app_;
+          int channel_id_;  // QNX message passing channel
+
+      public:
+          QnxSomeIpBinding(const std::string &name) {
+              // Create QNX channel for inter-process communication
+              channel_id_ = ChannelCreate(0);
+              if (channel_id_ == -1) {
+                  throw std::runtime_error("Failed to create QNX channel");
+              }
+
+              // Initialize vSOME/IP runtime
+              app_ = vsomeip::runtime::get()->create_application(name);
+              app_->init();
+
+              // Set QNX thread priority for real-time
+              struct sched_param param;
+              param.sched_priority = 20;  // Medium priority
+              pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+          }
+
+          void RegisterService(uint16_t service_id, uint16_t instance_id) {
+              // Offer SOME/IP service
+              app_->offer_service(service_id, instance_id);
+
+              // Register message handler
+              app_->register_message_handler(
+                  service_id,
+                  instance_id,
+                  vsomeip::ANY_METHOD,
+                  [this](const std::shared_ptr<vsomeip::message> &msg) {
+                      HandleMessage(msg);
+                  }
+              );
+          }
+
+          void HandleMessage(const std::shared_ptr<vsomeip::message> &msg) {
+              // Process SOME/IP message on QNX
+              auto payload = msg->get_payload();
+
+              // Use QNX pulse to notify waiting threads
+              struct sigevent event;
+              SIGEV_PULSE_INIT(&event, SIGEV_PULSE_PRIO_INHERIT,
+                              _NTO_PULSE_CODE_MINAVAIL, 0);
+
+              // Send pulse through channel
+              MsgSendPulse(channel_id_, -1,
+                          _NTO_PULSE_CODE_MINAVAIL,
+                          msg->get_method());
+          }
+
+          void Start() {
+              app_->start();
+          }
+      };
+
+      } // namespace com
+      } // namespace ara
+
+      // Example Adaptive Application using ara::com
+      class AdaptiveAdasController {
+      private:
+          ara::com::QnxSomeIpBinding someip_;
+
+      public:
+          AdaptiveAdasController() : someip_("AdasController") {
+              // Register ADAS control service (Service ID: 0x1234)
+              someip_.RegisterService(0x1234, 0x0001);
+          }
+
+          void Run() {
+              someip_.Start();
+
+              // Main control loop with QNX timers
+              timer_t timer_id;
+              struct sigevent event;
+              struct itimerspec timer_spec;
+
+              // Create periodic timer (10ms)
+              SIGEV_PULSE_INIT(&event, SIGEV_PULSE_PRIO_INHERIT,
+                              _NTO_PULSE_CODE_MINAVAIL + 1, 0);
+
+              timer_create(CLOCK_REALTIME, &event, &timer_id);
+
+              timer_spec.it_value.tv_sec = 0;
+              timer_spec.it_value.tv_nsec = 10000000;  // 10ms
+              timer_spec.it_interval = timer_spec.it_value;
+
+              timer_settime(timer_id, 0, &timer_spec, nullptr);
+
+              // Event loop
+              while (true) {
+                  struct _pulse pulse;
+                  int rcvid = MsgReceivePulse(someip_.channel_id_,
+                                             &pulse, sizeof(pulse), nullptr);
+
+                  if (pulse.code == _NTO_PULSE_CODE_MINAVAIL + 1) {
+                      // Timer pulse - execute control cycle
+                      ExecuteControlCycle();
+                  }
+              }
+          }
+
+          void ExecuteControlCycle() {
+              // ADAS control logic here
+              // Read sensor data via ara::com
+              // Execute perception/planning/control
+              // Send actuator commands via ara::com
+          }
+      };
+
+      int main() {
+          AdaptiveAdasController controller;
+          controller.Run();
+          return 0;
+      }
+      ```
+
+      ### Compile for QNX with Adaptive Support
+
+      ```bash
+      # Compile with C++14 support (required by AUTOSAR Adaptive)
+      qcc -Vgcc_ntox86_64 -std=c++14 \
+          -I/opt/autosar_adaptive/include \
+          -L/opt/autosar_adaptive/lib \
+          adaptive_communication.cpp \
+          -o adas_controller \
+          -lvsomeip -lboost_system -lpthread
+
+      # Deploy to QNX target
+      scp adas_controller root@qnx-target:/usr/local/bin/
+
+      # Run with elevated priority
+      ssh root@qnx-target 'on -f -p20 /usr/local/bin/adas_controller'
+      ```
+
+metadata:
+  author: "Automotive Claude Code Team"
+  last_updated: "2026-03-19"
+  license: "MIT"
+  automotive_standards:
+    - "POSIX 1003.1"
+    - "ISO 26262 (with QNX Safety extensions)"
+    - "AUTOSAR Adaptive R21-11"
+  supported_targets:
+    - "x86_64"
+    - "aarch64le (ARM64)"
+    - "armle-v7 (ARM Cortex-A)"
+  references:
+    - title: "QNX Neutrino RTOS System Architecture"
+      url: "http://www.qnx.com/developers/docs/7.1/index.html#com.qnx.doc.neutrino.sys_arch/topic/about.html"
+    - title: "AUTOSAR Adaptive Platform Release 21-11"
+      url: "https://www.autosar.org/fileadmin/standards/R21-11/AP/AUTOSAR_EXP_PlatformDesign.pdf"
+    - title: "QNX Resource Manager Framework"
+      url: "http://www.qnx.com/developers/docs/7.1/index.html#com.qnx.doc.neutrino.resmgr/topic/about.html"

@@ -1,0 +1,494 @@
+name: smart-charging-algorithms
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: energy-management
+description: Expert skill in smart charging algorithm development for load balancing, demand response, time-of-use optimization, renewable integration, and multi-EV fleet coordination.
+use_cases:
+- Residential smart charging optimization for TOU rates
+- Commercial building load balancing across multiple EVs
+- Depot charging schedule optimization for fleet operations
+- Renewable energy integration (solar/wind) for green charging
+- Grid demand response participation and revenue optimization
+automotive_standards:
+- ISO 15118 Smart charging profiles and schedules
+- OCPP 2.0.1 Smart charging and load management
+- OpenADR 2.0b Automated demand response
+- IEEE 2030.1.1 Smart grid integration for EVs
+- IEC 61851-1 Load management for EV charging
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in smart charging algorithm development for electric vehicles, covering load balancing, demand response, time-of-use optimization, renewable energy integration, and coordination of charging across multiple EVs to minimize cost, reduce grid impact, and maximize renewable energy utilization.
+
+
+  ### Smart Charging Objectives
+
+
+  - **Cost minimization**: Charge when electricity is cheapest (off-peak, high renewable generation)
+
+  - **Grid support**: Avoid peak demand periods, participate in demand response programs
+
+  - **Renewable integration**: Maximize charging from solar/wind (time-shift to match generation)
+
+  - **Load balancing**: Distribute available power across multiple EVs (avoid overloading circuits)
+
+  - **User satisfaction**: Ensure vehicle ready by departure time with desired SOC
+
+
+  ### Time-of-Use (TOU) Optimization
+
+
+  - **TOU rate structure** (example utility):
+
+    - Off-peak: $0.08/kWh (midnight-6 AM)
+
+    - Mid-peak: $0.15/kWh (6 AM-4 PM, 9 PM-midnight)
+
+    - On-peak: $0.35/kWh (4 PM-9 PM, summer weekdays)
+
+
+  - **Optimization algorithm**:
+
+    ```python
+    def tou_optimize(arrival_time, departure_time, current_soc, target_soc, battery_capacity, charge_power):
+        energy_needed = (target_soc - current_soc) * battery_capacity  # kWh
+        charge_duration = energy_needed / charge_power  # hours
+
+        # Get TOU schedule for charging window
+        tou_schedule = get_tou_rates(arrival_time, departure_time)
+
+        # Sort periods by rate (cheapest first)
+        tou_schedule.sort(key=lambda x: x.rate)
+
+        # Allocate charging to cheapest periods
+        charge_schedule = []
+        remaining_energy = energy_needed
+
+        for period in tou_schedule:
+            if remaining_energy <= 0:
+                break
+
+            period_duration = min(period.duration, remaining_energy / charge_power)
+            charge_schedule.append({
+                "start": period.start_time,
+                "duration": period_duration,
+                "power": charge_power,
+                "rate": period.rate
+            })
+            remaining_energy -= period_duration * charge_power
+
+        return charge_schedule
+
+    # Example
+    schedule = tou_optimize(
+        arrival_time="18:00",
+        departure_time="07:00",
+        current_soc=20,
+        target_soc=90,
+        battery_capacity=60,  # kWh
+        charge_power=7.4  # kW
+    )
+    # Result: Charge 0:00-5:36 @ $0.08/kWh (42 kWh × $0.08 = $3.36)
+    # vs. dumb charging 18:00-23:40 @ $0.35/kWh (42 kWh × $0.35 = $14.70)
+    # Savings: $11.34 per charge session
+    ```
+
+
+  ### Load Balancing for Multi-EV Charging
+
+
+  - **Scenario**: 10 EVs in apartment building, shared 50 kW service
+
+  - **Challenge**: Without load balancing, 10× 7.4 kW = 74 kW demand (exceeds 50 kW)
+
+  - **Solution**: Dynamic load management distributes 50 kW across EVs based on priority
+
+
+  - **Load balancing algorithm**:
+
+    ```python
+    def dynamic_load_balancing(evs, max_power_available):
+        # Priority: Earliest departure time, lowest SOC
+        evs.sort(key=lambda ev: (ev.departure_time, ev.soc))
+
+        allocated_power = {}
+        remaining_power = max_power_available
+
+        for ev in evs:
+            # Calculate minimum power needed to reach target by departure
+            time_to_departure = (ev.departure_time - current_time).total_seconds() / 3600
+            energy_needed = (ev.target_soc - ev.soc) * ev.battery_capacity
+            min_power_required = energy_needed / time_to_departure
+
+            # Allocate power (up to EV max, charger max, or remaining grid capacity)
+            allocated = min(
+                ev.max_charge_power,
+                ev.charger_max_power,
+                min_power_required * 1.2,  # 20% margin
+                remaining_power
+            )
+
+            allocated_power[ev.id] = allocated
+            remaining_power -= allocated
+
+            if remaining_power <= 0:
+                break
+
+        # EVs not allocated power will wait (lower priority or already charged enough)
+        for ev in evs:
+            if ev.id not in allocated_power:
+                allocated_power[ev.id] = 0  # Wait for higher-priority EVs to finish
+
+        return allocated_power
+
+    # Example
+    evs = [
+        EV(id=1, soc=20, target=80, departure="07:00", max_power=7.4),
+        EV(id=2, soc=50, target=90, departure="08:00", max_power=7.4),
+        EV(id=3, soc=30, target=80, departure="06:30", max_power=11.0),
+        # ... 7 more EVs
+    ]
+    allocation = dynamic_load_balancing(evs, max_power_available=50)
+    # Result: EV3 gets 11 kW (earliest departure), EV1 gets 7.4 kW (lowest SOC), etc.
+    ```
+
+
+  ### Renewable Energy Integration
+
+
+  - **Solar PV integration**:
+
+    - Home solar: 5 kW system produces 20-30 kWh/day
+
+    - Maximize solar charging: Shift EV charge to midday (10 AM - 4 PM)
+
+    - Net metering: Charge from solar instead of exporting to grid (avoid low export rates)
+
+
+  - **Solar forecast-based charging**:
+
+    ```python
+    def solar_forecast_optimization(solar_forecast, ev_arrival, ev_departure, energy_needed):
+        # Solar forecast: kW output for each hour
+        # Goal: Maximize charging from solar, minimize grid import
+
+        charge_schedule = []
+        remaining_energy = energy_needed
+
+        # Sort hours by solar output (highest first)
+        solar_sorted = sorted(solar_forecast, key=lambda x: x.solar_kw, reverse=True)
+
+        for hour in solar_sorted:
+            if remaining_energy <= 0:
+                break
+
+            # Charge during high solar periods
+            if hour.time >= ev_arrival and hour.time < ev_departure:
+                charge_power = min(hour.solar_kw, 7.4, remaining_energy / 1.0)
+                charge_schedule.append({
+                    "time": hour.time,
+                    "power": charge_power,
+                    "source": "solar" if charge_power <= hour.solar_kw else "mixed"
+                })
+                remaining_energy -= charge_power
+
+        # If not enough solar, fill in with grid power during cheap hours
+        if remaining_energy > 0:
+            charge_schedule += tou_optimize(ev_arrival, ev_departure, remaining_energy)
+
+        return charge_schedule
+
+    # Example
+    solar_forecast = [
+        {"time": "10:00", "solar_kw": 3.5},
+        {"time": "11:00", "solar_kw": 4.2},
+        {"time": "12:00", "solar_kw": 4.8},  # Peak solar
+        {"time": "13:00", "solar_kw": 4.5},
+        {"time": "14:00", "solar_kw": 3.8},
+        {"time": "15:00", "solar_kw": 2.9},
+    ]
+    # Result: Charge 12:00-15:00 from solar (15 kWh), then overnight from grid (remaining)
+    ```
+
+
+  ### Demand Response Participation
+
+
+  - **Demand response programs**:
+
+    - Utility sends signal: "Reduce load by 50% for next 2 hours (peak event)"
+
+    - Smart charger responds: Pause charging or reduce power
+
+    - Incentive: $1-3/kWh for load reduction
+
+
+  - **OpenADR (Open Automated Demand Response)**:
+
+    ```python
+    def handle_demand_response_event(event):
+        # Event: {signal: "MODERATE", duration: 120 min, start: "16:00"}
+
+        if event.signal == "MODERATE":
+            reduction_factor = 0.5  # Reduce charging by 50%
+        elif event.signal == "HIGH":
+            reduction_factor = 1.0  # Stop charging completely
+        else:
+            reduction_factor = 0.0  # No reduction
+
+        # Apply reduction to all active chargers
+        for charger in active_chargers:
+            original_power = charger.current_power
+            new_power = original_power * (1 - reduction_factor)
+            charger.set_power(new_power)
+
+            # Log for settlement (prove load reduction for payment)
+            log_dr_event(charger.id, original_power, new_power, event.duration)
+
+        # Schedule return to normal after event ends
+        schedule_task(event.start + event.duration, resume_normal_charging)
+    ```
+
+
+  - **Revenue calculation**:
+
+    - Baseline: 10 EVs × 7.4 kW = 74 kW
+
+    - Event: Reduce to 0 kW for 2 hours
+
+    - Load reduction: 74 kW × 2 hours = 148 kWh
+
+    - Payment: 148 kWh × $2/kWh = $296 per event
+
+    - Frequency: 10-20 events/year → $3000-6000 annual revenue
+
+
+  ### Fleet Depot Charging Optimization
+
+
+  - **Fleet scenario**: 50 electric buses, overnight charging (8 PM - 5 AM)
+
+  - **Constraints**:
+
+    - Total power: 2 MW (50× 50 kW chargers would be 2.5 MW)
+
+    - Each bus needs 200 kWh (30% → 100% SOC, 300 kWh battery)
+
+    - Staggered departure times (routes start 5:00 - 7:00 AM)
+
+
+  - **Optimization objective**: Minimize peak demand charge ($15/kW/month)
+
+
+  - **Smart depot charging**:
+
+    ```python
+    def depot_charging_optimization(buses, total_power_limit, start_time, end_time):
+        # Sort by departure time (earliest first = highest priority)
+        buses.sort(key=lambda b: b.departure_time)
+
+        # Time-step simulation (15-minute intervals)
+        time = start_time
+        while time < end_time:
+            # Allocate power each interval
+            remaining_power = total_power_limit
+
+            for bus in buses:
+                if bus.soc >= bus.target_soc:
+                    continue  # Already charged
+
+                # Calculate time remaining to departure
+                time_remaining = (bus.departure_time - time).total_seconds() / 3600
+
+                if time_remaining > 0:
+                    # Minimum power needed to finish by departure
+                    energy_needed = (bus.target_soc - bus.soc) * bus.battery_capacity
+                    min_power = energy_needed / time_remaining
+
+                    # Allocate power (respect charger limit and grid limit)
+                    allocated = min(bus.charger_max_power, min_power * 1.1, remaining_power)
+                    bus.charge(allocated, duration=0.25)  # 15 min
+                    remaining_power -= allocated
+
+            time += timedelta(minutes=15)
+
+        return buses  # Return charged buses with SOC and power profiles
+    ```
+
+
+  - **Result**: Spread charging evenly across 9 hours → 2 MW sustained vs 2.5 MW peak
+
+    - Demand charge savings: (2.5 - 2.0) MW × $15/kW = $7500/month = $90K/year
+
+
+  ### Vehicle-to-Grid (V2G) Optimization
+
+
+  - **Bidirectional power flow**: Charge when cheap, discharge when expensive or needed by grid
+
+  - **Arbitrage opportunity**:
+
+    - Charge overnight: $0.08/kWh
+
+    - Discharge during peak: $0.35/kWh
+
+    - Profit: $0.27/kWh (minus battery degradation ~$0.03/kWh) = $0.24/kWh
+
+
+  - **V2G scheduling**:
+
+    ```python
+    def v2g_arbitrage_optimization(ev, tou_schedule, departure_time, min_soc_at_departure):
+        # Find cheapest period to charge, most expensive to discharge
+        charge_period = min(tou_schedule, key=lambda x: x.rate)
+        discharge_period = max(tou_schedule, key=lambda x: x.rate)
+
+        # Charge during cheap period
+        energy_to_charge = ev.battery_capacity * 0.6  # 60% of battery
+        charge_schedule = {
+            "start": charge_period.start_time,
+            "power": ev.max_charge_power,
+            "energy": energy_to_charge,
+            "cost": energy_to_charge * charge_period.rate
+        }
+
+        # Discharge during expensive period (but ensure min SOC at departure)
+        energy_to_discharge = ev.battery_capacity * 0.4  # 40% of battery
+        discharge_schedule = {
+            "start": discharge_period.start_time,
+            "power": -ev.max_discharge_power,  # Negative = discharge
+            "energy": energy_to_discharge,
+            "revenue": energy_to_discharge * discharge_period.rate
+        }
+
+        # Ensure min SOC at departure (recharge if needed)
+        final_soc = ev.soc + (energy_to_charge - energy_to_discharge) / ev.battery_capacity
+        if final_soc < min_soc_at_departure:
+            # Add make-up charge
+            makeup_energy = (min_soc_at_departure - final_soc) * ev.battery_capacity
+            charge_schedule["energy"] += makeup_energy
+
+        return charge_schedule, discharge_schedule
+    ```
+
+
+  ### Machine Learning for Charging Prediction
+
+
+  - **Use case**: Predict user charging behavior to optimize preemptively
+
+  - **Inputs**: Historical data (arrival time, departure time, SOC at arrival, target SOC)
+
+  - **Model**: Random forest or neural network to predict next session parameters
+
+
+  - **Training data**:
+
+    ```python
+    training_data = [
+        # Day, arrival_time, departure_time, arrival_soc, target_soc, day_of_week
+        {"day": "2024-01-15", "arrival": "18:30", "departure": "07:00", "arrival_soc": 35, "target_soc": 90, "dow": "Mon"},
+        {"day": "2024-01-16", "arrival": "19:00", "departure": "07:30", "arrival_soc": 40, "target_soc": 90, "dow": "Tue"},
+        # ... thousands of records
+    ]
+
+    # Train model
+    model = RandomForestRegressor()
+    X = [[record["dow"], record["arrival"], record["arrival_soc"]] for record in training_data]
+    y = [record["target_soc"] for record in training_data]
+    model.fit(X, y)
+
+    # Predict for new session
+    predicted_target_soc = model.predict([[day_of_week, arrival_time, current_soc]])
+    # Use prediction for smart charging optimization
+    ```
+
+
+  ## Approach
+
+
+  1. **Data collection**: Gather TOU rates, solar forecast, EV parameters, user preferences
+
+  2. **Algorithm selection**: Choose optimization method (linear programming, heuristic, ML)
+
+  3. **Implementation**: Code algorithm in Python/C++, integrate with charger control
+
+  4. **Testing**: Simulate scenarios (high solar day, demand response event, multi-EV)
+
+  5. **Deployment**: Roll out to chargers, monitor performance, iterate
+
+  6. **User interface**: Mobile app to show schedule, estimated cost, override options
+
+
+  ## Deliverables
+
+
+  - Smart charging algorithm (Python/C++ code)
+
+  - Optimization models (TOU, load balancing, renewable integration, V2G)
+
+  - Integration with OCPP or ISO 15118 for charging control
+
+  - User interface (mobile app or web dashboard)
+
+  - Simulation results (cost savings, grid impact reduction)
+
+  - Documentation (algorithm logic, tuning parameters, API)
+
+
+  ## Best Practices
+
+
+  - **User control**: Allow manual override (user can force charge if urgent)
+
+  - **Margin of safety**: Add 10-20% buffer to ensure SOC target met by departure
+
+  - **Transparency**: Show user why charging delayed (cheaper rate coming, solar forecast)
+
+  - **Fallback**: If optimization fails, default to immediate charging (safety net)
+
+  - **Privacy**: Anonymize user data for ML training, secure communication
+
+
+  ## Integration
+
+
+  - **OCPP**: Send smart charging profiles to chargers (SetChargingProfile message)
+
+  - **ISO 15118**: Negotiate charging schedule directly with EV
+
+  - **OpenADR**: Receive demand response signals from utility
+
+  - **Home energy management**: Coordinate with solar inverter, battery, HVAC
+
+  - **Fleet management**: API for fleet operator to set priorities, monitor progress
+
+
+  '
+constraints:
+- User behavior unpredictability (late arrival, early departure)
+- Forecast accuracy (solar, grid pricing, demand response events)
+- Communication latency (cloud-based optimization vs local control)
+- Battery degradation from aggressive V2G cycling
+tools_required:
+- Optimization library (Python scipy.optimize, CVXPY, or commercial solver)
+- Time-series database (InfluxDB, TimescaleDB for telemetry)
+- Machine learning framework (scikit-learn, TensorFlow for prediction)
+- OCPP/ISO 15118 stack for charging control
+- Weather API for solar forecast (Solcast, NREL)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- smart-charging
+- load-balancing
+- demand-response
+- renewable-energy
+- optimization
+- automotive

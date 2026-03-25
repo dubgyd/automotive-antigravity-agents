@@ -1,0 +1,154 @@
+name: digital-transformation
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: digital_transformation
+description: Software-first organization, agile transformation, DevOps culture shift for automotive
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Digital transformation in automotive encompasses the fundamental shift from hardware-centric, waterfall-
+  driven organizations to software-first, agile enterprises capable of delivering software-defined vehicles
+  (SDVs). This transformation affects every function: R&D moves from mechanical engineering dominance to
+  software-hardware co-design, manufacturing adopts Industry 4.0 practices, sales shift to direct-to-
+  consumer digital channels, and after-sales evolves to OTA-based continuous improvement. This skill covers
+  organizational redesign, agile transformation, DevOps culture adoption, technology stack modernization,
+  and change management for automotive OEMs navigating the digital transition.
+
+  ## Key Concepts
+
+  ### Digital Maturity Dimensions
+  - **Product digitalization**: Connected features, OTA updates, digital cockpit, ADAS software stack
+  - **Process digitalization**: Digital thread from design to manufacturing, MES, digital twin, PLM
+  - **Business model digitalization**: Subscription services, FoD, data monetization, MaaS platforms
+  - **Organization digitalization**: Agile ways of working, DevOps, cloud-native development, AI/ML adoption
+  - **Customer experience digitalization**: Online configurator, digital sales, app ecosystem, remote diagnostics
+
+  ### Software-First Organization Models
+  - **Centralized software unit**: Dedicated entity for vehicle software (e.g., Cariad, BMW SDC, MB.OS)
+  - **Embedded software teams**: Software engineers embedded in vehicle programs alongside hardware teams
+  - **Hybrid model**: Platform software centralized, application software distributed to domains
+  - **Outsourced model**: Strategic software partnerships with tech companies for non-core capabilities
+  - **Inner-source model**: Open-source practices within the organization for shared platform components
+
+  ### Agile at Scale Frameworks for Automotive
+  - **SAFe (Scaled Agile Framework)**: Most adopted in automotive, supports hardware-software integration
+  - **LeSS (Large-Scale Scrum)**: Simpler framework for organizations wanting minimal process overhead
+  - **Spotify model**: Squad/tribe/chapter structure for autonomous, cross-functional teams
+  - **Automotive-adapted agile**: V-model gates with agile sprints within phases, hardware cadence alignment
+  - **DevOps for embedded**: CI/CD pipelines adapted for ECU software with HIL/SIL testing integration
+
+  ## Implementation Guide
+
+  ### Step 1: Digital Maturity Assessment
+  - Conduct organization-wide digital maturity assessment across all five dimensions
+  - Benchmark against industry leaders and digital-native competitors (Tesla, NIO, Xiaomi)
+  - Identify critical capability gaps that threaten competitive position within 3-5 years
+  - Map current IT landscape, technical debt, and legacy system dependencies
+
+  ### Step 2: Vision and Roadmap Definition
+  - Define target digital operating model aligned with corporate strategy and product vision
+  - Create transformation roadmap with clear milestones, quick wins, and long-term structural changes
+  - Establish digital transformation office (DTO) with executive sponsorship and cross-functional mandate
+  - Define investment envelope and expected returns (typically 3-7% of revenue over 3-5 years)
+
+  ### Step 3: Organizational and Cultural Change
+  - Redesign organization structure to embed software engineering as first-class discipline
+  - Launch agile transformation with pilot teams, then scale across development organization
+  - Implement DevOps practices: CI/CD pipelines, automated testing, infrastructure-as-code
+  - Establish new career paths and compensation models for software talent competitive with tech sector
+
+  ### Step 4: Technology Platform Modernization
+  - Migrate from legacy on-premise systems to cloud-native architecture (hybrid or multi-cloud)
+  - Implement modern development toolchain: Git, CI/CD, containerization, observability
+  - Build data platform for unified access to vehicle, customer, manufacturing, and operational data
+  - Deploy AI/ML capabilities for engineering (generative design, simulation), manufacturing, and customer
+
+  ## Decision Frameworks
+
+  ### Build vs. Buy vs. Partner for Digital Capabilities
+  | Capability | Build In-House | Buy/Acquire | Partner/JV |
+  |-----------|---------------|-------------|------------|
+  | Core differentiator (ADAS SW, OS) | Preferred | If behind | For acceleration |
+  | Platform (cloud, data) | Rarely | Often | Preferred |
+  | Tooling (PLM, ALM, CI/CD) | Never | Preferred | For integration |
+  | AI/ML capabilities | Selectively | For talent | For scale |
+  | Customer digital (app, web) | If capable | For speed | For expertise |
+
+  ### Agile Transformation Readiness Assessment
+  - **Leadership alignment**: Do executives understand and sponsor agile beyond lip service?
+  - **Organizational structure**: Can cross-functional teams be formed with end-to-end responsibility?
+  - **Culture**: Is failure tolerated as learning? Are decisions decentralized?
+  - **Technical foundation**: Is CI/CD possible? Are systems modular enough for independent deployment?
+  - **Customer feedback loops**: Can user feedback reach development teams within sprint cycles?
+
+  ### Transformation Pacing Strategy
+  - **Big bang**: Full organizational restructuring (high risk, fast if successful, rare in automotive)
+  - **Phased rollout**: Domain-by-domain transformation (moderate risk, medium speed, most common)
+  - **Parallel organization**: New digital entity alongside legacy (low disruption risk, high cost)
+  - **Organic evolution**: Gradual adoption through pilot teams and viral spread (low risk, slow)
+
+  ## Best Practices
+
+  - Start with customer-facing digital experiences where ROI is fastest and most visible
+  - Protect transformation budget from short-term cost-cutting pressures with ring-fenced funding
+  - Hire digital leaders from outside automotive but pair them with automotive domain experts
+  - Measure transformation progress with outcome metrics (lead time, deployment frequency) not activity
+  - Accept that the automotive development cycle (3-5 years) requires parallel agile and V-model coexistence
+  - Invest heavily in upskilling existing workforce rather than relying solely on external hiring
+  - Create internal developer platforms that abstract cloud and CI/CD complexity for engineering teams
+  - Establish architecture governance to prevent fragmentation as teams gain autonomy
+  - Run regular retrospectives at program and portfolio level to adapt transformation approach
+  - Communicate transformation vision relentlessly at all levels to overcome resistance
+
+  ## Examples
+
+  ### Example 1: Agile Transformation for ADAS Development
+  An OEM transitions its 2,000-person ADAS organization from waterfall to SAFe. Approach: 6-month pilot
+  with 3 Agile Release Trains (ARTs), expand to full organization over 18 months. Results: feature lead
+  time reduced from 18 months to 6 months, defect escape rate down 40%, developer satisfaction up 25%.
+  Key success factor: dedicated Scrum Masters and Release Train Engineers, not part-time roles.
+
+  ### Example 2: Cloud-Native Vehicle Data Platform
+  A premium OEM builds a centralized vehicle data platform on AWS/Azure to unify data from 5M connected
+  vehicles. Previously, each domain (telematics, diagnostics, navigation) had siloed data stores.
+  Investment: 45M EUR over 3 years. Enables: predictive maintenance reducing warranty costs by 8%,
+  usage-based insurance partnerships generating 50M EUR/year, and 60% faster feature development.
+
+  ### Example 3: Direct-to-Consumer Digital Sales Channel
+  A volume OEM launches online vehicle configurator and purchase flow alongside traditional dealer network.
+  Digital transformation includes: online pricing transparency, home delivery option, digital financing,
+  and post-purchase app for service scheduling. After 2 years: 15% of orders originate online, customer
+  acquisition cost reduced by 30% for digital channel, but dealer relationship management remains critical.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- digital-transformation
+- automotive
+- oem

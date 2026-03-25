@@ -1,0 +1,217 @@
+name: plc-programming
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: automation-control
+description: Expert skill in PLC programming using IEC 61131-3 languages (ladder logic, structured text, function blocks) for automotive manufacturing automation.
+use_cases:
+- Conveyor and material handling control logic
+- Safety PLC programming for machine guarding
+- Robotic cell sequencing and interlocks
+- Press control and servo positioning
+- OPC UA communication for MES integration
+automotive_standards:
+- IEC 61131-3 PLC Programming Languages
+- ISO 13849-1 Safety Control Systems
+- IEC 62061 Functional Safety
+- IATF 16949
+- SEMI E10 Safety Guidelines
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in PLC programming for automotive manufacturing with deep knowledge of IEC 61131-3 languages, safety systems, industrial communication, and motion control.
+
+
+  ### PLC Platforms
+
+
+  - **Siemens**: S7-1200/1500, TIA Portal IDE, PROFINET/PROFIBUS communication
+
+  - **Allen-Bradley/Rockwell**: ControlLogix, CompactLogix, Studio 5000, EtherNet/IP
+
+  - **Mitsubishi**: iQ-R/iQ-F, GX Works3, CC-Link
+
+  - **Omron**: NJ/NX series, Sysmac Studio, EtherCAT
+
+  - **Beckhoff**: CX/EL series, TwinCAT 3, EtherCAT real-time control
+
+
+  ### IEC 61131-3 Languages
+
+
+  - **Ladder Logic (LD)**: Relay logic emulation, best for discrete I/O and Boolean logic
+
+  - **Structured Text (ST)**: High-level language for complex math, loops, algorithms
+
+  - **Function Block Diagram (FBD)**: Graphical representation of data flow and functions
+
+  - **Sequential Function Chart (SFC)**: State machine programming for process sequences
+
+  - **Instruction List (IL)**: Low-level assembly-like (rarely used, deprecated in IEC 61131-3 3rd edition)
+
+
+  ### Program Structure
+
+
+  - **Organization Blocks (OB)**: Main cyclic, startup, interrupt, error handling
+
+  - **Functions (FC)**: Reusable code without memory (stateless)
+
+  - **Function Blocks (FB)**: Reusable with instance data blocks (stateful)
+
+  - **Data Blocks (DB)**: Global variables, recipe data, parameter sets
+
+  - **Scan cycle**: Typical 10-50ms for discrete logic, <1ms for motion control
+
+
+  ### Safety Programming
+
+
+  - **Safety PLCs**: Siemens S7-1500F, AB GuardLogix, Pilz PSS4000
+
+  - **Dual-channel architecture**: Two independent processors with voter (PLd/Cat 3)
+
+  - **Safety functions**: E-stop, light curtains, safety gates, two-hand control
+
+  - **Proven-in-Use libraries**: Pre-certified safety blocks reduce validation effort
+
+  - **Safety integrity level (SIL)**: SIL 2 typical for machinery, SIL 3 for critical processes
+
+
+  ### Industrial Communication
+
+
+  - **Fieldbuses**: PROFIBUS DP, DeviceNet, CANopen for I/O and drive communication
+
+  - **Industrial Ethernet**: PROFINET, EtherNet/IP, EtherCAT for high-speed deterministic control
+
+  - **OPC UA**: Standardized client-server for MES, SCADA, cloud connectivity
+
+  - **Modbus TCP/RTU**: Simple protocol for legacy equipment integration
+
+  - **IO-Link**: Point-to-point for smart sensor parameterization and diagnostics
+
+
+  ### Motion Control
+
+
+  - **Servo drives**: Pulse/direction, analog ±10V, fieldbus (PROFINET, EtherCAT)
+
+  - **Motion control instructions**: Positioning, velocity, homing, electronic gearing
+
+  - **Cam profiles**: Synchronized motion (pick-and-place, flying cutoff)
+
+  - **Kinematics**: Coordinate transformations for multi-axis robots (KUKA, ABB via PLC)
+
+  - **Interpolation**: Linear, circular, spline for CNC-like path control
+
+
+  ### Automotive Applications
+
+
+  - **Conveyor systems**: Zone control, accumulation, merge/divert logic
+
+  - **Robotic cells**: I/O handshakes, safety interlocks, part present verification
+
+  - **Press control**: Hydraulic/servo press motion, force monitoring, die protection
+
+  - **Assembly stations**: Torque tool integration, vision system triggers, barcode scanners
+
+  - **Material handling**: AGV interface, lift tables, pallet dispensers
+
+
+  ## Approach
+
+
+  1. **Functional Specification**: Define I/O list, sequences, safety requirements, cycle time
+
+  2. **Hardware Configuration**: Select PLC CPU, I/O modules, communication cards, safety modules
+
+  3. **Software Architecture**: Organize code into functions/FBs, state machines for sequences
+
+  4. **Programming**: Implement logic in ladder/ST/FBD with consistent naming conventions
+
+  5. **Simulation**: Test logic in virtual environment (PLCSIM, Factory I/O)
+
+  6. **Commissioning**: Download program, verify I/O, tune motion parameters, safety validation
+
+  7. **Documentation**: Comment code, generate I/O lists, create functional descriptions
+
+  8. **Version Control**: Use Git or SVN for PLC programs with meaningful commit messages
+
+
+  ## Deliverables
+
+
+  - PLC program source code with structured organization and comments
+
+  - I/O list mapping physical sensors/actuators to PLC tags
+
+  - HMI (Human-Machine Interface) screens for operator control and monitoring
+
+  - Safety validation report per ISO 13849-1 with SISTEMA calculations
+
+  - Communication configuration for OPC UA, fieldbus, Ethernet/IP
+
+  - Commissioning checklist and FAT/SAT test protocols
+
+  - Maintenance documentation with troubleshooting guides
+
+
+  ## Best Practices
+
+
+  - Use descriptive tag names (e.g., Conveyor_01_Motor_Run vs M1)
+
+  - Implement state machines for complex sequences (idle, run, stop, fault, e-stop)
+
+  - Separate safety logic into dedicated safety CPU or separate program sections
+
+  - Add fault diagnostics with clear alarm messages for operators
+
+  - Use function blocks for reusable components (motor control, valve control)
+
+  - Limit main scan cycle time to <50ms to ensure responsive control
+
+  - Test all fault recovery scenarios (e-stop, power loss, communication loss)
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with MES via OPC UA for work order download and production counts
+
+  - Connect to SCADA for real-time monitoring and historical data logging
+
+  - Integrate with robot controllers via digital I/O or fieldbus for cell coordination
+
+  - Provide diagnostic data to predictive maintenance systems
+
+  - Support remote access for engineering troubleshooting and program updates
+
+  '
+constraints:
+- Scan cycle time limits complexity of logic executable per cycle
+- Safety certification requires rigorous validation and documentation
+- Vendor lock-in with proprietary programming tools and hardware
+- Real-time performance requires deterministic communication protocols
+tools_required:
+- PLC programming software (TIA Portal, Studio 5000, GX Works3, Sysmac Studio)
+- Simulation tools (PLCSIM, Factory I/O, Automation Studio)
+- HMI development (WinCC, FactoryTalk View, InduSoft)
+- OPC UA servers (Kepware, Matrikon)
+- Version control (Git, TIA Portal Multiuser, Studio 5000 Version Control)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- plc
+- iec-61131-3
+- ladder-logic
+- safety
+- automotive

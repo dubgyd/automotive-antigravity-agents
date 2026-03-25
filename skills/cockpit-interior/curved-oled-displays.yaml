@@ -1,0 +1,162 @@
+name: curved-oled-displays
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Curved and transparent OLED display technologies for automotive interiors, covering flexible panel integration, transparent overlays, and color management for curved surfaces."
+use_cases:
+  - "Integrating curved OLED panels that follow dashboard contours organically"
+  - "Designing transparent OLED overlays for window and sunroof information displays"
+  - "Implementing color and brightness uniformity compensation across curved surfaces"
+  - "Building flexible display integration into steering wheels and door panels"
+  - "Managing OLED lifespan with burn-in prevention and pixel health monitoring"
+automotive_standards:
+  - "IEC 62341-6-3 - OLED display measuring methods"
+  - "ISO 15008 - Visual presentation legibility on curved surfaces"
+  - "SAE J1757 - Standard metrology for automotive displays"
+  - "ISO 16505 - Camera monitor systems using transparent display overlays"
+  - "AEC-Q104 - Qualification of multichip modules for automotive display drivers"
+instructions: |
+  # Curved OLED Displays
+
+  ## Overview
+  Curved and transparent OLED technology enables displays that seamlessly blend into
+  vehicle interior surfaces. Unlike flat LCD panels that require dedicated mounting
+  bezels, flexible OLED substrates conform to dashboard curvatures, door panel shapes,
+  and even steering wheel surfaces. Transparent OLED adds the ability to overlay digital
+  content on windows and sunroofs while maintaining visibility through the glass.
+
+  ## Key Concepts
+
+  ### Flexible OLED Substrates
+  Flexible OLED panels replace rigid glass substrates with polyimide film:
+  - Minimum bend radius of 5 mm for current automotive-grade flexible OLED
+  - Panel thickness as low as 0.3 mm enables integration into tight spaces
+  - Encapsulation with thin-film barrier layers protects organic materials from moisture
+  - Operating temperature range of -40 C to 85 C required for automotive qualification
+
+  ### Transparent OLED
+  Transparent displays allow light to pass through when pixels are off:
+  - Transparency ranges from 30% to 45% in current production panels
+  - When active, pixels emit light visible from both sides unless a directional film
+    is applied
+  - Ideal for window overlays showing navigation, weather, or point-of-interest data
+  - Sunroof integration can display sky maps, shade patterns, or mood lighting
+
+  ### Color Science for Curved Panels
+  Curvature introduces viewing angle variations across the display surface:
+  - OLED color shift at oblique angles must be compensated per region
+  - A color calibration lookup table maps panel position to correction coefficients
+  - Ambient light reflections change across the curved surface, requiring adaptive
+    compensation
+  - Factory calibration captures per-unit color profile stored in panel EEPROM
+
+  ## Implementation Guide
+
+  ### Step 1 - Define the Curvature Profile
+  Work with industrial designers to specify the exact surface geometry:
+  - Export the dashboard CAD surface as a NURBS model
+  - Calculate the maximum and minimum bend radii across the display area
+  - Verify the chosen panel can physically conform to the required curvature
+  - Add 5% margin on minimum bend radius to account for thermal expansion
+
+  ### Step 2 - Mechanical Integration
+  Design the mounting system for a curved flexible panel:
+  - Use a rigid carrier plate machined to match the target curvature
+  - Bond the flexible panel to the carrier with optically clear adhesive
+  - Route flex cables with strain relief to accommodate vibration
+  - Design for panel replaceability in service without dashboard removal
+
+  ### Step 3 - Drive Electronics
+  Configure the display driver for curved panel specifics:
+  - Map pixel coordinates to physical positions accounting for curvature distortion
+  - Implement per-pixel luminance compensation for viewing angle variation
+  - Configure the timing controller for the panel's native resolution and refresh rate
+  - Enable temperature-based brightness derating to protect organic materials
+
+  ### Step 4 - Transparent Overlay Integration
+  For transparent OLED on windows or sunroof:
+  - Laminate the transparent panel between glass layers during windshield manufacturing
+  - Route power and data connections through the window frame seal area
+  - Implement auto-dimming that reduces transparency for shade function
+  - Design content that remains legible against varying background scenery
+
+  ### Step 5 - Burn-in Prevention System
+  Implement a comprehensive pixel health management strategy:
+  - Track cumulative pixel-on-time per region in a persistent wear map
+  - Apply sub-pixel shifting of static UI elements every 60 seconds
+  - Reduce brightness of high-wear areas proactively before burn-in is visible
+  - Run periodic compensation cycles during vehicle off-time to equalize pixel aging
+
+  ## Best Practices
+
+  ### Optical Bonding
+  - Always use optical bonding between the OLED panel and cover glass
+  - Eliminate the air gap to prevent internal reflections and condensation
+  - Select adhesive with matching thermal expansion coefficient for glass and polyimide
+  - Validate bonding integrity through thermal cycling from -40 C to 105 C
+
+  ### Sunlight Durability
+  - Protect OLED panels from prolonged direct UV exposure that degrades organic layers
+  - Apply UV-blocking films or coatings on exterior-facing cover glass
+  - Monitor cumulative UV exposure and warn service teams of high-exposure vehicles
+  - Design dashboard geometry to shade the display from direct windshield sun angles
+
+  ### Power Efficiency
+  - Use dark UI themes to minimize OLED power consumption and heat generation
+  - Implement ambient-adaptive brightness that reduces power in low-light conditions
+  - Turn off display regions not currently showing content rather than displaying black
+  - Budget 10 to 15 watts per 12-inch equivalent curved OLED panel at typical brightness
+
+  ## Troubleshooting
+
+  ### Color Banding on Curved Regions
+  Check the per-region color calibration lookup table for discontinuities. Verify the
+  compensation firmware version matches the panel hardware revision. Recalibrate using
+  a spectroradiometer at multiple positions across the curve.
+
+  ### Delamination at Curve Apex
+  Inspect the optically clear adhesive bond line for bubbles or voids. Verify the carrier
+  plate curvature matches the panel rest-state curvature within 0.5 mm tolerance.
+  Check that thermal cycling has not exceeded the adhesive specification limits.
+
+  ### Transparent Display Content Unreadable Outdoors
+  Increase font weight and add high-contrast outlines to all text elements. Implement
+  background darkening behind text regions to improve contrast ratio. Verify panel peak
+  brightness meets the 1500 nit minimum for transparent overlay legibility.
+
+  ### Panel Shows Burn-in After Six Months
+  Review the wear map data to identify if static content caused localized aging. Verify
+  the pixel shifting algorithm is active and cycling at the correct interval. Increase
+  the aggressiveness of brightness derating for high-wear regions.
+
+  ## Integration Patterns
+
+  ### Multi-Panel Tiling
+  Creating large curved displays from multiple smaller OLED tiles:
+  - Align tiles with sub-pixel accuracy using optical registration during assembly
+  - Apply seam compensation in the rendering pipeline to hide tile boundaries
+  - Match color and brightness across tiles using per-tile calibration matrices
+  - Implement a unified timing controller that synchronizes refresh across all tiles
+
+  ### Touch Integration on Curved Surfaces
+  Enabling touch input on non-planar OLED panels:
+  - Use flexible capacitive touch sensors that conform to the same curvature as the panel
+  - Calibrate touch coordinate mapping accounting for surface distortion from curvature
+  - Implement palm rejection optimized for the curved surface geometry
+  - Test touch accuracy across the full curved surface with 5 mm target precision
+
+  ## Testing and Validation
+
+  ### Bend Cycle Fatigue Testing
+  Verify panel integrity under repeated flexing conditions:
+  - Cycle the panel between flat and target curvature 10000 times for assembly simulation
+  - Inspect for micro-crack formation in the encapsulation layer after cycling
+  - Measure electrical continuity of all pixel rows and columns after bend testing
+  - Validate that display image quality shows no degradation after cycling completion
+
+  ### Automotive Environmental Qualification
+  Subject curved OLED panels to the full automotive qualification suite:
+  - Thermal shock testing between -40 C and 105 C at maximum ramp rates
+  - Humidity exposure at 85 C and 85% RH for 1000 hours per AEC-Q104
+  - Vibration testing per ISO 16750-3 at the dashboard mounting location profile
+  - UV exposure testing equivalent to 15 years of windshield-filtered sunlight

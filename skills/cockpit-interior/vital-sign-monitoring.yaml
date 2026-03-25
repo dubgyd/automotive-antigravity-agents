@@ -1,0 +1,161 @@
+name: vital-sign-monitoring
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Contactless health tracking systems for automotive occupants covering radar-based vital signs, steering wheel biosensors, stress detection, and medical emergency response integration."
+use_cases:
+  - "Implementing radar-based contactless heart rate and respiration monitoring"
+  - "Designing steering wheel-embedded ECG and SpO2 biosensors"
+  - "Building real-time stress and cognitive load estimation from physiological signals"
+  - "Creating automated emergency medical response triggered by vital sign anomalies"
+  - "Integrating vital sign data with driver monitoring and autonomous handover systems"
+automotive_standards:
+  - "EU Regulation 2019/2144 - Advanced driver distraction recognition systems"
+  - "Euro NCAP 2025+ - Driver monitoring and medical emergency detection"
+  - "IEC 60601-1 - Medical device safety standards adapted for automotive context"
+  - "GDPR Article 9 - Processing of health-related biometric data"
+  - "ISO 26262 - Functional safety for health-triggered vehicle actions"
+instructions: |
+  # Vital Sign Monitoring
+
+  ## Overview
+  Contactless and contact-based vital sign monitoring transforms the vehicle into a
+  health-aware environment. Using millimeter-wave radar, camera-based photoplethysmography,
+  and steering wheel biosensors, the system continuously tracks occupant heart rate,
+  respiration rate, blood oxygen saturation, and stress indicators. This data feeds driver
+  fitness assessment, drowsiness detection, medical emergency response, and personalized
+  comfort adaptation.
+
+  ## Key Concepts
+
+  ### Contactless Sensing Technologies
+  Measuring vital signs without requiring physical contact:
+  - 60 GHz radar detects chest wall micro-movements from heartbeat and breathing
+  - Radar achieves heart rate accuracy within 3 BPM at distances up to 1.5 meters
+  - Camera-based remote photoplethysmography (rPPG) extracts pulse from facial skin color
+  - Seat-integrated ballistocardiography sensors detect body micro-movements from heartbeat
+
+  ### Contact-Based Biosensors
+  Higher accuracy measurements through direct skin contact:
+  - Steering wheel ECG electrodes capture heart rhythm for arrhythmia detection
+  - SpO2 sensors in the steering wheel or seatbelt buckle measure blood oxygen
+  - Galvanic skin response sensors on steering wheel detect stress-related sweat
+  - Skin temperature sensors provide fever indication from hand contact
+
+  ### Health Analytics Pipeline
+  Processing raw physiological signals into actionable health insights:
+  - Signal conditioning removes motion artifacts from vehicle vibration and movement
+  - Heart rate variability (HRV) analysis indicates autonomic nervous system state
+  - Respiration pattern analysis detects irregular breathing associated with medical events
+  - Multi-signal fusion improves accuracy by combining radar, camera, and contact data
+
+  ## Implementation Guide
+
+  ### Step 1 - Deploy Sensing Hardware
+  Install vital sign sensors in optimal positions:
+  - Mount a 60 GHz radar module behind the steering column aimed at the driver chest
+  - Place a secondary radar in the B-pillar for rear seat occupant monitoring
+  - Embed ECG electrodes at the 10 and 2 o'clock positions on the steering wheel
+  - Install an IR camera in the instrument cluster for facial rPPG analysis
+
+  ### Step 2 - Build the Signal Processing Pipeline
+  Implement real-time vital sign extraction:
+  - Sample radar I/Q data at 1 kHz and apply phase extraction for displacement signal
+  - Apply bandpass filtering to isolate heart rate (0.8-3 Hz) and respiration (0.1-0.5 Hz)
+  - Use adaptive clutter cancellation to remove static reflections and vehicle vibration
+  - Fuse multiple sensor modalities using a Kalman filter for robust estimates
+
+  ### Step 3 - Implement Health Analytics
+  Build the algorithms that interpret vital sign data:
+  - Compute running heart rate with 5-second update intervals
+  - Calculate HRV metrics including SDNN and RMSSD for stress and fatigue estimation
+  - Detect anomalous patterns such as sudden heart rate drop or breathing cessation
+  - Establish per-driver baselines that account for individual normal ranges
+
+  ### Step 4 - Design Emergency Response
+  Create the automated response chain for detected medical events:
+  - Define severity levels from advisory (elevated stress) to critical (cardiac event)
+  - Advisory level adjusts comfort systems and suggests a rest stop
+  - Warning level issues audio alert and contacts emergency services for guidance
+  - Critical level activates autonomous emergency stop and calls paramedics with location
+
+  ### Step 5 - Handle Privacy and Data Protection
+  Implement strict health data governance:
+  - Process all vital sign data on-device without cloud transmission by default
+  - Encrypt any stored health data with per-user keys tied to driver profile
+  - Provide clear opt-in consent flow before enabling vital sign features
+  - Allow data export for personal health records under user control only
+
+  ## Best Practices
+
+  ### Accuracy Validation
+  - Validate vital sign accuracy against medical-grade reference devices
+  - Test across diverse demographics including different body compositions and skin tones
+  - Measure accuracy during realistic driving scenarios including rough roads
+  - Report confidence intervals alongside vital sign values for clinical credibility
+
+  ### False Alarm Prevention
+  - Require sustained anomaly detection for 10+ seconds before triggering medical alerts
+  - Use multi-sensor confirmation before escalating to emergency response
+  - Implement a driver acknowledgment button that can dismiss advisory-level alerts
+  - Log all alert events for post-analysis and threshold tuning
+
+  ### Seamless User Experience
+  - Display vital signs only when the driver explicitly requests health dashboard view
+  - Do not distract the driver with continuous health data during normal operation
+  - Use subtle ambient cues (seat massage, lighting color) for wellness suggestions
+  - Provide post-trip health summaries only on the companion smartphone app
+
+  ## Troubleshooting
+
+  ### Heart Rate Reading Unstable or Missing
+  Check radar module alignment toward the driver chest area. Verify the driver is within
+  the optimal sensing range of 0.5 to 1.2 meters. Inspect for electromagnetic
+  interference from nearby electronics disrupting radar signal quality.
+
+  ### ECG Signal Noisy on Steering Wheel
+  Verify the driver is making skin contact with both electrode zones simultaneously.
+  Check electrode surface cleanliness and conductivity. Ensure the EMI shielding around
+  ECG signal traces is intact to prevent ignition system interference.
+
+  ### Stress Detection Triggers Too Frequently
+  Review the per-driver baseline calibration to ensure it reflects normal driving state.
+  Adjust the stress threshold accounting for the individual's typical HRV range. Check
+  that vehicle vibration is not being misinterpreted as physiological arousal.
+
+  ### Emergency Stop Activates Without Medical Event
+  Review the multi-sensor fusion log to identify which sensor generated the false alarm.
+  Validate radar vital sign extraction against ground truth in the specific scenario.
+  Increase the confirmation duration threshold before escalating to critical response.
+
+  ## Integration Patterns
+
+  ### Insurance and Wellness Ecosystem
+  Connecting vital sign data to external wellness platforms (with consent):
+  - Export anonymized health summaries to driver wellness apps per user opt-in
+  - Provide stress and fatigue trend data for fleet driver wellness programs
+  - Support integration with telemedicine services for real-time medical consultation
+  - Enable insurance wellness discount programs using aggregated driving health scores
+
+  ### Multi-Occupant Monitoring
+  Extending vital sign tracking beyond the driver to all occupants:
+  - Deploy rear-seat radar modules for passenger health monitoring
+  - Detect child vital signs for enhanced child presence detection accuracy
+  - Monitor elderly or medically vulnerable passengers during ride-share scenarios
+  - Aggregate multi-occupant data for cabin wellness scoring and comfort adaptation
+
+  ## Testing and Validation
+
+  ### Clinical Correlation Study
+  Validate automotive vital sign accuracy against medical references:
+  - Compare radar heart rate against a clinical pulse oximeter over 24-hour study periods
+  - Validate respiration rate against a reference chest strap across diverse body types
+  - Test ECG arrhythmia detection sensitivity against a 12-lead Holter monitor reference
+  - Publish validation results in a peer-reviewed journal for credibility
+
+  ### Edge Case Stress Testing
+  Verify system performance under challenging real-world conditions:
+  - Test vital sign detection through heavy winter clothing and down jackets
+  - Validate accuracy during aggressive driving with significant body movement
+  - Measure performance when two occupants are in close proximity on a bench seat
+  - Test with occupants of extreme BMI values at both ends of the spectrum

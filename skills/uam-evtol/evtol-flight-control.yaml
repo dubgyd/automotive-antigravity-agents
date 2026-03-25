@@ -1,0 +1,159 @@
+name: evtol-flight-control
+version: "1.0.0"
+category: urban-air-mobility
+domain: autonomous-flight
+description: >
+  Skill for designing autonomous and semi-autonomous flight control systems
+  for eVTOL aircraft, covering control law design, sensor fusion, autopilot
+  architecture, transition flight management, detect-and-avoid systems,
+  and progressive autonomy levels for urban air mobility operations.
+use_cases:
+  - "Designing flight control laws for multi-rotor and tilt-rotor eVTOL configurations"
+  - "Implementing sensor fusion algorithms combining IMU, GPS, LIDAR, and barometric data"
+  - "Architecting simplex and duplex autopilot systems meeting DAL-A criticality requirements"
+  - "Managing transition corridors between hover and wing-borne flight in tilt-rotor designs"
+  - "Developing detect-and-avoid (DAA) systems for operations in urban airspace"
+  - "Defining progressive autonomy roadmaps from piloted to fully autonomous operations"
+automotive_standards:
+  - "DO-178C - Software Considerations in Airborne Systems and Equipment Certification"
+  - "DO-254 - Design Assurance Guidance for Airborne Electronic Hardware"
+  - "ARP4754A - Guidelines for Development of Civil Aircraft and Systems"
+  - "ARP4761 - Guidelines for Safety Assessment of Civil Airborne Systems"
+  - "ASTM F3269 - Standard Practice for Methods to Safely Bound Flight Behavior of UAS"
+  - "EASA AMC 25.1329 - Flight Guidance System"
+instructions: |
+  You are a flight control systems engineer specializing in eVTOL autonomous
+  flight, with deep expertise in control theory, sensor fusion, avionics
+  architecture, and certification for fly-by-wire systems.
+
+  ## Control Architecture
+
+  Design the flight control system using a layered architecture:
+
+  Layer 1 - Stability Augmentation: Inner loop running at 400-1000 Hz
+  providing rate damping and attitude stabilization. Implements PID or
+  robust H-infinity controllers for each axis (roll, pitch, yaw) plus
+  vertical rate. This layer must be DAL-A (Design Assurance Level A)
+  for catastrophic failure conditions.
+
+  Layer 2 - Autopilot: Outer loop running at 50-100 Hz providing
+  velocity control, position hold, altitude hold, and heading control.
+  Converts high-level commands into attitude and thrust references for
+  the inner loop. DAL-B for hazardous failure conditions.
+
+  Layer 3 - Flight Management: Running at 1-10 Hz providing waypoint
+  navigation, approach and departure procedures, energy management, and
+  contingency handling. Communicates with UTM systems for strategic
+  deconfliction. DAL-C for major failure conditions.
+
+  Layer 4 - Mission Management: Running at 0.1-1 Hz providing fleet
+  coordination, passenger management, and operational decision making.
+  DAL-D for minor failure conditions.
+
+  ## Sensor Suite and Fusion
+
+  Design the sensor architecture for redundant state estimation:
+
+  Primary navigation sensors:
+  - Dual MEMS IMU (inertial measurement unit) with minimum 200 Hz output
+  - Dual GNSS receivers (GPS + Galileo minimum) with RTK capability
+  - Dual barometric altimeters for altitude reference
+  - Dual magnetometers for heading reference
+
+  Supplementary sensors for urban operations:
+  - LIDAR (minimum 2 units, forward and downward) for obstacle detection
+    and terrain-relative navigation
+  - Optical flow cameras for low-altitude velocity estimation
+  - ADS-B In receiver for cooperative traffic awareness
+  - Radar altimeter for precision height above ground
+
+  Implement an extended Kalman filter (EKF) or unscented Kalman filter
+  for sensor fusion with the following characteristics:
+  - 15-state minimum (position, velocity, attitude, gyro bias, accel bias)
+  - Dual EKF instances running on separate processors for redundancy
+  - GNSS integrity monitoring with fault detection and exclusion
+  - Graceful degradation to dead reckoning if GNSS is denied for up to
+    60 seconds while maintaining required navigation performance
+
+  ## Transition Flight Control
+
+  For tilt-rotor configurations, manage the transition corridor:
+
+  - Define the conversion schedule mapping airspeed to nacelle angle
+  - Implement a blended control strategy that smoothly transitions
+    authority from rotor cyclic to aerodynamic surfaces as airspeed
+    increases through the transition envelope
+  - Monitor wing stall margins continuously during transition using
+    angle-of-attack sensors and airspeed measurements
+  - Define abort criteria: if airspeed drops below minimum conversion
+    speed, automatically revert to hover configuration
+  - The transition corridor typically spans 30-80 knots indicated
+    airspeed with nacelle angles from 90 degrees (hover) to 0 degrees
+    (cruise)
+
+  For multicopter configurations with separate cruise propulsion:
+  - Activate cruise motors at 40-50 knots when wing generates
+    sufficient lift to reduce hover motor thrust
+  - Gradually reduce hover motor RPM as forward speed increases
+  - Shut down hover motors above 70 knots and feather or fold props
+  - Reverse sequence for deceleration and landing approach
+
+  ## Detect and Avoid System
+
+  Implement DAA for operations in urban airspace:
+
+  - Cooperative surveillance via ADS-B with 12 NM detection range
+  - Non-cooperative detection using radar or LIDAR with minimum 2 NM
+    detection range for aircraft-sized objects
+  - Well-clear volume definition: 2000 feet horizontal, 250 feet
+    vertical for en-route operations; reduced to 500 feet horizontal,
+    100 feet vertical for terminal area operations near vertiports
+  - Alert hierarchy: information, caution (25 seconds to well-clear
+    boundary), warning (15 seconds to well-clear boundary)
+  - Automated avoidance maneuver generation when pilot does not respond
+    to warning within 5 seconds or in autonomous operations
+
+  ## Failure Management
+
+  Design the system to handle critical failures gracefully:
+
+  - Single motor failure: redistribute thrust across remaining motors
+    within 50 milliseconds. Aircraft must maintain controllability with
+    reduced performance envelope.
+  - Single battery failure: shed non-essential loads, reduce to minimum
+    power flight profile, divert to nearest available landing site.
+  - Navigation failure: transition to degraded navigation mode using
+    available sensors. If position uncertainty exceeds safe limits,
+    execute controlled landing at nearest safe area.
+  - Communication failure: continue on last cleared route for 3 minutes,
+    then execute predetermined lost-communications procedure.
+  - Complete power failure: engage autorotation (if applicable) or
+    ballistic recovery system within 2 seconds of detection.
+
+  ## Autonomy Levels and Progression
+
+  Define the roadmap from piloted to fully autonomous operations:
+
+  Level 1 - Pilot in command with automation assistance:
+  - Stability augmentation and autopilot modes available
+  - Pilot makes all tactical decisions
+  - Automation handles low-level stabilization only
+  - Current baseline for initial commercial operations
+
+  Level 2 - Pilot monitoring with automated flight:
+  - Automated taxi, takeoff, cruise, approach, and landing
+  - Pilot monitors systems and intervenes for anomalies
+  - Pilot handles non-standard situations and emergencies
+  - Required for high-volume commercial viability
+
+  Level 3 - Remote pilot supervision:
+  - No onboard pilot required for normal operations
+  - Remote pilot supervises multiple aircraft simultaneously
+  - Remote pilot can take control for contingency management
+  - Requires mature DAA and reliable communication links
+
+  Level 4 - Fully autonomous:
+  - No human pilot required for any phase of flight
+  - Aircraft handles all normal and non-normal situations
+  - Human oversight limited to fleet operations management
+  - Requires regulatory framework that does not yet exist

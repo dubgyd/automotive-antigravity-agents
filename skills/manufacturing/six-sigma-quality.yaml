@@ -1,0 +1,123 @@
+name: six-sigma-quality
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: quality-improvement
+description: "Expert skill in Six Sigma methodology including DMAIC, design of experiments (DOE), hypothesis testing, and data-driven root cause analysis for automotive manufacturing."
+use_cases:
+  - "Reduce defect rates to below 3.4 DPMO"
+  - "Design experiments to optimize process parameters"
+  - "Root cause analysis for chronic quality issues"
+  - "Capability improvement for processes with Cpk below 1.33"
+  - "Cost of poor quality (COPQ) reduction projects"
+automotive_standards:
+  - "IATF 16949"
+  - "ISO 9001"
+  - "ASQ Six Sigma Body of Knowledge"
+  - "AIAG Core Tools (FMEA, Control Plan, MSA)"
+instructions: |
+  # Six Sigma Quality for Automotive Manufacturing
+
+  ## Overview
+  Six Sigma is a data-driven methodology for eliminating defects and reducing
+  variation in manufacturing processes. In automotive production, Six Sigma
+  achieves the tight tolerances required for safety-critical components.
+
+  ## DMAIC Methodology
+
+  ### Define Phase
+  - Create project charter with business case and scope
+  - Define CTQ (Critical to Quality) characteristics
+  - Map current process with SIPOC diagram
+  - Establish baseline sigma level
+
+  ### Measure Phase
+  - Validate measurement system (MSA / Gage R&R)
+  - Collect baseline data on key metrics
+  - Calculate process capability (Cp, Cpk)
+  - Determine current DPMO and sigma level
+
+  ### Analyze Phase
+  - Identify potential root causes with fishbone diagrams
+  - Perform hypothesis testing (t-test, chi-square, ANOVA)
+  - Regression analysis for factor relationships
+  - Multi-vari analysis to isolate variation sources
+
+  ### Improve Phase
+  - Design of Experiments (DOE) to optimize factors
+  - Pilot improvements with controlled runs
+  - Validate improvement with statistical significance
+  - Update process documentation and control plans
+
+  ### Control Phase
+  - Implement Statistical Process Control (SPC) charts
+  - Create control plans and response procedures
+  - Train operators on new standard work
+  - Monitor and sustain improvements
+
+  ## Implementation Guide
+
+  ### Process Capability Analysis (Python)
+
+  ```python
+  import numpy as np
+  from scipy import stats
+
+  def calculate_capability(data, usl, lsl):
+      mean = np.mean(data)
+      std = np.std(data, ddof=1)
+
+      cp = (usl - lsl) / (6 * std)
+      cpu = (usl - mean) / (3 * std)
+      cpl = (mean - lsl) / (3 * std)
+      cpk = min(cpu, cpl)
+
+      dpmo = (1 - stats.norm.cdf(cpk * 3)) * 1_000_000 * 2
+      sigma_level = stats.norm.ppf(1 - dpmo / 1_000_000) + 1.5
+
+      return {
+          "Cp": round(cp, 3),
+          "Cpk": round(cpk, 3),
+          "DPMO": round(dpmo, 1),
+          "Sigma": round(sigma_level, 2)
+      }
+  ```
+
+  ### SPC Control Chart
+
+  ```python
+  def xbar_r_chart(subgroups):
+      means = [np.mean(sg) for sg in subgroups]
+      ranges = [max(sg) - min(sg) for sg in subgroups]
+      n = len(subgroups[0])
+
+      xbar = np.mean(means)
+      rbar = np.mean(ranges)
+
+      A2 = {2: 1.880, 3: 1.023, 4: 0.729, 5: 0.577}
+
+      ucl = xbar + A2[n] * rbar
+      lcl = xbar - A2[n] * rbar
+
+      return {"UCL": ucl, "CL": xbar, "LCL": lcl}
+  ```
+
+  ## Best Practices
+  - Validate measurement systems before collecting data
+  - Use practical significance alongside statistical significance
+  - Engage operators and technicians in root cause analysis
+  - Target Cpk of 1.67+ for safety-critical characteristics
+  - Document lessons learned for future projects
+
+  ## Common Automotive Applications
+  - Torque specification compliance on assembly lines
+  - Weld quality in body shop (nugget diameter, penetration)
+  - Paint thickness uniformity across vehicle panels
+  - Dimensional accuracy of machined engine components
+  - Electrical continuity in wiring harness assembly
+
+  ## Troubleshooting
+  - Low Cpk despite good Cp indicates process centering issue
+  - Non-normal data requires transformation before capability analysis
+  - Excessive measurement variation masks true process capability
+  - Special cause variation must be eliminated before SPC is effective

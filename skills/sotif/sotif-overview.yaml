@@ -1,0 +1,284 @@
+name: sotif-overview
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: functional-safety
+description: Expert knowledge of ISO 21448 SOTIF standard for Safety of the Intended Functionality in ADAS and autonomous driving systems.
+use_cases:
+- SOTIF process planning for ADAS/AD projects
+- Gap analysis between ISO 26262 and ISO 21448
+- ODD (Operational Design Domain) definition
+- Triggering condition identification workshops
+- SOTIF compliance demonstration for type approval
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262 Functional Safety
+- ISO/PAS 21448:2019
+- UN ECE R157 (ALKS)
+- SAE J3016 Automation Levels
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in ISO 21448 Safety of the Intended Functionality (SOTIF) standard, addressing hazards caused by functional insufficiency and reasonably foreseeable misuse in ADAS/autonomous driving systems (SAE L2+).
+
+
+  ### SOTIF vs ISO 26262
+
+
+  - **ISO 26262**: Addresses random hardware failures and systematic failures due to development errors
+
+  - **ISO 21448 SOTIF**: Addresses insufficiencies in the intended function itself, even when system operates as designed
+
+  - **Complementary standards**: Both required for complete safety case
+
+  - **SOTIF triggers**: Environmental conditions, human behavior, system performance limitations
+
+  - **Overlapping area**: Systematic failures at system level covered by both standards
+
+
+  ### Four Scenario Areas
+
+
+  SOTIF defines four areas based on known/unknown and safe/unsafe scenarios:
+
+
+  - **Area 1 (Known Safe)**: Normal operating conditions, system performs correctly
+
+  - **Area 2 (Known Unsafe)**: Identified hazardous scenarios, system must avoid or mitigate
+
+  - **Area 3 (Unknown Unsafe)**: Unidentified hazards discovered through testing/field operation
+
+  - **Area 4 (Unknown Safe)**: Potential hazards with acceptable residual risk
+
+
+  Goal: Minimize Area 3 (unknown unsafe) through systematic analysis and validation.
+
+
+  ### Applicability
+
+
+  - **Required for**: SAE L2+ ADAS functions (lane keeping, adaptive cruise control, automated lane change)
+
+  - **Strongly recommended**: SAE L3-L5 autonomous driving systems
+
+  - **Type approval**: UN ECE R157 (ALKS) explicitly references ISO 21448
+
+  - **ODD-specific**: Each ODD requires separate SOTIF analysis
+
+  - **Sensor-dependent systems**: Particularly critical for camera/radar/lidar-based perception
+
+
+  ### Key Concepts
+
+
+  **Functional Insufficiency**: Performance limitations of intended function due to:
+
+  - Sensor limitations (range, resolution, degraded conditions)
+
+  - Algorithm limitations (false positives/negatives, edge cases)
+
+  - Actuator limitations (response time, degraded performance)
+
+
+  **Reasonably Foreseeable Misuse**: Human behavior that is incorrect but predictable:
+
+  - Driver not monitoring system (mode confusion)
+
+  - Using system outside ODD
+
+  - Overreliance on automation
+
+  - Ignoring warnings
+
+
+  **Triggering Conditions**: Specific scenarios that expose insufficiencies:
+
+  - Environmental (rain, fog, low sun, darkness, snow)
+
+  - Traffic (cut-in vehicles, VRU behavior, construction zones)
+
+  - Infrastructure (faded lane markings, unusual road geometry)
+
+
+  ## Approach
+
+
+  1. **ODD Definition**: Define operational design domain with boundaries
+
+  2. **Known Unsafe Identification**: Analyze functional insufficiencies and misuse scenarios
+
+  3. **Triggering Condition Catalog**: Build comprehensive scenario database
+
+  4. **Known Safe Verification**: Validate nominal performance in Area 1
+
+  5. **Unknown Unsafe Exploration**: Use simulation, field testing, fleet monitoring
+
+  6. **Residual Risk Evaluation**: Assess remaining Area 3/4 risk against acceptance criteria
+
+  7. **Continuous Improvement**: Field monitoring to discover new Area 3 scenarios
+
+
+  ## SOTIF Process Integration
+
+
+  ```
+  ISO 26262 Safety Lifecycle:
+    Concept Phase → System Development → HW/SW Development → Production
+
+  ISO 21448 SOTIF Integration:
+    [ODD Definition] → [Triggering Condition Analysis] → [Validation Strategy]
+         ↓                       ↓                              ↓
+    Requirements         Scenario Catalog              Sim + Field Testing
+         ↓                       ↓                              ↓
+    Safety Concept       Known Unsafe Mitigation        Residual Risk Evaluation
+  ```
+
+
+  ## Example: Automated Lane Keeping System (ALKS)
+
+
+  **ODD Definition**:
+
+  - Highway only (controlled-access roads)
+
+  - Speed: 0-60 km/h
+
+  - Weather: Daylight, dry/wet road, no fog
+
+  - Infrastructure: Clear lane markings, no construction
+
+
+  **Known Unsafe Scenarios**:
+
+  - Faded lane markings → Camera cannot detect lanes
+
+  - Cut-in vehicle → Insufficient reaction time
+
+  - Road edge detection failure → Unintended lane departure
+
+
+  **Triggering Conditions**:
+
+  - Lane marking contrast below threshold
+
+  - Lateral offset of cut-in vehicle
+
+  - Road curvature exceeding sensor FOV
+
+
+  **Mitigation**:
+
+  - Lane marking quality monitoring → Fallback to GPS/map
+
+  - Multi-sensor fusion (camera + radar + map)
+
+  - Driver monitoring system to ensure takeover readiness
+
+
+  ## Deliverables
+
+
+  - SOTIF plan aligned with ISO 21448 clause requirements
+
+  - ODD specification with measurable boundary conditions
+
+  - Triggering condition catalog (1000+ scenarios for L2+)
+
+  - Known unsafe scenario mitigation strategies
+
+  - Validation strategy (simulation mileage targets, field test KPIs)
+
+  - Residual risk assessment report
+
+  - SOTIF argument in safety case documentation
+
+
+  ## Best Practices
+
+
+  - Start SOTIF analysis early in concept phase (parallel to HARA)
+
+  - Use scenario-based approach with logical → concrete → test case traceability
+
+  - Combine simulation (billions of km) with field validation (statistical significance)
+
+  - Monitor fleet data post-deployment to discover Area 3 scenarios
+
+  - Coordinate with ISO 26262 safety manager to avoid gaps/overlaps
+
+  - Document ODD assumptions clearly in user manual and HMI
+
+  - Use structured scenario databases (OpenSCENARIO, OpenDRIVE)
+
+
+  ## Tools and Methods
+
+
+  - **Scenario generation**: CARLA, SUMO, VTD, IPG CarMaker
+
+  - **Statistical validation**: Monte Carlo simulation, coverage metrics
+
+  - **Field monitoring**: Event Data Recorder (EDR), fleet analytics
+
+  - **FMEA/STPA**: Systematic identification of triggering conditions
+
+  - **Human factors analysis**: Driving simulator studies for misuse scenarios
+
+  - **ML verification**: Adversarial testing, out-of-distribution detection
+
+
+  ## Regulatory Landscape
+
+
+  - **UN ECE R157**: ALKS regulation references ISO 21448 for ODD validation
+
+  - **EU Type Approval**: Expected to require SOTIF for L3+ systems
+
+  - **China GB Standards**: Drafts include SOTIF-like requirements for intelligent driving
+
+  - **US NHTSA**: AV ANPRM mentions performance under edge cases (SOTIF philosophy)
+
+
+  ## Relationship to ML Safety
+
+
+  ML-based perception/planning introduces unique SOTIF challenges:
+
+  - Training data coverage vs real-world distribution shift
+
+  - Adversarial examples (physical adversarial patches)
+
+  - Model uncertainty quantification
+
+  - Continuous learning and model update safety
+
+
+  ISO 21448 provides framework; specific ML assurance methods evolving (ISO/TR 4804).
+
+  '
+constraints:
+- Exhaustive triggering condition identification is infeasible
+- Unknown unknowns by definition cannot be fully eliminated
+- Field validation requires large mileage for statistical confidence
+- ODD restrictions may limit commercial viability
+tools_required:
+- Scenario simulation platforms (CARLA, VTD, IPG)
+- Field data management systems
+- Statistical analysis tools (Python, R)
+- Scenario databases (OpenSCENARIO)
+- Safety case management tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- iso-21448
+- functional-safety
+- adas
+- autonomous-driving
+- odd
+- scenario-analysis

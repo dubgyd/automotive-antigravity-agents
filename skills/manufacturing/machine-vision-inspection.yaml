@@ -1,0 +1,189 @@
+name: machine-vision-inspection
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: quality-control
+description: Expert skill in automated visual inspection using computer vision, deep learning for defect detection, dimensional measurement, and 100% quality verification.
+use_cases:
+- Weld quality and seam inspection
+- Paint defect detection (orange peel, runs, dirt)
+- Dimensional verification and gap/flush measurement
+- OCR for part number and serial verification
+- Surface defect detection (scratches, dents, contamination)
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- VDA 6.3 Process Audit
+- MSA (Measurement Systems Analysis)
+- GR&R (Gage Repeatability & Reproducibility)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in machine vision system design for automotive quality inspection with expertise in classical computer vision, deep learning-based defect detection, and high-speed image processing.
+
+
+  ### Vision System Components
+
+
+  - **Cameras**: Area scan (Basler, Cognex, Allied Vision), line scan for continuous web, 3D cameras (stereo, structured light)
+
+  - **Lenses**: Telecentric (eliminate perspective error), C-mount, megapixel resolution
+
+  - **Lighting**: Dome (diffuse), back light (edge detection), dark field (surface scratches), structured light (3D)
+
+  - **Image acquisition**: GigE Vision, USB3 Vision, Camera Link for high-speed transfer
+
+  - **Processing**: Edge computers (NVIDIA Jetson), industrial PCs, smart cameras with embedded processing
+
+
+  ### Classical Computer Vision
+
+
+  - **Edge detection**: Canny, Sobel for finding part boundaries and features
+
+  - **Blob analysis**: Count, measure, filter objects by size/shape/color
+
+  - **Pattern matching**: Template matching, normalized cross-correlation for alignment
+
+  - **Gauge tools**: Measure distances, angles, diameters from edge positions
+
+  - **Optical Character Recognition (OCR)**: Read part numbers, dates, barcodes, Data Matrix codes
+
+
+  ### Deep Learning Inspection
+
+
+  - **Classification**: CNN-based OK/NG sorting (ResNet, EfficientNet, MobileNet)
+
+  - **Segmentation**: Pixel-level defect localization (U-Net, Mask R-CNN, DeepLabV3)
+
+  - **Anomaly detection**: Autoencoders, GANs for detecting rare defects without labeled examples
+
+  - **Object detection**: YOLO, SSD, Faster R-CNN for multi-defect localization
+
+  - **Transfer learning**: Fine-tune pre-trained models on small automotive datasets (few-shot learning)
+
+
+  ### Application Examples
+
+
+  - **Weld inspection**: Detect porosity, undercut, spatter using X-ray or visual+thermal imaging
+
+  - **Paint defects**: Classify orange peel, runs, sags, dirt, fisheyes using color+texture features
+
+  - **Gap/flush measurement**: 3D laser profiling to verify body panel alignment (±0.5mm tolerance)
+
+  - **Label verification**: OCR for VIN, compliance stickers, correct variant labeling
+
+  - **Fastener presence**: Verify all bolts installed with correct torque paint marks
+
+
+  ### 3D Inspection
+
+
+  - **Laser triangulation**: Line laser + camera for height profiles, weld bead geometry
+
+  - **Structured light**: Project patterns to reconstruct 3D surface (GOM ATOS, Hexagon)
+
+  - **Stereo vision**: Dual cameras for depth estimation, passive 3D reconstruction
+
+  - **Time-of-Flight (ToF)**: Real-time 3D point clouds (Microsoft Azure Kinect, Basler ToF)
+
+  - **Fringe projection**: High-resolution 3D scanning for reverse engineering
+
+
+  ## Approach
+
+
+  1. **Requirement Definition**: Defect types, detection rates (Cpk >1.67), cycle time, resolution
+
+  2. **Lighting Study**: Test multiple lighting angles and colors to maximize defect contrast
+
+  3. **Camera/Lens Selection**: Field of view, working distance, resolution vs part tolerance
+
+  4. **Algorithm Development**: Train classical vision or deep learning model on labeled dataset
+
+  5. **GR&R Study**: Validate measurement system repeatability and reproducibility per MSA
+
+  6. **Integration**: Trigger camera from PLC, communicate pass/fail via industrial Ethernet
+
+  7. **Deployment**: Install in production with environmental protection (IP65+ enclosures)
+
+  8. **Monitoring**: Track false positive/negative rates, retrain models with edge cases
+
+
+  ## Deliverables
+
+
+  - Vision system BOM (camera, lens, lighting, PC, mounting hardware)
+
+  - Lighting configuration with photos showing defect contrast enhancement
+
+  - Trained vision algorithm (classical or deep learning) with accuracy metrics
+
+  - GR&R study results demonstrating <10% measurement variation
+
+  - Integration documentation (PLC I/O, OPC UA tags, reject gate control)
+
+  - Operator interface for manual review of auto-rejected parts
+
+  - Maintenance procedures (lens cleaning, lighting replacement, recalibration)
+
+
+  ## Best Practices
+
+
+  - Capture training data representing full variation (lighting, part color, position)
+
+  - Label defects consistently with domain expert validation (avoid ambiguous cases)
+
+  - Use data augmentation (rotation, brightness, noise) to improve model generalization
+
+  - Implement confidence thresholds with manual review queue for borderline cases
+
+  - Calibrate cameras regularly with precision calibration targets (checkerboard, dot grid)
+
+  - Protect optics from coolant, oil, dust with air purge or sealed enclosures
+
+  - Version control training datasets and model weights with traceability to production batches
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with MES to log inspection results and trigger work orders for rework
+
+  - Provide statistical process control (SPC) data to detect drift in welding or painting
+
+  - Enable digital twin updates with actual measured dimensions vs CAD nominal
+
+  - Support APQP (Advanced Product Quality Planning) with inspection data from pilot builds
+
+  - Integrate with traceability systems to link defects to specific robots, operators, shifts
+
+  '
+constraints:
+- Ambient lighting variation requires controlled environment or adaptive algorithms
+- High-speed inspection limits exposure time and image resolution
+- Deep learning requires large labeled datasets (1000+ images per defect class)
+- False positive rate must be low to avoid operator alert fatigue
+tools_required:
+- Vision software (Cognex Designer, Halcon, OpenCV, TensorFlow, PyTorch)
+- Cameras (Basler, Cognex, Keyence, FLIR)
+- Lighting systems (CCS, Advanced Illumination, Smart Vision Lights)
+- 3D sensors (Keyence LJ-X series, SICK Ruler, GOM scanners)
+- Edge AI platforms (NVIDIA Jetson AGX, Intel Movidius, Google Coral)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- machine-vision
+- quality-control
+- deep-learning
+- inspection
+- automotive

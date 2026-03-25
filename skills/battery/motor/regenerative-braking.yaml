@@ -1,0 +1,77 @@
+name: regenerative-braking
+description: Regenerative braking control for energy recovery and range extension in EVs
+category: ev-motor-control
+
+instructions: |
+  Implement regenerative braking system:
+
+  Control strategy:
+  - Blend regenerative and friction braking
+  - Maximize energy recovery (up to 70% in urban)
+  - Ensure driver feel and safety
+  - Coordinate with ABS/ESC
+
+  Braking regions:
+  - Light braking: 100% regenerative
+  - Medium braking: blend regen + friction
+  - Heavy braking: mostly friction (safety)
+  - Emergency: full friction braking
+
+  Constraints:
+  - Motor speed limits (max regen at high RPM)
+  - Battery charge limits (SOC, current, power)
+  - Thermal limits (motor and battery)
+  - Traction limits (wheel slip)
+
+  Energy recovery:
+  - Urban driving: 15-30% range extension
+  - Highway: 5-10% range extension
+  - Capture deceleration kinetic energy
+
+  Implementation:
+  - Monitor brake pedal position
+  - Calculate available regen torque
+  - Coordinate with friction brake
+  - Limit regen based on battery SOC
+  - Smooth torque transitions
+
+dependencies:
+  - NumPy for control logic
+  - CAN bus for vehicle communication
+
+examples:
+  - description: "Regenerative braking controller"
+    input: "Implement blended braking with energy recovery"
+    output: |
+      ```python
+      class RegenBrakeController:
+          def __init__(self, max_regen_power_kw=80):
+              self.max_regen_power = max_regen_power_kw * 1000
+              self.max_regen_torque = 300  # Nm
+
+          def calculate_regen_torque(self, brake_pedal, speed_rpm, battery_soc):
+              # Limit based on SOC (no regen above 95%)
+              if battery_soc > 0.95:
+                  return 0.0
+
+              # Calculate available regen torque
+              available_torque = min(
+                  self.max_regen_torque,
+                  self.max_regen_power / (speed_rpm * 2 * np.pi / 60)
+              )
+
+              # Scale by brake pedal (0-50% pedal = full regen)
+              if brake_pedal < 0.5:
+                  regen_fraction = brake_pedal / 0.5
+              else:
+                  regen_fraction = 1.0 - (brake_pedal - 0.5)
+
+              return available_torque * regen_fraction
+      ```
+
+tags:
+  - ev
+  - motor-control
+  - regenerative-braking
+  - energy-recovery
+  - brake-blending

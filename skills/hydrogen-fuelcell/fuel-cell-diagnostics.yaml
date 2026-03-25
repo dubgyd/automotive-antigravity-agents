@@ -1,0 +1,878 @@
+name: fuel-cell-diagnostics
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: diagnostics
+description: Expert skill in fuel cell diagnostics using EIS, polarization curve analysis, fault detection algorithms, and in-situ performance monitoring.
+use_cases:
+- Electrochemical Impedance Spectroscopy (EIS) analysis
+- Polarization curve fault diagnosis
+- Cell voltage monitoring and outlier detection
+- Flooding and drying detection
+- Membrane failure diagnostics
+- Air starvation and fuel starvation detection
+automotive_standards:
+- ISO 14229 (UDS diagnostic services)
+- SAE J1979 (E/E diagnostic test modes)
+- IEC 62282-2 (Fuel cell performance testing)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in fuel cell diagnostics, electrochemical impedance spectroscopy (EIS), polarization curve analysis, cell voltage monitoring, and fault detection algorithms. Deep understanding of failure signatures, sensor fusion, and root cause identification.
+
+
+  ### Electrochemical Impedance Spectroscopy (EIS)
+
+
+  **Principle**: Apply AC voltage perturbation, measure impedance vs frequency
+
+  - **Frequency range**: 10 kHz - 0.1 Hz (automotive EIS)
+
+  - **Nyquist plot**: Imaginary vs real impedance
+
+  - **Equivalent circuit**: R_series + (R_ct || CPE) (charge transfer resistance, double layer capacitance)
+
+
+  ```python
+
+  import numpy as np
+
+  import matplotlib.pyplot as plt
+
+
+
+  class EISAnalyzer:
+
+      def __init__(self):
+
+          self.frequencies = np.logspace(4, -1, 50)  # 10 kHz to 0.1 Hz
+
+          self.Z_real = []
+
+          self.Z_imag = []
+
+
+
+      def measure_eis_spectrum(self, amplitude=10e-3):
+
+          """
+
+          Perform EIS measurement on fuel cell.
+
+
+
+          Args:
+
+              amplitude: AC voltage amplitude [V] (small signal)
+
+
+
+          Returns:
+
+              frequencies, Z_real, Z_imag
+
+          """
+
+          for freq in self.frequencies:
+
+              # Apply sinusoidal perturbation
+
+              V_ac = amplitude * np.sin(2 * np.pi * freq * np.arange(0, 1, 1e-4))
+
+
+
+              # Measure current response (phase-shifted)
+
+              I_ac = self.measure_current_response(V_ac, freq)
+
+
+
+              # Calculate impedance Z = V / I
+
+              Z = np.fft.fft(V_ac)[1] / np.fft.fft(I_ac)[1]
+
+              self.Z_real.append(Z.real)
+
+              self.Z_imag.append(Z.imag)
+
+
+
+          return self.frequencies, self.Z_real, self.Z_imag
+
+
+
+      def extract_parameters(self):
+
+          """
+
+          Extract equivalent circuit parameters from Nyquist plot.
+
+
+
+          Returns:
+
+              R_series: Ohmic resistance [Ohm·cm²]
+
+              R_ct: Charge transfer resistance [Ohm·cm²]
+
+          """
+
+          # R_series: High-frequency intercept (real axis)
+
+          R_series = self.Z_real[0] * 1000  # Convert to mOhm·cm²
+
+
+
+          # R_ct: Diameter of semicircle (activation resistance)
+
+          R_ct = (max(self.Z_real) - min(self.Z_real)) * 1000
+
+
+
+          return R_series, R_ct
+
+
+
+      def diagnose_faults(self, R_series, R_ct):
+
+          """
+
+          Fault diagnosis based on EIS parameters.
+
+          """
+
+          if R_series > 200:  # mOhm·cm²
+
+              print("FAULT: High ohmic resistance - membrane drying or poor contact")
+
+          if R_ct > 500:  # mOhm·cm²
+
+              print("FAULT: High activation resistance - catalyst degradation or flooding")
+
+  ```
+
+
+  ### Polarization Curve Diagnostics
+
+
+  **Procedure**: Sweep current from 0 to max, measure voltage at each point
+
+
+  ```c
+
+  typedef struct {
+
+      float I_points[50];    // A (current setpoints)
+
+      float V_measured[50];  // V (measured voltages)
+
+      int num_points;
+
+  } PolarizationCurve_t;
+
+
+
+  void measure_polarization_curve(PolarizationCurve_t *curve) {
+
+      curve->num_points = 50;
+
+
+
+      for (int i = 0; i < curve->num_points; i++) {
+
+          // Set current from 0 to 250 A
+
+          curve->I_points[i] = (float)i * 5.0f;  // A
+
+
+
+          // Wait for steady-state (10 seconds)
+
+          delay_ms(10000);
+
+
+
+          // Measure voltage
+
+          curve->V_measured[i] = read_stack_voltage();
+
+      }
+
+  }
+
+
+
+  void diagnose_polarization_curve(PolarizationCurve_t *curve) {
+
+      // Check activation region (low current)
+
+      float V_ocv = curve->V_measured[0];
+
+      float V_10A = curve->V_measured[2];  // At 10 A
+
+
+
+      if ((V_ocv - V_10A) > 0.15f) {
+
+          // Excessive activation loss
+
+          printf("FAULT: Catalyst degradation or poor kinetics\n");
+
+      }
+
+
+
+      // Check ohmic region (mid current)
+
+      float V_100A = curve->V_measured[20];
+
+      float V_150A = curve->V_measured[30];
+
+      float slope = (V_100A - V_150A) / 50.0f;  // V/A
+
+
+
+      if (slope > 0.002f) {  // > 2 mV/A
+
+          printf("FAULT: High ohmic resistance - membrane issue\n");
+
+      }
+
+
+
+      // Check concentration region (high current)
+
+      float V_200A = curve->V_measured[40];
+
+      if (V_200A < 0.50f) {
+
+          printf("FAULT: Mass transport limitation - flooding or air starvation\n");
+
+      }
+
+  }
+
+  ```
+
+
+  ### Cell Voltage Monitoring
+
+
+  **Individual cell voltage monitoring** (CVM):
+
+  - Monitor each cell voltage (or groups of 10-20 cells)
+
+  - Detect outliers (cells significantly lower/higher than average)
+
+
+  ```python
+
+  class CellVoltageMonitor:
+
+      def __init__(self, N_cells=350):
+
+          self.N_cells = N_cells
+
+          self.V_cell = np.zeros(N_cells)
+
+          self.V_avg = 0.0
+
+          self.V_std = 0.0
+
+
+
+      def read_cell_voltages(self):
+
+          """
+
+          Read individual cell voltages from CVM hardware.
+
+          """
+
+          for i in range(self.N_cells):
+
+              self.V_cell[i] = self.read_adc_channel(i)  # Simulated
+
+
+
+          self.V_avg = np.mean(self.V_cell)
+
+          self.V_std = np.std(self.V_cell)
+
+
+
+      def detect_outliers(self, threshold_sigma=3.0):
+
+          """
+
+          Detect cells with abnormal voltage (outliers).
+
+
+
+          Args:
+
+              threshold_sigma: Z-score threshold for outlier detection
+
+
+
+          Returns:
+
+              List of cell indices with faults
+
+          """
+
+          outliers = []
+
+
+
+          for i in range(self.N_cells):
+
+              z_score = abs(self.V_cell[i] - self.V_avg) / self.V_std
+
+
+
+              if z_score > threshold_sigma:
+
+                  outliers.append(i)
+
+
+
+          return outliers
+
+
+
+      def diagnose_cell_faults(self, cell_id):
+
+          """
+
+          Diagnose root cause of cell voltage fault.
+
+          """
+
+          V_cell = self.V_cell[cell_id]
+
+
+
+          if V_cell < (self.V_avg - 0.1):
+
+              print(f"Cell {cell_id}: LOW VOLTAGE - possible flooding, catalyst poisoning, or membrane pinhole")
+
+          elif V_cell > (self.V_avg + 0.05):
+
+              print(f"Cell {cell_id}: HIGH VOLTAGE - possible drying, air leak to anode")
+
+  ```
+
+
+  ### Flooding Detection
+
+
+  **Symptoms**:
+
+  - Low voltage at high current (concentration loss)
+
+  - High-frequency resistance increase (water blocks pores)
+
+  - Pressure drop increase across cathode
+
+
+  ```c
+
+  typedef struct {
+
+      float V_cell_avg;
+
+      float HFR;             // Ohm·cm²
+
+      float delta_P_cathode; // Pa (pressure drop)
+
+      bool is_flooded;
+
+  } FloodingDetector_t;
+
+
+
+  void detect_flooding(FloodingDetector_t *detector, float I_density) {
+
+      // Flooding typically occurs at low current density (insufficient drying)
+
+      if (I_density < 0.3f) {  // A/cm²
+
+          // Check for voltage drop
+
+          if (detector->V_cell_avg < 0.60f) {
+
+              detector->is_flooded = true;
+
+          }
+
+
+
+          // Check for HFR increase
+
+          if (detector->HFR > 0.25f) {  // mOhm·cm²
+
+              detector->is_flooded = true;
+
+          }
+
+
+
+          // Check for pressure drop increase
+
+          if (detector->delta_P_cathode > 5000.0f) {  // Pa
+
+              detector->is_flooded = true;
+
+          }
+
+      } else {
+
+          detector->is_flooded = false;
+
+      }
+
+
+
+      if (detector->is_flooded) {
+
+          // Mitigation: Increase air flow, reduce humidification
+
+          trigger_alarm(ALARM_FLOODING);
+
+          increase_air_stoichiometry(0.5f);  // +0.5 lambda
+
+      }
+
+  }
+
+  ```
+
+
+  ### Drying Detection
+
+
+  **Symptoms**:
+
+  - High ohmic resistance (membrane conductivity drops)
+
+  - Voltage drop at mid-current (ohmic region)
+
+  - Membrane resistance increase (EIS R_series)
+
+
+  ```python
+
+  def detect_membrane_drying(R_series, RH_cathode, I_density):
+
+      """
+
+      Detect membrane drying condition.
+
+
+
+      Args:
+
+          R_series: High-frequency resistance [mOhm·cm²]
+
+          RH_cathode: Cathode relative humidity [%]
+
+          I_density: Current density [A/cm²]
+
+
+
+      Returns:
+
+          is_drying: Boolean
+
+      """
+
+      is_drying = False
+
+
+
+      # Drying occurs at high current (water removal exceeds generation)
+
+      if I_density > 0.8:  # A/cm²
+
+          if R_series > 200:  # mOhm·cm²
+
+              is_drying = True
+
+
+
+          if RH_cathode < 40:  # % (low humidity)
+
+              is_drying = True
+
+
+
+      if is_drying:
+
+          print("FAULT: Membrane drying detected")
+
+          # Mitigation: Increase humidification, reduce current temporarily
+
+          increase_humidification(10)  # +10% RH
+
+          reduce_current_limit(0.2)  # -20% current limit
+
+
+
+      return is_drying
+
+  ```
+
+
+  ### Air Starvation Detection
+
+
+  **Symptoms**:
+
+  - Sudden voltage drop
+
+  - Individual cells reverse voltage (cathode starved of O2)
+
+  - Low oxygen concentration at cathode outlet
+
+
+  ```c
+
+  void detect_air_starvation(float V_stack, float *V_cell, int N_cells, float O2_conc_outlet) {
+
+      bool starvation = false;
+
+
+
+      // Check for sudden stack voltage drop
+
+      static float V_stack_prev = 300.0f;
+
+      if ((V_stack_prev - V_stack) > 20.0f) {  // > 20V drop
+
+          starvation = true;
+
+      }
+
+      V_stack_prev = V_stack;
+
+
+
+      // Check for cell reversal (negative voltage)
+
+      for (int i = 0; i < N_cells; i++) {
+
+          if (V_cell[i] < 0.0f) {
+
+              starvation = true;
+
+              break;
+
+          }
+
+      }
+
+
+
+      // Check oxygen concentration at cathode outlet
+
+      if (O2_conc_outlet < 5.0f) {  // % (below stoichiometric minimum)
+
+          starvation = true;
+
+      }
+
+
+
+      if (starvation) {
+
+          // Emergency mitigation: Reduce current, increase compressor
+
+          trigger_alarm(ALARM_AIR_STARVATION);
+
+          reduce_stack_current(0.5f);  // Cut current by 50%
+
+          increase_compressor_speed(20.0f);  // +20% speed
+
+      }
+
+  }
+
+  ```
+
+
+  ### Hydrogen Starvation Detection
+
+
+  **Symptoms**:
+
+  - Voltage drop at anode
+
+  - Cell reversal (anode starved of H2)
+
+  - Low H2 pressure
+
+
+  ```python
+
+  def detect_hydrogen_starvation(P_H2_inlet, V_cell_min, purge_interval):
+
+      """
+
+      Detect hydrogen starvation condition.
+
+
+
+      Args:
+
+          P_H2_inlet: Hydrogen inlet pressure [bar]
+
+          V_cell_min: Minimum cell voltage [V]
+
+          purge_interval: Time since last anode purge [s]
+
+
+
+      Returns:
+
+          is_h2_starvation: Boolean
+
+      """
+
+      is_h2_starvation = False
+
+
+
+      # Check H2 pressure
+
+      if P_H2_inlet < 1.0:  # bar (below minimum)
+
+          is_h2_starvation = True
+
+
+
+      # Check for cell reversal
+
+      if V_cell_min < 0.0:
+
+          is_h2_starvation = True
+
+
+
+      # Check if purge interval too long (N2 accumulation blocks H2)
+
+      if purge_interval > 120:  # seconds (2 minutes)
+
+          print("WARNING: Anode purge overdue - possible N2 buildup")
+
+          # Trigger purge
+
+          execute_anode_purge(duration=0.5)
+
+
+
+      if is_h2_starvation:
+
+          print("FAULT: Hydrogen starvation detected")
+
+          # Mitigation: Open H2 valve, reduce current
+
+          open_h2_valve_fully()
+
+          reduce_current_limit(0.5)
+
+
+
+      return is_h2_starvation
+
+  ```
+
+
+  ### Fault Decision Tree
+
+
+  ```c
+
+  typedef enum {
+
+      FAULT_NONE,
+
+      FAULT_FLOODING,
+
+      FAULT_DRYING,
+
+      FAULT_AIR_STARVATION,
+
+      FAULT_H2_STARVATION,
+
+      FAULT_CATALYST_DEGRADATION,
+
+      FAULT_MEMBRANE_FAILURE,
+
+      FAULT_CARBON_CORROSION
+
+  } FCFaultType_t;
+
+
+
+  FCFaultType_t diagnose_fc_fault(float V_stack, float R_series, float V_cell_min,
+
+                                  float I_density, float RH_cathode, float P_H2) {
+
+      // Decision tree for fault diagnosis
+
+
+
+      if (V_cell_min < 0.0f) {
+
+          // Cell reversal - starvation
+
+          if (P_H2 < 1.0f) {
+
+              return FAULT_H2_STARVATION;
+
+          } else {
+
+              return FAULT_AIR_STARVATION;
+
+          }
+
+      }
+
+
+
+      if (R_series > 200.0f) {
+
+          // High resistance
+
+          if (RH_cathode < 40.0f) {
+
+              return FAULT_DRYING;
+
+          } else {
+
+              return FAULT_MEMBRANE_FAILURE;
+
+          }
+
+      }
+
+
+
+      if (V_stack < 200.0f && I_density > 0.5f) {
+
+          // Low voltage at high current
+
+          if (RH_cathode > 80.0f) {
+
+              return FAULT_FLOODING;
+
+          } else {
+
+              return FAULT_CATALYST_DEGRADATION;
+
+          }
+
+      }
+
+
+
+      return FAULT_NONE;
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Sensor Integration**: Interface with voltage, current, pressure, temperature, humidity sensors
+
+  2. **EIS Implementation**: Develop AC perturbation and impedance measurement
+
+  3. **Polarization Analysis**: Automate curve measurement and feature extraction
+
+  4. **Cell Voltage Monitoring**: Implement outlier detection and fault localization
+
+  5. **Fault Detection Algorithms**: Code decision trees and threshold-based detection
+
+  6. **Mitigation Strategies**: Implement automatic corrective actions (flow adjustment, purge)
+
+  7. **Logging and Reporting**: Store diagnostic data for prognostics and maintenance
+
+
+  ## Deliverables
+
+
+  - EIS analyzer code (frequency sweep, impedance calculation, parameter extraction)
+
+  - Polarization curve diagnostic tool
+
+  - Cell voltage monitoring system (CVM)
+
+  - Flooding/drying detection algorithms
+
+  - Air/H2 starvation fault detection
+
+  - Fault decision tree implementation
+
+  - Diagnostic trouble code (DTC) definitions for UDS
+
+
+  ## Best Practices
+
+
+  - Perform EIS periodically (e.g., every 100 hours) to track degradation
+
+  - Use cell voltage monitoring to detect early failures (before catastrophic)
+
+  - Implement graduated mitigation (reduce current before emergency shutdown)
+
+  - Log all fault events with timestamp, operating conditions, and sensor data
+
+  - Validate fault detection with known failure modes (lab testing)
+
+  - Design for fail-safe: default to safe state on sensor failure
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface with UDS diagnostic protocol (ISO 14229) for OBD access
+
+  - Store DTCs in non-volatile memory for service diagnostics
+
+  - Display fault warnings to driver (flooding, starvation, degradation)
+
+  - Trigger maintenance reminders based on SOH and fault frequency
+
+  - Log diagnostic data to cloud for fleet-wide analysis
+
+  '
+constraints:
+- EIS measurement time (several minutes for full spectrum)
+- Cell voltage monitoring hardware cost (1 channel per cell)
+- Sensor accuracy and drift
+- Real-time computation limits for embedded systems
+tools_required:
+- EIS analyzer (Solartron, Gamry, or custom)
+- Cell voltage monitoring hardware (multiplexed ADC)
+- MATLAB/Python for offline analysis
+- CAN/Ethernet interface for sensor data
+- UDS diagnostic software (Vector CANoe, ETAS INCA)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- diagnostics
+- eis
+- polarization-curve
+- fault-detection
+- cell-voltage-monitoring
+- automotive

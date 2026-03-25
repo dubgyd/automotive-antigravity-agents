@@ -1,0 +1,158 @@
+name: ar-windshield-hud
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Full-width augmented reality overlay on the windshield, covering waveguide optics, world-locked rendering, and driver attention management for AR HUDs."
+use_cases:
+  - "Designing full-windshield AR head-up displays with world-locked overlays"
+  - "Implementing navigation cues that render directly on the road surface"
+  - "Calibrating waveguide or holographic optical elements for varying eye positions"
+  - "Building hazard highlighting that outlines pedestrians and obstacles in real time"
+  - "Managing driver cognitive load by filtering AR content based on context"
+automotive_standards:
+  - "ISO 15008 - Road vehicles, ergonomic aspects of in-vehicle visual presentation"
+  - "SAE J2831 - HUD field-of-view and luminance requirements"
+  - "UN ECE R43 - Windshield optical quality for embedded optics"
+  - "Euro NCAP 2026 - AR HUD integration in safety assist rating"
+  - "ISO 26262 - Functional safety for display rendering pipelines"
+instructions: |
+  # AR Windshield HUD
+
+  ## Overview
+  Augmented reality head-up displays project information directly onto the windshield,
+  overlaying digital content on the real-world view. Unlike traditional combiner HUDs
+  that show a small floating rectangle, full-windshield AR HUDs use waveguide optics or
+  holographic film to paint content across the entire glass surface, enabling world-locked
+  navigation arrows, hazard outlines, and lane guidance that appears anchored to the road.
+
+  ## Key Concepts
+
+  ### Optical Architectures
+  Three primary approaches to full-windshield AR projection:
+  - Holographic waveguide embedded in windshield laminate, diffracting specific wavelengths
+  - Micro-LED projector with freeform mirror bouncing light off a combiner layer
+  - Laser beam scanning (LBS) with MEMS mirror and holographic optical element (HOE)
+  Each approach trades off field-of-view, brightness, eyebox size, and cost.
+
+  ### World-Locked Rendering
+  Content must appear fixed to real-world positions despite vehicle motion:
+  - Sensor fusion combines camera, IMU, GPS, and HD map data
+  - Pose estimation calculates the relationship between vehicle and world coordinates
+  - Reprojection corrects for head movement between frame render and photon emission
+  - Latency budget from sensor input to photon must stay below 20 ms
+
+  ### Eyebox and Eye Tracking
+  The eyebox defines the volume where the driver can see the projected image:
+  - Traditional HUDs offer a 130 mm x 50 mm eyebox
+  - Full-windshield systems target 200 mm x 100 mm or larger
+  - Eye tracking dynamically steers the projection to follow the driver gaze
+  - Pupil position feedback adjusts distortion correction in real time
+
+  ## Implementation Guide
+
+  ### Step 1 - Define the Optical Stack
+  Select the projection technology based on vehicle packaging constraints:
+  - Measure available volume behind the dashboard for the projector unit
+  - Specify windshield laminate thickness to accommodate waveguide layers
+  - Define brightness requirement based on sunlight load analysis (target 15000+ cd/m2)
+
+  ### Step 2 - Build the Rendering Pipeline
+  Create a dedicated GPU rendering path for AR content:
+  - Use a low-latency compositor separate from the infotainment rendering
+  - Implement asynchronous timewarp to correct for head motion at display time
+  - Apply windshield distortion mesh calibrated per vehicle model to predistort images
+
+  ### Step 3 - Integrate Sensor Fusion
+  Fuse multiple data sources for accurate world-lock positioning:
+  - Camera-based SLAM provides local feature tracking
+  - GNSS with RTK correction gives absolute world position within 2 cm
+  - HD map data supplies road geometry for navigation overlay alignment
+  - IMU at 200 Hz fills gaps between camera and GNSS updates
+
+  ### Step 4 - Implement Content Layers
+  Organize AR content into priority-based layers:
+  - Critical safety layer with collision warnings, always visible, highest priority
+  - Navigation layer with turn arrows and lane guidance
+  - Information layer with speed, range, and contextual POI data
+  - Comfort layer with media info and call status, lowest priority
+
+  ### Step 5 - Calibrate Per-Vehicle
+  Run end-of-line calibration during manufacturing:
+  - Project test patterns and measure with a camera at nominal eye position
+  - Compute per-unit distortion correction coefficients
+  - Store calibration data in vehicle ECU persistent storage
+  - Support in-field recalibration after windshield replacement
+
+  ## Best Practices
+
+  ### Brightness and Contrast
+  - Achieve a minimum contrast ratio of 1.5 to 1 against sunlit road surfaces
+  - Use adaptive brightness control linked to ambient light sensors
+  - Implement high dynamic range rendering for mixed sun and shadow scenes
+  - Test visibility with polarized sunglasses, as some optics interact with polarization
+
+  ### Cognitive Load Management
+  - Limit simultaneous AR elements to three or fewer to avoid visual clutter
+  - Use progressive disclosure, showing detail only when the driver glances at a region
+  - Fade non-critical content when the driver attention system detects high workload
+  - Never overlay critical driving information like brake lights or traffic signals
+
+  ### Thermal Management
+  - AR projectors generate significant heat in a confined dashboard space
+  - Design a dedicated cooling path with heat pipes or thermoelectric coolers
+  - Monitor projector temperature and dim output before thermal shutdown
+  - Validate thermal performance in 85 C soak conditions per OEM requirements
+
+  ## Troubleshooting
+
+  ### Image Appears to Float or Swim
+  Check sensor fusion latency, ensuring end-to-end pipeline is under 20 ms. Verify IMU
+  calibration and confirm camera-to-vehicle extrinsic parameters are correct. Inspect
+  timewarp reprojection logic for incorrect rotation axis assumptions.
+
+  ### Content Not Aligned with Road
+  Validate HD map data freshness and confirm GNSS fix quality. Check the windshield
+  distortion mesh was generated for the correct glass curvature. Ensure the eye tracking
+  system is providing accurate pupil position to the distortion correction module.
+
+  ### Dim Image in Direct Sunlight
+  Verify the projector is running at maximum brightness. Check the waveguide efficiency
+  at the problematic viewing angle. Consider that windshield tint or solar coating may be
+  absorbing projected light. Measure actual luminance with a spot meter at eye position.
+
+  ### Driver Reports Eye Strain
+  Review the virtual image distance setting, which should be at least 7 meters for
+  comfortable viewing. Check for flicker by measuring at 240 fps with a high-speed
+  camera. Reduce the number of simultaneously displayed AR elements.
+
+  ## Integration Patterns
+
+  ### Multi-Layer Content Composition
+  Managing multiple AR content sources requires structured composition:
+  - Define a layer priority stack with safety alerts at the highest z-order
+  - Implement per-layer opacity control for smooth content transitions
+  - Use a content arbiter that prevents overlapping elements in the same visual region
+  - Synchronize layer timing so all content aligns with the same world-lock reference frame
+
+  ### Vehicle Sensor Bus Integration
+  AR HUD depends on multiple vehicle data sources delivered in real time:
+  - Subscribe to CAN bus signals for vehicle speed, steering angle, and turn indicators
+  - Consume ADAS object list for pedestrian and vehicle highlighting overlays
+  - Read navigation guidance from the route engine for turn-by-turn arrow rendering
+  - Aggregate weather sensor data to adjust content visibility algorithms
+
+  ## Testing and Validation
+
+  ### Optical Quality Verification
+  Measure AR HUD optical performance systematically:
+  - Use a camera at the nominal eye position to capture the projected image
+  - Measure luminance uniformity across the full field of view at 9 sample points
+  - Verify distortion correction by projecting a grid pattern and measuring deviations
+  - Test color accuracy against the sRGB target gamut using a spectroradiometer
+
+  ### Real-World Driving Validation
+  Verify AR content accuracy on public roads under diverse conditions:
+  - Drive calibrated test routes with known landmarks and measure overlay alignment
+  - Test in tunnels, bridges, and overpasses where GPS signal degrades
+  - Validate content visibility during sunrise and sunset with low sun angles
+  - Measure driver glance behavior with and without AR HUD using eye tracking glasses

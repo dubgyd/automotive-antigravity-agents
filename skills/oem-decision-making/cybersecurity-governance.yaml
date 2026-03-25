@@ -1,0 +1,155 @@
+name: cybersecurity-governance
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: cybersecurity_governance
+description: Board-level CSMS oversight, CISO role, risk appetite, incident response governance
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Cybersecurity governance in automotive defines the organizational structures, policies, processes, and
+  accountability frameworks that ensure vehicles and connected services are protected against cyber threats
+  throughout their lifecycle. UN R155 mandates a certified Cybersecurity Management System (CSMS) for
+  vehicle type approval in UNECE markets, making cybersecurity governance a regulatory prerequisite for
+  market access. This skill covers board-level CSMS oversight, CISO organizational positioning, risk
+  appetite definition, incident response governance, and supply chain cybersecurity management.
+
+  ## Key Concepts
+
+  ### Regulatory Framework
+  - **UN R155**: Requires OEMs to demonstrate a certified CSMS for vehicle type approval
+  - **UN R156**: Software update management system (SUMS) requirements for OTA governance
+  - **ISO/SAE 21434**: Road vehicles cybersecurity engineering standard (process framework)
+  - **ISO 24089**: Software update engineering standard for road vehicles
+  - **NIST Cybersecurity Framework**: Risk-based approach adaptable to automotive context
+  - **TISAX**: Trusted Information Security Assessment Exchange for automotive supply chain
+
+  ### CSMS Organizational Structure
+  - **Board-level accountability**: Executive sponsor (typically CTO or CDO) with board reporting line
+  - **Automotive CISO**: Dedicated role bridging IT security, product security, and manufacturing OT security
+  - **Product Security Team**: Engineers embedded in vehicle development programs
+  - **Security Operations Center (SOC)**: 24/7 monitoring of connected vehicle fleet and backend systems
+  - **Incident Response Team**: Cross-functional team for coordinated response to security events
+  - **Supply Chain Security Office**: Manages cybersecurity requirements for Tier-1/2/3 suppliers
+
+  ### Risk Appetite and Tolerance
+  - **Safety-critical systems**: Zero tolerance for vulnerabilities that could cause physical harm
+  - **Privacy and data protection**: Strict compliance posture aligned with GDPR and regional regulations
+  - **Functional features**: Risk-based acceptance with documented residual risk and mitigation plan
+  - **Backend and cloud services**: Standard enterprise IT risk management with automotive-specific overlays
+  - **Legacy vehicles**: Graduated risk acceptance based on remaining fleet life and exploitability
+
+  ## Implementation Guide
+
+  ### Step 1: CSMS Establishment
+  - Define cybersecurity policy signed by executive management with clear scope and objectives
+  - Establish governance structure with roles, responsibilities, and reporting lines (RACI matrix)
+  - Appoint automotive CISO with authority spanning product, IT, and manufacturing domains
+  - Create cybersecurity committee with representation from engineering, legal, procurement, and quality
+
+  ### Step 2: Threat Analysis and Risk Assessment (TARA)
+  - Implement systematic TARA process per ISO 21434 for all vehicle programs
+  - Define risk assessment methodology: asset identification, threat scenarios, impact rating, attack feasibility
+  - Establish risk acceptance criteria with clear escalation paths for residual risks above tolerance
+  - Maintain living threat intelligence database updated with automotive-specific threat landscape
+
+  ### Step 3: Security-by-Design Integration
+  - Embed cybersecurity requirements in vehicle development process from concept phase
+  - Integrate TARA outputs into system architecture decisions and component specifications
+  - Require cybersecurity verification and validation at each development gate (concept, design, integration, release)
+  - Mandate security testing: penetration testing, fuzz testing, code analysis for all connected ECUs
+
+  ### Step 4: Post-Production and Incident Management
+  - Establish vehicle Security Operations Center (vSOC) for fleet-wide anomaly detection and monitoring
+  - Define incident response playbook with severity classification, escalation triggers, and communication templates
+  - Implement vulnerability disclosure policy and coordinated disclosure process (ISO 29147/30111)
+  - Plan for security patches via OTA with rollback capability and safety validation
+
+  ## Decision Frameworks
+
+  ### Cybersecurity Investment Prioritization
+  | Risk Category | Likelihood | Impact | Investment Priority |
+  |--------------|-----------|--------|-------------------|
+  | Remote vehicle control exploit | Low | Critical (safety) | Highest |
+  | Customer data breach | Medium | High (regulatory) | High |
+  | Ransomware on production IT | Medium | High (operational) | High |
+  | Infotainment system compromise | Medium | Medium (reputation) | Medium |
+  | Telematics data manipulation | Low | Medium (warranty) | Medium |
+  | Key fob relay attack | High | Low (per incident) | Standard |
+
+  ### CSMS Maturity Assessment Model
+  - **Level 1 - Initial**: Ad hoc security, reactive to incidents, no formal processes
+  - **Level 2 - Managed**: Basic CSMS documented, TARA performed per project, dedicated security team
+  - **Level 3 - Defined**: Standardized processes across all programs, integrated into V-model, SOC operational
+  - **Level 4 - Measured**: Metrics-driven management, KPIs tracked, continuous improvement cycle
+  - **Level 5 - Optimized**: Predictive threat intelligence, automated response, industry-leading practices
+
+  ### Supplier Cybersecurity Governance Tiers
+  - **Tier A (Critical)**: Suppliers of connected ECUs, gateways, telematics -- full TARA, TISAX, audit rights
+  - **Tier B (Important)**: Suppliers of ECUs with network access -- TISAX assessment, security requirements
+  - **Tier C (Standard)**: Mechanical/passive components -- basic information security, NDA compliance
+
+  ## Best Practices
+
+  - Ensure cybersecurity governance has board-level visibility with quarterly risk reporting
+  - Maintain independence between cybersecurity assessment and development teams to avoid conflicts
+  - Require TISAX certification or equivalent for all suppliers with access to vehicle network
+  - Establish bug bounty or vulnerability disclosure program to leverage external security research
+  - Conduct tabletop incident response exercises at minimum annually with executive participation
+  - Budget cybersecurity as percentage of vehicle program cost (benchmark: 3-8% of E/E development)
+  - Maintain cybersecurity throughout vehicle lifetime (10-15 years post-SOP), not just development
+  - Integrate cybersecurity and functional safety analysis (ISO 21434 + ISO 26262 interaction)
+  - Track cybersecurity KPIs: mean time to detect (MTTD), mean time to respond (MTTR), vulnerability backlog
+  - Prepare for regulatory audits by maintaining complete evidence trail of CSMS compliance
+
+  ## Examples
+
+  ### Example 1: CSMS Certification for EU Type Approval
+  An OEM must achieve CSMS certification before July 2024 for new type approvals. Governance program:
+  appoint automotive CISO reporting to CTO, establish cross-functional cybersecurity committee, implement
+  TARA process integrated into ASPICE-based development, deploy vehicle SOC with 24/7 monitoring, and
+  complete technical service audit. Total investment: 15M EUR over 18 months across organization.
+
+  ### Example 2: Supply Chain Cybersecurity Incident
+  A Tier-1 supplier suffers ransomware attack, halting production of gateway ECUs. OEM incident response:
+  activate supply chain contingency plan, assess whether compromised software could have been delivered,
+  initiate forensic analysis of last 90 days of deliveries, notify type approval authority as precaution.
+  Post-incident: mandate TISAX Level 3 for all critical suppliers, add cybersecurity audit clause to contracts.
+
+  ### Example 3: Fleet Vulnerability Disclosure Response
+  Security researcher reports remote exploit in telematics unit affecting 500K vehicles. Governance process:
+  CISO activates incident response team, severity classified as Critical, legal assesses disclosure timeline,
+  engineering develops OTA patch, safety team validates patch does not affect vehicle dynamics, communications
+  prepares customer notification. Patch deployed within 14 days, coordinated disclosure published at 90 days.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- cybersecurity-governance
+- automotive
+- oem

@@ -1,0 +1,161 @@
+name: rapid-tooling
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+description: "Fast jig and fixture fabrication using 3D printing and accelerated tooling strategies"
+use_cases:
+  - "3D-print assembly jigs and fixtures for line changeover in days instead of weeks"
+  - "Design conformal cooling inserts for injection mold cycle time reduction"
+  - "Implement bridge tooling strategies for pre-series production runs"
+  - "Apply topology optimization to reduce fixture weight for robot-mounted tools"
+  - "Build modular fixture systems enabling quick changeover for multi-variant lines"
+automotive_standards:
+  - "IATF 16949 - Tooling Management Requirements"
+  - "ISO 2768 - General Tolerances for Linear and Angular Dimensions"
+  - "ASTM F3301 - Additive Manufacturing of Metals"
+  - "ISO/ASTM 52900 - Additive Manufacturing Terminology"
+  - "VDA 260 - Component Marking for Tooling"
+instructions: |
+  # Rapid Tooling for Automotive Manufacturing
+
+  ## Overview
+  Rapid tooling compresses the traditional 20-40 week tooling lead time for automotive
+  production tools into 2-8 weeks using additive manufacturing, soft materials, and
+  digital simulation. This enables faster prototype validation, quicker model changeovers,
+  and reduced capital expenditure for low-to-medium volume production. Three categories
+  apply: direct 3D-printed tools for production, bridge tools in soft material for
+  pre-series, and conformal cooling inserts combining AM metal with conventional bodies.
+
+  ## Key Concepts
+
+  ### Tooling Categories and Capabilities
+  Each tooling approach serves a different volume and accuracy range:
+
+  - Production hard tool steel P20: 500K+ parts, 20-40 weeks lead, 0.02mm accuracy
+  - Soft bridge aluminum 7075: 5K-50K parts, 6-10 weeks lead, 0.05mm accuracy
+  - Kirksite zinc alloy: 500-5K parts, 3-6 weeks lead, 0.10mm accuracy
+  - 3D printed maraging steel: 100-5K parts, 1-3 weeks lead, 0.05mm accuracy
+  - 3D printed nylon carbon: 10-500 parts, 1-5 days lead, 0.10mm accuracy
+
+  ### AM Technologies for Tooling
+  - DMLS/SLM: Metal laser sintering for steel and aluminum tool inserts
+  - Binder Jetting: Sand molds for casting and metal tools at lower cost
+  - FDM/FFF: Large-format polymer fixtures and checking aids
+  - SLA/DLP: High-accuracy resin patterns for investment casting
+  - WAAM: Wire arc additive for large-scale die repair and hybrid tools
+
+  ## Implementation Guide
+
+  ### Step 1 - Tooling Strategy Selection
+  Select the optimal approach based on volume, tolerance, and timeline requirements.
+
+  ```python
+  class ToolingStrategySelector:
+      def recommend(self, requirements: dict) -> dict:
+          """Select optimal tooling strategy based on requirements."""
+          volume = requirements["annual_volume"]
+          lead_time_weeks = requirements["max_lead_time_weeks"]
+
+          if lead_time_weeks <= 1 and volume < 500:
+              return {
+                  "strategy": "FDM_nylon_carbon_filled",
+                  "lead_time_weeks": 0.5,
+                  "tool_life_parts": 500,
+                  "accuracy_mm": 0.10,
+                  "post_processing": ["insert_metal_bushings", "bond_wear_pads"],
+              }
+          elif lead_time_weeks <= 3 and volume < 5000:
+              return {
+                  "strategy": "DMLS_maraging_steel",
+                  "lead_time_weeks": 2,
+                  "tool_life_parts": 5000,
+                  "accuracy_mm": 0.05,
+                  "post_processing": ["stress_relief", "CNC_finishing", "polishing"],
+              }
+          elif lead_time_weeks <= 8 and volume < 50000:
+              return {
+                  "strategy": "aluminum_7075_soft_tool",
+                  "lead_time_weeks": 7,
+                  "tool_life_parts": 50000,
+                  "accuracy_mm": 0.05,
+                  "post_processing": ["CNC_machining", "hard_anodize"],
+              }
+          return {
+              "strategy": "P20_production_hard_tool",
+              "lead_time_weeks": 30,
+              "tool_life_parts": 500000,
+              "accuracy_mm": 0.02,
+              "post_processing": ["heat_treat", "CNC_finish", "EDM", "polish"],
+          }
+  ```
+
+  ### Step 2 - Conformal Cooling Insert Design
+  Design AM cooling channels that follow part surface geometry for uniform cooling.
+
+  ```python
+  class ConformalCoolingDesigner:
+      def design_channels(self, hot_spots: list) -> dict:
+          """Design conformal cooling channels for injection mold inserts."""
+          channels = []
+          for spot in hot_spots:
+              wall_t = spot["wall_thickness"]
+              diameter = max(3.0, min(12.0, wall_t * 1.8))
+              channels.append({
+                  "diameter_mm": diameter,
+                  "offset_from_surface_mm": wall_t * 2.0,
+                  "pitch_mm": diameter * 3.0,
+                  "flow_rate_lpm": spot["heat_load_w"] / 4180,
+              })
+          return {
+              "channels": channels,
+              "expected_cycle_reduction_pct": 25,
+              "cooling_uniformity_improvement_pct": 40,
+              "manufacturing_method": "DMLS_maraging_steel_insert",
+          }
+  ```
+
+  ### Step 3 - Bridge Tooling Launch Sequence
+  Use bridge tooling to start production while hard tools are being built:
+
+  ```
+  Week 1-2:  3D print prototype tools for part validation
+  Week 3-4:  Kirksite or aluminum bridge tooling for pre-series of 500 parts
+  Week 5-20: Production hard tooling under construction in parallel
+  Week 8-12: Bridge tooling supports initial customer shipments
+  Week 20+:  Transition to production tooling, retire bridge tools
+  ```
+
+  ### Step 4 - AM Fixture ROI Calculation
+  Justify investment with direct cost and schedule comparisons:
+
+  ```
+  Conventional fixture: $5,000 cost + 6 weeks lead time
+  3D-printed fixture:   $800 cost + 3 days lead time
+  Savings per fixture:  $4,200 + 39 days schedule compression
+  Fixtures per plant:   500-2,000
+  Annual savings:       $2.1M-$8.4M plus massive schedule improvement
+  ```
+
+  ## Best Practices
+  - Always validate 3D-printed tooling with first-article dimensional inspection
+  - Use topology optimization to reduce fixture weight for robot-mounted applications
+  - Design modular fixtures with swappable nests for multi-variant production
+  - Apply wear-resistant coatings like DLC or TiN to AM metal tools at contact surfaces
+  - Maintain a digital library of fixture designs for reuse across model programs
+  - Insert threaded metal bushings into polymer fixtures for clamping durability
+  - Run forming simulation before cutting steel to avoid costly tool rework
+  - Track tool life by shot count to plan preventive replacement before failure
+
+  ## Troubleshooting
+  - 3D-printed fixture warps under load: Increase infill density to 60 percent
+    minimum and add carbon fiber reinforcement at stress concentration points
+  - Conformal cooling channel blockage: Design self-draining channel paths with
+    minimum 3mm diameter and flush thoroughly after printing
+  - Surface finish insufficient for forming tool: Post-machine AM surfaces to
+    required Ra values and polish cavity areas for part release
+  - Soft tooling wears faster than expected: Apply hard chrome plating or nitriding
+    treatment to extend tool life by 3-5x for aluminum tools
+  - Dimensional drift in AM metal tools: Stress relieve printed parts at 600C
+    for 2 hours before performing any finish machining operations
+  - Topology-optimized fixture too fragile: Set minimum wall thickness constraint
+    of 3mm in optimizer and validate with FEA under worst-case loading

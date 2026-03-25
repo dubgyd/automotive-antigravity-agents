@@ -1,0 +1,324 @@
+name: foc-control
+description: Field-Oriented Control (FOC) for PMSM/BLDC motors with space vector modulation and sensorless operation
+category: ev-motor-control
+
+instructions: |
+  Implement Field-Oriented Control (FOC) for EV traction motors:
+
+  Control architecture:
+  - Clarke transform (abc → αβ)
+  - Park transform (αβ → dq rotating frame)
+  - PI controllers for Id and Iq currents
+  - Inverse Park transform (dq → αβ)
+  - Space Vector Modulation (SVM)
+
+  Feedback requirements:
+  - Phase currents (Ia, Ib, Ic)
+  - Rotor position (encoder or sensorless estimation)
+  - DC bus voltage
+
+  Sensorless operation:
+  - Back-EMF observer
+  - Sliding mode observer
+  - High-frequency injection (low speed)
+
+  Performance targets:
+  - Current control bandwidth: 1-2 kHz
+  - Torque ripple: < 3%
+  - Efficiency: > 95% at rated load
+  - Maximum speed: 15,000 RPM
+
+dependencies:
+  - NumPy for transforms
+  - control or python-control for PI design
+  - SciPy for filtering
+
+examples:
+  - description: "FOC implementation for PMSM with encoder feedback"
+    input: "Implement complete FOC control loop for EV motor"
+    output: |
+      ```python
+      import numpy as np
+      from dataclasses import dataclass
+      from typing import Tuple
+
+      @dataclass
+      class MotorParameters:
+          pole_pairs: int = 4
+          rated_voltage_v: float = 400.0
+          rated_current_a: float = 300.0
+          rated_power_kw: float = 100.0
+          rated_speed_rpm: float = 6000
+          rs_ohm: float = 0.02            # Stator resistance
+          ld_h: float = 100e-6            # d-axis inductance
+          lq_h: float = 120e-6            # q-axis inductance
+          flux_linkage_wb: float = 0.15   # Permanent magnet flux
+
+      @dataclass
+      class PIController:
+          kp: float
+          ki: float
+          output_min: float = -1.0
+          output_max: float = 1.0
+          integral: float = 0.0
+
+          def update(self, error: float, dt: float) -> float:
+              # Proportional term
+              p_term = self.kp * error
+
+              # Integral term with anti-windup
+              self.integral += error * dt
+              self.integral = np.clip(
+                  self.integral,
+                  self.output_min / self.ki,
+                  self.output_max / self.ki
+              )
+              i_term = self.ki * self.integral
+
+              # Total output
+              output = p_term + i_term
+              output = np.clip(output, self.output_min, self.output_max)
+
+              return output
+
+          def reset(self):
+              self.integral = 0.0
+
+      class FOCController:
+          def __init__(self, motor_params: MotorParameters, vdc: float):
+              self.motor = motor_params
+              self.vdc = vdc
+
+              # Current controllers (tuned for 1 kHz bandwidth)
+              bandwidth = 2 * np.pi * 1000  # rad/s
+              self.pi_id = PIController(
+                  kp=motor_params.ld_h * bandwidth,
+                  ki=motor_params.rs_ohm * bandwidth,
+                  output_min=-vdc / np.sqrt(3),
+                  output_max=vdc / np.sqrt(3)
+              )
+              self.pi_iq = PIController(
+                  kp=motor_params.lq_h * bandwidth,
+                  ki=motor_params.rs_ohm * bandwidth,
+                  output_min=-vdc / np.sqrt(3),
+                  output_max=vdc / np.sqrt(3)
+              )
+
+              # State variables
+              self.theta_elec = 0.0  # Electrical angle
+              self.omega_elec = 0.0  # Electrical angular velocity
+
+          def clarke_transform(self, ia: float, ib: float, ic: float) -> Tuple[float, float]:
+              """Clarke transform: abc → αβ (stationary frame)"""
+              i_alpha = ia
+              i_beta = (ia + 2 * ib) / np.sqrt(3)
+              return i_alpha, i_beta
+
+          def park_transform(self, i_alpha: float, i_beta: float,
+                            theta: float) -> Tuple[float, float]:
+              """Park transform: αβ → dq (rotating frame)"""
+              cos_theta = np.cos(theta)
+              sin_theta = np.sin(theta)
+
+              id = i_alpha * cos_theta + i_beta * sin_theta
+              iq = -i_alpha * sin_theta + i_beta * cos_theta
+
+              return id, iq
+
+          def inverse_park_transform(self, vd: float, vq: float,
+                                     theta: float) -> Tuple[float, float]:
+              """Inverse Park transform: dq → αβ"""
+              cos_theta = np.cos(theta)
+              sin_theta = np.sin(theta)
+
+              v_alpha = vd * cos_theta - vq * sin_theta
+              v_beta = vd * sin_theta + vq * cos_theta
+
+              return v_alpha, v_beta
+
+          def space_vector_modulation(self, v_alpha: float, v_beta: float) -> Tuple[float, float, float]:
+              """Space Vector Modulation (SVM) to generate duty cycles"""
+              # Normalize to [0, 1] range
+              vdc_inv = 1.0 / (self.vdc / np.sqrt(3))
+              v_alpha_norm = v_alpha * vdc_inv
+              v_beta_norm = v_beta * vdc_inv
+
+              # Calculate sector (1-6)
+              angle = np.arctan2(v_beta_norm, v_alpha_norm)
+              if angle < 0:
+                  angle += 2 * np.pi
+
+              sector = int(angle / (np.pi / 3)) + 1
+
+              # Calculate duty cycles using SVM algorithm
+              # Simplified implementation
+              va = 0.5 + v_alpha_norm / 2
+              vb = 0.5 + (-v_alpha_norm / 2 + np.sqrt(3) * v_beta_norm / 2) / 2
+              vc = 0.5 + (-v_alpha_norm / 2 - np.sqrt(3) * v_beta_norm / 2) / 2
+
+              # Clamp to [0, 1]
+              va = np.clip(va, 0.0, 1.0)
+              vb = np.clip(vb, 0.0, 1.0)
+              vc = np.clip(vc, 0.0, 1.0)
+
+              return va, vb, vc
+
+          def update(self, ia: float, ib: float, ic: float,
+                    theta_mech: float, omega_mech: float,
+                    id_ref: float, iq_ref: float, dt: float) -> Tuple[float, float, float]:
+              """
+              Main FOC control loop
+              Returns: (duty_a, duty_b, duty_c)
+              """
+              # Update electrical angle and velocity
+              self.theta_elec = theta_mech * self.motor.pole_pairs
+              self.omega_elec = omega_mech * self.motor.pole_pairs
+
+              # 1. Clarke transform
+              i_alpha, i_beta = self.clarke_transform(ia, ib, ic)
+
+              # 2. Park transform
+              id, iq = self.park_transform(i_alpha, i_beta, self.theta_elec)
+
+              # 3. Current control (PI controllers)
+              id_error = id_ref - id
+              iq_error = iq_ref - iq
+
+              vd_ref = self.pi_id.update(id_error, dt)
+              vq_ref = self.pi_iq.update(iq_error, dt)
+
+              # 4. Decoupling compensation
+              vd_ref -= self.omega_elec * self.motor.lq_h * iq
+              vq_ref += self.omega_elec * (self.motor.ld_h * id + self.motor.flux_linkage_wb)
+
+              # 5. Inverse Park transform
+              v_alpha, v_beta = self.inverse_park_transform(vd_ref, vq_ref, self.theta_elec)
+
+              # 6. Space Vector Modulation
+              duty_a, duty_b, duty_c = self.space_vector_modulation(v_alpha, v_beta)
+
+              return duty_a, duty_b, duty_c
+
+          def calculate_torque(self, id: float, iq: float) -> float:
+              """Calculate electromagnetic torque"""
+              # T = 3/2 * p * [ψ_f * iq + (Ld - Lq) * id * iq]
+              torque_nm = (
+                  1.5 * self.motor.pole_pairs *
+                  (self.motor.flux_linkage_wb * iq +
+                   (self.motor.ld_h - self.motor.lq_h) * id * iq)
+              )
+              return torque_nm
+
+
+      class MotorDrive:
+          def __init__(self, motor_params: MotorParameters, vdc: float):
+              self.motor = motor_params
+              self.foc = FOCController(motor_params, vdc)
+
+              # Speed controller (outer loop)
+              self.pi_speed = PIController(
+                  kp=0.5,
+                  ki=2.0,
+                  output_min=-motor_params.rated_current_a,
+                  output_max=motor_params.rated_current_a
+              )
+
+          def speed_control(self, omega_ref_rpm: float, omega_mech_rpm: float,
+                           dt: float) -> float:
+              """Speed control (outer loop) → torque/Iq reference"""
+              error_rpm = omega_ref_rpm - omega_mech_rpm
+              iq_ref = self.pi_speed.update(error_rpm, dt)
+              return iq_ref
+
+          def torque_to_current(self, torque_nm: float) -> Tuple[float, float]:
+              """Convert torque command to Id, Iq references"""
+              # For maximum torque per ampere (MTPA): Id = 0
+              id_ref = 0.0
+
+              # Iq from torque equation (simplified, Id=0)
+              iq_ref = torque_nm / (
+                  1.5 * self.motor.pole_pairs * self.motor.flux_linkage_wb
+              )
+
+              # Current limiting
+              i_max = self.motor.rated_current_a
+              iq_ref = np.clip(iq_ref, -i_max, i_max)
+
+              return id_ref, iq_ref
+
+
+      # Usage example
+      if __name__ == "__main__":
+          motor_params = MotorParameters(
+              pole_pairs=4,
+              rated_power_kw=100,
+              rated_current_a=300,
+              rs_ohm=0.02,
+              ld_h=100e-6,
+              lq_h=120e-6,
+              flux_linkage_wb=0.15
+          )
+
+          vdc = 400.0  # DC bus voltage
+          drive = MotorDrive(motor_params, vdc)
+
+          print("FOC Motor Control Simulation")
+          print("=" * 80)
+
+          # Simulate motor startup and acceleration
+          dt = 0.001  # 1 kHz control loop
+          omega_mech_rpm = 0.0
+          theta_mech = 0.0
+
+          target_speed_rpm = 3000
+
+          print("\nTime(s) | Speed(RPM) | Iq(A) | Torque(Nm) | DutyA | DutyB | DutyC")
+          print("-" * 80)
+
+          for t in np.arange(0, 2.0, dt):
+              # Speed control
+              iq_ref = drive.speed_control(target_speed_rpm, omega_mech_rpm, dt)
+              id_ref = 0.0  # MTPA
+
+              # Simulate phase currents (simplified)
+              ia = iq_ref * np.cos(theta_mech)
+              ib = iq_ref * np.cos(theta_mech - 2 * np.pi / 3)
+              ic = iq_ref * np.cos(theta_mech + 2 * np.pi / 3)
+
+              # FOC control
+              omega_mech_rad = omega_mech_rpm * 2 * np.pi / 60
+              duty_a, duty_b, duty_c = drive.foc.update(
+                  ia, ib, ic, theta_mech, omega_mech_rad,
+                  id_ref, iq_ref, dt
+              )
+
+              # Calculate torque
+              torque_nm = drive.foc.calculate_torque(id_ref, iq_ref)
+
+              # Simple motor dynamics (J*dω/dt = T)
+              inertia = 0.05  # kg·m²
+              omega_mech_rad += (torque_nm / inertia) * dt
+              omega_mech_rpm = omega_mech_rad * 60 / (2 * np.pi)
+
+              # Update rotor position
+              theta_mech += omega_mech_rad * dt
+
+              # Print every 100 ms
+              if int(t / 0.1) != int((t - dt) / 0.1):
+                  print(f"{t:7.3f} | {omega_mech_rpm:10.1f} | {iq_ref:6.1f} | "
+                        f"{torque_nm:10.2f} | {duty_a:.3f} | {duty_b:.3f} | {duty_c:.3f}")
+
+          print("\nSimulation complete")
+          print(f"Final speed: {omega_mech_rpm:.1f} RPM (target: {target_speed_rpm} RPM)")
+      ```
+
+tags:
+  - ev
+  - motor-control
+  - foc
+  - field-oriented-control
+  - pmsm
+  - bldc
+  - inverter
+  - svm
+  - space-vector-modulation

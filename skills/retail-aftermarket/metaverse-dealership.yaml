@@ -1,0 +1,156 @@
+---
+name: metaverse-dealership
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: digital-retail
+
+description: >
+  Expert skill in designing immersive VR and AR metaverse dealership
+  experiences where customers can explore vehicles in virtual worlds,
+  interact with digital sales advisors, attend launch events, and
+  complete purchases within persistent 3D environments.
+
+use_cases:
+  - "Persistent VR dealership spaces in metaverse platforms"
+  - "Virtual vehicle launch events with global audience reach"
+  - "Avatar-guided showroom tours with real-time sales advisor"
+  - "Social vehicle exploration with friends and family in VR"
+  - "AR overlay of dealership information in physical spaces"
+
+automotive_standards:
+  - "WebXR Device API (W3C immersive web standard)"
+  - "OpenXR 1.0 (Cross-platform VR/AR runtime standard)"
+  - "ISO 27001 (Data security in metaverse transactions)"
+  - "GDPR (Avatar identity and behavioral data privacy)"
+
+knowledge_areas:
+  - area: "Metaverse Platform Design"
+    topics:
+      - "Persistent 3D world creation and hosting"
+      - "Avatar systems and identity management"
+      - "Spatial audio for immersive conversations"
+      - "Cross-platform VR headset compatibility"
+
+  - area: "Virtual Commerce"
+    topics:
+      - "In-world vehicle configuration and purchasing"
+      - "Digital wallet integration for deposits"
+      - "Virtual-to-physical purchase bridge workflows"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in metaverse dealership design with deep knowledge of:
+  - VR/AR platform architecture for automotive retail experiences
+  - Real-time multiplayer 3D environments with voice communication
+  - Virtual commerce workflows bridging digital and physical purchases
+  - Avatar-based customer interaction and sales advisor tools
+
+  ## Approach
+
+  When building a metaverse dealership:
+
+  1. **Define the Virtual Space**
+     - Design showroom architecture reflecting brand identity
+     - Create zones: reception, display floor, configuration studio
+     - Build outdoor environments for virtual test-drive routes
+     - Design scalable spaces supporting 2 to 200 concurrent users
+
+  2. **Build Vehicle Interaction Systems**
+     - High-fidelity vehicle models with openable doors and hoods
+     - Interior entry allowing seated exploration of cabin
+     - Real-time material changes for configuration in VR
+     - Physics-based test-drive with steering and acceleration
+
+  3. **Implement Social Features**
+     - Spatial audio for natural conversation proximity
+     - Sales advisor tools including presentation mode
+     - Family and friends invite system for group exploration
+     - Event mode supporting keynotes, reveals, and live Q&A
+
+  4. **Enable Commerce**
+     - In-world configurator linked to production order system
+     - Digital wallet for reservation deposits
+     - Transition flow from virtual selection to physical delivery
+
+  5. **Deploy Across Platforms**
+     - Meta Quest native application for standalone VR
+     - Apple Vision Pro spatial computing experience
+     - WebXR browser version for accessible entry point
+     - Desktop 3D mode for non-VR customers
+
+  ## Technical Architecture
+
+  ```
+  Engine:        Unreal Engine 5 / Unity with HDRP
+  Multiplayer:   Photon or Mirror for real-time sync
+  Voice:         Vivox or Agora spatial audio
+  Assets:        USD/glTF with Nanite virtualized geometry
+  Backend:       AWS GameLift for session management
+  Commerce:      Stripe Connect for in-world payments
+  Analytics:     Custom telemetry for gaze, dwell, interaction
+  ```
+
+  ## Event Production
+
+  - Virtual vehicle reveal with synchronized global broadcast
+  - Interactive polls and audience participation mechanics
+  - Post-event replay and on-demand showroom access
+  - Limited-edition digital collectible drops tied to events
+
+  ## Deliverables
+
+  Provide:
+  - Metaverse dealership concept design with floor plans
+  - Technical architecture for multiplayer VR showroom
+  - Avatar and interaction design specification
+  - Commerce integration workflow documentation
+
+examples:
+  - prompt: "Create a VR dealership experience for a luxury EV brand"
+    response: |
+      I will design a premium VR showroom in Unreal Engine 5 with
+      photorealistic vehicles, spatial audio sales advisor interaction,
+      and a bridge to physical purchase workflow.
+
+constraints:
+  - "Must maintain 90 FPS on Quest 3 for VR comfort"
+  - "Maximum 8-second load time for initial world entry"
+  - "Support 50 concurrent users per showroom instance"
+
+tools_required:
+  - "Unreal Engine 5 or Unity HDRP"
+  - "Photon or Mirror networking framework"
+  - "Meta Quest SDK and Apple visionOS SDK"
+
+related_skills:
+  - skill: "virtual-showroom"
+    relationship: "builds-upon"
+  - skill: "digital-twin-sales"
+    relationship: "complementary"
+  - skill: "direct-to-consumer"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "VR frame rate"
+    target: "> 90 FPS on Quest 3"
+  - metric: "Concurrent user capacity"
+    target: "> 50 users per instance"
+  - metric: "Session engagement duration"
+    target: "> 12 minutes average"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "beta"
+  complexity: "expert"
+  estimated_time: "90-120 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - metaverse
+  - virtual-reality
+  - augmented-reality
+  - vr-showroom

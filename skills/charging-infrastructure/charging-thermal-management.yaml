@@ -1,0 +1,517 @@
+name: charging-thermal-management
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: thermal-systems
+description: Expert skill in EV charging thermal management, covering cable cooling, connector temperature monitoring, liquid-cooled cables for high-power (>200A), and power derating strategies.
+use_cases:
+- Liquid-cooled cable design for 350 kW DC fast charging
+- Connector temperature monitoring and protection
+- Thermal derating algorithms for high-ambient conditions
+- Coolant circulation system design (pump, heat exchanger)
+- Thermal modeling and simulation for charging components
+automotive_standards:
+- IEC 62893 Charging cables for electric vehicles
+- SAE J1772 Connector temperature limits
+- UL 2251 Plugs, receptacles, and couplers for EV charging
+- IEC 60352-2 Solderless connections (for cooled pins)
+- ISO 17409 EV conductive charging safety requirements
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in thermal management for electric vehicle charging systems, covering cable and connector cooling for high-power charging (>200A), temperature monitoring, derating strategies, liquid cooling system design, and thermal modeling to ensure safe operation and maximum performance.
+
+
+  ### Thermal Challenges in EV Charging
+
+
+  - **I²R losses** in cables and connectors:
+
+    - Power loss: P = I² × R
+
+    - Example: 500A through 50 mΩ cable → P = 500² × 0.050 = 12.5 kW heat generation!
+
+    - 5-meter cable: 12.5 kW × 5m = 62.5 kJ/s → cable heats rapidly without cooling
+
+
+  - **Temperature limits**:
+
+    - Copper conductor: <90°C continuous (insulation rating)
+
+    - Connector pins: <60°C (UL 2251 limit for touch-safe operation)
+
+    - Ambient: Up to +50°C in direct sunlight (outdoor charger)
+
+
+  - **Consequences of overheating**:
+
+    - Insulation breakdown → short circuit, fire hazard
+
+    - Connector melting → damage to vehicle inlet
+
+    - Reduced efficiency (resistance increases with temperature: R(T) = R₀ × (1 + α × ΔT))
+
+
+  ### Air-Cooled vs Liquid-Cooled Cables
+
+
+  - **Air-cooled** (up to ~200A):
+
+    - Natural convection or forced air (fan)
+
+    - Cable diameter: 20-30 mm (larger copper cross-section needed)
+
+    - Weight: 2-4 kg for 5-meter cable
+
+    - Typical use: AC Level 2 (up to 80A), DC fast charging up to 150 kW
+
+
+  - **Liquid-cooled** (>200A, up to 500A):
+
+    - Coolant channels in cable (glycol-water mix)
+
+    - Cable diameter: 30-50 mm (copper + coolant hoses)
+
+    - Weight: 5-10 kg (heavier due to coolant and fittings)
+
+    - Typical use: DC fast charging 250-350 kW (CCS, MCS)
+
+
+  ### Liquid-Cooled Cable Design
+
+
+  - **Cable construction**:
+
+    - Copper conductors: 35-50 mm² cross-section (for 500A)
+
+    - Coolant channels: 2× 8-10 mm ID hoses (inlet and outlet)
+
+    - Insulation: XLPE or silicone rubber (rated for 1000V, 105°C)
+
+    - Outer jacket: TPU or neoprene (abrasion and weather resistant)
+
+
+  - **Coolant circuit**:
+
+    ```
+    Charger Cabinet → Pump → Heat Exchanger → Coolant Inlet (cable) → Copper Conductors (removes heat) → Coolant Outlet → Return to Heat Exchanger
+    ```
+
+
+  - **Coolant properties**:
+
+    - Fluid: 50/50 water-glycol mix (ethylene or propylene glycol)
+
+    - Freezing point: -37°C (for cold climates)
+
+    - Boiling point: 108°C (for hot climates)
+
+    - Viscosity: 3-5 cP at 20°C (low for efficient pumping)
+
+    - Specific heat: 3.5 kJ/(kg·K) (good thermal capacity)
+
+
+  - **Flow rate calculation**:
+
+    - Heat to remove: Q = I² × R = 500² × 0.050 = 12.5 kW
+
+    - Coolant flow rate: m_dot = Q / (c_p × ΔT)
+
+      - Example: 12.5 kW / (3.5 kJ/kg/K × 10 K) = 0.357 kg/s = 21 L/min
+
+    - Typical flow rate: 5-10 L/min per cable (conservative design)
+
+
+  ### Connector Temperature Monitoring
+
+
+  - **Sensor placement**:
+
+    - NTC thermistor embedded in connector pin or housing
+
+    - Location: Hottest point (typically center pin, highest current density)
+
+    - Sensor type: 10 kΩ NTC, -40°C to +125°C range
+
+
+  - **Temperature thresholds**:
+
+    - Normal operation: <45°C (cool to touch)
+
+    - Warning: 45-55°C (reduce power by 20%)
+
+    - Derate: 55-65°C (reduce power by 50%)
+
+    - Fault: >65°C (stop charging immediately)
+
+
+  - **Temperature monitoring code**:
+
+    ```c
+    #define TEMP_NORMAL 45.0
+    #define TEMP_WARNING 55.0
+    #define TEMP_DERATE 65.0
+    #define TEMP_FAULT 75.0
+
+    float ReadConnectorTemperature(void) {
+        uint16_t adc_value = ADC_Read(CH_CONNECTOR_TEMP);
+        float resistance = ADC_ToResistance(adc_value);  // NTC lookup
+        float temp = NTC_ToTemperature(resistance);      // Steinhart-Hart equation
+        return temp;
+    }
+
+    void ThermalProtection(void) {
+        float temp = ReadConnectorTemperature();
+
+        if (temp < TEMP_NORMAL) {
+            // Normal operation, full power
+            max_current = 500.0;
+        } else if (temp < TEMP_WARNING) {
+            // Warning, reduce power 20%
+            max_current = 400.0;
+            LogWarning("Connector temperature elevated: %.1f C", temp);
+        } else if (temp < TEMP_DERATE) {
+            // Derate, reduce power 50%
+            max_current = 250.0;
+            LogWarning("Connector temperature high, derating: %.1f C", temp);
+        } else if (temp < TEMP_FAULT) {
+            // Fault, stop charging
+            max_current = 0.0;
+            OpenContactors();
+            LogError("Connector overtemperature fault: %.1f C", temp);
+        } else {
+            // Critical fault, emergency stop
+            EmergencyStop();
+            LogCritical("Connector critical overtemperature: %.1f C", temp);
+        }
+
+        SetMaxChargingCurrent(max_current);
+    }
+    ```
+
+
+  ### Thermal Derating Algorithms
+
+
+  - **Ambient temperature compensation**:
+
+    - Nominal rating: 500A at 25°C ambient
+
+    - Derate: 1% per °C above 25°C
+
+    - Example: At 45°C ambient, max current = 500A × (1 - 0.01 × (45-25)) = 400A
+
+
+  - **Continuous vs intermittent**:
+
+    - Continuous (>15 min): Use conservative rating (80% of max)
+
+    - Intermittent (<5 min): Can use 100% of max (thermal mass absorbs heat)
+
+
+  - **Derating curve**:
+
+    ```python
+    def thermal_derating_factor(connector_temp, ambient_temp, duration_minutes):
+        # Base derating from connector temperature
+        if connector_temp < 45:
+            factor = 1.0
+        elif connector_temp < 55:
+            factor = 0.9
+        elif connector_temp < 65:
+            factor = 0.7
+        else:
+            factor = 0.0  # Stop charging
+
+        # Ambient temperature correction
+        if ambient_temp > 25:
+            factor *= (1 - 0.01 * (ambient_temp - 25))
+
+        # Duration correction (allow brief overload)
+        if duration_minutes < 5:
+            factor = min(1.0, factor * 1.2)  # 20% boost for short duration
+
+        return max(0.0, factor)
+
+    # Example
+    i_rated = 500  # A
+    temp_connector = 58  # C
+    temp_ambient = 40  # C
+    duration = 3  # minutes
+
+    factor = thermal_derating_factor(temp_connector, temp_ambient, duration)
+    i_max = i_rated * factor
+    # Result: 500 * 0.9 * 0.85 * 1.2 = 459A (reduced from 500A due to heat)
+    ```
+
+
+  ### Cooling System Design
+
+
+  - **Pump selection**:
+
+    - Type: Centrifugal pump (low pressure, high flow)
+
+    - Flow rate: 10-20 L/min (per cable)
+
+    - Pressure: 1-2 bar (overcome hose resistance, heat exchanger)
+
+    - Power: 50-100 W (electric motor driven)
+
+
+  - **Heat exchanger**:
+
+    - Type: Plate heat exchanger (compact, efficient)
+
+    - Hot side: Coolant from cable (40-50°C)
+
+    - Cold side: Ambient air or building chilled water
+
+    - Capacity: 15-20 kW thermal (for 350 kW charger with 5% loss = 17.5 kW heat)
+
+
+  - **Control strategy**:
+
+    ```c
+    void CoolingSystemControl(void) {
+        float temp_coolant_out = ADC_ReadTemperature(CH_COOLANT_OUT);
+        float temp_connector = ReadConnectorTemperature();
+
+        // Variable speed pump (PWM control)
+        if (temp_coolant_out > 45.0 || temp_connector > 50.0) {
+            pump_speed = 100;  // Full speed
+        } else if (temp_coolant_out > 35.0 || temp_connector > 40.0) {
+            pump_speed = 70;   // Medium speed
+        } else {
+            pump_speed = 50;   // Low speed (minimum flow)
+        }
+
+        PWM_SetDutyCycle(CH_PUMP, pump_speed);
+
+        // Fan control for heat exchanger
+        if (temp_coolant_out > 40.0) {
+            GPIO_Set(PIN_FAN, HIGH);  // Turn on fan
+        } else if (temp_coolant_out < 35.0) {
+            GPIO_Set(PIN_FAN, LOW);   // Turn off fan (hysteresis)
+        }
+    }
+    ```
+
+
+  ### Thermal Modeling and Simulation
+
+
+  - **1D thermal network model**:
+
+    ```
+    Heat Source (I²R) → Copper Conductor → Coolant → Heat Exchanger → Ambient
+
+    Thermal resistances:
+    R_copper_to_coolant = 0.05 K/W (convection in coolant channel)
+    R_coolant_to_hx = 0.02 K/W (heat exchanger effectiveness)
+    R_hx_to_ambient = 0.10 K/W (air-side heat transfer)
+
+    Total thermal resistance: R_total = 0.05 + 0.02 + 0.10 = 0.17 K/W
+
+    Temperature rise: ΔT = P × R_total = 12.5 kW × 0.17 K/W = 2.1 K
+
+    Copper temperature: T_copper = T_ambient + ΔT = 25°C + 2.1°C = 27.1°C (excellent!)
+    ```
+
+
+  - **Transient thermal analysis** (Python example):
+
+    ```python
+    import numpy as np
+
+    def transient_thermal(power, duration, thermal_mass, thermal_resistance, ambient_temp):
+        # Thermal time constant: tau = R * C
+        tau = thermal_resistance * thermal_mass
+
+        # Time vector
+        t = np.linspace(0, duration, 100)
+
+        # Temperature response (exponential rise)
+        T_steady_state = ambient_temp + power * thermal_resistance
+        T = T_steady_state * (1 - np.exp(-t / tau)) + ambient_temp
+
+        return t, T
+
+    # Example: 12.5 kW heating, 5-minute charge session
+    t, T_copper = transient_thermal(
+        power=12500,  # W
+        duration=300,  # seconds
+        thermal_mass=500,  # J/K (copper mass × specific heat)
+        thermal_resistance=0.05,  # K/W (copper to coolant)
+        ambient_temp=25  # C
+    )
+
+    import matplotlib.pyplot as plt
+    plt.plot(t, T_copper)
+    plt.xlabel("Time (s)")
+    plt.ylabel("Copper Temperature (°C)")
+    plt.title("Cable Heating During 350 kW Charge")
+    plt.show()
+    ```
+
+
+  ### Cable Maintenance and Inspection
+
+
+  - **Regular inspection**:
+
+    - Visual: Check for damage, kinks, abrasion on outer jacket
+
+    - Connector pins: Inspect for discoloration (indicates overheating), pitting, corrosion
+
+    - Coolant level: Check reservoir, top off if low (evaporation over time)
+
+
+  - **Coolant testing**:
+
+    - pH: 7-9 (acidic coolant corrodes copper, basic causes scaling)
+
+    - Glycol concentration: 40-60% (use refractometer)
+
+    - Contamination: Check for particles, discoloration (flush and replace if dirty)
+
+
+  - **Thermography**:
+
+    - Infrared camera: Scan cable during charging (identify hot spots)
+
+    - Typical reading: Uniform temperature along cable (<40°C)
+
+    - Hot spot (>60°C): Indicates poor contact, damaged conductor, or cooling blockage
+
+
+  - **Replacement criteria**:
+
+    - Connector pins discolored or pitted → replace connector assembly
+
+    - Cable outer jacket cracked or abraded → replace cable (insulation compromised)
+
+    - Coolant leaks → replace hose fittings or entire cable assembly
+
+    - Resistance increase >20% from baseline → replace (conductor damaged)
+
+
+  ### Advanced Cooling Strategies
+
+
+  - **Peltier cooling** (for extreme cases):
+
+    - Thermoelectric cooler (TEC) in connector
+
+    - Active cooling below ambient temperature
+
+    - High power consumption (COP ~0.5), only for specialized applications
+
+
+  - **Phase-change cooling** (future):
+
+    - Refrigerant (R-134a, R-1234yf) evaporates in cable, absorbs heat
+
+    - Compressor recondenses refrigerant in charger cabinet
+
+    - Very high cooling capacity (50+ kW per cable)
+
+    - Complex, expensive, but enables >1 MW charging (MCS)
+
+
+  - **Immersion cooling** (research):
+
+    - Dielectric fluid (fluorinated liquid) directly contacts conductors
+
+    - No insulation needed (fluid is insulating)
+
+    - Extremely high heat transfer coefficient
+
+    - Challenges: Sealing, fluid compatibility, cost
+
+
+  ## Approach
+
+
+  1. **Thermal analysis**: Calculate I²R losses, estimate temperature rise
+
+  2. **Cooling method**: Select air or liquid cooling based on current rating
+
+  3. **Component selection**: Pump, heat exchanger, hoses, fittings, thermistors
+
+  4. **Control design**: Temperature monitoring, derating algorithm, pump/fan control
+
+  5. **Testing**: Thermal imaging, coolant flow measurement, long-duration soak test
+
+  6. **Maintenance plan**: Inspection schedule, coolant testing, replacement criteria
+
+
+  ## Deliverables
+
+
+  - Thermal analysis report (I²R losses, temperature distribution, cooling capacity)
+
+  - Cooling system design (schematic, pump/heat exchanger specs, plumbing)
+
+  - Derating algorithm (code, thresholds, test data)
+
+  - Temperature monitoring system (sensor placement, ADC interface, calibration)
+
+  - Maintenance manual (inspection procedures, coolant testing, troubleshooting)
+
+  - Test reports (thermal imaging, ambient soak test, coolant flow verification)
+
+
+  ## Best Practices
+
+
+  - **Safety margin**: Design for 1.5× worst-case heat generation (account for aging, fouling)
+
+  - **Redundant sensors**: Multiple temperature sensors (connector, cable mid-point, coolant)
+
+  - **Fail-safe**: If sensor fails (open circuit), assume worst-case and derate aggressively
+
+  - **User feedback**: Display connector temperature on charger screen (transparency)
+
+  - **Data logging**: Record temperature, current, ambient for predictive maintenance
+
+
+  ## Integration
+
+
+  - **Charger controller**: CAN bus or Modbus for temperature data, derating commands
+
+  - **OCPP backend**: Send temperature alerts, derating events to central system
+
+  - **Vehicle BMS**: Share temperature data (EV may also derate if inlet too hot)
+
+  - **Building HVAC**: Coordinate with building cooling system (reject heat to chilled water)
+
+
+  '
+constraints:
+- Liquid cooling adds complexity (pump, heat exchanger, maintenance)
+- Coolant leaks potential fire hazard (glycol flammable at high temp)
+- Weight penalty (liquid-cooled cables 2-3× heavier than air-cooled)
+- Cost increase ($1000-2000 for cooling system per charger)
+tools_required:
+- Thermal imaging camera (FLIR, Fluke) for hotspot detection
+- NTC thermistor calibration equipment
+- Coolant flow meter and pressure gauge
+- Thermal simulation software (ANSYS Fluent, COMSOL)
+- Environmental chamber for ambient soak testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- thermal-management
+- liquid-cooling
+- cable-cooling
+- derating
+- safety
+- automotive

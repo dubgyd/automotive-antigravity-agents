@@ -1,0 +1,788 @@
+name: fuel-cell-bop-components
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: balance-of-plant
+description: Expert skill in Balance of Plant (BoP) component selection and control including air compressor, H2 recirculation, humidifier, and valve/sensor integration.
+use_cases:
+- Air compressor selection and control (centrifugal, roots, screw types)
+- Hydrogen recirculation pump or ejector design
+- Membrane humidifier sizing and integration
+- Water separator and drain valve control
+- Intercooler and heat exchanger sizing
+- Valve and sensor selection for H2/air/coolant loops
+automotive_standards:
+- SAE J2615 (Performance testing of fuel cell systems for automotive applications)
+- ISO 23828 (Fuel cell road vehicles - Energy consumption)
+- ATEX directive (Explosion-proof components)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Balance of Plant (BoP) component selection, sizing, and control for automotive PEM fuel cell systems. Deep understanding of air compressor maps, hydrogen recirculation strategies, humidification technologies, and valve/sensor specifications.
+
+
+  ### Air Compressor
+
+
+  **Types**:
+
+  - **Centrifugal**: High efficiency (70-75%), high speed (50,000-100,000 RPM), compact
+
+  - **Roots (lobe)**: Lower efficiency (50-60%), lower speed, simpler control
+
+  - **Screw**: Medium efficiency (60-70%), oil-free variants available
+
+
+  **Automotive choice**: Centrifugal compressor (e-turbo) for best power density and efficiency.
+
+
+  ```python
+
+  class AirCompressor:
+
+      def __init__(self):
+
+          self.type = "centrifugal"
+
+          self.max_speed = 100000  # RPM
+
+          self.max_flow_rate = 0.05  # kg/s (180 kg/hr)
+
+          self.max_pressure_ratio = 3.0
+
+          self.power_consumption = 0  # W
+
+
+
+      def calculate_power(self, mdot_air, PR, T_inlet=298):
+
+          """
+
+          Calculate compressor power consumption.
+
+
+
+          Args:
+
+              mdot_air: Air mass flow rate [kg/s]
+
+              PR: Pressure ratio (P_out / P_in)
+
+              T_inlet: Inlet air temperature [K]
+
+
+
+          Returns:
+
+              Power [W]
+
+          """
+
+          import numpy as np
+
+
+
+          gamma = 1.4  # Heat capacity ratio for air
+
+          R = 287  # J/(kg·K) for air
+
+          eta_compressor = 0.72  # Isentropic efficiency
+
+
+
+          # Isentropic work
+
+          W_isentropic = (gamma / (gamma - 1)) * R * T_inlet * \
+
+                         (PR ** ((gamma - 1) / gamma) - 1)
+
+
+
+          # Actual work (accounting for efficiency)
+
+          W_actual = W_isentropic / eta_compressor
+
+
+
+          # Power
+
+          self.power_consumption = mdot_air * W_actual  # W
+
+
+
+          return self.power_consumption
+
+
+
+      def compressor_map_lookup(self, mdot_air, PR_target):
+
+          """
+
+          Lookup compressor speed from performance map.
+
+
+
+          Args:
+
+              mdot_air: Air mass flow rate [kg/s]
+
+              PR_target: Target pressure ratio
+
+
+
+          Returns:
+
+              Compressor speed [RPM]
+
+          """
+
+          # Simplified linear model (real map is 2D lookup table)
+
+          speed = 20000 + mdot_air * 1e6 + PR_target * 10000
+
+
+
+          # Clamp to limits
+
+          speed = max(10000, min(self.max_speed, speed))
+
+
+
+          return speed
+
+  ```
+
+
+  **Control strategy**:
+
+  ```c
+
+  typedef struct {
+
+      float target_stoichiometry;  // Lambda (2.0-2.5)
+
+      float I_stack;               // A
+
+      float mdot_air_req;          // kg/s
+
+      float compressor_speed;      // RPM
+
+      float compressor_power;      // W
+
+  } CompressorController_t;
+
+
+
+  void control_compressor(CompressorController_t *ctrl) {
+
+      // Calculate required air mass flow
+
+      float F = 96485.0f;  // C/mol
+
+      float M_O2 = 32.0f;  // g/mol
+
+
+
+      // O2 consumption: I/(4F) mol/s
+
+      float mdot_O2 = (ctrl->I_stack / (4.0f * F)) * M_O2 / 1000.0f;  // kg/s
+
+
+
+      // Air mass flow (21% O2 by mass)
+
+      ctrl->mdot_air_req = mdot_O2 / 0.21f * ctrl->target_stoichiometry;
+
+
+
+      // Lookup compressor speed from map
+
+      float PR_target = 2.0f;  // Pressure ratio
+
+      ctrl->compressor_speed = compressor_map_lookup(ctrl->mdot_air_req, PR_target);
+
+
+
+      // Apply motor control
+
+      set_motor_speed(ctrl->compressor_speed);
+
+  }
+
+  ```
+
+
+  ### Hydrogen Recirculation System
+
+
+  **Ejector (passive)**:
+
+  - **Principle**: Venturi effect using high-pressure H2 to entrain recirculated gas
+
+  - **Pros**: No moving parts, no parasitic power
+
+  - **Cons**: Fixed entrainment ratio, poor performance at low load
+
+
+  **Recirculation pump (active)**:
+
+  - **Type**: Scroll, diaphragm, or blower
+
+  - **Pros**: Variable control, better low-load performance
+
+  - **Cons**: Parasitic power (100-500 W), moving parts, H2 compatibility
+
+
+  ```python
+
+  class H2RecirculationPump:
+
+      def __init__(self):
+
+          self.pump_type = "scroll"
+
+          self.max_flow_rate = 0.01  # kg/s
+
+          self.power_consumption = 0  # W
+
+
+
+      def calculate_flow_rate(self, I_stack, stoichiometry=1.3):
+
+          """
+
+          Calculate required recirculation flow rate.
+
+
+
+          Args:
+
+              I_stack: Stack current [A]
+
+              stoichiometry: Anode stoichiometry
+
+
+
+          Returns:
+
+              Flow rate [kg/s]
+
+          """
+
+          F = 96485  # C/mol
+
+          M_H2 = 2.016e-3  # kg/mol
+
+
+
+          # H2 consumption: I/(2F) mol/s
+
+          mdot_H2_consumed = (I_stack / (2 * F)) * M_H2  # kg/s
+
+
+
+          # Total flow (fresh + recirculated)
+
+          mdot_H2_total = mdot_H2_consumed * stoichiometry
+
+
+
+          # Recirculation flow (assume 30% fresh, 70% recirculated)
+
+          mdot_H2_recirc = mdot_H2_total * 0.7
+
+
+
+          return mdot_H2_recirc
+
+
+
+      def calculate_power(self, mdot_H2, delta_P=0.5):
+
+          """
+
+          Calculate pump power consumption.
+
+
+
+          Args:
+
+              mdot_H2: H2 mass flow rate [kg/s]
+
+              delta_P: Pressure rise [bar]
+
+
+
+          Returns:
+
+              Power [W]
+
+          """
+
+          rho_H2 = 0.089  # kg/m³ at STP (adjust for pressure)
+
+          eta_pump = 0.6  # Pump efficiency
+
+
+
+          # Volumetric flow rate
+
+          Q = mdot_H2 / rho_H2  # m³/s
+
+
+
+          # Power
+
+          self.power_consumption = (Q * delta_P * 1e5) / eta_pump  # W
+
+
+
+          return self.power_consumption
+
+  ```
+
+
+  ### Membrane Humidifier
+
+
+  **Principle**: Selective water-permeable membrane transfers moisture from product water to dry inlet gas.
+
+
+  **Design parameters**:
+
+  - **Membrane area**: 0.5-2 m² for automotive application
+
+  - **Pressure drop**: < 0.2 bar (minimize compressor power)
+
+  - **Humidity transfer**: Target 60-80% RH at cathode inlet
+
+
+  ```c
+
+  typedef struct {
+
+      float membrane_area;     // m²
+
+      float mdot_dry_gas;      // kg/s (inlet dry air)
+
+      float mdot_wet_gas;      // kg/s (cathode outlet humid air)
+
+      float RH_inlet;          // % (inlet relative humidity)
+
+      float RH_outlet_target;  // % (target outlet RH)
+
+      float water_transfer;    // kg/s
+
+  } MembraneHumidifier_t;
+
+
+
+  void calculate_humidifier_performance(MembraneHumidifier_t *hum) {
+
+      // Simplified model: water transfer proportional to membrane area and RH gradient
+
+      float RH_gradient = hum->RH_outlet_target - hum->RH_inlet;
+
+
+
+      // Water transfer coefficient (empirical)
+
+      float k_water = 0.0001f;  // kg/(s·m²·%RH)
+
+
+
+      // Water transfer rate
+
+      hum->water_transfer = k_water * hum->membrane_area * RH_gradient;
+
+
+
+      // Check if sufficient for target RH
+
+      float water_needed = hum->mdot_dry_gas * 0.02f;  // Estimate for 80% RH
+
+
+
+      if (hum->water_transfer < water_needed) {
+
+          // Insufficient humidification - increase membrane area or add water injection
+
+          trigger_warning(WARNING_INSUFFICIENT_HUMIDIFICATION);
+
+      }
+
+  }
+
+  ```
+
+
+  ### Water Separator
+
+
+  **Purpose**: Remove liquid water from cathode exhaust to prevent flooding.
+
+
+  **Types**:
+
+  - **Gravity separator**: Simple, no moving parts, larger volume
+
+  - **Centrifugal separator**: Compact, higher efficiency, may require power
+
+  - **Coalescing filter**: Captures fine droplets, requires periodic replacement
+
+
+  ```python
+
+  class WaterSeparator:
+
+      def __init__(self):
+
+          self.separator_type = "centrifugal"
+
+          self.collection_volume = 0.0  # L (accumulated water)
+
+          self.drain_valve_open = False
+
+
+
+      def control_drain_valve(self, water_level):
+
+          """
+
+          Control drain valve to expel collected water.
+
+
+
+          Args:
+
+              water_level: Water level in separator [L]
+
+          """
+
+          DRAIN_THRESHOLD = 0.5  # L
+
+
+
+          if water_level > DRAIN_THRESHOLD:
+
+              # Open drain valve to expel water
+
+              self.drain_valve_open = True
+
+              self.expel_water(duration=2.0)  # 2 seconds
+
+              self.collection_volume = 0.0
+
+          else:
+
+              self.drain_valve_open = False
+
+
+
+      def expel_water(self, duration):
+
+          """
+
+          Open drain valve to expel water (timed pulse).
+
+          """
+
+          # Open valve
+
+          set_drain_valve(OPEN)
+
+          time.sleep(duration)
+
+          set_drain_valve(CLOSE)
+
+  ```
+
+
+  ### Intercooler
+
+
+  **Purpose**: Cool compressed air from compressor before entering stack (reduce inlet temperature, increase density).
+
+
+  **Design**:
+
+  - **Type**: Air-to-coolant heat exchanger
+
+  - **Cooling capacity**: 5-10 kW (depends on compressor power)
+
+  - **Outlet temperature**: < 40°C (closer to stack operating temperature)
+
+
+  ```c
+
+  void calculate_intercooler_heat_load(float mdot_air, float T_compressor_out, float T_target) {
+
+      float Cp_air = 1005.0f;  // J/(kg·K)
+
+
+
+      // Heat removal required
+
+      float Q_intercooler = mdot_air * Cp_air * (T_compressor_out - T_target);  // W
+
+
+
+      printf("Intercooler heat load: %.1f kW\n", Q_intercooler / 1000.0f);
+
+  }
+
+  ```
+
+
+  ### Valves and Sensors
+
+
+  **Valve types**:
+
+  - **H2 tank outlet valve**: Solenoid, normally closed, fail-safe close
+
+  - **Purge valve (anode)**: Solenoid, normally closed, periodic opening
+
+  - **Back-pressure valve (cathode)**: Proportional control, regulates pressure
+
+  - **Coolant valves**: 3-way valve for thermal management (bypass radiator)
+
+
+  **Sensor types**:
+
+  - **Pressure**: Piezoresistive, 0-10 bar (cathode), 0-900 bar (H2 tank)
+
+  - **Temperature**: PT1000, K-type thermocouple (-40 to 120°C)
+
+  - **Flow**: Mass air flow (MAF) sensor (hot-wire or ultrasonic)
+
+  - **Humidity**: Capacitive RH sensor (0-100%)
+
+  - **H2 concentration**: MEMS or electrochemical (0-4%)
+
+
+  ```python
+
+  class BoP_Sensors:
+
+      def __init__(self):
+
+          self.P_cathode = 0.0  # bar
+
+          self.P_anode = 0.0    # bar
+
+          self.P_tank = 0.0     # bar
+
+          self.T_stack = 0.0    # °C
+
+          self.mdot_air = 0.0   # kg/s
+
+          self.RH_cathode = 0.0 # %
+
+          self.H2_conc = 0.0    # %
+
+
+
+      def read_all_sensors(self):
+
+          """
+
+          Read all BoP sensors.
+
+          """
+
+          self.P_cathode = read_pressure_sensor(ADC_CHANNEL_P_CATHODE)
+
+          self.P_anode = read_pressure_sensor(ADC_CHANNEL_P_ANODE)
+
+          self.P_tank = read_pressure_sensor(ADC_CHANNEL_P_TANK)
+
+          self.T_stack = read_temperature_sensor(I2C_ADDR_T_STACK)
+
+          self.mdot_air = read_maf_sensor()
+
+          self.RH_cathode = read_humidity_sensor(I2C_ADDR_RH)
+
+          self.H2_conc = read_h2_sensor()
+
+
+
+      def validate_sensor_data(self):
+
+          """
+
+          Check sensor data for plausibility.
+
+          """
+
+          if self.P_cathode > 3.0 or self.P_cathode < 0.0:
+
+              trigger_fault(FAULT_P_CATHODE_SENSOR)
+
+
+
+          if self.T_stack > 100.0 or self.T_stack < -40.0:
+
+              trigger_fault(FAULT_T_STACK_SENSOR)
+
+
+
+          if self.H2_conc > 4.0:
+
+              trigger_alarm(ALARM_H2_LEAK)
+
+  ```
+
+
+  ### BoP Control Architecture
+
+
+  ```c
+
+  typedef struct {
+
+      CompressorController_t compressor;
+
+      H2RecirculationController_t h2_recirc;
+
+      MembraneHumidifier_t humidifier;
+
+      WaterSeparator_t water_sep;
+
+      BoP_Sensors_t sensors;
+
+  } BoP_System_t;
+
+
+
+  void control_bop_system(BoP_System_t *bop, float I_stack_target) {
+
+      // Read sensors
+
+      read_all_sensors(&bop->sensors);
+
+      validate_sensor_data(&bop->sensors);
+
+
+
+      // Control air compressor
+
+      bop->compressor.I_stack = I_stack_target;
+
+      control_compressor(&bop->compressor);
+
+
+
+      // Control H2 recirculation
+
+      control_h2_recirculation(&bop->h2_recirc, I_stack_target);
+
+
+
+      // Control humidifier
+
+      control_humidifier(&bop->humidifier, bop->compressor.mdot_air_req);
+
+
+
+      // Control water separator drain
+
+      control_water_separator(&bop->water_sep);
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Requirement Analysis**: Define air/H2 flow rates, pressure, temperature ranges
+
+  2. **Component Selection**: Choose compressor, pump, humidifier, valves based on specs
+
+  3. **Sizing Calculations**: Determine membrane area, heat exchanger capacity, valve flow coefficients
+
+  4. **Integration Design**: Layout piping, electrical connections, sensor placement
+
+  5. **Control Development**: Code compressor speed, valve position, purge timing
+
+  6. **Testing and Validation**: Bench test components, system-level performance testing
+
+  7. **Optimization**: Tune control parameters for efficiency and durability
+
+
+  ## Deliverables
+
+
+  - BoP component selection list (compressor, pump, humidifier, valves, sensors)
+
+  - Sizing calculations (flow rates, heat loads, membrane area)
+
+  - P&ID (piping and instrumentation diagram)
+
+  - Control algorithms (C code for compressor, pump, valves)
+
+  - Sensor interface specifications (CAN, I2C, analog)
+
+  - Performance test reports (flow, pressure, humidity validation)
+
+  - BoP system integration guide
+
+
+  ## Best Practices
+
+
+  - Select ATEX-compliant components for H2 zones (explosion-proof motors, valves)
+
+  - Use redundant pressure sensors for safety-critical measurements (H2 tank pressure)
+
+  - Design purge valve for fail-safe closed (prevent H2 loss on power failure)
+
+  - Implement sensor plausibility checks (detect failures, prevent erroneous control)
+
+  - Size humidifier with margin (20-30% excess capacity for degradation)
+
+  - Use stainless steel or polymer piping for H2 compatibility (avoid embrittlement)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface BoP sensors with CAN bus for data logging and diagnostics
+
+  - Coordinate compressor control with DC-DC converter power limit
+
+  - Integrate H2 recirculation with purge strategy (balance efficiency and N2 removal)
+
+  - Provide BoP power consumption to energy management system
+
+  - Support OTA updates for control parameter tuning (compressor map, purge interval)
+
+  '
+constraints:
+- Compressor power consumption (20-30% of FC net power)
+- H2-compatible materials for recirculation pump
+- Humidifier membrane degradation over time
+- Sensor accuracy and drift in harsh environment
+tools_required:
+- CFD tools for compressor and intercooler design
+- MATLAB/Simulink for control algorithm development
+- CAD software for P&ID and layout
+- Test bench with flow meters, pressure/temperature sensors
+- CAN interface tools (Vector CANoe)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- balance-of-plant
+- air-compressor
+- recirculation-pump
+- humidifier
+- valves-sensors
+- automotive

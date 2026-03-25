@@ -1,0 +1,270 @@
+name: 800v-charging-architecture
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive-ev
+description: "Expert skill in 800V EV platform architecture design, covering SiC power electronics, ultra-fast charging (250-350 kW), backward compatibility with 400V infrastructure, and efficiency advantages."
+use_cases:
+  - "800V platform EV design (Porsche Taycan, Hyundai Ioniq 5, Kia EV6)"
+  - "SiC (Silicon Carbide) inverter and OBC design for 800V"
+  - "250-350 kW ultra-fast charging implementation"
+  - "400V to 800V boost converter for backward compatibility"
+  - "High-efficiency powertrain (motor inverter, DC-DC, OBC)"
+automotive_standards:
+  - "IEC 61851-23 DC charging up to 1000V"
+  - "ISO 15118 Communication for 800V charging"
+  - "UL 2202 Safety for high-voltage EV charging systems"
+  - "SAE J3068 High-power conductive charging (350 kW+)"
+  - "IEC 60664-1 Insulation coordination for 800V systems"
+instructions: |
+  ## Core Competencies
+
+  Expert in 800V electric vehicle platform architecture, enabling ultra-fast charging (10 minutes for 80% SOC), higher efficiency powertrains, and reduced weight through smaller conductors and components, while maintaining backward compatibility with 400V charging infrastructure.
+
+  ### 800V Platform Overview
+
+  - **Advantages over 400V**:
+    - **Faster charging**: 350 kW at 800V = 437A (vs 875A at 400V, cable/connector limited to ~500A)
+    - **Lighter weight**: 50% reduction in conductor size (half the current for same power)
+    - **Higher efficiency**: Lower I2R losses in cables, inverter, motor windings
+    - **Smaller components**: Inverter, OBC, DC-DC converter can be more compact
+
+  - **Production vehicles** (2024+):
+    - Porsche Taycan: 800V, 270 kW charging, 200 kWh/100km efficiency
+    - Hyundai Ioniq 5 / Kia EV6: 800V, 350 kW charging, 18-minute 10-80% SOC
+    - GMC Hummer EV: 800V, 350 kW charging, 200+ kWh battery
+    - Lucid Air: 900V, 300 kW charging, luxury sedan
+
+  ### Battery Pack Design
+
+  - **Cell configuration**:
+    - 400V pack: 96 cells in series (96S) @ 4.2V = 403V max
+    - 800V pack: 192 cells in series (192S) @ 4.2V = 806V max
+    - Alternative: Use high-voltage cells (e.g., 8.4V per cell, 96S = 806V)
+
+  - **BMS considerations**:
+    - More cells in series -> longer voltage measurement chain (daisy-chain ADCs)
+    - Higher insulation requirements (>800 kOhm isolation resistance)
+    - Cell balancing: Passive or active balancing for 192 cells
+
+  - **Thermal management**:
+    - Same heat generation per kWh (energy throughput independent of voltage)
+    - But higher current density possible (better utilization of cooling system)
+
+  ### SiC Power Electronics
+
+  - **Why SiC for 800V**:
+    - **Higher blocking voltage**: 1200V SiC MOSFETs (vs 600V Si IGBTs for 400V)
+    - **Lower switching losses**: SiC switches faster (10x vs IGBT) -> higher efficiency
+    - **Higher temperature**: SiC operates at 175C junction (vs 150C for Si)
+    - **Smaller heatsinks**: 50% reduction in cooling requirements
+
+  - **Motor inverter (800V)**:
+    - Topology: Three-phase 2-level inverter (6x SiC MOSFETs)
+    - Switching frequency: 10-20 kHz (2x vs Si IGBT due to lower switching loss)
+    - Efficiency: 98-99% (vs 95-97% for 400V Si IGBT inverter)
+    - Power density: 15-20 kW/liter (vs 8-12 kW/liter for 400V)
+
+  - **SiC MOSFET selection**:
+    - Voltage rating: 1200V (safety margin for 800V DC bus)
+    - R_DS(on): 10-20 mOhm (e.g., Wolfspeed C3M0016120K, 16 mOhm @ 25C)
+    - Current rating: 200-300A continuous (for 150-200 kW inverter)
+
+  - **Gate driver design**:
+    - Isolated gate driver with Miller clamp (prevent false turn-on from dV/dt)
+    - Gate resistance: 2-5 Ohm (trade-off faster switching vs EMI)
+    - Turn-on voltage: +15V, turn-off: -4V (fully enhance/deplete)
+
+  ### Ultra-Fast Charging (350 kW)
+
+  - **Charging speed**:
+    - 100 kWh battery, 10-80% SOC = 70 kWh delivered
+    - At 350 kW: 70 kWh / 350 kW = 0.2 hours = 12 minutes
+    - Real-world: 15-18 minutes (de-rating for battery temperature, SOC taper)
+
+  - **Charging curve** (Hyundai Ioniq 5 example):
+    - 10-50% SOC: 350 kW (800V x 437A)
+    - 50-70% SOC: 250 kW (800V x 312A, battery heating up)
+    - 70-80% SOC: 150 kW (voltage taper, constant voltage phase)
+    - 80-100% SOC: 50 kW -> 10 kW (slow taper to protect battery)
+
+  - **Charger requirements**:
+    - Output voltage: 400-920V (to match 800V battery at various SOC)
+    - Output current: 500A max (connector rating, liquid-cooled cable)
+    - Efficiency: 95-97% (SiC-based DC-DC converter)
+
+  ### Backward Compatibility (400V Charging)
+
+  - **Challenge**: 800V vehicle at 400V charger (50-150 kW DC fast chargers are 400V)
+
+  - **Solution 1 - Onboard boost converter**:
+    - DC-DC boost: 400V -> 800V
+    - Power: 50-100 kW (limits charging speed at 400V stations)
+    - Components: SiC MOSFETs, inductor, controller
+    - Example: Hyundai/Kia E-GMP platform has 10 kW boost converter
+
+  - **Solution 2 - Split battery pack**:
+    - Battery divided into two 400V sections (96S + 96S)
+    - Normally series (800V for driving and 800V charging)
+    - Switch to parallel (400V each section) for 400V charging
+    - Complex switching (high-voltage contactors, BMS coordination)
+
+  - **Boost converter design**:
+
+    ```c
+    // Simplified boost control
+    void BoostConverter400to800(void) {
+        float v_input = ADC_ReadVoltage(CH_INPUT);   // 400V from charger
+        float v_output = ADC_ReadVoltage(CH_OUTPUT); // 800V to battery
+        float i_input = ADC_ReadCurrent(CH_INPUT);
+
+        float v_target = 800.0;
+        float duty = 1.0 - (v_input / v_target);  // Ideal duty cycle for boost
+
+        // PI controller fine-tunes duty cycle
+        duty = PI_Update(&pi_boost, v_output, v_target, 0.0001);
+
+        PWM_SetDuty(duty);
+
+        // Current limit (don't exceed charger rating)
+        if (i_input > 125.0) {  // 50 kW / 400V = 125A
+            duty -= 0.01;  // Reduce duty to limit current
+        }
+    }
+    ```
+
+  ### High-Voltage Safety
+
+  - **Insulation monitoring**:
+    - Threshold: >500 Ohm/V (400 kOhm for 800V system, vs 200 kOhm for 400V)
+    - Continuous monitoring during operation
+    - Trip contactors if R_iso drops below threshold
+
+  - **Creepage and clearance**:
+    - Per IEC 60664-1 for 800V:
+      - Clearance: 4-6 mm (air gap between HV+ and HV-, or HV and ground)
+      - Creepage: 6-10 mm (surface distance on PCB)
+    - Use conformal coating or potting for harsh environments
+
+  - **Arc flash protection**:
+    - 800V arcs more dangerous than 400V (longer arc length, harder to extinguish)
+    - Use arc-resistant contactors, fast fault detection (<5 ms)
+
+  - **High-voltage interlock (HVIL)**:
+    - Connectors have HVIL pin (low-voltage signal loop)
+    - If connector disconnected, HVIL opens -> controller opens contactors
+    - Prevents accidental contact with live HV terminals
+
+  ### Efficiency Gains
+
+  - **Powertrain losses comparison** (400V vs 800V, 150 kW motor):
+
+    | Component | 400V Loss | 800V Loss | Improvement |
+    |-----------|-----------|-----------|-------------|
+    | Inverter | 3 kW (2%) | 1.5 kW (1%) | 50% reduction |
+    | Motor copper | 2 kW (1.3%) | 2 kW (1.3%) | Same |
+    | Cables (HV) | 1 kW (0.7%) | 0.25 kW (0.17%) | 75% reduction |
+    | DC-DC conv | 0.5 kW | 0.3 kW | 40% reduction |
+    | Total | 6.5 kW (4.3%) | 4.05 kW (2.7%) | 38% loss reduction |
+
+  - **Range impact**: 4.3% vs 2.7% loss -> 1.6% more efficient -> ~5 km extra range per 100 km
+
+  ### Weight and Cost
+
+  - **Weight savings**:
+    - HV cables: 50% copper (half the current, half the cross-section) -> save 10-15 kg
+    - Inverter: Smaller heatsink, compact SiC modules -> save 3-5 kg
+    - Total: 15-25 kg weight reduction (1-2% of vehicle weight)
+
+  - **Cost**:
+    - SiC MOSFETs: 2-3x cost of Si IGBTs (~$50-100 more per inverter)
+    - Battery: Same cost (same kWh capacity, same cells)
+    - Charger infrastructure: 800V chargers slightly more expensive (higher voltage isolation)
+    - Net: $500-1000 premium for 800V platform (justified by faster charging)
+
+  ### Charging Infrastructure
+
+  - **CCS connector**: Same CCS Type 1 or Type 2 connector (supports up to 1000V)
+  - **Charger upgrade**: 400V chargers need 800V-capable DC-DC converter module
+  - **Example chargers**:
+    - ABB Terra 360: 350 kW, 200-920V output (800V compatible)
+    - Electrify America: 350 kW chargers (800V capable)
+    - Tesla Supercharger V4: 250-350 kW, 400-1000V (supports 800V)
+
+  ### Motor Design for 800V
+
+  - **Winding**: Same number of turns as 400V (motor current same for given torque)
+  - **Insulation**: Higher voltage rating (magnet wire with thicker enamel, 1500V test)
+  - **Efficiency**: Slightly higher (inverter switching less lossy, can use higher PWM frequency)
+
+  - **Example motor specs**:
+    - 400V motor: 200 kW, 350 Nm, 500A peak
+    - 800V motor: 200 kW, 350 Nm, 250A peak (same torque, half current)
+
+  ### Thermal Management
+
+  - **Cooling strategy**:
+    - SiC inverter generates less heat (higher efficiency) -> smaller radiator
+    - Battery cooling: Same thermal load (energy throughput same)
+    - Motor cooling: Same (losses roughly same)
+
+  - **Integrated cooling**:
+    - Single glycol-water loop for inverter, motor, OBC, DC-DC, battery
+    - 800V inverter compact -> easier integration
+
+  ## Approach
+
+  1. **System architecture**: Decide on 800V vs 400V split, boost converter for compatibility
+  2. **Battery pack**: Design 192S configuration, BMS with high-voltage protection
+  3. **SiC inverter**: Select 1200V SiC MOSFETs, design gate driver, layout for low inductance
+  4. **OBC**: 11-22 kW onboard charger with 800V output (LLC resonant converter)
+  5. **DC-DC converter**: 800V to 12V auxiliary power (for lights, HVAC, computers)
+  6. **Safety**: HVIL, insulation monitoring, arc detection, creepage/clearance compliance
+  7. **Testing**: High-voltage safety testing, efficiency measurement, EMC compliance
+
+  ## Deliverables
+
+  - 800V system architecture diagram (battery, inverter, OBC, DC-DC, motor)
+  - SiC inverter design (schematic, PCB, gate driver, thermal)
+  - Boost converter for 400V compatibility (optional)
+  - Safety analysis (insulation, arc flash, fault modes)
+  - Efficiency report (powertrain losses, range impact)
+  - Cost analysis (BOM, comparison to 400V platform)
+
+  ## Best Practices
+
+  - **Isolation testing**: Test at 2x rated voltage (1600V for 800V system) for 1 minute
+  - **Partial discharge**: Test for corona at high voltage (use PD detector)
+  - **Thermal cycling**: Verify components survive -40C to +125C (automotive range)
+  - **EMC**: SiC fast switching generates high dV/dt (requires careful PCB layout, shielding)
+  - **Service safety**: Train technicians on 800V hazards (insulated tools, PPE)
+
+  ## Integration
+
+  - **Vehicle CAN**: Communicate HV system status, voltage, current, SOC
+  - **Charging infrastructure**: CCS protocol (ISO 15118) for 800V negotiation
+  - **Battery thermal**: Precondition battery to 20-25C for 350 kW charging (BMS command)
+  - **Motor control**: Adjust inverter control strategy for 800V DC bus
+constraints:
+  - "Limited 800V charger availability (infrastructure lagging, 2024-2026 rollout)"
+  - "SiC component availability and cost (supply chain constraints)"
+  - "Safety certification more stringent (higher voltage = higher risk)"
+  - "Service technician training required (not all shops equipped for 800V)"
+tools_required:
+  - "High-voltage power supply (0-1000V, 0-500A) for testing"
+  - "SiC evaluation boards (Wolfspeed, Infineon, ROHM)"
+  - "Insulation tester (Megger, 1000V+)"
+  - "Thermal imaging camera (FLIR) for hotspot detection"
+  - "EMC chamber for high-frequency EMI testing"
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: emerging
+  complexity: expert
+tags:
+  - charging-infrastructure
+  - 800v-platform
+  - sic-mosfet
+  - ultra-fast-charging
+  - high-voltage
+  - power-electronics
+  - automotive

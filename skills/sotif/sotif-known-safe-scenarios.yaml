@@ -1,0 +1,427 @@
+name: sotif-known-safe-scenarios
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-analysis
+description: Definition and verification of Area 1 (known safe) scenarios where ADAS/AD systems perform nominally within ODD.
+use_cases:
+- ODD nominal condition specification
+- Requirements derivation for Area 1 operation
+- Verification test plan for nominal scenarios
+- Performance baseline establishment
+- Type approval demonstration of intended functionality
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-4 (System Design)
+- UN ECE R157 (ALKS)
+- ISO 34502 Test Scenarios
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in defining and verifying Area 1 (known safe) scenarios in ISO 21448 SOTIF framework — operating conditions where system performs intended function correctly without triggering hazards.
+
+
+  ### Area 1 Definition
+
+
+  **Known Safe Scenarios**: Situations where:
+
+  - All parameters are within specified ODD
+
+  - Sensors provide sufficient data quality
+
+  - Algorithms perform as intended
+
+  - No reasonably foreseeable misuse
+
+  - Hazards are identified and properly controlled
+
+
+  **Purpose**:
+
+  - Define baseline for nominal system behavior
+
+  - Establish performance requirements
+
+  - Serve as reference for regression testing
+
+  - Demonstrate intended functionality for type approval
+
+
+  ### Characteristics of Area 1
+
+
+  - **Well-understood**: Physics and behavior models validated
+
+  - **Measurable boundaries**: Clear thresholds for ODD parameters
+
+  - **Reproducible**: Scenarios can be reliably recreated in testing
+
+  - **Verifiable**: Pass/fail criteria can be objectively assessed
+
+  - **Traceable**: Linked to safety requirements and hazard analysis
+
+
+  ## ODD Nominal Condition Specification
+
+
+  **Environmental Parameters**:
+
+  - Weather: Dry or light rain (< 5 mm/h), no fog, daylight
+
+  - Temperature: 0-40°C ambient
+
+  - Visibility: > 200m
+
+  - Road surface: Dry/wet asphalt, clean
+
+
+  **Infrastructure Parameters**:
+
+  - Lane markings: Standard width (10-15cm), contrast ratio > 5:1
+
+  - Road type: Highway, controlled access, no construction
+
+  - Curvature: Radius > 250m
+
+  - Slope: < 8%
+
+
+  **Traffic Parameters**:
+
+  - Speed: Within legal limits (e.g., 60-120 km/h for highway ADAS)
+
+  - Traffic density: Light to moderate (> 2s following distance available)
+
+  - Vehicle mix: Standard passenger cars and trucks
+
+
+  **System Parameters**:
+
+  - All sensors functional (no faults)
+
+  - Sensor cleanliness > 70% (no significant contamination)
+
+  - Computation load < 80% capacity
+
+  - Communication links active (V2X, cloud)
+
+
+  ## Verification Approach
+
+
+  1. **Requirements Derivation**: Convert Area 1 conditions into testable requirements
+
+  2. **Test Scenario Generation**: Create representative test cases spanning ODD
+
+  3. **Acceptance Criteria**: Define performance metrics and thresholds
+
+  4. **Test Execution**: Simulation + proving ground + public road
+
+  5. **Statistical Validation**: Demonstrate performance meets criteria with confidence level
+
+
+  ## Example: Adaptive Cruise Control (ACC)
+
+
+  **Area 1 Scenario Definition**:
+
+
+  | Parameter | Nominal Range | Acceptance Criteria |
+
+  |-----------|---------------|---------------------|
+
+  | Speed | 60-120 km/h | Maintain setpoint ±3 km/h |
+
+  | Following distance | 1.0-2.5s time gap | Maintain target gap ±0.2s |
+
+  | Target deceleration | -0.3g max | Jerk < 2 m/s³ (comfort) |
+
+  | Lane keeping | Center ±0.3m | Lateral deviation < 0.5m |
+
+  | Weather | Dry, daylight | Radar detection range > 150m |
+
+
+  **Test Scenarios**:
+
+  - Steady-state following (constant speed lead vehicle)
+
+  - Lead vehicle gentle deceleration (0.2g)
+
+  - Lead vehicle gentle acceleration (0.15g)
+
+  - Lane change with new lead vehicle (different speed)
+
+  - Curve negotiation (R=500m, 90 km/h)
+
+
+  **Verification Results**:
+
+  - 10,000 simulation runs with parameter variations
+
+  - 500 proving ground test runs
+
+  - 5,000 km public road validation
+
+  - Performance: 99.8% scenarios meet criteria (statistical confidence 99%)
+
+
+  ## Test Case Generation
+
+
+  ```python
+
+  import numpy as np
+
+  from dataclasses import dataclass
+
+
+  @dataclass
+
+  class Area1Scenario:
+
+      """Known safe scenario for ACC function"""
+
+      ego_speed: float  # km/h
+
+      lead_speed: float  # km/h
+
+      following_distance: float  # meters
+
+      road_curvature: float  # 1/m
+
+      weather: str  # "dry", "wet"
+
+
+
+      def is_in_area1(self) -> bool:
+
+          """Check if scenario parameters are within Area 1 (ODD nominal)"""
+
+          if not (60 <= self.ego_speed <= 120):
+
+              return False
+
+          if not (50 <= self.lead_speed <= 130):
+
+              return False
+
+          # Time gap check: 1-2.5s at ego speed
+
+          time_gap = self.following_distance / (self.ego_speed / 3.6)
+
+          if not (1.0 <= time_gap <= 2.5):
+
+              return False
+
+          if not (0 <= self.road_curvature <= 1/250):  # R > 250m
+
+              return False
+
+          if self.weather not in ["dry", "wet"]:
+
+              return False
+
+          return True
+
+
+
+      def generate_test_cases(num_samples: int) -> list:
+
+          """Generate Monte Carlo samples in Area 1"""
+
+          scenarios = []
+
+          for _ in range(num_samples):
+
+              ego_speed = np.random.uniform(60, 120)
+
+              lead_speed = np.random.uniform(50, 130)
+
+              time_gap = np.random.uniform(1.0, 2.5)
+
+              following_distance = (ego_speed / 3.6) * time_gap
+
+              road_curvature = np.random.uniform(0, 1/250)
+
+              weather = np.random.choice(["dry", "wet"], p=[0.8, 0.2])
+
+
+
+              scenario = Area1Scenario(
+
+                  ego_speed=ego_speed,
+
+                  lead_speed=lead_speed,
+
+                  following_distance=following_distance,
+
+                  road_curvature=road_curvature,
+
+                  weather=weather
+
+              )
+
+              if scenario.is_in_area1():
+
+                  scenarios.append(scenario)
+
+          return scenarios
+
+
+  # Generate 1000 Area 1 test scenarios
+
+  test_cases = Area1Scenario.generate_test_cases(1000)
+
+  print(f"Generated {len(test_cases)} Area 1 test cases")
+
+  ```
+
+
+  ## Performance Metrics
+
+
+  **Functional Metrics**:
+
+  - Speed control accuracy: Mean error, standard deviation
+
+  - Following distance accuracy: Mean error, max deviation
+
+  - Lateral control: Lane center deviation, max lateral acceleration
+
+
+  **Comfort Metrics**:
+
+  - Longitudinal jerk: Max, mean, 95th percentile
+
+  - Lateral jerk: Max, mean, 95th percentile
+
+  - Acceleration/deceleration smoothness
+
+
+  **Safety Metrics**:
+
+  - Time-to-collision (TTC): Always > 3s
+
+  - Minimum following distance: Never < 10m at any speed
+
+  - Lane departure: Never > 0.5m from center
+
+
+  ## Statistical Validation
+
+
+  **Hypothesis Testing**:
+
+  - Null hypothesis: System meets Area 1 performance criteria
+
+  - Confidence level: 99% (type approval requirement)
+
+  - Sample size calculation based on expected failure rate
+
+
+  **Example**:
+
+  - Performance requirement: 99.9% scenarios successful
+
+  - Confidence: 99%
+
+  - Required sample size: ~4600 test cases (binomial distribution)
+
+
+  ## Deliverables
+
+
+  - Area 1 scenario specification with measurable parameters
+
+  - Test case database (parameterized scenarios in OpenSCENARIO)
+
+  - Verification test plan (simulation + proving ground + field)
+
+  - Performance requirement specification with acceptance criteria
+
+  - Test results report with statistical confidence analysis
+
+  - Traceability matrix: Area 1 scenarios → Safety requirements → Test cases
+
+
+  ## Best Practices
+
+
+  - Define Area 1 boundaries conservatively (buffer from ODD limits)
+
+  - Use design of experiments (DOE) for efficient parameter space coverage
+
+  - Validate in all nominal conditions (not just most frequent)
+
+  - Include normal variability (sensor noise, actuator response time)
+
+  - Perform regression testing when system updated
+
+  - Monitor field performance to confirm Area 1 assumptions
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **ODD Definition** → Area 1 represents nominal conditions within ODD
+
+  2. **Known Safe Verification** → Demonstrates intended functionality works as specified
+
+  3. **Baseline for Comparison** → Area 2/3 analysis references Area 1 performance
+
+  4. **Requirements Validation** → Area 1 tests validate safety requirements correctness
+
+
+  ## Relationship to ISO 26262
+
+
+  - ISO 26262: Focuses on failures (safety goals, ASIL decomposition)
+
+  - ISO 21448: Focuses on nominal performance (Area 1 verification)
+
+  - Complementary: Both needed for complete safety case
+
+  - Overlap: System-level safety requirements inform both Area 1 criteria and safety goals
+
+
+  ## Common Pitfalls
+
+
+  - Defining Area 1 too broadly (includes edge cases that should be Area 2)
+
+  - Insufficient test coverage (missing parameter combinations)
+
+  - Overly optimistic acceptance criteria (not reflecting real-world variability)
+
+  - Not re-validating Area 1 after system updates
+
+  - Ignoring sensor degradation within nominal range (e.g., light rain)
+
+  '
+constraints:
+- Large sample size required for statistical confidence
+- Real-world testing expensive and time-consuming
+- Sensor/actuator variability may cause nominal performance spread
+- Proving ground may not capture all real-world nominal conditions
+tools_required:
+- Simulation platforms (CARLA, IPG CarMaker, VTD)
+- Statistical analysis tools (Python scipy.stats, R)
+- OpenSCENARIO scenario generation tools
+- Test automation frameworks
+- Data logging and analysis (MATLAB, Python pandas)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- sotif
+- area-1
+- known-safe
+- odd
+- verification
+- nominal-scenarios
+- requirements-validation

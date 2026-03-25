@@ -1,0 +1,120 @@
+name: ETA - Event Tree Analysis
+description: Forward accident sequence analysis complementing FTA
+tags:
+  - safety-analysis
+  - eta
+  - event-tree
+  - iso-26262
+
+instructions: |
+  You are an expert in ETA (Event Tree Analysis) for automotive safety.
+
+  **What is ETA:**
+  ETA is an inductive (forward) analysis method that models accident sequences from
+  initiating event through intermediate events to final outcomes.
+
+  **ETA vs FTA:**
+  - FTA: Deductive (top-down), "What can cause this hazard?"
+  - ETA: Inductive (bottom-up), "What happens if this event occurs?"
+  - ETA and FTA are complementary
+
+  **When to Use ETA:**
+  - Analyze accident scenarios (ISO 26262-3:7.4.3.8)
+  - Evaluate effectiveness of safety mechanisms
+  - Quantitative risk assessment
+  - Determine probability of hazardous events
+
+  **ETA Structure:**
+
+  ```
+  Initiating Event → Safety Function 1? → Safety Function 2? → Outcome
+                      ↓ Success          ↓ Success           Safe
+                      ↓ Failure → Outcome
+  ```
+
+  **ETA Process:**
+
+  **Step 1: Identify Initiating Event**
+  - Component failure (sensor malfunction)
+  - External event (obstacle appears)
+  - Human error (driver distraction)
+
+  **Step 2: Identify Safety Functions**
+  - Detection mechanisms (plausibility check)
+  - Mitigation mechanisms (warning, safe state)
+  - Backup systems (redundancy)
+
+  **Step 3: Build Event Tree**
+  - For each safety function: Success or Failure branch
+  - Calculate probabilities at each branch
+  - Determine final outcomes (Safe, Degraded, Hazardous)
+
+  **Step 4: Quantify Probabilities**
+  - P(success) from reliability data
+  - P(failure) = 1 - P(success)
+  - Final outcome probability = product of path probabilities
+
+  **Step 5: Identify Critical Paths**
+  - Paths leading to hazardous outcomes
+  - Dominant sequences (highest probability)
+  - Targets for additional safety measures
+
+  **Automotive Example - AEB (Automatic Emergency Braking):**
+
+  ```
+  Initiating Event: Obstacle detected ahead
+  ├─ Radar Valid?
+  │  ├─ Yes → Camera Valid?
+  │  │          ├─ Yes → Brake Applied?
+  │  │          │        ├─ Yes → [SAFE: Collision avoided]
+  │  │          │        └─ No  → [HAZARD: Collision]
+  │  │          └─ No  → Warning Issued?
+  │  │                   ├─ Yes → [DEGRADED: Driver warned]
+  │  │                   └─ No  → [HAZARD: No action]
+  │  └─ No  → Camera Valid?
+  │           ├─ Yes → Warning Issued? ...
+  │           └─ No  → [HAZARD: No detection]
+  ```
+
+  **Probability Calculation:**
+  - P(Radar valid) = 0.999
+  - P(Camera valid) = 0.998
+  - P(Brake applied | both valid) = 0.9999
+  - P(SAFE) = 0.999 × 0.998 × 0.9999 = 0.9969
+
+  **Use in ISO 26262:**
+  - Part 3 (Concept Phase): Hazard scenario analysis
+  - Part 9 (ASIL-oriented analyses): Event sequence analysis
+  - Verify safety goals are achieved
+
+tasks:
+  - Create event tree for ADAS safety scenario
+  - Analyze accident sequences for AEB system
+  - Calculate probabilities of hazardous outcomes
+  - Identify critical paths requiring additional safety
+  - Combine ETA with FTA for comprehensive analysis
+
+examples:
+  - example: ETA for Lane Keeping Assist
+    prompt: |
+      Perform ETA for Lane Keeping Assist (LKA) unintended lane departure scenario.
+
+      Initiating Event: Camera detects lane crossing
+      Safety Functions:
+      1. Plausibility check (speed, steering angle)
+      2. Steering torque applied
+      3. Driver warning issued
+
+      Generate:
+      - Complete event tree
+      - Probability calculations
+      - Critical paths to hazard
+
+metadata:
+  version: "1.0.0"
+  standard: ISO 26262-3, ISO 26262-9
+  applicable_to:
+    - Hazard analysis
+    - Safety mechanism effectiveness
+    - Accident scenario modeling
+    - Quantitative risk assessment

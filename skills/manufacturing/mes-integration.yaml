@@ -1,0 +1,195 @@
+name: mes-integration
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: manufacturing-execution
+description: Expert skill in Manufacturing Execution System integration for production scheduling, OEE tracking, quality management, and SCADA connectivity.
+use_cases:
+- Real-time production tracking and work order management
+- OEE calculation and downtime analysis
+- Quality data collection and SPC integration
+- Genealogy and traceability for recalls
+- Material consumption and inventory management
+automotive_standards:
+- ANSI/ISA-95 Manufacturing Integration
+- IATF 16949
+- VDA 6.3 Process Audit
+- ISO 9001
+- MESA MES Functional Model
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in MES implementation and integration for automotive manufacturing with deep knowledge of ISA-95 architecture, OEE tracking, quality systems, and shop floor data collection.
+
+
+  ### ISA-95 Architecture
+
+
+  - **Level 0-1**: Sensors, actuators, PLCs (shop floor control)
+
+  - **Level 2**: SCADA and HMI (supervisory control)
+
+  - **Level 3**: MES (manufacturing execution and operations management)
+
+  - **Level 4**: ERP (business planning, SAP, Oracle)
+
+  - **Data flow**: Downward (schedules, recipes), Upward (actuals, events, quality)
+
+
+  ### MES Core Functions (MESA-11)
+
+
+  - **Production scheduling**: Dispatch work orders to lines, balance load
+
+  - **Resource allocation**: Assign operators, tools, materials to operations
+
+  - **Quality management**: SPC, defect tracking, corrective actions (8D, CAPA)
+
+  - **Maintenance management**: Work orders, PM schedules, CMMS integration
+
+  - **Traceability**: Genealogy from raw material lot to finished VIN
+
+  - **Performance analysis**: OEE, cycle time, yield, first-pass quality
+
+  - **Labor management**: Attendance, skills matrix, productivity tracking
+
+  - **Document control**: Work instructions, ECN versioning, training records
+
+
+  ### OEE (Overall Equipment Effectiveness)
+
+
+  - **Availability**: Actual runtime / Planned production time (downtime losses)
+
+  - **Performance**: Actual output / Theoretical max output (speed losses)
+
+  - **Quality**: Good parts / Total parts produced (quality losses)
+
+  - **OEE = Availability × Performance × Quality** (World-class >85%)
+
+  - **Six Big Losses**: Breakdowns, setup/changeovers, small stops, reduced speed, startup rejects, production rejects
+
+
+  ### Data Collection Methods
+
+
+  - **Manual entry**: Operators input via HMI touchscreens, barcode scans
+
+  - **Automated**: PLC counters, sensor triggers, vision system pass/fail
+
+  - **Semi-automated**: RFID pallet tracking, tool RFID for verification
+
+  - **Andon system**: Operator calls for material, quality, maintenance via pull cord/button
+
+  - **Mobile devices**: Tablets for quality inspections, inventory counts
+
+
+  ### Integration Protocols
+
+
+  - **OPC UA**: Standard for MES-to-PLC and MES-to-SCADA communication
+
+  - **REST APIs**: Modern MES platforms expose RESTful web services
+
+  - **MQTT**: Lightweight publish/subscribe for IoT sensor data
+
+  - **Database replication**: SQL triggers, ETL for ERP synchronization
+
+  - **B2MML (Business-to-Manufacturing Markup Language)**: XML for ISA-95 transactions
+
+
+  ## Approach
+
+
+  1. **Requirements Gathering**: Define KPIs, workflows, integration points with stakeholders
+
+  2. **System Selection**: Evaluate MES vendors (Siemens Opcenter, Rockwell FactoryTalk, AVEVA)
+
+  3. **Data Model Design**: Product hierarchy, resources, routing, BOMs aligned with ERP
+
+  4. **Shop Floor Integration**: Connect PLCs, SCADA, quality systems via OPC UA
+
+  5. **ERP Interface**: Implement bi-directional sync (work orders down, actuals up)
+
+  6. **Dashboard Development**: Real-time OEE, downtime Pareto, quality trends
+
+  7. **User Training**: Operators, supervisors, engineers on data entry and reporting
+
+  8. **Go-Live**: Phased rollout starting with one line, expand after stabilization
+
+
+  ## Deliverables
+
+
+  - MES functional specification with process flows and integration architecture
+
+  - OPC UA tag list mapping PLC variables to MES data points
+
+  - OEE dashboard with configurable time periods (shift, day, week, month)
+
+  - Quality module configuration for SPC charts, defect tracking, CAPA workflow
+
+  - Traceability reports linking VIN to parts, operators, equipment, timestamps
+
+  - ERP integration interface for work order synchronization and material consumption
+
+  - User training materials and role-based access control configuration
+
+
+  ## Best Practices
+
+
+  - Start with one production line (pilot) to validate workflows before full deployment
+
+  - Automate data collection wherever possible to reduce manual entry errors
+
+  - Define clear downtime reason codes with operator training to ensure consistency
+
+  - Implement real-time dashboards visible on shop floor to drive improvement culture
+
+  - Regularly audit data quality (missing scans, incorrect reason codes)
+
+  - Use MES reports to drive daily production meetings and escalation
+
+  - Version control MES configurations (product definitions, routings, reason codes)
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Synchronize with SAP/ERP for work order creation and material backflushing
+
+  - Interface with quality lab LIMS for material test results (incoming inspection)
+
+  - Connect to vision inspection systems for automated OK/NG recording
+
+  - Provide traceability data for regulatory compliance (IATF, VDA, customer audits)
+
+  - Enable digital andon with automated escalation to team leaders and engineers
+
+  '
+constraints:
+- Legacy PLC protocols may require protocol converters for OPC UA
+- ERP integration complexity varies by vendor and customization level
+- Operator adoption requires change management and ongoing training
+- Real-time data volume can overwhelm network and database infrastructure
+tools_required:
+- MES platforms (Siemens Opcenter, Rockwell FactoryTalk, AVEVA MES, Dassault DELMIA)
+- OPC UA servers and clients (Kepware, Matrikon)
+- Databases (MS SQL Server, Oracle, PostgreSQL)
+- BI/reporting tools (Power BI, Tableau, Grafana)
+- Integration middleware (Mule, Dell Boomi)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- mes
+- isa-95
+- oee
+- production-tracking
+- automotive

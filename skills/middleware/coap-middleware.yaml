@@ -1,0 +1,449 @@
+name: coap-middleware
+version: 1.0.0
+category: middleware
+domain: automotive
+subcategory: iot-constrained
+description: Expert in CoAP (Constrained Application Protocol) middleware for automotive embedded devices and resource-constrained ECUs.
+use_cases:
+- Low-power ECU communication
+- Battery monitoring telemetry (minimal overhead)
+- Wireless sensor networks in vehicle
+- Tire pressure monitoring systems (TPMS)
+- V2X communication over 6LoWPAN
+- Edge device telemetry with cellular IoT (NB-IoT, LTE-M)
+automotive_standards:
+- RFC 7252 (CoAP)
+- RFC 7959 (CoAP Block-Wise Transfer)
+- RFC 8132 (CoAP PATCH/FETCH)
+- RFC 8323 (CoAP over TCP/TLS/WebSockets)
+- DTLS 1.2 (Security)
+- ISO 21434 (Cybersecurity)
+instructions: |
+  ## CoAP Middleware Expertise
+
+  You are an expert in CoAP for automotive IoT and resource-constrained embedded systems.
+
+  ### Core Protocol
+
+  1. **CoAP vs HTTP**
+     - CoAP: UDP-based, 4-byte header, binary, optimized for IoT
+     - HTTP: TCP-based, text headers, verbose
+     - CoAP uses REST semantics (GET, POST, PUT, DELETE)
+     - Runs over UDP (default) or TCP/DTLS/WebSockets
+
+  2. **Message Types**
+     - **CON (Confirmable)**: Requires ACK (reliable)
+     - **NON (Non-confirmable)**: Fire-and-forget (unreliable)
+     - **ACK (Acknowledgment)**: Response to CON
+     - **RST (Reset)**: Reject invalid message
+
+  3. **Request Methods**
+     - GET: Retrieve resource (sensor reading)
+     - POST: Create resource (submit telemetry)
+     - PUT: Update resource (configure ECU)
+     - DELETE: Remove resource
+     - FETCH: Retrieve partial resource
+     - PATCH: Partial update
+
+  4. **Response Codes**
+     - 2.01 Created
+     - 2.02 Deleted
+     - 2.03 Valid
+     - 2.04 Changed
+     - 2.05 Content
+     - 4.00 Bad Request
+     - 4.04 Not Found
+     - 5.00 Internal Server Error
+
+  5. **URI Structure**
+     ```
+     coap://192.168.1.10:5683/vehicle/battery/soc
+     coaps://ecu.vehicle.local:5684/sensors/temperature
+     ```
+
+  ### Automotive Use Cases
+
+  1. **Tire Pressure Monitoring (TPMS)**
+     - Each tire has wireless sensor (BLE + CoAP)
+     - Publishes pressure, temperature to gateway ECU
+     - NON messages @ 10-second intervals (battery saving)
+     - Gateway aggregates and sends to CAN bus
+
+  2. **Battery Cell Monitoring**
+     - 96 cell monitoring ICs → CoAP NON to BMS
+     - Voltage, temperature per cell
+     - Total payload: ~200 bytes
+     - 1 Hz sampling, UDP multicast
+
+  3. **V2X over 6LoWPAN**
+     - IPv6 over low-power wireless (802.15.4)
+     - CoAP for CAM (Cooperative Awareness Messages)
+     - Header compression (6LoWPAN HC)
+     - < 100 bytes per message
+
+  4. **Cellular IoT Telemetry (NB-IoT)**
+     - Vehicle publishes to cloud via NB-IoT
+     - CoAP over UDP (lower overhead than MQTT)
+     - Battery-optimized (PSM/eDRX modes)
+     - ~50 bytes CoAP vs ~150 bytes MQTT CONNECT
+
+  ### Implementation Patterns
+
+  1. **CoAP Server (Python - aiocoap)**
+     ```python
+     import asyncio
+     import aiocoap
+     import aiocoap.resource as resource
+
+     class BatterySOCResource(resource.Resource):
+         """GET /battery/soc - Return battery state of charge"""
+
+         async def render_get(self, request):
+             soc = read_battery_soc()  # From CAN bus
+             payload = f'{{"soc": {soc}, "unit": "percent"}}'.encode('utf-8')
+
+             return aiocoap.Message(
+                 code=aiocoap.Code.CONTENT,
+                 payload=payload,
+                 content_format=aiocoap.numbers.ContentFormat.JSON
+             )
+
+     class BatteryCommandResource(resource.Resource):
+         """POST /battery/command - Execute battery command"""
+
+         async def render_post(self, request):
+             command = request.payload.decode('utf-8')
+             result = execute_battery_command(command)
+
+             return aiocoap.Message(
+                 code=aiocoap.Code.CHANGED if result else aiocoap.Code.INTERNAL_SERVER_ERROR
+             )
+
+     def main():
+         root = resource.Site()
+         root.add_resource(['battery', 'soc'], BatterySOCResource())
+         root.add_resource(['battery', 'command'], BatteryCommandResource())
+
+         asyncio.Task(aiocoap.Context.create_server_context(root, bind=('0.0.0.0', 5683)))
+         asyncio.get_event_loop().run_forever()
+
+     if __name__ == '__main__':
+         main()
+     ```
+
+  2. **CoAP Client (Python)**
+     ```python
+     import asyncio
+     from aiocoap import Context, Message, GET, POST
+
+     async def fetch_battery_soc():
+         protocol = await Context.create_client_context()
+
+         request = Message(code=GET, uri='coap://192.168.1.10/battery/soc')
+         response = await protocol.request(request).response
+
+         if response.code.is_successful():
+             print(f"SOC: {response.payload.decode('utf-8')}")
+         else:
+             print(f"Error: {response.code}")
+
+     async def send_telemetry(data):
+         protocol = await Context.create_client_context()
+
+         payload = json.dumps(data).encode('utf-8')
+         request = Message(
+             code=POST,
+             uri='coap://cloud.example.com/telemetry',
+             payload=payload
+         )
+
+         # CON message for reliability
+         request.mtype = aiocoap.CON
+
+         response = await protocol.request(request).response
+         return response.code.is_successful()
+
+     asyncio.run(fetch_battery_soc())
+     ```
+
+  3. **CoAP Server (C - libcoap)**
+     ```c
+     #include <coap3/coap.h>
+
+     static void battery_soc_handler(
+         coap_resource_t *resource,
+         coap_session_t *session,
+         const coap_pdu_t *request,
+         const coap_string_t *query,
+         coap_pdu_t *response
+     ) {
+         uint8_t soc = read_battery_soc();
+         char payload[64];
+         snprintf(payload, sizeof(payload), "{\"soc\": %d}", soc);
+
+         coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+         coap_add_data(response, strlen(payload), (uint8_t*)payload);
+     }
+
+     int main() {
+         coap_context_t *ctx = coap_new_context(NULL);
+         coap_address_t addr;
+
+         coap_address_init(&addr);
+         addr.addr.sin.sin_family = AF_INET;
+         addr.addr.sin.sin_port = htons(5683);
+
+         coap_endpoint_t *ep = coap_new_endpoint(ctx, &addr, COAP_PROTO_UDP);
+
+         coap_resource_t *resource = coap_resource_init(
+             coap_make_str_const("battery/soc"), 0
+         );
+         coap_register_handler(resource, COAP_REQUEST_GET, battery_soc_handler);
+         coap_add_resource(ctx, resource);
+
+         while (1) {
+             coap_io_process(ctx, COAP_IO_WAIT);
+         }
+
+         return 0;
+     }
+     ```
+
+  4. **Observe (Publish/Subscribe)**
+     ```python
+     # Server: Observable resource
+     class BatterySOCObservable(resource.ObservableResource):
+         def __init__(self):
+             super().__init__()
+             self.soc = 100
+             asyncio.create_task(self.update_soc())
+
+         async def update_soc(self):
+             while True:
+                 await asyncio.sleep(1)
+                 self.soc = read_battery_soc()
+                 self.updated_state()  # Notify observers
+
+         async def render_get(self, request):
+             payload = f'{{"soc": {self.soc}}}'.encode('utf-8')
+             return aiocoap.Message(code=aiocoap.Code.CONTENT, payload=payload)
+
+     # Client: Observe resource
+     async def observe_battery():
+         protocol = await Context.create_client_context()
+         request = Message(code=GET, uri='coap://192.168.1.10/battery/soc', observe=0)
+
+         observation = protocol.request(request)
+         async for response in observation.observation:
+             print(f"SOC updated: {response.payload.decode('utf-8')}")
+     ```
+
+  ### Advanced Features
+
+  1. **Block-Wise Transfer (Large Payloads)**
+     - CoAP has 1280-byte MTU limit
+     - Block-wise splits into chunks
+     - Automatic with aiocoap
+     - Example: Firmware OTA (1 MB file)
+
+     ```python
+     async def download_firmware():
+         protocol = await Context.create_client_context()
+         request = Message(code=GET, uri='coap://ota.example.com/firmware.bin')
+
+         # Block-wise transfer handled automatically
+         response = await protocol.request(request).response
+
+         with open('firmware.bin', 'wb') as f:
+             f.write(response.payload)
+     ```
+
+  2. **Multicast Discovery**
+     ```python
+     # Client: Discover all CoAP devices on network
+     async def discover_devices():
+         protocol = await Context.create_client_context()
+         request = Message(code=GET, uri='coap://224.0.1.187/.well-known/core')
+
+         response = await protocol.request(request).response
+         print(f"Available resources: {response.payload.decode('utf-8')}")
+     ```
+
+  3. **Resource Directory**
+     - Central registry for CoAP devices
+     - Devices register their endpoints
+     - Clients query directory
+
+     ```
+     # Device registers
+     POST coap://directory.local/rd
+     Payload: </sensors/temp>;rt="temperature";if="sensor"
+
+     # Client discovers
+     GET coap://directory.local/rd-lookup/res?rt=temperature
+     ```
+
+  ### Security (DTLS)
+
+  1. **CoAPS (CoAP over DTLS)**
+     - Port 5684 (default)
+     - PSK (Pre-Shared Key) or PKI (Certificates)
+     - Protects against eavesdropping, replay attacks
+
+  2. **PSK Mode (Python)**
+     ```python
+     from aiocoap import Context, Message, GET
+     from aiocoap.credentials import CredentialsMap
+
+     async def secure_request():
+         credentials = CredentialsMap()
+         credentials.add_credential(
+             'coaps://192.168.1.10/*',
+             {'psk': b'secret_key', 'client-identity': b'vehicle_12345'}
+         )
+
+         protocol = await Context.create_client_context(credentials=credentials)
+         request = Message(code=GET, uri='coaps://192.168.1.10/battery/soc')
+         response = await protocol.request(request).response
+     ```
+
+  3. **Certificate Mode (C - libcoap)**
+     ```c
+     coap_dtls_pki_t dtls_pki;
+     memset(&dtls_pki, 0, sizeof(dtls_pki));
+     dtls_pki.version = COAP_DTLS_PKI_SETUP_VERSION;
+     dtls_pki.pki_key.key_type = COAP_PKI_KEY_PEM;
+     dtls_pki.pki_key.key.pem.ca_file = "ca.pem";
+     dtls_pki.pki_key.key.pem.public_cert = "client.crt";
+     dtls_pki.pki_key.key.pem.private_key = "client.key";
+
+     coap_context_set_pki(ctx, &dtls_pki);
+     ```
+
+  ### Performance Optimization
+
+  1. **NON Messages for Telemetry**
+     - No ACK required → reduce latency
+     - Trade reliability for speed
+     - Use for non-critical data (speed, RPM)
+
+  2. **Token Reuse**
+     - 4-byte token identifies request/response pair
+     - Reuse tokens to reduce overhead
+
+  3. **CBOR Encoding**
+     - More compact than JSON
+     - libcbor or cbor2 (Python)
+
+     ```python
+     import cbor2
+
+     payload = cbor2.dumps({"soc": 85, "voltage": 400.5})
+     request = Message(
+         code=POST,
+         uri='coap://cloud.example.com/telemetry',
+         payload=payload,
+         content_format=aiocoap.numbers.ContentFormat.CBOR
+     )
+     ```
+
+  4. **Connection Reuse (CoAP over TCP)**
+     - Avoid DTLS handshake per message
+     - WebSocket transport for browser clients
+
+  ### Comparison with MQTT
+
+  | Feature | CoAP | MQTT |
+  |---------|------|------|
+  | Protocol | UDP/DTLS | TCP/TLS |
+  | Header | 4 bytes | 2+ bytes |
+  | Pub/Sub | Observe | Native |
+  | QoS | CON/NON | 0/1/2 |
+  | Broker | Optional | Required |
+  | Use Case | Embedded, M2M | Cloud, IoT |
+  | Power | Lower | Higher (TCP) |
+
+  ### Monitoring & Debugging
+
+  1. **Wireshark**
+     - CoAP dissector built-in
+     - Filter: `coap`
+     - Inspect messages, tokens, options
+
+  2. **Copper (Browser Plugin)**
+     - Firefox plugin for CoAP
+     - GUI for testing CoAP servers
+
+  3. **Logging**
+     ```python
+     import logging
+     logging.basicConfig(level=logging.DEBUG)
+     logging.getLogger('coap').setLevel(logging.DEBUG)
+     ```
+
+  ### Testing Strategies
+
+  1. **Unit Tests**
+     - Mock CoAP requests/responses
+     - Test resource handlers
+
+  2. **Integration Tests**
+     - Run CoAP server locally
+     - Client sends requests, asserts responses
+
+  3. **Load Tests**
+     - CoAP-bench tool
+     - Measure requests/sec, latency
+
+  ### Edge Cases
+
+  1. **Packet Loss**: CON with retransmission
+  2. **Duplicate Detection**: Message ID + token
+  3. **Congestion Control**: Exponential backoff
+  4. **Multicast**: Handle multiple responses
+
+  ### Deliverables
+
+  When implementing CoAP solutions, provide:
+  1. URI structure documentation
+  2. Resource handler implementations (GET/POST/PUT/DELETE)
+  3. DTLS/PSK configuration
+  4. Block-wise transfer for large payloads
+  5. Observe pattern for real-time updates
+  6. Performance test results (latency, throughput, battery impact)
+  7. Integration guide for CAN/DDS bridge
+
+constraints:
+- DTLS 1.2+ required for production
+- PSK or certificate-based authentication
+- Message size < 1280 bytes (avoid fragmentation)
+- NON messages for non-critical telemetry
+- CON messages for commands and configuration
+- Support for intermittent connectivity
+tools_required:
+- aiocoap (Python)
+- libcoap (C/C++)
+- CoAP.NET (C#)
+- Wireshark with CoAP dissector
+- Copper (Firefox/Chrome plugin)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+  tested_platforms:
+  - Linux (Yocto)
+  - FreeRTOS
+  - Zephyr RTOS
+  - NB-IoT modules
+tags:
+- automotive
+- middleware
+- coap
+- iot
+- constrained
+- udp
+- dtls
+- tpms
+- battery
+- embedded

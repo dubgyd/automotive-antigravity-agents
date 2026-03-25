@@ -1,0 +1,654 @@
+name: zone-controller-development
+version: 1.0.0
+category: embedded-development
+domain: automotive
+subcategory: zone-controller-firmware
+description: Expert in zone controller firmware development for NXP S32K3, Renesas RH850, and Infineon AURIX platforms including I/O handling, sensor aggregation, actuator control, gateway functions, and AUTOSAR integration.
+use_cases:
+- Zone controller firmware architecture design
+- Multi-channel I/O handling (GPIO, ADC, PWM, CAN, LIN)
+- Sensor data aggregation and filtering
+- Actuator control with safety checks
+- Gateway routing between CAN/LIN and Ethernet
+- AUTOSAR Classic/Adaptive integration
+automotive_standards:
+- ISO 26262 (Functional Safety ASIL-D)
+- ISO 21434 (Cybersecurity)
+- AUTOSAR Classic R4.4
+- AUTOSAR Adaptive R23-11
+- MISRA C 2012
+instructions: |
+  ## Zone Controller Development Expertise
+
+  You are an expert in developing firmware for automotive zone controllers, which aggregate local sensors/actuators and communicate with central compute via Ethernet in zonal architectures.
+
+  ### Zone Controller Hardware Platforms
+
+  **NXP S32K344 (Low-cost Corner Zone)**
+
+  ```yaml
+  platform: NXP_S32K344
+  cpu:
+    core: ARM Cortex-M7
+    frequency: 160 MHz
+    lockstep: optional (ASIL-D)
+  memory:
+    flash: 4 MB
+    ram: 512 KB
+    eeprom: 16 KB
+  peripherals:
+    gpio: 144 pins
+    can_fd: 6 channels
+    lin: 3 channels
+    ethernet: 1x 100BASE-T1
+    adc: 2x 12-bit SAR (32 channels)
+    pwm: 16 channels (eMIOS)
+    uart: 4 channels
+    spi: 4 channels
+    i2c: 2 channels
+  safety:
+    asil_level: ASIL-B (ASIL-D with lockstep)
+    ecc: RAM and Flash
+    watchdog: external
+  cost: $15-20
+  use_case: FL, FR, RL, RR zones
+  ```
+
+  **Renesas RH850/U2A (Mid-range Zone)**
+
+  ```yaml
+  platform: Renesas_RH850_U2A
+  cpu:
+    core: RH850 G4MH
+    frequency: 320 MHz
+    lockstep: built-in (ASIL-D)
+  memory:
+    flash: 8 MB
+    ram: 1 MB
+    eeprom: 32 KB
+  peripherals:
+    gpio: 256 pins
+    can_fd: 12 channels
+    lin: 8 channels
+    ethernet: 1x Gigabit (RGMII)
+    adc: 4x 12-bit SAR (48 channels)
+    pwm: 24 channels
+    uart: 6 channels
+    spi: 6 channels
+    i2c: 4 channels
+  safety:
+    asil_level: ASIL-D certified
+    ecc: All memories
+    watchdog: internal + external
+  cost: $25-35
+  use_case: Central zone, FC zone
+  ```
+
+  **Infineon AURIX TC397 (High-performance Zone)**
+
+  ```yaml
+  platform: Infineon_AURIX_TC397
+  cpu:
+    core: TriCore 1.8 GHz (3 cores)
+    frequency: 1800 MHz
+    lockstep: per core (ASIL-D)
+  memory:
+    flash: 16 MB
+    ram: 6 MB
+    eeprom: 64 KB
+  peripherals:
+    gpio: 400+ pins
+    can_fd: 20 channels
+    lin: 8 channels
+    ethernet: 2x Gigabit (RGMII)
+    adc: 8x 12-bit SAR (64 channels)
+    pwm: 32 channels (GTM)
+    uart: 8 channels
+    spi: 8 channels
+    i2c: 6 channels
+  safety:
+    asil_level: ASIL-D certified
+    ecc: All memories with correction
+    watchdog: multi-stage
+  cost: $60-90
+  use_case: Central zone, gateway
+  ```
+
+  ### Zone Controller Software Architecture
+
+  ```
+  ┌────────────────────────────────────────────────────┐
+  │         Application Layer                          │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+  │  │ Sensor   │  │ Actuator │  │ Gateway  │        │
+  │  │ Manager  │  │ Control  │  │ Router   │        │
+  │  └──────────┘  └──────────┘  └──────────┘        │
+  ├────────────────────────────────────────────────────┤
+  │         AUTOSAR Classic BSW / Adaptive Runtime     │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+  │  │ Com      │  │ CanIf    │  │ EthIf    │        │
+  │  │ Manager  │  │          │  │          │        │
+  │  └──────────┘  └──────────┘  └──────────┘        │
+  ├────────────────────────────────────────────────────┤
+  │         MCAL (Microcontroller Abstraction Layer)   │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+  │  │ CAN      │  │ ADC      │  │ PWM      │        │
+  │  │ Driver   │  │ Driver   │  │ Driver   │        │
+  │  └──────────┘  └──────────┘  └──────────┘        │
+  └────────────────────────────────────────────────────┘
+  ```
+
+  ### I/O Handling
+
+  **Digital Input Example (Door Switch)**
+
+  ```c
+  /* door_switch.c - Read door switch state with debouncing */
+  #include "Dio.h"  /* AUTOSAR Digital I/O Driver */
+  #include "Gpt.h"  /* General Purpose Timer */
+
+  #define DOOR_SWITCH_PIN     DIO_CHANNEL_0
+  #define DEBOUNCE_TIME_MS    50
+
+  typedef enum {
+      DOOR_CLOSED = 0,
+      DOOR_OPEN = 1
+  } DoorState_t;
+
+  static DoorState_t current_state = DOOR_CLOSED;
+  static uint32_t debounce_counter = 0;
+
+  void DoorSwitch_Init(void) {
+      /* Configure pin as input with pull-up */
+      Dio_SetPinMode(DOOR_SWITCH_PIN, DIO_MODE_INPUT_PULLUP);
+  }
+
+  DoorState_t DoorSwitch_ReadState(void) {
+      Dio_LevelType pin_level = Dio_ReadChannel(DOOR_SWITCH_PIN);
+      static Dio_LevelType last_level = STD_HIGH;
+
+      /* Debouncing logic */
+      if (pin_level != last_level) {
+          debounce_counter++;
+          if (debounce_counter >= (DEBOUNCE_TIME_MS / 10)) {
+              /* State changed for long enough */
+              current_state = (pin_level == STD_LOW) ? DOOR_OPEN : DOOR_CLOSED;
+              last_level = pin_level;
+              debounce_counter = 0;
+          }
+      } else {
+          debounce_counter = 0;
+      }
+
+      return current_state;
+  }
+
+  /* Called every 10ms by OS task */
+  void DoorSwitch_MainFunction(void) {
+      DoorState_t state = DoorSwitch_ReadState();
+
+      if (state == DOOR_OPEN) {
+          /* Publish event to network */
+          SendDoorOpenEvent();
+      }
+  }
+  ```
+
+  **Analog Input Example (Temperature Sensor)**
+
+  ```c
+  /* temperature_sensor.c - Read NTC thermistor via ADC */
+  #include "Adc.h"  /* AUTOSAR ADC Driver */
+  #include <math.h>
+
+  #define TEMP_ADC_CHANNEL    ADC_CHANNEL_5
+  #define ADC_RESOLUTION      4096  /* 12-bit ADC */
+  #define VREF_MV             3300  /* 3.3V reference */
+
+  /* NTC thermistor parameters (e.g., Vishay NTCLE100E3) */
+  #define R_REF_OHM           10000  /* Pull-up resistor */
+  #define B_COEFFICIENT       3977   /* Beta coefficient */
+  #define T0_KELVIN           298.15 /* 25°C in Kelvin */
+
+  float TemperatureSensor_ReadCelsius(void) {
+      /* Start ADC conversion */
+      Adc_StartGroupConversion(ADC_GROUP_0);
+
+      /* Wait for conversion complete */
+      while (Adc_GetGroupStatus(ADC_GROUP_0) != ADC_COMPLETED);
+
+      /* Read ADC value */
+      Adc_ValueGroupType adc_value;
+      Adc_ReadGroup(ADC_GROUP_0, &adc_value);
+
+      /* Convert ADC value to voltage */
+      float v_adc = (float)adc_value * VREF_MV / ADC_RESOLUTION;
+
+      /* Calculate NTC resistance using voltage divider formula */
+      float r_ntc = R_REF_OHM * v_adc / (VREF_MV - v_adc);
+
+      /* Steinhart-Hart equation (simplified Beta formula) */
+      float temp_kelvin = 1.0f / (
+          (1.0f / T0_KELVIN) + (1.0f / B_COEFFICIENT) * logf(r_ntc / 10000.0f)
+      );
+
+      return temp_kelvin - 273.15f;  /* Convert to Celsius */
+  }
+
+  void TemperatureSensor_MainFunction(void) {
+      float temp_c = TemperatureSensor_ReadCelsius();
+
+      /* Publish to network every 1 second */
+      static uint32_t publish_counter = 0;
+      if (++publish_counter >= 100) {  /* 10ms task * 100 = 1s */
+          SendTemperatureEvent(temp_c);
+          publish_counter = 0;
+      }
+  }
+  ```
+
+  **PWM Output Example (LED Dimming)**
+
+  ```c
+  /* led_control.c - PWM-based LED brightness control */
+  #include "Pwm.h"  /* AUTOSAR PWM Driver */
+
+  #define LED_PWM_CHANNEL     PWM_CHANNEL_3
+  #define PWM_FREQUENCY_HZ    1000  /* 1 kHz */
+  #define PWM_PERIOD_TICKS    16000 /* Assuming 16 MHz clock */
+
+  void LED_Init(void) {
+      /* Initialize PWM channel */
+      Pwm_Init(&Pwm_Config);
+      Pwm_SetPeriodAndDuty(LED_PWM_CHANNEL, PWM_PERIOD_TICKS, 0);
+  }
+
+  void LED_SetBrightness(uint8_t percent) {
+      /* Clamp to 0-100% */
+      if (percent > 100) percent = 100;
+
+      /* Calculate duty cycle (0-100% of period) */
+      uint16_t duty_ticks = (uint32_t)PWM_PERIOD_TICKS * percent / 100;
+
+      /* Set PWM duty cycle */
+      Pwm_SetDutyCycle(LED_PWM_CHANNEL, duty_ticks);
+  }
+
+  void LED_FadeIn(uint16_t duration_ms) {
+      for (uint8_t brightness = 0; brightness <= 100; brightness += 5) {
+          LED_SetBrightness(brightness);
+          Os_DelayMs(duration_ms / 20);  /* 20 steps */
+      }
+  }
+  ```
+
+  ### Sensor Aggregation
+
+  **Multi-sensor Data Fusion (Wheel Speed Sensors)**
+
+  ```c
+  /* wheel_speed_aggregator.c - Aggregate 4 wheel speed sensors */
+  #include "Can.h"
+  #include "EthIf.h"
+
+  typedef struct {
+      uint16_t speed_rpm;      /* Wheel speed in RPM */
+      uint8_t validity;        /* 0=invalid, 1=valid, 2=degraded */
+      uint64_t timestamp_us;   /* Timestamp in microseconds */
+  } WheelSpeed_t;
+
+  static WheelSpeed_t wheel_speeds[4] = {0};  /* FL, FR, RL, RR */
+
+  /* Called when CAN message received from wheel speed sensor */
+  void WheelSpeed_OnCanMessage(uint8_t wheel_id, Can_MessageType* msg) {
+      if (wheel_id >= 4) return;
+
+      /* Parse CAN message (example format) */
+      wheel_speeds[wheel_id].speed_rpm = (msg->data[0] << 8) | msg->data[1];
+      wheel_speeds[wheel_id].validity = msg->data[2];
+      wheel_speeds[wheel_id].timestamp_us = GetCurrentTimestampUs();
+  }
+
+  /* Aggregate and publish to Ethernet every 20ms */
+  void WheelSpeed_MainFunction(void) {
+      static uint32_t publish_counter = 0;
+
+      if (++publish_counter >= 2) {  /* 10ms task * 2 = 20ms */
+          /* Calculate vehicle speed (average of all 4 wheels) */
+          uint32_t sum_rpm = 0;
+          uint8_t valid_count = 0;
+
+          for (uint8_t i = 0; i < 4; i++) {
+              if (wheel_speeds[i].validity == 1) {
+                  sum_rpm += wheel_speeds[i].speed_rpm;
+                  valid_count++;
+              }
+          }
+
+          if (valid_count >= 3) {  /* At least 3 valid sensors */
+              uint16_t avg_rpm = sum_rpm / valid_count;
+              float vehicle_speed_kmh = avg_rpm * WHEEL_CIRCUMFERENCE_M * 60.0f / 1000.0f;
+
+              /* Publish to Ethernet (SOME/IP event) */
+              PublishVehicleSpeedEvent(vehicle_speed_kmh, valid_count);
+          } else {
+              /* Publish invalid status */
+              PublishVehicleSpeedEvent(0.0f, 0);
+          }
+
+          publish_counter = 0;
+      }
+  }
+  ```
+
+  ### Actuator Control with Safety
+
+  **Motor Control (Window Lift)**
+
+  ```c
+  /* window_motor_control.c - Window motor with anti-pinch safety */
+  #include "Pwm.h"
+  #include "Adc.h"
+  #include "Dio.h"
+
+  #define MOTOR_PWM_CHANNEL       PWM_CHANNEL_5
+  #define MOTOR_DIR_PIN           DIO_CHANNEL_10
+  #define MOTOR_CURRENT_ADC       ADC_CHANNEL_8
+
+  #define MAX_CURRENT_MA          5000  /* 5A max */
+  #define ANTIPINCH_THRESHOLD_MA  3000  /* 3A triggers anti-pinch */
+
+  typedef enum {
+      MOTOR_STOP = 0,
+      MOTOR_UP = 1,
+      MOTOR_DOWN = 2
+  } MotorDirection_t;
+
+  static MotorDirection_t current_direction = MOTOR_STOP;
+
+  void WindowMotor_Init(void) {
+      Pwm_Init(&Pwm_Config);
+      Dio_SetPinMode(MOTOR_DIR_PIN, DIO_MODE_OUTPUT);
+  }
+
+  void WindowMotor_Move(MotorDirection_t direction, uint8_t speed_percent) {
+      current_direction = direction;
+
+      /* Set direction pin */
+      if (direction == MOTOR_UP) {
+          Dio_WriteChannel(MOTOR_DIR_PIN, STD_HIGH);
+      } else if (direction == MOTOR_DOWN) {
+          Dio_WriteChannel(MOTOR_DIR_PIN, STD_LOW);
+      }
+
+      /* Set PWM speed */
+      if (direction == MOTOR_STOP) {
+          Pwm_SetDutyCycle(MOTOR_PWM_CHANNEL, 0);
+      } else {
+          uint16_t duty = (uint32_t)PWM_PERIOD_TICKS * speed_percent / 100;
+          Pwm_SetDutyCycle(MOTOR_PWM_CHANNEL, duty);
+      }
+  }
+
+  void WindowMotor_SafetyCheck(void) {
+      /* Read motor current via ADC */
+      Adc_StartGroupConversion(ADC_GROUP_1);
+      while (Adc_GetGroupStatus(ADC_GROUP_1) != ADC_COMPLETED);
+
+      Adc_ValueGroupType adc_value;
+      Adc_ReadGroup(ADC_GROUP_1, &adc_value);
+
+      /* Convert ADC to current (example: 1mV = 1mA via shunt resistor) */
+      uint16_t current_ma = adc_value * VREF_MV / ADC_RESOLUTION;
+
+      /* Anti-pinch detection */
+      if (current_ma > ANTIPINCH_THRESHOLD_MA && current_direction == MOTOR_UP) {
+          /* Stop motor immediately */
+          WindowMotor_Move(MOTOR_STOP, 0);
+
+          /* Reverse slightly to release pinch */
+          WindowMotor_Move(MOTOR_DOWN, 50);
+          Os_DelayMs(500);
+          WindowMotor_Move(MOTOR_STOP, 0);
+
+          /* Report safety event */
+          ReportAntiPinchEvent();
+      }
+
+      /* Overcurrent protection */
+      if (current_ma > MAX_CURRENT_MA) {
+          WindowMotor_Move(MOTOR_STOP, 0);
+          ReportOvercurrentFault(current_ma);
+      }
+  }
+  ```
+
+  ### Gateway Function (CAN to Ethernet)
+
+  ```c
+  /* can_eth_gateway.c - Route CAN messages to Ethernet (SOME/IP) */
+  #include "CanIf.h"
+  #include "EthIf.h"
+  #include "SomeIp.h"
+
+  /* CAN message ID mapping to SOME/IP events */
+  typedef struct {
+      uint32_t can_id;
+      uint16_t someip_service_id;
+      uint16_t someip_event_id;
+  } CanToSomeIpMapping_t;
+
+  static const CanToSomeIpMapping_t routing_table[] = {
+      {0x100, 0x1234, 0x8001},  /* VehicleSpeed CAN → SOME/IP */
+      {0x200, 0x1235, 0x8002},  /* BrakeStatus CAN → SOME/IP */
+      {0x300, 0x1236, 0x8003},  /* DoorStatus CAN → SOME/IP */
+      /* ... more mappings */
+  };
+
+  void Gateway_OnCanRx(Can_IdType can_id, const uint8_t* data, uint8_t dlc) {
+      /* Find matching routing entry */
+      for (uint8_t i = 0; i < ARRAY_SIZE(routing_table); i++) {
+          if (routing_table[i].can_id == can_id) {
+              /* Convert CAN payload to SOME/IP format */
+              uint8_t someip_payload[128];
+              uint16_t payload_len = ConvertCanToSomeIp(data, dlc, someip_payload);
+
+              /* Publish SOME/IP event */
+              SomeIp_PublishEvent(
+                  routing_table[i].someip_service_id,
+                  routing_table[i].someip_event_id,
+                  someip_payload,
+                  payload_len
+              );
+
+              break;
+          }
+      }
+  }
+
+  /* Reverse direction: SOME/IP to CAN */
+  void Gateway_OnSomeIpRx(uint16_t service_id, uint16_t method_id, const uint8_t* data, uint16_t len) {
+      /* Example: Headlight control command from central compute */
+      if (service_id == 0x5000 && method_id == 0x0001) {
+          /* Parse SOME/IP payload */
+          uint8_t headlight_state = data[0];  /* 0=off, 1=on, 2=high beam */
+
+          /* Convert to CAN message */
+          Can_MessageType can_msg;
+          can_msg.id = 0x400;
+          can_msg.dlc = 1;
+          can_msg.data[0] = headlight_state;
+
+          /* Transmit on CAN bus */
+          CanIf_Transmit(CAN_CHANNEL_0, &can_msg);
+      }
+  }
+  ```
+
+  ### AUTOSAR Integration
+
+  **AUTOSAR Classic RTE Configuration**
+
+  ```xml
+  <!-- SWC (Software Component) for Door Zone Controller -->
+  <APPLICATION-SW-COMPONENT-TYPE>
+    <SHORT-NAME>DoorZoneController</SHORT-NAME>
+    <PORTS>
+      <!-- Input port: Door switch sensor -->
+      <R-PORT-PROTOTYPE>
+        <SHORT-NAME>DoorSwitch</SHORT-NAME>
+        <REQUIRED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">
+          /Interfaces/DoorSwitchInterface
+        </REQUIRED-INTERFACE-TREF>
+      </R-PORT-PROTOTYPE>
+
+      <!-- Output port: Door status to Ethernet -->
+      <P-PORT-PROTOTYPE>
+        <SHORT-NAME>DoorStatus</SHORT-NAME>
+        <PROVIDED-INTERFACE-TREF DEST="SENDER-RECEIVER-INTERFACE">
+          /Interfaces/DoorStatusInterface
+        </PROVIDED-INTERFACE-TREF>
+      </P-PORT-PROTOTYPE>
+    </PORTS>
+
+    <INTERNAL-BEHAVIORS>
+      <SWC-INTERNAL-BEHAVIOR>
+        <SHORT-NAME>DoorZoneControllerBehavior</SHORT-NAME>
+        <RUNNABLES>
+          <RUNNABLE-ENTITY>
+            <SHORT-NAME>DoorZone_MainFunction</SHORT-NAME>
+            <MINIMUM-START-INTERVAL>0.01</MINIMUM-START-INTERVAL> <!-- 10ms -->
+            <CAN-BE-INVOKED-CONCURRENTLY>false</CAN-BE-INVOKED-CONCURRENTLY>
+            <DATA-READ-ACCESSS>
+              <VARIABLE-ACCESS>
+                <SHORT-NAME>ReadDoorSwitch</SHORT-NAME>
+                <ACCESSED-VARIABLE>
+                  <AUTOSAR-VARIABLE-IREF>
+                    <PORT-PROTOTYPE-REF DEST="R-PORT-PROTOTYPE">/DoorZoneController/DoorSwitch</PORT-PROTOTYPE-REF>
+                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/Interfaces/DoorSwitchInterface/state</TARGET-DATA-PROTOTYPE-REF>
+                  </AUTOSAR-VARIABLE-IREF>
+                </ACCESSED-VARIABLE>
+              </VARIABLE-ACCESS>
+            </DATA-READ-ACCESSS>
+            <DATA-WRITE-ACCESSS>
+              <VARIABLE-ACCESS>
+                <SHORT-NAME>WriteDoorStatus</SHORT-NAME>
+                <ACCESSED-VARIABLE>
+                  <AUTOSAR-VARIABLE-IREF>
+                    <PORT-PROTOTYPE-REF DEST="P-PORT-PROTOTYPE">/DoorZoneController/DoorStatus</PORT-PROTOTYPE-REF>
+                    <TARGET-DATA-PROTOTYPE-REF DEST="VARIABLE-DATA-PROTOTYPE">/Interfaces/DoorStatusInterface/status</TARGET-DATA-PROTOTYPE-REF>
+                  </AUTOSAR-VARIABLE-IREF>
+                </ACCESSED-VARIABLE>
+              </VARIABLE-ACCESS>
+            </DATA-WRITE-ACCESSS>
+          </RUNNABLE-ENTITY>
+        </RUNNABLES>
+      </SWC-INTERNAL-BEHAVIOR>
+    </INTERNAL-BEHAVIORS>
+  </APPLICATION-SW-COMPONENT-TYPE>
+  ```
+
+  ### Build System (CMake for S32K344)
+
+  ```cmake
+  # CMakeLists.txt for Zone Controller Firmware
+  cmake_minimum_required(VERSION 3.20)
+  project(ZoneController C ASM)
+
+  set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/toolchain-s32k344.cmake")
+
+  # Target microcontroller
+  set(MCU S32K344)
+  set(MCU_FAMILY S32K3)
+
+  # AUTOSAR MCAL path
+  set(MCAL_ROOT "${CMAKE_SOURCE_DIR}/../mcal/S32K3")
+
+  # Include directories
+  include_directories(
+      ${CMAKE_SOURCE_DIR}/src
+      ${CMAKE_SOURCE_DIR}/inc
+      ${MCAL_ROOT}/include
+  )
+
+  # Source files
+  file(GLOB_RECURSE APP_SOURCES "src/*.c")
+  file(GLOB_RECURSE MCAL_SOURCES "${MCAL_ROOT}/src/*.c")
+
+  # Create executable
+  add_executable(${PROJECT_NAME}.elf
+      ${APP_SOURCES}
+      ${MCAL_SOURCES}
+      startup_S32K344.s
+  )
+
+  # Linker script
+  set_target_properties(${PROJECT_NAME}.elf PROPERTIES
+      LINK_FLAGS "-T ${CMAKE_SOURCE_DIR}/linker/S32K344_flash.ld -Wl,-Map=${PROJECT_NAME}.map"
+  )
+
+  # Generate binary and hex files
+  add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+      COMMAND ${CMAKE_OBJCOPY} -O binary ${PROJECT_NAME}.elf ${PROJECT_NAME}.bin
+      COMMAND ${CMAKE_OBJCOPY} -O ihex ${PROJECT_NAME}.elf ${PROJECT_NAME}.hex
+      COMMENT "Generating binary and hex files"
+  )
+
+  # Print memory usage
+  add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+      COMMAND ${CMAKE_SIZE} ${PROJECT_NAME}.elf
+      COMMENT "Firmware size:"
+  )
+  ```
+
+  ### Deliverables
+
+  When developing zone controller firmware, provide:
+  1. Hardware requirements specification (BOM)
+  2. Software architecture document (UML diagrams)
+  3. AUTOSAR configuration (ARXML files)
+  4. C source code with MISRA C compliance
+  5. Build scripts (CMake/Makefile)
+  6. Unit tests (GoogleTest or Unity)
+  7. Integration test plan (HIL/SIL)
+  8. Safety analysis (FMEA, FTA for ASIL-D)
+
+constraints:
+- MISRA C 2012 compliance (mandatory rules)
+- ISO 26262 ASIL-D for safety-critical functions
+- Real-time OS task scheduling < 10ms worst-case
+- Memory usage < 80% of Flash and RAM
+- CAN/LIN bus load < 60%
+- Ethernet latency < 5ms p99
+- Watchdog timeout < 100ms
+tools_required:
+- Compilers (GCC ARM, GreenHills MULTI, IAR Embedded Workbench)
+- AUTOSAR toolchain (Vector DaVinci, EB tresos)
+- Debuggers (Lauterbach TRACE32, SEGGER J-Link)
+- Static analysis (Polyspace, Klocwork, Coverity)
+- Unit test (GoogleTest, Unity, CppUTest)
+- HIL simulator (dSPACE, ETAS, Vector CANoe)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - NXP S32K344
+  - Renesas RH850/U2A
+  - Infineon AURIX TC397
+tags:
+- automotive
+- zone-controller
+- firmware
+- embedded
+- autosar
+- s32k3
+- rh850
+- aurix
+- gpio
+- adc
+- pwm
+- can
+- ethernet
+- gateway

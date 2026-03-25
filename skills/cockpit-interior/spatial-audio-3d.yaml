@@ -1,0 +1,161 @@
+name: spatial-audio-3d
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "3D soundscapes and zonal audio systems for automotive cabins, covering speaker array design, head-related transfer functions, individual sound zones, and immersive audio rendering."
+use_cases:
+  - "Designing immersive 3D audio systems with object-based sound rendering"
+  - "Implementing individual sound zones so each occupant hears different content"
+  - "Building head-tracked spatial audio that maintains sound positioning during head turns"
+  - "Creating virtual sound sources for navigation cues that appear to come from the road"
+  - "Integrating Dolby Atmos and Sony 360 Reality Audio for in-vehicle entertainment"
+automotive_standards:
+  - "ISO 15006 - Auditory presentation requirements for vehicles"
+  - "AES69 - Spatial audio object coding and rendering"
+  - "Dolby Atmos for Cars integration specifications"
+  - "MPEG-H 3D Audio standard for automotive implementation"
+  - "Harman HATS standard for in-vehicle audio measurement"
+instructions: |
+  # Spatial Audio 3D
+
+  ## Overview
+  Spatial audio transforms the vehicle cabin into an immersive listening environment
+  where sounds can be precisely positioned in three-dimensional space around each
+  occupant. Using dense speaker arrays, advanced signal processing, and head tracking,
+  the system renders music, navigation cues, alerts, and communication audio as discrete
+  objects placed at specific locations in the cabin soundfield. Individual sound zones
+  enable each seat position to hear independent audio content simultaneously.
+
+  ## Key Concepts
+
+  ### Speaker Array Architecture
+  High-channel-count speaker systems enable spatial rendering:
+  - Premium systems use 20 to 30 speakers distributed across pillars, doors, and roof
+  - Headrest speakers provide near-field channels for individual zone creation
+  - Subwoofers placed in trunk or under seats handle frequencies below 80 Hz
+  - Exciter-type transducers turn interior panels into large-area sound sources
+
+  ### Head-Related Transfer Functions
+  HRTFs model how sound reaches each ear based on source direction:
+  - Generic HRTFs provide reasonable spatial cues for most listeners
+  - Personalized HRTFs measured or estimated from ear photos improve accuracy
+  - In-cabin HRTFs must account for seat, headrest, and cabin surface reflections
+  - HRTF interpolation enables smooth transitions as virtual sources move
+
+  ### Sound Zone Separation
+  Creating independent audio experiences per seat position:
+  - Constructive and destructive interference patterns focus sound to target zones
+  - Crosstalk cancellation uses anti-phase signals to attenuate sound outside the zone
+  - Achievable separation of 10 to 20 dB between adjacent seat zones
+  - Headrest speakers improve high-frequency zone isolation above 2 kHz
+
+  ## Implementation Guide
+
+  ### Step 1 - Design Speaker Layout
+  Optimize speaker placement for the target vehicle architecture:
+  - Model the cabin acoustics using finite element analysis or boundary element methods
+  - Place tweeters at ear height in A-pillars and doors for horizontal spatial cues
+  - Mount height channels in the roof liner for vertical dimension rendering
+  - Include headrest speakers for each seat position to support zonal audio
+
+  ### Step 2 - Measure Cabin Acoustics
+  Characterize the acoustic environment for tuning:
+  - Place measurement microphones at each seat ear position per SAE J2806
+  - Capture impulse responses from every speaker to every microphone position
+  - Measure background noise spectra at various vehicle speeds
+  - Build a cabin acoustic model used for rendering filter computation
+
+  ### Step 3 - Implement the Spatial Renderer
+  Build the real-time audio processing engine:
+  - Use object-based rendering where each audio source has metadata for position
+  - Apply HRTF filtering and room compensation for each output channel
+  - Render at 48 kHz with latency below 20 ms for interactive content
+  - Support standard immersive formats including Dolby Atmos and MPEG-H
+
+  ### Step 4 - Create Sound Zones
+  Implement per-seat audio isolation:
+  - Compute crosstalk cancellation filters from the measured impulse responses
+  - Apply least-squares optimization to maximize zone contrast across frequency
+  - Update filters when seat positions change using seat track sensors
+  - Blend zones smoothly when occupants enter or leave the vehicle
+
+  ### Step 5 - Integrate with Vehicle Systems
+  Connect spatial audio to all cabin audio sources:
+  - Navigation audio rendered as a spatial object appearing ahead of the vehicle
+  - Phone calls positioned at the driver headrest for natural conversation feel
+  - Alert sounds rendered with spatial urgency cues indicating direction of hazard
+  - Entertainment content rendered in full immersive mode across all speakers
+
+  ## Best Practices
+
+  ### Tuning for the Cabin
+  - Optimize rendering filters for the nominal head position, not free-field conditions
+  - Account for seat material absorption which changes between leather and fabric trims
+  - Retune for each vehicle variant as cabin geometry affects acoustics significantly
+  - Provide user-adjustable spatial width and immersion settings
+
+  ### Sound Zone Quality
+  - Prioritize mid-frequency separation (300 Hz to 4 kHz) where speech intelligibility lies
+  - Accept reduced separation below 200 Hz where wavelengths exceed zone dimensions
+  - Use content-aware zone management that activates zones only when needed
+  - Measure zone contrast with a binaural head at each seat position
+
+  ### Latency and Synchronization
+  - Maintain audio-to-video sync within 40 ms for rear-seat entertainment
+  - Synchronize all amplifier channels to within 1 sample to prevent spatial comb filtering
+  - Use a centralized DSP with sufficient processing headroom for worst-case rendering
+  - Monitor DSP load and gracefully reduce spatial complexity if overloaded
+
+  ## Troubleshooting
+
+  ### Sound Appears to Come from Speakers Instead of Virtual Positions
+  Check HRTF filter application and verify the correct HRTF set is loaded. Inspect room
+  compensation filters for over-correction that collapses the spatial image. Confirm
+  speaker phase alignment across all channels.
+
+  ### Poor Zone Separation Between Driver and Passenger
+  Remeasure impulse responses if seat positions have changed. Verify crosstalk
+  cancellation filters are being applied to the correct speaker channels. Increase
+  headrest speaker contribution for high-frequency content.
+
+  ### Bass Feels Uneven Across Cabin
+  Map the low-frequency standing wave pattern with a measurement microphone sweep.
+  Adjust subwoofer phase and delay to smooth the response at each seat position. Consider
+  adding a second subwoofer location to break up modal patterns.
+
+  ### Spatial Audio Causes Listener Fatigue
+  Reduce the intensity of HRTF processing which can cause unnatural coloration. Check for
+  excessive high-frequency boost in the spatial rendering chain. Offer a relaxed mode
+  that widens the sweet spot at the expense of precise spatial accuracy.
+
+  ## Integration Patterns
+
+  ### Audio Source Management
+  Routing diverse audio sources through the spatial rendering engine:
+  - Assign spatial position metadata to every audio source in the vehicle
+  - Navigation prompts render from the direction of the upcoming maneuver
+  - Phone calls render from the driver headrest for natural conversation positioning
+  - Collision warnings render from the direction of the approaching hazard
+
+  ### Vehicle Speed Adaptation
+  Adjusting audio rendering based on driving conditions:
+  - Increase overall volume automatically to compensate for speed-dependent road noise
+  - Widen the spatial image at low speeds for immersive listening during city driving
+  - Narrow the front image at highway speeds to maintain dialog intelligibility
+  - Adjust equalization dynamically based on real-time noise floor measurement
+
+  ## Testing and Validation
+
+  ### Spatial Accuracy Assessment
+  Measure the precision of virtual source positioning:
+  - Use localization tests where listeners point toward perceived sound directions
+  - Measure angular error between intended and perceived source positions
+  - Test front-back confusion rate which is common in non-individualized HRTF rendering
+  - Validate vertical localization accuracy for height channels in the roof liner
+
+  ### Zone Isolation Measurement
+  Quantify the independence of individual sound zones:
+  - Play pink noise in the driver zone and measure SPL at each other seat position
+  - Report zone contrast in dB across octave bands from 125 Hz to 8 kHz
+  - Measure speech intelligibility (STI) within the target zone and in adjacent zones
+  - Test zone performance with all seats occupied versus empty cabin conditions

@@ -1,0 +1,554 @@
+name: sotif-validation-strategy
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: validation
+description: Comprehensive SOTIF validation approach combining simulation-based testing, field testing, and statistical acceptance criteria.
+use_cases:
+- SOTIF validation plan development
+- Mileage target calculation for statistical confidence
+- Hybrid validation strategy (simulation + field)
+- Coverage metric definition
+- Type approval demonstration
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-4 (System Validation)
+- UN ECE R157 (ALKS)
+- ISO 34502 Test Scenarios
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in developing comprehensive SOTIF validation strategies that combine simulation-based testing (billions of km), field testing (statistical significance), and coverage metrics to demonstrate acceptable residual risk.
+
+
+  ### Validation Challenges
+
+
+  **The Validation Gap**:
+
+  - Human driver: ~1 fatal crash per 100 million miles (US baseline)
+
+  - To prove 2x safer: Need to drive 200+ million miles with zero fatalities (impractical)
+
+  - Solution: Combine simulation (scale) + field testing (realism) + coverage metrics
+
+
+  **Key Questions**:
+
+  - How much testing is enough?
+
+  - How to balance simulation (cheap, scalable) vs field (expensive, realistic)?
+
+  - What coverage metrics ensure sufficient exploration?
+
+  - How to extrapolate from validation to real-world performance?
+
+
+  ### Validation Strategy Components
+
+
+  **1. Simulation-Based Testing** (Scale):
+
+  - Billions of km equivalent
+
+  - Systematic parameter variation (scenario catalog)
+
+  - Corner case discovery (adversarial generation)
+
+  - Regression testing for software updates
+
+
+  **2. Proving Ground Testing** (Control):
+
+  - Reproducible test scenarios
+
+  - Instrumented environment
+
+  - Safety drivers for critical scenarios
+
+  - Hardware-in-the-loop validation
+
+
+  **3. Public Road Testing** (Realism):
+
+  - Naturalistic driving conditions
+
+  - Geographic and temporal diversity
+
+  - Disengagement analysis
+
+  - Shadow mode testing (parallel execution)
+
+
+  **4. Coverage Metrics** (Completeness):
+
+  - Scenario coverage (catalog completeness)
+
+  - Parameter space coverage (distribution matching)
+
+  - ODD boundary testing (edge of operational domain)
+
+  - Triggering condition coverage
+
+
+  ## Statistical Mileage Calculation
+
+
+  ```python
+
+  import scipy.stats as stats
+
+  import numpy as np
+
+
+  class ValidationMileageCalculator:
+
+      """Calculate required validation mileage for SOTIF confidence"""
+
+
+      def __init__(self, target_crash_rate_per_million_km=0.1,
+
+                   confidence_level=0.99):
+
+          """
+
+          Parameters:
+
+          - target_crash_rate_per_million_km: Acceptable crash rate (e.g., 0.1 = 10x better than human)
+
+          - confidence_level: Statistical confidence (e.g., 0.99 for 99%)
+
+          """
+
+          self.target_rate = target_crash_rate_per_million_km
+
+          self.confidence = confidence_level
+
+
+
+      def calculate_mileage_zero_crash(self):
+
+          """
+
+          Calculate mileage required with zero crashes observed
+
+
+          Uses Poisson distribution: P(X=0 | λ) = exp(-λ) ≥ confidence
+
+          """
+
+          lambda_max = -np.log(1 - self.confidence)
+
+          required_mileage = lambda_max / self.target_rate
+
+          return required_mileage
+
+
+
+      def calculate_mileage_n_crashes(self, max_allowed_crashes):
+
+          """
+
+          Calculate mileage with N allowed crashes
+
+
+          Uses Poisson cumulative distribution
+
+          """
+
+          from scipy.optimize import fsolve
+
+
+          def equation(lambda_val):
+
+              return stats.poisson.cdf(max_allowed_crashes, lambda_val) - self.confidence
+
+
+          lambda_max = fsolve(equation, max_allowed_crashes + 2)[0]
+
+          required_mileage = lambda_max / self.target_rate
+
+          return required_mileage
+
+
+
+      def simulation_equivalence_factor(self, simulation_fidelity=0.8):
+
+          """
+
+          Adjust simulation mileage based on fidelity
+
+
+          Lower fidelity requires more simulation miles to equal real-world mile
+
+          """
+
+          equivalence = simulation_fidelity ** 2  # Non-linear degradation
+
+          return 1 / equivalence
+
+
+  # Example: Calculate mileage targets
+
+  calculator = ValidationMileageCalculator(target_crash_rate_per_million_km=0.1, confidence_level=0.99)
+
+
+  mileage_zero = calculator.calculate_mileage_zero_crash()
+
+  print(f"Required mileage (0 crashes): {mileage_zero:.1f} million km")
+
+
+  mileage_one = calculator.calculate_mileage_n_crashes(max_allowed_crashes=1)
+
+  print(f"Required mileage (1 crash allowed): {mileage_one:.1f} million km")
+
+
+  # Simulation equivalence
+
+  sim_factor = calculator.simulation_equivalence_factor(simulation_fidelity=0.7)
+
+  sim_mileage = mileage_zero * sim_factor
+
+  print(f"Equivalent simulation mileage (70% fidelity): {sim_mileage:.1f} million km")
+
+  ```
+
+
+  ## Hybrid Validation Approach
+
+
+  **Recommended Split**:
+
+  - Simulation: 95% of total mileage (e.g., 10 billion km)
+
+  - Field testing: 5% (e.g., 5 million km)
+
+
+  **Rationale**:
+
+  - Simulation provides scale for rare event coverage
+
+  - Field testing validates simulation assumptions and realism
+
+  - Hybrid approach balances cost and confidence
+
+
+  **Example Validation Plan** (L2 ADAS):
+
+
+  | Method | Mileage | Purpose | Duration |
+
+  |--------|---------|---------|----------|
+
+  | Simulation (CARLA) | 10 billion km | Parameter sweep, corner cases | 6 months |
+
+  | Proving ground | 100,000 km | Regression, controlled tests | 3 months |
+
+  | Public road | 5 million km | Naturalistic validation | 12 months |
+
+  | Shadow mode | 50 million km | Parallel execution, no control | Ongoing |
+
+
+  ## Coverage Metrics
+
+
+  **Scenario Coverage**:
+
+
+  ```python
+
+  class ScenarioCoverageAnalyzer:
+
+      """Analyze coverage of scenario catalog"""
+
+
+      def __init__(self, scenario_catalog):
+
+          """
+
+          Parameters:
+
+          - scenario_catalog: List of scenarios with parameters
+
+          """
+
+          self.catalog = scenario_catalog
+
+          self.executed_scenarios = []
+
+
+
+      def add_executed_scenario(self, scenario):
+
+          """Record scenario execution"""
+
+          self.executed_scenarios.append(scenario)
+
+
+
+      def calculate_coverage(self):
+
+          """
+
+          Calculate percentage of catalog scenarios executed
+
+          """
+
+          executed_ids = set(s[''id''] for s in self.executed_scenarios)
+
+          catalog_ids = set(s[''id''] for s in self.catalog)
+
+          coverage = len(executed_ids) / len(catalog_ids)
+
+          return coverage
+
+
+
+      def identify_gaps(self):
+
+          """
+
+          Identify untested scenarios
+
+          """
+
+          executed_ids = set(s[''id''] for s in self.executed_scenarios)
+
+          catalog_ids = set(s[''id''] for s in self.catalog)
+
+          untested = catalog_ids - executed_ids
+
+          return [s for s in self.catalog if s[''id''] in untested]
+
+
+
+      def calculate_parameter_coverage(self, parameter_name):
+
+          """
+
+          Analyze coverage of specific parameter range
+
+          """
+
+          executed_values = [s[''parameters''][parameter_name]
+
+                             for s in self.executed_scenarios
+
+                             if parameter_name in s[''parameters'']]
+
+
+          # Calculate histogram bins
+
+          hist, bins = np.histogram(executed_values, bins=10)
+
+
+          # Identify under-covered bins (< 5% of samples)
+
+          total_samples = len(executed_values)
+
+          under_covered_bins = [(bins[i], bins[i+1])
+
+                                for i, count in enumerate(hist)
+
+                                if count < 0.05 * total_samples]
+
+
+          return {
+
+              "total_samples": total_samples,
+
+              "histogram": hist,
+
+              "bins": bins,
+
+              "under_covered_bins": under_covered_bins
+
+          }
+
+
+  # Example usage
+
+  catalog = [
+
+      {''id'': ''SOTIF-001'', ''parameters'': {''ego_speed'': 100, ''distance'': 50}},
+
+      {''id'': ''SOTIF-002'', ''parameters'': {''ego_speed'': 80, ''distance'': 30}},
+
+      # ... 1000+ scenarios
+
+  ]
+
+
+  coverage_analyzer = ScenarioCoverageAnalyzer(catalog)
+
+
+  # Simulate test execution
+
+  for scenario in catalog[:800]:  # Executed 800 out of 1000
+
+      coverage_analyzer.add_executed_scenario(scenario)
+
+
+  coverage = coverage_analyzer.calculate_coverage()
+
+  print(f"Scenario coverage: {coverage*100:.1f}%")
+
+
+  gaps = coverage_analyzer.identify_gaps()
+
+  print(f"Untested scenarios: {len(gaps)}")
+
+  ```
+
+
+  **ODD Boundary Coverage**:
+
+  - Test at ODD limits (not just nominal center)
+
+  - Example: If ODD is 0-120 km/h, test at 0, 10, 110, 120 km/h
+
+  - Verify graceful transition at ODD exit
+
+
+  ## Deliverables
+
+
+  - SOTIF validation plan with mileage targets
+
+  - Scenario catalog with coverage requirements
+
+  - Hybrid validation approach (simulation + field split)
+
+  - Statistical acceptance criteria
+
+  - Coverage metrics dashboard (scenario, parameter, ODD boundary)
+
+  - Validation report with results and confidence analysis
+
+  - Traceability: Scenario → Test case → Execution → Result
+
+
+  ## Best Practices
+
+
+  - Define acceptance criteria before testing (avoid post-hoc rationalization)
+
+  - Use risk-based prioritization (test high-severity scenarios first)
+
+  - Combine multiple validation methods (simulation + proving ground + field)
+
+  - Monitor coverage metrics continuously (identify gaps early)
+
+  - Validate simulation fidelity with field testing correlation
+
+  - Update scenario catalog with field learnings
+
+  - Plan for continuous validation (ongoing monitoring post-deployment)
+
+  - Document all assumptions (simulation fidelity, statistical model)
+
+
+  ## Tools
+
+
+  - **Simulation**: CARLA, IPG CarMaker, VTD, SUMO
+
+  - **Scenario management**: OpenSCENARIO database, custom tools
+
+  - **Coverage analysis**: Python (matplotlib, seaborn), MATLAB
+
+  - **Statistical analysis**: SciPy, R, Bayesian frameworks
+
+  - **Field data management**: Cloud platforms (AWS, Azure)
+
+  - **Reporting**: Safety case tools (Medini Analyze, ASCE)
+
+
+  ## Regulatory Examples
+
+
+  **UN ECE R157 (ALKS L3)**:
+
+  - No specific mileage mandate
+
+  - Requires test scenarios covering ODD
+
+  - 60 km test track validation minimum
+
+  - Field monitoring post-deployment
+
+
+  **NHTSA AV Framework** (proposed):
+
+  - Performance-based metrics (crash rate targets)
+
+  - Simulation + field testing hybrid approach
+
+  - Statistical confidence requirements
+
+
+  **Waymo Safety Report** (industry example):
+
+  - 20+ million miles public road
+
+  - 15+ billion miles simulation
+
+  - Structured scenario-based testing
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Triggering Condition Identification** → Scenario catalog
+
+  2. **Known Unsafe Mitigation** → Verification tests
+
+  3. **Unknown Unsafe Exploration** → Simulation sweeps, field testing
+
+  4. **Validation Execution** → Scenario coverage, mileage accumulation
+
+  5. **Residual Risk Evaluation** → Statistical analysis of results
+
+
+  ## Common Pitfalls
+
+
+  - Insufficient mileage for statistical confidence
+
+  - Over-reliance on simulation (not validating realism)
+
+  - Testing only nominal conditions (missing ODD boundaries)
+
+  - Not tracking coverage metrics (gaps in validation)
+
+  - Post-hoc acceptance criteria (biased by results)
+
+  - Not updating catalog with field learnings
+
+  '
+constraints:
+- Real-world testing expensive and time-consuming
+- Simulation fidelity always limited
+- Statistical confidence requires large sample sizes
+- Rare events difficult to observe even with large mileage
+tools_required:
+- Simulation platforms (CARLA, VTD, IPG)
+- Field data collection and analytics
+- Statistical analysis tools (Python, R)
+- Coverage analysis frameworks
+- Scenario database management
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- validation-strategy
+- simulation-testing
+- field-testing
+- statistical-confidence
+- coverage-metrics
+- mileage-targets

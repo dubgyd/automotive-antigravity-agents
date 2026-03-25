@@ -1,0 +1,274 @@
+name: zero-defect-manufacturing
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: zero defect manufacturing
+description: Expert skill in implementing zero-defect manufacturing strategies for automotive production through inline quality inspection, statistical process control, machine learning anomaly detection, and closed-loop corrective action systems that prevent defective parts from reaching the next process.
+use_cases:
+- Inline vision inspection systems for weld quality, surface defects, and dimensional accuracy
+- Statistical process control (SPC) with real-time Cp/Cpk monitoring and alerting
+- Machine learning anomaly detection on process parameter data streams
+- Closed-loop quality control adjusting process parameters to prevent drift
+- Poka-yoke system design for error-proofing assembly operations
+- Digital quality twin tracking every measurement for full vehicle traceability
+- Predictive quality models correlating upstream parameters with downstream defects
+- Automated containment and escalation workflows for out-of-control processes
+automotive_standards:
+- IATF 16949 Quality Management System
+- VDA 6.3 Process Audit
+- ISO 9001 Quality Management
+- AIAG APQP (Advanced Product Quality Planning)
+- AIAG PPAP (Production Part Approval Process)
+- AIAG SPC Reference Manual
+- AIAG MSA (Measurement Systems Analysis)
+- ISO 22514 Statistical Process Control
+instructions: |
+
+  ## Overview
+
+  Zero-defect manufacturing (ZDM) targets the elimination of quality escapes in automotive
+  production through a multi-layered defense: prevention through robust process design,
+  detection through inline inspection, prediction through ML models, and containment through
+  automated response. The goal is not statistical perfection but systematic prevention of
+  defective vehicles reaching customers.
+
+  In automotive context, ZDM connects APQP planning, inline SPC monitoring, vision-based
+  inspection, and MES-driven containment into a continuous quality feedback loop operating
+  at production speed (typically 60-90 second takt time).
+
+
+  ## Key Concepts
+
+  ### Zero-Defect Strategy Layers
+
+  - **Layer 1 - Prevention**: Robust process design, DOE, PFMEA, poka-yoke
+  - **Layer 2 - Detection**: Inline measurement, vision inspection, sensor monitoring
+  - **Layer 3 - Prediction**: ML models forecasting quality from process parameters
+  - **Layer 4 - Containment**: Automated quarantine, rework routing, escalation
+
+  ### Key Quality Metrics
+
+  - **DPU (Defects Per Unit)**: Total defects found per vehicle
+  - **FTQ (First Time Quality)**: Vehicles passing all inspection without rework
+  - **Cp/Cpk**: Process capability indices (target: Cpk >= 1.67 for safety-critical)
+  - **PPM (Parts Per Million)**: Defect rate for individual characteristics
+  - **R@R (Runs at Rate)**: Quality performance during full-speed production validation
+  - **Warranty CPV (Cost Per Vehicle)**: Downstream quality metric from field returns
+
+  ### Measurement Systems
+
+  - **Contact**: CMM (Coordinate Measuring Machine), touch probes, gauging fixtures
+  - **Non-contact**: Laser scanning, structured light, machine vision, CT scanning
+  - **Inline**: Integrated in production line, 100% measurement at takt time
+  - **Offline**: Sample-based audit in quality lab, higher accuracy but statistical only
+
+
+  ## Implementation Guide
+
+  ### Step 1: Process FMEA to Inspection Plan
+
+  ```python
+  # Map PFMEA high-risk characteristics to inspection methods
+  class QualityPlanGenerator:
+      SEVERITY_THRESHOLD = 7
+      RPN_THRESHOLD = 100
+
+      def generate_control_plan(self, pfmea_items: list) -> list:
+          """Generate inspection points from PFMEA critical items."""
+          control_items = []
+          for item in pfmea_items:
+              rpn = item["severity"] * item["occurrence"] * item["detection"]
+              if item["severity"] >= self.SEVERITY_THRESHOLD or rpn >= self.RPN_THRESHOLD:
+                  control_items.append({
+                      "characteristic": item["characteristic"],
+                      "specification": item["spec_limits"],
+                      "method": self.select_inspection_method(item),
+                      "frequency": "100%" if item["severity"] >= 9 else "SPC_sample",
+                      "reaction_plan": self.define_reaction(item["severity"]),
+                  })
+          return control_items
+
+      def select_inspection_method(self, item: dict) -> str:
+          """Select appropriate measurement technology."""
+          if item["type"] == "dimensional" and item["tolerance_mm"] < 0.1:
+              return "inline_laser_scanner"
+          elif item["type"] == "surface":
+              return "machine_vision_camera"
+          elif item["type"] == "torque":
+              return "electronic_torque_tool_with_logging"
+          return "manual_gauge"
+  ```
+
+  ### Step 2: Statistical Process Control
+
+  ```python
+  # Real-time SPC engine
+  import numpy as np
+
+  class SPCMonitor:
+      def __init__(self, characteristic: str, usl: float, lsl: float, target: float):
+          self.characteristic = characteristic
+          self.usl = usl
+          self.lsl = lsl
+          self.target = target
+          self.data_buffer = []
+          self.subgroup_size = 5
+
+      def add_measurement(self, value: float) -> dict:
+          """Process new measurement and check control rules."""
+          self.data_buffer.append(value)
+          result = {"value": value, "in_spec": self.lsl <= value <= self.usl}
+          if len(self.data_buffer) >= self.subgroup_size * 25:
+              result["cpk"] = self.calculate_cpk()
+              result["control_chart_signals"] = self.check_western_electric_rules()
+          return result
+
+      def calculate_cpk(self) -> float:
+          """Calculate process capability index."""
+          data = np.array(self.data_buffer[-500:])
+          sigma = np.std(data, ddof=1)
+          mean = np.mean(data)
+          cpu = (self.usl - mean) / (3 * sigma)
+          cpl = (mean - self.lsl) / (3 * sigma)
+          return round(min(cpu, cpl), 3)
+
+      def check_western_electric_rules(self) -> list:
+          """Check Western Electric rules for out-of-control signals."""
+          signals = []
+          data = self.data_buffer[-25:]
+          mean = np.mean(self.data_buffer)
+          sigma = np.std(self.data_buffer, ddof=1)
+          # Rule 1: Single point beyond 3-sigma
+          if abs(data[-1] - mean) > 3 * sigma:
+              signals.append("rule1_beyond_3sigma")
+          # Rule 2: 7 consecutive points on same side of mean
+          last_7 = data[-7:]
+          if all(x > mean for x in last_7) or all(x < mean for x in last_7):
+              signals.append("rule2_run_of_7")
+          return signals
+  ```
+
+  ### Step 3: Machine Learning Quality Prediction
+
+  ```python
+  # Predictive quality model
+  class PredictiveQualityModel:
+      def __init__(self, process_parameters: list, quality_target: str):
+          self.features = process_parameters
+          self.target = quality_target
+          self.model = None
+
+      def train(self, historical_data):
+          """Train model on historical process parameter and quality data."""
+          # Features: welding current, force, time, material batch, temperature
+          # Target: weld strength (pass/fail or continuous)
+          from sklearn.ensemble import GradientBoostingClassifier
+          X = historical_data[self.features]
+          y = historical_data[self.target]
+          self.model = GradientBoostingClassifier(n_estimators=200, max_depth=5)
+          self.model.fit(X, y)
+
+      def predict_inline(self, process_params: dict) -> dict:
+          """Predict quality outcome from real-time process parameters."""
+          prediction = self.model.predict_proba([list(process_params.values())])[0]
+          return {
+              "pass_probability": prediction[1],
+              "alert": prediction[1] < 0.95,
+              "quarantine": prediction[1] < 0.80,
+          }
+  ```
+
+  ### Step 4: Closed-Loop Quality Control
+
+  ```
+  Process Flow with Quality Feedback:
+  ====================================
+  Process Parameters --> Inline Measurement --> SPC Analysis
+       ^                                           |
+       |                                           v
+  Parameter Adjustment <-- Control Algorithm <-- Quality Signal
+       |
+       v
+  MES Records (full traceability per VIN)
+  ```
+
+  ### Step 5: Poka-Yoke Design Patterns
+
+  - **Contact method**: Physical fixtures that only accept correctly oriented parts
+  - **Fixed-value method**: Counters ensuring correct number of fasteners installed
+  - **Motion-step method**: Sequence enforcement via pick-to-light or tool interlocks
+  - **Electronic torque tools**: Reject under/over-torque with digital logging
+  - **Vision verification**: Camera confirms correct part variant before assembly proceeds
+
+
+  ## Best Practices
+
+  - Design quality into the process (APQP Phase 2) rather than inspecting it in afterward
+  - Measure process capability (Cpk) before investing in 100% inline inspection
+  - Use MSA (Measurement System Analysis) to validate measurement systems (Gage R&R < 10%)
+  - Implement layered process audits (LPA) as human verification of automated systems
+  - Store all quality data with vehicle VIN for full warranty traceability
+  - Set SPC alert thresholds at 2-sigma trend, not 3-sigma violation (early warning)
+  - Train ML quality models on both normal and defective data (balanced dataset)
+  - Connect quality data across operations: upstream weld parameters predict downstream fit
+
+
+  ## Common Patterns
+
+  ### Quality Gate Architecture
+
+  ```
+  Body Shop        Paint Shop       Assembly         Final Test
+  ==========       ==========       =========        ==========
+  Gate 1:          Gate 2:          Gate 3:          Gate 4:
+  - Weld quality   - Film thickness - Torque data    - ADAS calibration
+  - Gap/flush      - Color match    - Fluid levels   - Wheel alignment
+  - Geometry scan  - Surface defect - Electrical      - Water leak test
+  - Spot count     - E-coat DFT     - Traceability   - Road simulation
+                                                      - Emissions
+  PASS = advance to next shop
+  FAIL = quarantine + rework loop
+  ```
+
+  ### Escalation Matrix
+
+  ```
+  Level 1: Auto-correct (closed-loop parameter adjustment)
+  Level 2: Operator alert (andon, process check required)
+  Level 3: Line stop (containment, quality engineer investigation)
+  Level 4: Management escalation (systemic issue, potential recall scope)
+  ```
+
+
+  ## Troubleshooting
+
+  - **High false positive rate in vision inspection**: Retrain with production-representative images
+  - **Cpk fluctuates between shifts**: Check for operator variation, tool wear, material batch
+  - **ML model drift over time**: Implement model monitoring, retrain quarterly with fresh data
+  - **SPC chart shows non-normal distribution**: Use appropriate control chart (p-chart, u-chart)
+  - **Poka-yoke bypassed by operators**: Investigate root cause (ergonomics, cycle time pressure)
+  - **Quality data gaps in MES**: Verify all measurement devices connected and logging correctly
+
+constraints:
+- Inline inspection must operate within production takt time
+- Measurement system accuracy limits detectable defect size
+- ML models require sufficient defect examples for training (rare event problem)
+- Quality data storage requirements are massive (terabytes per year per plant)
+tools_required:
+- Vision inspection systems (Cognex, Keyence, ISRA Vision)
+- SPC software (InfinityQS, QualityOne, Minitab)
+- CMM and laser scanners (Zeiss, Hexagon, GOM)
+- Electronic torque tools (Atlas Copco, Desoutter)
+- MES with quality module (Siemens Opcenter, MPDV)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- zero-defect
+- quality
+- spc
+- inspection
+- automotive

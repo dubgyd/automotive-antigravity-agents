@@ -1,0 +1,179 @@
+---
+name: predictive-aftermarket
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: parts-supply
+
+description: >
+  Expert skill in AI-based aftermarket parts demand forecasting that
+  leverages vehicle telematics, service history, fleet aging data, and
+  market signals to predict parts requirements, optimize inventory
+  levels, and reduce stockouts across the automotive parts supply chain.
+
+use_cases:
+  - "AI-driven parts demand forecasting for dealer inventory"
+  - "Predictive maintenance alerts triggering parts pre-positioning"
+  - "Seasonal and geographic demand pattern analysis"
+  - "Slow-moving and obsolete parts inventory optimization"
+  - "New model launch parts planning from warranty claim prediction"
+
+automotive_standards:
+  - "ISO 55000 (Asset management for parts inventory)"
+  - "IATF 16949 (Quality management in automotive supply chain)"
+  - "MMOG/LE (Materials management operations guideline)"
+  - "GS1 standards (Parts identification and traceability)"
+
+knowledge_areas:
+  - area: "Demand Forecasting"
+    topics:
+      - "Time series forecasting with ARIMA and Prophet"
+      - "Vehicle parc aging and failure rate modeling"
+      - "Seasonal decomposition for weather-dependent parts"
+  - area: "Inventory Optimization"
+    topics:
+      - "Safety stock calculation for critical parts"
+      - "ABC/XYZ classification for differentiated strategies"
+      - "Multi-echelon inventory optimization"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in predictive aftermarket analytics with deep
+  knowledge of:
+  - Statistical and ML-based demand forecasting for auto parts
+  - Vehicle parc analysis and component lifecycle modeling
+  - Multi-echelon inventory optimization algorithms
+  - Telematics data integration for predictive parts demand
+
+  ## Approach
+
+  When building a predictive aftermarket system:
+
+  1. **Analyze the Vehicle Parc**
+     - Map registered vehicles by model, year, and region
+     - Calculate age distribution and annual mileage profiles
+     - Correlate vehicle age with component failure probabilities
+     - Project parc evolution with new registrations and scrappage
+
+  2. **Build Demand Forecasting Models**
+     - Collect historical parts sales data at SKU and location level
+     - Engineer features from vehicle parc, weather, and economics
+     - Train ensemble models combining statistical and ML approaches
+     - Deploy models with automated retraining pipelines
+
+  3. **Integrate Telematics Signals**
+     - Map diagnostic trouble codes to likely parts requirements
+     - Estimate component remaining useful life from sensor data
+     - Generate proactive parts demand signals before failure
+     - Feed predictive maintenance alerts into demand forecast
+
+  4. **Optimize Inventory Across Network**
+     - Apply ABC/XYZ segmentation for differentiated stocking
+     - Calculate safety stock levels per SKU per location
+     - Implement lateral transfers between distribution points
+     - Monitor and reduce obsolete inventory exposure
+
+  ## Forecasting Pipeline
+
+  ```python
+  class AftermarketForecaster:
+      def __init__(self):
+          self.models = {
+              "arima": ARIMAModel(), "prophet": ProphetModel(),
+              "xgboost": XGBoostModel(), "lstm": LSTMModel()
+          }
+          self.weights = {
+              "arima": 0.2, "prophet": 0.2,
+              "xgboost": 0.35, "lstm": 0.25
+          }
+
+      def forecast(self, sku, location, horizon_months=3):
+          """Generate demand forecast for a part at a location."""
+          features = self.build_features(sku, location)
+          predictions = {
+              name: model.predict(features, horizon_months)
+              for name, model in self.models.items()
+          }
+          ensemble = sum(
+              pred * self.weights[name]
+              for name, pred in predictions.items()
+          )
+          return {"sku": sku, "forecast": ensemble.tolist()}
+  ```
+
+  ## Inventory Classification
+
+  ```
+  ABC (Value) x XYZ (Predictability) Matrix:
+  +---+------------+------------+------------+
+  |   | X (Steady) | Y (Trend)  | Z (Erratic)|
+  +---+------------+------------+------------+
+  | A | Auto-order | Responsive | Risk pool  |
+  | B | Standard   | Monitored  | Periodic   |
+  | C | Min stock  | On-demand  | Drop-ship  |
+  +---+------------+------------+------------+
+  ```
+
+  ## Key Metrics
+
+  - Forecast accuracy (MAPE below 15% at monthly SKU-location level)
+  - Parts fill rate (above 95% for A-class items)
+  - Inventory days of supply reduction versus baseline
+  - Customer wait time for out-of-stock parts
+
+  ## Deliverables
+
+  Provide:
+  - Vehicle parc analysis report with demand drivers
+  - Forecasting model architecture with feature engineering
+  - Inventory optimization rules and safety stock calculations
+  - Telematics integration specification for demand signals
+
+examples:
+  - prompt: "Build a demand forecasting system for brake components"
+    response: |
+      I will create an ensemble forecasting model combining vehicle
+      parc aging data, seasonal patterns, and brake wear telematics
+      signals to predict brake pad and rotor demand by region.
+
+constraints:
+  - "Forecast refresh cycle daily for fast-moving parts"
+  - "Must handle 100K+ SKUs across distribution centers"
+  - "Model retraining automated weekly with drift detection"
+
+tools_required:
+  - "Python with Prophet, XGBoost, and PyTorch"
+  - "Apache Airflow for pipeline orchestration"
+  - "Snowflake or BigQuery for data warehouse"
+
+related_skills:
+  - skill: "remote-diagnostics-retail"
+    relationship: "works-with"
+  - skill: "automated-logistics"
+    relationship: "complementary"
+  - skill: "b2b-parts-marketplace"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Forecast MAPE"
+    target: "< 15% at monthly SKU-location level"
+  - metric: "Parts fill rate"
+    target: "> 95% for A-class items"
+  - metric: "Forecast generation time"
+    target: "< 2 hours for full catalog refresh"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - predictive-analytics
+  - demand-forecasting
+  - inventory-optimization
+  - supply-chain

@@ -1,0 +1,269 @@
+name: waste-to-energy
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: energy-recovery
+description: Expert skill in waste-to-energy systems for automotive manufacturing plants, covering thermal recovery from paint sludge and non-recyclable waste, biogas generation from organic waste, and integration of waste-derived energy into plant energy management for reduced landfill and lower carbon intensity.
+use_cases:
+- Paint sludge thermal recovery through pyrolysis or co-processing in cement kilns
+- Non-recyclable production waste conversion to energy via gasification
+- Biogas generation from canteen and organic waste for on-site CHP plants
+- Waste heat recovery from RTO (regenerative thermal oxidizer) exhaust
+- Solvent recovery and energy recapture from paint shop VOC streams
+- Thermal depolymerization of mixed plastics waste into fuel oil
+- Integration of waste-derived energy into plant energy management systems
+- Zero-waste-to-landfill certification pathway and compliance
+automotive_standards:
+- ISO 14001 Environmental Management Systems
+- EU Waste Framework Directive 2008/98/EC
+- EU Industrial Emissions Directive 2010/75/EU
+- ISO 50001 Energy Management Systems
+- Zero Waste to Landfill Certification (UL ECVP 2799)
+- BAT Reference Documents (BREF) for Waste Treatment
+- IATF 16949 (Environmental Compliance)
+instructions: |
+
+  ## Overview
+
+  Automotive manufacturing plants generate 15-30 kg of non-recyclable waste per vehicle
+  produced, including paint sludge, contaminated absorbents, mixed plastics, and composite
+  materials that cannot be mechanically recycled. Waste-to-energy (WtE) systems convert
+  this residual waste into usable thermal or electrical energy, eliminating landfill
+  dependency while recovering embedded energy value.
+
+  This skill covers the full WtE technology spectrum from simple waste heat recovery through
+  advanced gasification and pyrolysis, helping plants achieve zero-waste-to-landfill status
+  while reducing overall energy cost and carbon footprint.
+
+
+  ## Key Concepts
+
+  ### Waste Hierarchy Applied to Automotive
+
+  ```
+  Priority 1: Prevention   (reduce paint overspray, lean material usage)
+  Priority 2: Reuse        (regrind plastics, recirculate solvents)
+  Priority 3: Recycling    (sort metals, recover chemicals)
+  Priority 4: Recovery     (waste-to-energy for non-recyclables) <-- THIS SKILL
+  Priority 5: Disposal     (landfill -- target: ZERO)
+  ```
+
+  ### Automotive Waste Streams for Energy Recovery
+
+  - **Paint sludge**: 3-8 kg/vehicle, 15-20 MJ/kg calorific value (wet basis)
+  - **RTO exhaust heat**: 200-350C, recoverable for building or process heating
+  - **Contaminated plastics**: 2-4 kg/vehicle, 25-35 MJ/kg calorific value
+  - **Used absorbents/rags**: 1-2 kg/vehicle, 18-22 MJ/kg
+  - **Organic/canteen waste**: 0.5-1 kg/employee/day, biogas potential 100 m3/ton
+  - **Solvent waste**: 0.5-1 kg/vehicle, 25-30 MJ/kg (prefer recovery over energy)
+
+  ### WtE Technology Comparison
+
+  ```
+  Technology        Feedstock              Output          Efficiency  Scale
+  ==============    ===================   ==============  =========   ======
+  Incineration      Mixed waste            Heat + power    25-35%      Large
+  Gasification      Dry waste, plastics    Syngas + heat   60-75%      Medium
+  Pyrolysis         Plastics, sludge       Oil + char      50-70%      Medium
+  Anaerobic digest  Organic waste          Biogas (CH4)    40-60%      Small
+  Cement co-process Paint sludge, mixed    Heat (kiln)     85-95%      N/A
+  RTO heat recovery VOC exhaust            Hot air/water   85-95%      In-plant
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: Waste Energy Potential Assessment
+
+  ```python
+  # Calculate energy recovery potential from plant waste streams
+  class WasteEnergyCalculator:
+      def __init__(self, annual_production: int, employee_count: int):
+          self.production = annual_production
+          self.employees = employee_count
+
+      def assess_streams(self, waste_data: list) -> dict:
+          """Calculate total energy recovery potential."""
+          total_energy_mwh = 0
+          streams = []
+          for waste in waste_data:
+              annual_tons = waste["kg_per_vehicle"] * self.production / 1000
+              energy_gj = annual_tons * waste["calorific_value_mj_per_kg"]
+              energy_mwh = energy_gj / 3.6
+              recovery_mwh = energy_mwh * waste["recovery_efficiency"]
+              streams.append({
+                  "stream": waste["name"],
+                  "annual_tons": round(annual_tons, 1),
+                  "energy_content_mwh": round(energy_mwh, 0),
+                  "recoverable_mwh": round(recovery_mwh, 0),
+                  "recommended_technology": waste["best_technology"],
+              })
+              total_energy_mwh += recovery_mwh
+          return {
+              "total_recoverable_mwh": round(total_energy_mwh, 0),
+              "pct_of_plant_consumption": round(total_energy_mwh / (self.production * 1.0) * 100, 1),
+              "streams": streams,
+          }
+  ```
+
+  ### Step 2: Paint Sludge Energy Recovery
+
+  ```yaml
+  paint_sludge_recovery:
+    option_a_cement_kiln:
+      description: "Co-process in cement kiln as alternative fuel"
+      advantages:
+        - highest_energy_recovery_efficiency_95pct
+        - mineral_residue_incorporated_into_clinker
+        - no_additional_capital_investment_at_plant
+      requirements:
+        - moisture_content_below_40pct
+        - transport_to_cement_plant_within_200km
+        - waste_characterization_per_BREF
+      cost: "negative (cement kiln pays for calorific value)"
+    option_b_pyrolysis:
+      description: "On-site pyrolysis to recover oil and energy"
+      advantages:
+        - on_site_processing_reduces_transport
+        - pyrolysis_oil_usable_as_heating_fuel
+        - char_residue_may_have_value
+      requirements:
+        - drying_to_below_20pct_moisture
+        - capital_investment_for_pyrolysis_unit
+        - emissions_permit_for_on_site_operation
+      cost: "$500K-2M capital, breakeven 3-5 years"
+  ```
+
+  ### Step 3: RTO Waste Heat Recovery System
+
+  ```python
+  # RTO heat recovery optimization
+  class RTOHeatRecovery:
+      def __init__(self, rto_exhaust_temp_c: float, rto_flow_m3h: float):
+          self.exhaust_temp = rto_exhaust_temp_c
+          self.flow_rate = rto_flow_m3h
+
+      def design_recovery_system(self, heat_sinks: list) -> dict:
+          """Design heat recovery network from RTO exhaust."""
+          available_heat_kw = self.calc_available_heat()
+          allocated = []
+          remaining_kw = available_heat_kw
+          for sink in sorted(heat_sinks, key=lambda s: s["temperature_c"], reverse=True):
+              if remaining_kw <= 0:
+                  break
+              recoverable = min(remaining_kw, sink["demand_kw"])
+              allocated.append({
+                  "sink": sink["name"],
+                  "recovered_kw": recoverable,
+                  "supply_temp_c": max(sink["temperature_c"] + 10, 60),
+              })
+              remaining_kw -= recoverable
+          return {
+              "available_heat_kw": round(available_heat_kw, 0),
+              "recovered_kw": round(available_heat_kw - remaining_kw, 0),
+              "recovery_pct": round((1 - remaining_kw / available_heat_kw) * 100, 1),
+              "allocations": allocated,
+              "annual_gas_savings_mwh": round((available_heat_kw - remaining_kw) * 8000 / 1000, 0),
+          }
+
+      def calc_available_heat(self) -> float:
+          """Calculate recoverable heat from RTO exhaust."""
+          air_density = 1.2  # kg/m3
+          cp = 1.005  # kJ/kg.K
+          delta_t = self.exhaust_temp - 80  # cool to 80C minimum
+          return air_density * (self.flow_rate / 3600) * cp * delta_t
+  ```
+
+  ### Step 4: Biogas from Organic Waste
+
+  ```
+  Anaerobic Digestion System:
+  ===========================
+  Canteen food waste (500 employees x 0.5 kg/day = 250 kg/day)
+       |
+  Pre-treatment (shredding, de-packaging)
+       |
+  Anaerobic digester (mesophilic, 37C, 21-day retention)
+       |
+  +----+----+
+  |         |
+  Biogas    Digestate
+  (60% CH4) (fertilizer)
+  |
+  CHP engine (35% elec, 50% heat)
+  |
+  +----+----+
+  |         |
+  50 kWe    70 kWth
+  (canteen  (hot water
+  electricity) heating)
+  ```
+
+
+  ## Best Practices
+
+  - Exhaust waste hierarchy options before resorting to energy recovery
+  - Characterize waste calorific value and contaminants before selecting WtE technology
+  - Prefer cement co-processing for paint sludge -- highest efficiency, lowest cost
+  - Install RTO heat recovery as first priority -- it is always cost-effective
+  - Size biogas systems conservatively -- organic waste volumes fluctuate seasonally
+  - Obtain emissions permits early -- air quality permits can take 6-12 months
+  - Monitor waste stream consistency -- varying composition affects WtE efficiency
+  - Track zero-waste-to-landfill metrics monthly with clear diversion rate targets
+
+
+  ## Common Patterns
+
+  ### Zero Waste to Landfill Pathway
+
+  ```
+  Current state:          Target state:
+  =============           =============
+  30% recycled     -->    65% recycled (improved sorting)
+  10% recovered    -->    30% recovered (WtE for residuals)
+  60% landfill     -->    5% landfill (hazardous only, if any)
+                          0% = certified zero-waste-to-landfill
+  ```
+
+  ### Energy Recovery Integration with Plant EMS
+
+  ```
+  Waste Heat (RTO)  -->  Building heating (winter) / Absorption chiller (summer)
+  Biogas CHP        -->  Baseload electricity + canteen hot water
+  Pyrolysis oil     -->  Emergency generator fuel / Boiler backup
+  All sources       -->  ISO 50001 Energy Management System dashboard
+  ```
+
+
+  ## Troubleshooting
+
+  - **Paint sludge too wet for pyrolysis**: Install belt dryer using RTO waste heat
+  - **Biogas production low**: Check pH, temperature, and C:N ratio in digester
+  - **Emissions from on-site WtE exceed permits**: Upgrade flue gas treatment, add scrubbers
+  - **Cement kiln rejects waste**: Ensure chlorine content < 1%, heavy metals within limits
+  - **RTO heat recovery fouling**: Install automated cleaning system, check filter upstream
+  - **Waste stream volume insufficient for economic WtE**: Aggregate waste from nearby plants
+
+constraints:
+- Environmental permits required for on-site thermal treatment
+- Waste composition variability affects WtE process stability
+- Capital investment for gasification/pyrolysis requires 3-7 year payback
+- Cement co-processing depends on proximity to cement plant
+tools_required:
+- Waste characterization labs (calorific value, composition, contaminants)
+- Energy management systems (Schneider EcoStruxure, Siemens Navigator)
+- Process simulation (Aspen Plus, CHEMCAD for WtE process design)
+- Emissions monitoring (CEMS for stack monitoring)
+- Waste tracking platforms (SAP EHS, Enablon)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- manufacturing
+- waste-to-energy
+- sustainability
+- zero-waste
+- energy-recovery
+- automotive

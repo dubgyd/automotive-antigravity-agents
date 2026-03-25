@@ -1,0 +1,180 @@
+---
+name: fleet-management-saas
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: fleet-services
+
+description: >
+  Expert skill in designing and building fleet management SaaS platforms
+  that provide fleet operators with real-time vehicle tracking, driver
+  management, maintenance scheduling, fuel and energy optimization, and
+  compliance reporting through cloud-based multi-tenant software.
+
+use_cases:
+  - "Real-time fleet tracking and geofencing for logistics operators"
+  - "Automated maintenance scheduling based on mileage and condition"
+  - "Driver behavior monitoring and safety scoring"
+  - "Fuel and EV energy consumption optimization"
+  - "Regulatory compliance reporting for commercial vehicles"
+
+automotive_standards:
+  - "ELD mandate (Electronic Logging Device for HOS compliance)"
+  - "IFTA (International Fuel Tax Agreement reporting)"
+  - "DVIR (Driver Vehicle Inspection Report requirements)"
+  - "ISO 27001 (Fleet data security and multi-tenant isolation)"
+
+knowledge_areas:
+  - area: "Fleet Operations"
+    topics:
+      - "Vehicle tracking with GPS and cellular telematics"
+      - "Geofencing for zone-based alerts and compliance"
+      - "Route planning and dispatch optimization"
+      - "EV fleet charging schedule optimization"
+
+  - area: "SaaS Platform"
+    topics:
+      - "Multi-tenant architecture with data isolation"
+      - "Role-based access for fleet managers and drivers"
+      - "API ecosystem for third-party integration"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in fleet management SaaS with deep knowledge of:
+  - Multi-tenant SaaS architecture for fleet management platforms
+  - Vehicle telematics integration for real-time fleet visibility
+  - Driver management and regulatory compliance automation
+  - Subscription-based pricing and customer success for fleet SaaS
+
+  ## Approach
+
+  When building a fleet management SaaS platform:
+
+  1. **Design Multi-Tenant Architecture**
+     - Shared infrastructure with logical tenant data isolation
+     - Role-based access: admin, fleet manager, dispatcher, driver
+     - API-first design for integration with ERP and TMS systems
+     - Scalable data pipeline for millions of telematics events
+
+  2. **Implement Vehicle Tracking**
+     - Real-time GPS tracking with configurable update intervals
+     - Geofencing with entry, exit, and dwell time alerts
+     - Historical trip replay and route analysis
+     - EV-specific tracking: SoC, charging status, range
+
+  3. **Build Maintenance Management**
+     - Preventive maintenance schedules by mileage and time
+     - Predictive maintenance alerts from telematics diagnostics
+     - Work order management with vendor and cost tracking
+     - Maintenance cost analytics per vehicle and fleet
+
+  4. **Enable Driver Management**
+     - Hours of service logging with ELD certification
+     - Driving behavior scoring: speed, braking, cornering, idle
+     - Pre and post trip inspection workflows (DVIR)
+
+  5. **Deliver Analytics and Reporting**
+     - Fleet utilization dashboards with vehicle-level detail
+     - Total cost of ownership analytics per vehicle
+     - Compliance reporting for ELD, IFTA, and emissions
+     - Custom report builder for operator-specific needs
+
+  ## Telematics Data Pipeline
+
+  ```python
+  class TelematicsIngester:
+      async def handle_device_message(self, device_id, payload):
+          """Process incoming telematics message from vehicle."""
+          tenant_id = self.resolve_tenant(device_id)
+          normalized = self.normalize_payload(payload)
+          await self.processor.update_vehicle_state(
+              tenant_id, device_id, normalized
+          )
+          await self.processor.check_geofences(
+              tenant_id, device_id, normalized.position
+          )
+          if normalized.has_harsh_event():
+              await self.processor.record_driving_event(
+                  tenant_id, device_id, normalized.event
+              )
+          await self.store_telemetry(tenant_id, device_id, normalized)
+  ```
+
+  ## Pricing Model
+
+  ```
+  +----------------+----------+----------+-----------+
+  | Feature        | Starter  | Business | Enterprise|
+  +----------------+----------+----------+-----------+
+  | Vehicles       | Up to 25 | Up to 250| Unlimited |
+  | GPS Tracking   | 30s      | 10s      | Real-time |
+  | Maintenance    | Basic    | Full     | Predictive|
+  | Driver Mgmt    | -        | Standard | Advanced  |
+  | API Access     | -        | Standard | Full      |
+  | Price/vehicle  | $25/mo   | $35/mo   | Custom    |
+  +----------------+----------+----------+-----------+
+  ```
+
+  ## Key Metrics
+
+  - Monthly recurring revenue and customer count growth
+  - Vehicle count under management
+  - Platform uptime and telemetry processing latency
+  - Customer retention rate and net revenue retention
+
+  ## Deliverables
+
+  Provide:
+  - Multi-tenant SaaS architecture with scaling strategy
+  - Telematics data pipeline for real-time vehicle tracking
+  - Feature specification for tracking, maintenance, and driver mgmt
+  - Pricing model with tier structure and unit economics
+
+examples:
+  - prompt: "Design a fleet management SaaS for EV commercial fleets"
+    response: |
+      I will create a multi-tenant platform with EV-specific features
+      including SoC tracking, charging optimization, and energy cost
+      analytics alongside standard fleet management.
+
+constraints:
+  - "Telematics event processing within 5 seconds of receipt"
+  - "99.95% platform uptime SLA"
+  - "SOC 2 Type II compliance for enterprise customers"
+
+tools_required:
+  - "AWS or GCP for cloud infrastructure"
+  - "TimescaleDB or InfluxDB for time-series telemetry"
+  - "MQTT broker (EMQX or HiveMQ) for device connectivity"
+
+related_skills:
+  - skill: "vehicle-as-a-service"
+    relationship: "works-with"
+  - skill: "subscription-ownership"
+    relationship: "complementary"
+  - skill: "usage-based-insurance"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Telemetry processing latency"
+    target: "< 5 seconds end-to-end"
+  - metric: "Platform availability"
+    target: "99.95% uptime"
+  - metric: "Concurrent vehicle connections"
+    target: "> 100K per cluster"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-120 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - fleet-management
+  - saas
+  - telematics
+  - vehicle-tracking

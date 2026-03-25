@@ -1,0 +1,149 @@
+AUTOMOTIVE SKILLS INVENTORY - NEW DOMAINS
+==========================================
+
+Generated: 2026-03-19
+Total Files: 65 (across 3 new domains)
+
+ADVANCED MATERIALS (25 files)
+==============================
+Location: skills/advanced-materials/
+
+Smart Materials & Actuators:
+  1. shape-memory-alloys.yaml
+  2. piezoelectric-materials.yaml
+  3. magneto-rheological-fluids.yaml
+  4. electroactive-polymers.yaml
+
+Advanced Structural Materials:
+  5. cfrp-composites.yaml
+  6. ahss-ultra-high-strength-steel.yaml
+  7. magnesium-alloys.yaml
+  8. aluminum-joining.yaml
+
+Functional Materials:
+  9. thermoelectric-materials.yaml
+ 10. graphene-applications.yaml
+ 11. aerogel-insulation.yaml
+ 12. self-healing-coatings.yaml
+ 13. metamaterials.yaml
+
+Sustainable & Bio-Materials:
+ 14. bio-based-plastics.yaml
+ 15. anti-microbial-surfaces.yaml
+ 16. nanomaterials-automotive.yaml
+
+Materials Engineering & Analysis:
+ 17. multi-material-design.yaml
+ 18. corrosion-engineering.yaml
+ 19. fatigue-analysis.yaml
+ 20. crashworthiness-materials.yaml
+
+Specialty Materials:
+ 21. thermal-interface-materials.yaml
+ 22. acoustic-materials.yaml
+ 23. glass-technology.yaml
+ 24. rubber-elastomers.yaml
+ 25. adhesive-technology.yaml
+
+
+OEM DECISION MAKING (20 files)
+===============================
+Location: skills/oem-decision-making/
+
+Strategic Planning & Portfolio:
+  1. strategic-planning.yaml
+  2. stage-gate-process.yaml
+  3. make-vs-buy-analysis.yaml
+  4. product-lifecycle-management.yaml
+
+Financial & Investment:
+  5. capex-opex-optimization.yaml
+  6. m-and-a-strategy.yaml
+  7. sales-operations-planning.yaml
+  8. warranty-aftersales.yaml
+
+Innovation & IP:
+  9. ip-management.yaml
+ 10. digital-transformation.yaml
+ 11. monetization-models.yaml
+
+Supply Chain & Operations:
+ 12. supply-chain-strategy.yaml
+ 13. talent-workforce.yaml
+ 14. competitive-benchmarking.yaml
+
+Market & Brand:
+ 15. brand-positioning.yaml
+ 16. regional-adaptation.yaml
+
+Governance & Compliance:
+ 17. esg-governance.yaml
+ 18. data-sovereignty.yaml
+ 19. cybersecurity-governance.yaml
+ 20. joint-venture-partnerships.yaml
+
+
+REGULATORY COMPLIANCE (20 files)
+=================================
+Location: skills/regulatory-compliance/
+
+Battery & EV Regulations:
+  1. eu-battery-regulation-compliance.yaml
+  2. battery-passport-compliance.yaml
+  3. epr-extended-producer.yaml
+  4. ev-safety-regulation.yaml
+
+Emissions & Environmental:
+  5. wltp-testing.yaml
+  6. euro-7-emissions.yaml
+  7. epa-cafe-standards.yaml
+  8. china-nev-policy.yaml
+  9. noise-regulation.yaml
+ 10. end-of-life-vehicles.yaml
+
+Type Approval & Homologation:
+ 11. homologation-process.yaml
+ 12. type-approval-workflow.yaml
+ 13. functional-safety-homologation.yaml
+
+Cybersecurity & Software:
+ 14. un-r155-compliance.yaml
+ 15. un-r156-compliance.yaml
+ 16. data-privacy-automotive.yaml
+
+ADAS & Autonomous:
+ 17. un-r157-alks.yaml
+ 18. adas-regulation.yaml
+ 19. autonomous-vehicle-regulation.yaml
+
+Material Compliance:
+ 20. rohs-reach-compliance.yaml
+
+
+FILE STATISTICS
+===============
+Total skill files: 65
+Average file size: ~100-150 lines
+Total content: ~6,500 lines
+
+Each file includes:
+- Metadata (name, version, category, domain)
+- 5 use cases
+- 4 automotive standards
+- Comprehensive instructions (80-150 lines)
+- 4 constraints
+- 5 tools/software requirements
+- Tags for searchability
+
+KEY STANDARDS COVERED
+=====================
+Materials: LV 124, ISO 16750, USCAR-2, ASTM
+Strategy: ISO 9001, IATF 16949, APQP, PPAP
+Regulatory: UNECE WP.29, EU Type Approval, FMVSS, GB Standards
+
+TOOLS & SOFTWARE
+================
+Materials: ANSYS, COMSOL, MATLAB, Python, MTS/Instron
+Strategy: Excel/Python, PowerBI, MS Project, SAP/Oracle
+Regulatory: WLTP dyno, CANalyzer, document management systems
+

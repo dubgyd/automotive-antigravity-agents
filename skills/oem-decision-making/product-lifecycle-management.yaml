@@ -1,0 +1,156 @@
+name: product-lifecycle-management
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: product_lifecycle_management
+description: PLM systems (Teamcenter, Windchill), BOM management, change management processes
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Product Lifecycle Management (PLM) in automotive encompasses the processes, systems, and governance
+  that manage a vehicle and its components from initial concept through design, manufacturing, service,
+  and end-of-life. As vehicles become software-defined, PLM must integrate hardware BOM management with
+  software configuration management, creating a "digital thread" that connects requirements to design
+  to production to field service. This skill covers PLM systems (Teamcenter, Windchill, 3DExperience),
+  BOM management strategies, engineering change management, variant/configuration management, and the
+  evolution toward integrated hardware-software lifecycle management.
+
+  ## Key Concepts
+
+  ### PLM System Landscape
+  - **Siemens Teamcenter**: Market leader in automotive PLM, strong in mBOM and manufacturing integration
+  - **PTC Windchill**: Strong in CAD-neutral environments, IoT integration via ThingWorx
+  - **Dassault 3DExperience**: Integrated PLM-CAD-CAM-CAE platform, cloud-native architecture
+  - **Aras Innovator**: Open-source PLM gaining traction for flexibility and lower TCO
+  - **ALM tools**: Jira, Polarion, codeBeamer for software requirements, change, and test management
+  - **Integration layer**: PLM-ALM-MES-ERP integration for complete digital thread
+
+  ### Bill of Materials (BOM) Types
+  - **Engineering BOM (eBOM)**: Design intent structure, functional decomposition, as-designed
+  - **Manufacturing BOM (mBOM)**: Production-oriented structure, assembly sequence, process routing
+  - **Service BOM (sBOM)**: Spare parts structure, replacement parts, service kits
+  - **Software BOM (SBOM)**: Software components, libraries, licenses, dependencies per ECU/domain
+  - **150% BOM**: Superset BOM containing all variants; specific vehicles are 100% subsets
+  - **As-built BOM**: Actual configuration of each produced vehicle including serial-traced parts
+
+  ### Engineering Change Management (ECM)
+  - **Engineering Change Request (ECR)**: Proposal for change with justification and impact assessment
+  - **Engineering Change Notice (ECN)**: Approved change with implementation instructions and effectivity
+  - **Effectivity management**: Date-based, serial-number-based, or order-based change cut-in
+  - **Change impact analysis**: Cost, timing, quality, tooling, supplier, regulatory impact
+  - **Emergency changes**: Fast-track process for safety, quality, or production-critical changes
+
+  ## Implementation Guide
+
+  ### Step 1: PLM Maturity Assessment
+  - Evaluate current PLM tool landscape, data quality, and process maturity across all engineering domains
+  - Map data flows between PLM, CAD, CAE, ALM, MES, ERP to identify gaps and redundancies
+  - Assess change management process: average cycle time, approval bottlenecks, implementation accuracy
+  - Benchmark PLM maturity against industry best practices and identify priority improvement areas
+
+  ### Step 2: Digital Thread Architecture
+  - Define target data model connecting requirements, design, simulation, test, production, and service
+  - Establish BOM transformation rules from eBOM to mBOM to sBOM with automated reconciliation
+  - Integrate software BOM (SBOM) management with hardware BOM for complete vehicle configuration
+  - Implement traceability from customer requirements through design to validation evidence
+
+  ### Step 3: Variant and Configuration Management
+  - Define product structure strategy: modular kit, platform-variant, or feature-based configuration
+  - Build 150% BOM master with configuration rules linking features to component variants
+  - Implement order-to-BOM resolution for as-planned configuration of each customer order
+  - Deploy as-built recording for complete traceability of each produced vehicle
+
+  ### Step 4: Process Optimization
+  - Streamline ECM process targeting 50% cycle time reduction through parallel approvals and automation
+  - Implement change impact simulation before approval to predict cost and timing consequences
+  - Deploy supplier collaboration portal for change communication and acknowledgment tracking
+  - Establish PLM-driven regulatory compliance tracking (homologation, REACH, EU Battery Passport)
+
+  ## Decision Frameworks
+
+  ### PLM System Selection Criteria
+  | Criterion | Weight | Teamcenter | Windchill | 3DExperience | Aras |
+  |-----------|--------|-----------|-----------|-------------|------|
+  | Automotive industry fit | 25% | Excellent | Good | Good | Growing |
+  | CAD integration | 20% | NX native | CAD neutral | CATIA native | CAD neutral |
+  | Cloud/SaaS maturity | 15% | Improving | Good | Cloud-native | Cloud-native |
+  | ALM integration | 15% | Polarion | Codebeamer | Reqtify | Flexible |
+  | Total cost of ownership | 15% | High | Medium | High | Lower |
+  | Customization flexibility | 10% | Moderate | Moderate | Moderate | High |
+
+  ### Change Classification and Routing
+  - **Class 1 (Critical)**: Safety, regulatory, or customer-critical -- full change board review required
+  - **Class 2 (Major)**: Significant cost, tooling, or process impact -- program-level approval
+  - **Class 3 (Minor)**: Documentation, cosmetic, or non-impacting changes -- engineering lead approval
+  - **Emergency**: Safety or production stop -- expedited 24-hour process with post-facto documentation
+
+  ### BOM Strategy for Platform Vehicles
+  - **Shared platform BOM**: Common underbody, chassis, and E/E architecture across multiple models
+  - **Brand-specific overlay BOM**: Upper body, interior, and feature differentiation per brand
+  - **Market variant BOM**: Regional adaptations for regulations, specifications, and configurations
+  - **Software variant BOM**: Software feature packages mapped to hardware capability tiers
+
+  ## Best Practices
+
+  - Maintain single source of truth for BOM data; avoid shadow systems in spreadsheets
+  - Implement automated BOM comparison between design revisions to catch unintended changes
+  - Track engineering change metrics: average cycle time, on-time implementation rate, change volume
+  - Require cost impact on every ECR before approval; no cost-blind engineering changes
+  - Integrate SBOM management into PLM early; retroactive software traceability is extremely difficult
+  - Establish data governance with clear ownership for each BOM domain (design, manufacturing, service)
+  - Implement digital approval workflows replacing paper-based sign-offs for change management
+  - Plan for EU Digital Product Passport requirements in PLM data architecture
+  - Use as-built data for warranty analytics, recall targeting, and predictive maintenance
+  - Train all engineers on PLM tools and processes; poor adoption undermines data quality
+
+  ## Examples
+
+  ### Example 1: PLM-ALM Integration for SDV
+  An OEM implements bidirectional integration between Teamcenter (hardware PLM) and Polarion (software
+  ALM) to create unified vehicle configuration. Each vehicle build has linked hardware BOM and software
+  manifest. OTA updates trigger SBOM version changes traceable back to requirements and test evidence.
+  Result: 60% reduction in field quality issues caused by hardware-software incompatibility.
+
+  ### Example 2: Engineering Change Cycle Time Reduction
+  An OEM's average ECN cycle time is 45 days. Root cause analysis: 60% of time spent in sequential
+  approvals. Solution: implement parallel review workflow, automated impact assessment using BOM analytics,
+  and digital signatures replacing wet-ink approvals. New average cycle time: 18 days. Emergency changes
+  reduced from 72 hours to 24 hours. Annual savings from faster change implementation: 8M EUR.
+
+  ### Example 3: 150% BOM for EV Platform
+  An OEM builds platform serving 4 brands and 6 models. 150% BOM contains 12,000 unique part numbers
+  with 3,200 configuration rules. Each customer order resolves to approximately 4,500 parts (100% BOM).
+  Configuration management system validates every order against manufacturing feasibility rules before
+  release to production. Error rate reduced from 2.3% invalid configurations to 0.1%.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- product-lifecycle-management
+- automotive
+- oem

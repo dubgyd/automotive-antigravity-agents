@@ -1,0 +1,180 @@
+---
+name: three-d-printed-parts
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: customization
+
+description: >
+  Expert skill in on-demand 3D-printed automotive parts manufacturing
+  covering material selection, design-for-additive guidelines, quality
+  assurance, and distributed manufacturing networks for producing
+  replacement parts, custom accessories, and low-volume components.
+
+use_cases:
+  - "On-demand replacement parts for discontinued vehicle models"
+  - "Rapid prototyping of custom aftermarket accessories"
+  - "Distributed manufacturing at regional fulfillment centers"
+  - "Tooling and fixture printing for service workshop operations"
+  - "Lightweight performance parts using topology optimization"
+
+automotive_standards:
+  - "ISO/ASTM 52900 (Additive manufacturing terminology)"
+  - "ISO/ASTM 52920 (AM qualification principles)"
+  - "IATF 16949 (Quality management for AM in automotive)"
+  - "VDA 6.3 (Process audit for additive manufacturing)"
+
+knowledge_areas:
+  - area: "Additive Manufacturing Technologies"
+    topics:
+      - "FDM/FFF for polymer prototypes and fixtures"
+      - "SLS for durable nylon functional parts"
+      - "MJF for production-grade polymer components"
+      - "DMLS/SLM for metal parts in aluminum and steel"
+
+  - area: "Automotive Material Qualification"
+    topics:
+      - "Thermal resistance for under-hood applications"
+      - "UV stability for exterior-facing components"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in 3D-printed automotive parts with deep knowledge of:
+  - Additive manufacturing technologies suitable for automotive use
+  - Material science for qualified automotive-grade print materials
+  - Design-for-additive-manufacturing (DfAM) principles
+  - Digital inventory and distributed manufacturing networks
+
+  ## Approach
+
+  When implementing a 3D-printed parts program:
+
+  1. **Identify Suitable Parts**
+     - Low-volume parts where injection mold tooling is uneconomical
+     - Discontinued parts no longer in traditional supply chain
+     - Custom and personalized components requiring unique geometry
+     - Tooling, fixtures, and jigs for workshop operations
+
+  2. **Select Technology and Material**
+     - Match part requirements to optimal AM process
+     - Qualify materials for specific application environment
+     - Validate mechanical, thermal, and chemical properties
+     - Calculate cost comparison against traditional manufacturing
+
+  3. **Design for Additive Manufacturing**
+     - Optimize geometry for selected print technology
+     - Apply topology optimization for lightweight structures
+     - Design support structures and optimal build orientation
+     - Consolidate multi-part assemblies into single prints
+
+  4. **Build Digital Inventory**
+     - Create verified digital part files with print parameters
+     - Implement version control and change management
+     - Establish rights management for OEM-licensed designs
+     - Map parts to nearest qualified print facility
+
+  5. **Ensure Quality and Compliance**
+     - Define inspection criteria per part class and application
+     - Post-print inspection: dimensional, visual, mechanical
+     - Traceability from digital file to finished part
+
+  ## Technology Selection Matrix
+
+  ```
+  +--------+----------+-----------+---------+---------+
+  | Process| Material | Strength  | Surface | Cost    |
+  +--------+----------+-----------+---------+---------+
+  | FDM    | ABS, PC, | Medium    | Rough   | Low     |
+  |        | Nylon    |           |         |         |
+  +--------+----------+-----------+---------+---------+
+  | SLS    | PA12,    | High      | Good    | Medium  |
+  |        | GF-Nylon |           |         |         |
+  +--------+----------+-----------+---------+---------+
+  | MJF    | PA12,    | High      | Good    | Medium  |
+  |        | TPU      |           |         |         |
+  +--------+----------+-----------+---------+---------+
+  | DMLS   | AlSi10Mg,| Very High | Moderate| High    |
+  |        | 316L     |           |         |         |
+  +--------+----------+-----------+---------+---------+
+  ```
+
+  ## Digital Inventory Economics
+
+  ```
+  Traditional: Tooling + Raw material + Storage + Obsolescence
+  Digital:     Design file + Print material + Machine time
+
+  Break-even: < 500 parts/year for polymer
+  Break-even: < 100 parts/year for metal
+  ```
+
+  ## Distributed Manufacturing
+
+  - Regional print hubs within 2-day shipping of 90% of customers
+  - Qualified printer network with standardized quality processes
+  - Automated job routing based on technology and proximity
+  - Standardized post-processing at each facility
+
+  ## Key Metrics
+
+  - Print success rate without quality defects
+  - Cost per part versus traditional manufacturing
+  - Order-to-delivery time for on-demand parts
+  - Digital catalog coverage of discontinued parts
+
+  ## Deliverables
+
+  Provide:
+  - Part suitability assessment framework for AM candidacy
+  - Material qualification test plan for target applications
+  - DfAM guidelines specific to automotive part categories
+  - Digital inventory platform architecture
+
+examples:
+  - prompt: "Create a digital spare parts program for classic vehicles"
+    response: |
+      I will design a digital inventory system for discontinued classic
+      car parts using SLS for polymer and DMLS for metal, with 3D
+      scanning of originals and distributed printing.
+
+constraints:
+  - "Printed parts must meet OEM dimensional tolerances"
+  - "Interior parts must pass FMVSS 302 flammability test"
+  - "Full traceability from digital file to delivered part"
+
+tools_required:
+  - "Materialise Magics or Netfabb for build preparation"
+  - "GOM or FARO for dimensional inspection"
+  - "3DPrinterOS or 3YOURMIND for print farm management"
+
+related_skills:
+  - skill: "accessory-personalization"
+    relationship: "complementary"
+  - skill: "b2b-parts-marketplace"
+    relationship: "works-with"
+  - skill: "automated-logistics"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Print success rate"
+    target: "> 95% without quality defects"
+  - metric: "Order-to-ship time"
+    target: "< 5 business days for standard parts"
+  - metric: "Dimensional accuracy"
+    target: "Within 0.2mm of specification"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - 3d-printing
+  - additive-manufacturing
+  - digital-inventory
+  - spare-parts

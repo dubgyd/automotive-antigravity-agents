@@ -1,0 +1,161 @@
+name: stage-gate-process
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: stage_gate_process
+description: Innovation funnel, TRL assessment, gate reviews, go/no-go decision criteria for new programs
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  The stage-gate process in automotive governs how new vehicle programs and technology developments
+  progress from initial concept to series production through structured decision points. Each gate
+  represents a go/no-go/recycle decision by executive leadership based on predefined criteria covering
+  technical maturity, financial viability, market validation, and organizational readiness. The process
+  aligns with APQP (Advanced Product Quality Planning) and ASPICE for software, ensuring disciplined
+  development that meets quality, cost, and timing targets. This skill covers innovation funnel design,
+  Technology Readiness Level (TRL) assessment, gate review criteria, portfolio management, and the
+  integration of agile software development within the stage-gate framework.
+
+  ## Key Concepts
+
+  ### Automotive Stage-Gate Phases (Typical OEM PDP)
+  - **Gate 0 - Strategy Alignment**: Idea screening, portfolio fit, preliminary business case
+  - **Gate 1 - Concept Approval**: Technical feasibility, market validation, target agreement (cost, timing)
+  - **Gate 2 - Program Approval**: Full business case, architecture freeze, budget commitment
+  - **Gate 3 - Design Freeze**: Engineering complete, prototype validation, supplier nominations locked
+  - **Gate 4 - Launch Readiness**: Manufacturing readiness, quality confirmation, sales preparation
+  - **Gate 5 - SOP (Start of Production)**: First saleable unit, ramp-up monitoring, market launch
+
+  ### Technology Readiness Level (TRL) Scale
+  - **TRL 1-3**: Basic research, concept formulation, proof of concept (pre-vehicle program)
+  - **TRL 4-5**: Component validation in lab, subsystem validation in relevant environment
+  - **TRL 6**: System prototype demonstration in vehicle-representative environment
+  - **TRL 7**: Prototype validation in actual vehicle under real-world conditions
+  - **TRL 8**: Technology qualified for series through complete testing and validation
+  - **TRL 9**: Technology proven through successful series production operation
+
+  ### APQP Integration
+  - **Phase 1 (Plan and Define)**: Aligns with Gates 0-1, voice of customer, preliminary targets
+  - **Phase 2 (Product Design)**: Aligns with Gate 2, DFMEA, design verification plan
+  - **Phase 3 (Process Design)**: Aligns with Gate 3, PFMEA, control plan, process flow
+  - **Phase 4 (Product/Process Validation)**: Aligns with Gate 4, PPAP, measurement system analysis
+  - **Phase 5 (Production)**: Aligns with Gate 5, SPC monitoring, continuous improvement
+
+  ## Implementation Guide
+
+  ### Step 1: Process Architecture Design
+  - Define number of gates, gate criteria, and deliverables appropriate for organization complexity
+  - Differentiate gate rigor by program type: full new vehicle vs. facelift vs. derivative vs. technology
+  - Integrate software development milestones (agile sprints, integration builds) with hardware gates
+  - Establish gate review board composition: which executives attend which gates
+
+  ### Step 2: Gate Criteria Definition
+  - Define mandatory and optional gate criteria for each gate with measurable pass/fail thresholds
+  - Create scorecards covering: technical maturity, cost status, timing status, quality, risk, market
+  - Establish red/yellow/green status system with clear definitions for each dimension
+  - Define conditional pass criteria: what open items can be accepted with risk mitigation plan
+
+  ### Step 3: Innovation Funnel Management
+  - Build technology pipeline with TRL tracking for pre-competitive innovations
+  - Establish innovation-to-program handoff criteria (minimum TRL 6 for series program inclusion)
+  - Create fast-track process for technology insertion into running programs (mid-cycle updates)
+  - Manage portfolio balance: short-term derivative programs vs. long-term transformational programs
+
+  ### Step 4: Continuous Process Improvement
+  - Conduct post-launch reviews comparing actual vs. planned performance at each gate
+  - Track gate discipline metrics: on-time gate completion, gate recycle rate, decision quality
+  - Benchmark stage-gate process against industry best practices and adapt to technology evolution
+  - Integrate lessons learned into gate criteria updates and process refinements
+
+  ## Decision Frameworks
+
+  ### Gate Decision Options
+  | Decision | Meaning | Action |
+  |----------|---------|--------|
+  | **Go** | All criteria met, proceed to next phase | Release budget and resources for next phase |
+  | **Conditional Go** | Minor gaps with mitigation plan | Proceed with defined action items and review date |
+  | **Recycle** | Significant gaps requiring rework | Return to current or previous phase, reset timeline |
+  | **Hold** | External factors require pause | Suspend program, preserve team, review in defined period |
+  | **Kill** | Business case no longer viable | Terminate program, reallocate resources, document learnings |
+
+  ### Gate Scoring Model (Example: Gate 2 - Program Approval)
+  - **Market attractiveness (20%)**: Volume potential, competitive positioning, margin forecast
+  - **Technical feasibility (20%)**: Architecture maturity, TRL of key technologies, risk assessment
+  - **Financial viability (25%)**: NPV, IRR, payback, investment-to-revenue ratio
+  - **Timing confidence (15%)**: Schedule risk, critical path analysis, resource availability
+  - **Strategic fit (10%)**: Portfolio balance, brand alignment, platform utilization
+  - **Risk profile (10%)**: Top-10 program risks with mitigation plans and residual risk assessment
+
+  ### Software-Hardware Gate Synchronization
+  - Hardware gates every 6-12 months aligned with physical prototype builds (A/B/C samples)
+  - Software integration builds every 2-4 weeks feeding continuous integration and testing
+  - Critical software milestones mapped to hardware gates: feature freeze, integration complete, release
+  - Software can advance ahead of hardware gates but must demonstrate compatibility at each gate
+
+  ## Best Practices
+
+  - Enforce gate discipline: never skip gates or pass without meeting mandatory criteria
+  - Empower gate reviewers to say "no" without career risk; killing weak programs preserves resources
+  - Require TRL 6+ for any technology entering a series vehicle program to avoid development risk
+  - Separate technology development (pre-competitive, TRL 1-6) from product development (TRL 6-9)
+  - Adapt gate rigor to program scope: full new vehicle needs all gates; derivative can skip or combine
+  - Include supplier readiness assessment at each gate to avoid late-stage supply chain surprises
+  - Track cumulative program cost against gate-approved budget with variance analysis at each gate
+  - Use gate reviews as learning opportunities, not blame sessions; psychological safety improves honesty
+  - Digitize gate deliverables and approvals for audit trail and ASPICE/IATF compliance evidence
+  - Review killed programs annually for potential revival if market or technology conditions change
+
+  ## Examples
+
+  ### Example 1: New BEV Platform Gate 2 Decision
+  At Gate 2 (Program Approval), the gate board reviews the BEV platform business case: 850K lifetime
+  volume across 4 derivatives, 5.2B EUR total investment, NPV of 1.8B EUR at base case, IRR of 16%.
+  Technical assessment: battery technology at TRL 7, new E/E architecture at TRL 5 (risk). Decision:
+  Conditional Go with mandate to achieve TRL 7 on E/E architecture within 6 months, otherwise fallback
+  to proven architecture with performance trade-off. Additional 50M EUR risk budget allocated.
+
+  ### Example 2: Technology Kill Decision at Gate 1
+  A solid-state battery technology program reaches Gate 1 after 3 years of development. TRL assessment:
+  still at TRL 4 (lab validation only), cycle life target missed by 60%, cost trajectory not reaching
+  parity with lithium-ion before 2032. Gate decision: Kill the series program but continue basic research
+  with reduced 5M EUR/year budget. Redirect 80M EUR program budget to advanced lithium-ion pack with
+  silicon-carbon anode achieving 85% of the energy density target at TRL 7.
+
+  ### Example 3: Agile-Gate Hybrid for ADAS Development
+  An ADAS program runs SAFe with 8-week Program Increments (PIs). PI boundaries align with hardware gate
+  milestones: PI-4 with Gate 2 (architecture freeze), PI-8 with Gate 3 (design freeze), PI-12 with
+  Gate 4 (launch readiness). Within PIs, Scrum teams run 2-week sprints with continuous integration.
+  At each gate, software maturity is assessed via test coverage, bug backlog, and feature completeness
+  metrics alongside traditional hardware gate criteria.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- stage-gate-process
+- automotive
+- oem

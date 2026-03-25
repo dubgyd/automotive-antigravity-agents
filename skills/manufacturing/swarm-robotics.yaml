@@ -1,0 +1,280 @@
+name: swarm-robotics
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: swarm robotics
+description: Expert skill in designing and deploying swarm robotics systems for automotive manufacturing, where fleets of autonomous mobile robots coordinate through decentralized algorithms to perform material transport, collaborative assembly, and adaptive logistics without centralized control.
+use_cases:
+- Decentralized fleet coordination for intralogistics material delivery
+- Swarm-based warehouse picking and kitting for just-in-sequence assembly
+- Multi-AGV cooperative heavy load transport for battery packs and body panels
+- Self-organizing production cells that reconfigure for model mix changes
+- Swarm inspection using multiple small robots for underbody and tank scanning
+- Ant-colony-optimized routing for factory material flow networks
+- Resilient logistics that self-heal when individual robots fail or charge
+- Collaborative mobile manipulation combining AGVs with cobot arms
+automotive_standards:
+- VDA 5050 AGV/AMR Communication Interface
+- ISO 3691-4 Driverless Industrial Trucks Safety
+- IEC 62443 Industrial Cybersecurity
+- ISO 10218-1/2 Robot Safety Requirements
+- ISO 13482 Personal Care Robot Safety
+- DIN EN 1525 Safety of Driverless Trucks
+- IATF 16949 (Material Handling and Traceability)
+instructions: |
+
+  ## Overview
+
+  Swarm robotics applies decentralized coordination principles from biological swarms (ants,
+  bees, fish schools) to fleets of autonomous robots in automotive factories. Unlike centralized
+  fleet management where a single server dispatches all robots, swarm systems use local
+  communication and simple behavioral rules to achieve emergent global coordination.
+
+  This approach provides inherent resilience -- no single point of failure -- and scalability,
+  as adding robots does not increase central computation load. For automotive manufacturing
+  with 50-200+ AGVs/AMRs operating simultaneously, swarm intelligence enables real-time
+  adaptive routing that centralized systems struggle to achieve.
+
+
+  ## Key Concepts
+
+  ### Swarm Intelligence Algorithms
+
+  - **Ant Colony Optimization (ACO)**: Pheromone-based path optimization for routing
+  - **Particle Swarm Optimization (PSO)**: Velocity-based search for task allocation
+  - **Bee Algorithm**: Waggle-dance-inspired resource allocation and task assignment
+  - **Reynolds Flocking**: Separation, alignment, cohesion for formation movement
+  - **Stigmergy**: Indirect communication through environment modification
+
+  ### Communication Architectures
+
+  - **Direct**: Robot-to-robot (WiFi mesh, UWB, IR)
+  - **Stigmergic**: Shared environment markers (virtual pheromones in digital map)
+  - **Broadcast**: All robots receive same message (beacons, shared topic)
+  - **Hybrid**: Local direct + cloud aggregation for global optimization
+
+  ### Fleet Composition for Automotive
+
+  - **Transport AGV (1-5 ton)**: Body-in-white, battery packs, engine/motor assemblies
+  - **Kitting AMR (100-500 kg)**: Parts delivery to assembly stations in sequence
+  - **Tugger trains**: Multiple carts pulled by lead AGV for bulk material
+  - **Micro-AGV (<50 kg)**: Small parts, fasteners, clips to point-of-use
+  - **Inspection drones**: Aerial or ground-based quality scanning swarms
+
+
+  ## Implementation Guide
+
+  ### Step 1: Swarm Behavior Design
+
+  ```python
+  # Ant Colony Optimization for factory routing
+  import numpy as np
+
+  class AntColonyRouter:
+      def __init__(self, factory_graph: dict, num_ants: int = 50):
+          self.graph = factory_graph
+          self.num_ants = num_ants
+          self.pheromone = {edge: 1.0 for edge in factory_graph["edges"]}
+          self.alpha = 1.0  # pheromone weight
+          self.beta = 2.0   # distance weight
+          self.evaporation = 0.1
+
+      def find_route(self, start: str, goal: str, iterations: int = 100) -> list:
+          """Find optimal route using ant colony optimization."""
+          best_route = None
+          best_cost = float("inf")
+          for _ in range(iterations):
+              routes = [self.ant_walk(start, goal) for _ in range(self.num_ants)]
+              for route, cost in routes:
+                  if cost < best_cost:
+                      best_route, best_cost = route, cost
+              self.update_pheromones(routes)
+          return best_route
+
+      def update_pheromones(self, routes: list):
+          """Evaporate and deposit pheromones based on route quality."""
+          for edge in self.pheromone:
+              self.pheromone[edge] *= (1 - self.evaporation)
+          for route, cost in routes:
+              deposit = 1.0 / cost
+              for edge in route:
+                  self.pheromone[edge] += deposit
+  ```
+
+  ### Step 2: Robot Behavior State Machine
+
+  ```python
+  # Individual robot behavior in swarm
+  from enum import Enum
+
+  class RobotState(Enum):
+      IDLE = "idle"
+      SEEKING_TASK = "seeking_task"
+      NAVIGATING = "navigating"
+      LOADING = "loading"
+      DELIVERING = "delivering"
+      CHARGING = "charging"
+      YIELDING = "yielding"
+
+  class SwarmRobot:
+      def __init__(self, robot_id: str, swarm_network):
+          self.id = robot_id
+          self.state = RobotState.IDLE
+          self.network = swarm_network
+          self.battery_pct = 100.0
+
+      def update(self):
+          """Main behavior loop -- runs at 10 Hz."""
+          if self.battery_pct < 15:
+              self.state = RobotState.CHARGING
+              self.navigate_to_nearest_charger()
+              return
+          if self.state == RobotState.IDLE:
+              task = self.bid_for_task()
+              if task:
+                  self.state = RobotState.NAVIGATING
+          elif self.state == RobotState.NAVIGATING:
+              self.follow_pheromone_trail()
+              self.avoid_neighbors(min_distance_m=1.5)
+              if self.reached_destination():
+                  self.state = RobotState.LOADING
+
+      def bid_for_task(self):
+          """Auction-based task allocation -- closest capable robot wins."""
+          available_tasks = self.network.get_open_tasks()
+          if not available_tasks:
+              return None
+          best_task = min(available_tasks, key=lambda t: self.distance_to(t["pickup"]))
+          return self.network.submit_bid(self.id, best_task, self.distance_to(best_task["pickup"]))
+  ```
+
+  ### Step 3: VDA 5050 Integration
+
+  ```yaml
+  # VDA 5050 compliant communication
+  vda5050_config:
+    mqtt_broker: mqtt://factory-broker:1883
+    topics:
+      order: /vda5050/v2/factory01/order
+      state: /vda5050/v2/factory01/state
+      visualization: /vda5050/v2/factory01/visualization
+      connection: /vda5050/v2/factory01/connection
+    fleet_master:
+      type: decentralized_with_supervisor
+      supervisor_role: conflict_resolution_only
+      robot_autonomy: route_planning_and_task_bidding
+  ```
+
+  ### Step 4: Collision Avoidance and Traffic Management
+
+  ```python
+  # Decentralized collision avoidance
+  class SwarmTrafficManager:
+      SAFETY_DISTANCE_M = 2.0
+      PRIORITY_RULES = {
+          "loaded": 3,      # loaded robots have highest priority
+          "navigating": 2,
+          "returning": 1,
+          "idle": 0,
+      }
+
+      def resolve_conflict(self, robot_a, robot_b) -> str:
+          """Decentralized priority-based conflict resolution."""
+          priority_a = self.PRIORITY_RULES.get(robot_a.state.value, 0)
+          priority_b = self.PRIORITY_RULES.get(robot_b.state.value, 0)
+          if priority_a != priority_b:
+              yielder = "b" if priority_a > priority_b else "a"
+          else:
+              # Tie-breaker: robot with lower ID yields (deterministic)
+              yielder = "b" if robot_a.id < robot_b.id else "a"
+          return yielder
+
+      def virtual_lane_system(self, factory_map):
+          """Create virtual one-way lanes to reduce conflicts."""
+          for corridor in factory_map.corridors:
+              if corridor.width_m >= 4.0:
+                  corridor.assign_bidirectional_lanes(lane_width_m=1.8)
+              else:
+                  corridor.assign_one_way(direction=corridor.primary_flow)
+  ```
+
+  ### Step 5: Fleet Health and Self-Healing
+
+  ```
+  Monitoring Architecture:
+  =======================
+  Each robot publishes: battery%, motor temp, task count, error codes
+       |
+  Neighbor robots detect: missing heartbeats, erratic movement
+       |
+  Swarm response: redistribute tasks, avoid failed robot zone
+       |
+  Supervisor alert: maintenance notification for physical recovery
+  ```
+
+
+  ## Best Practices
+
+  - Design for graceful degradation: system must work with 20% of fleet offline
+  - Use virtual pheromones with decay to prevent stale routing information
+  - Implement priority lanes for loaded vs empty robots to maximize throughput
+  - Battery charging must be swarm-managed: stagger charging to maintain fleet capacity
+  - Test swarm behaviors in simulation (Isaac Sim, Gazebo) before physical deployment
+  - Limit direct robot-to-robot communication range to prevent network flooding
+  - Log all task assignments and route decisions for post-hoc optimization
+  - Start with 5-10 robots, validate emergent behavior, then scale incrementally
+
+
+  ## Common Patterns
+
+  ### Material Delivery Swarm Cycle
+
+  1. MES publishes material request with station ID and urgency
+  2. Nearby idle robots calculate bid (distance + battery + queue position)
+  3. Winning robot navigates to warehouse pickup using ACO-optimized route
+  4. Robot loads material, updates virtual pheromone map with route timing
+  5. Robot delivers to station, operator confirms receipt
+  6. Robot evaluates: seek next task or navigate to charger based on battery
+
+  ### Swarm Scaling Strategy
+
+  ```
+  Phase 1 (Pilot):     5-10 robots, single zone, centralized supervisor
+  Phase 2 (Expansion): 20-50 robots, multi-zone, hybrid coordination
+  Phase 3 (Full):      100+ robots, factory-wide, fully decentralized
+  Phase 4 (Multi-site): Cross-factory coordination via cloud aggregation
+  ```
+
+
+  ## Troubleshooting
+
+  - **Deadlock between robots**: Implement timeout-based yielding with random backoff
+  - **Pheromone convergence to suboptimal routes**: Increase exploration rate (epsilon-greedy)
+  - **WiFi congestion with large fleets**: Use UWB for proximity, WiFi only for task data
+  - **Uneven task distribution**: Add load-balancing term to bidding function
+  - **Charging station queues**: Deploy mobile charging robots or increase station count
+  - **Emergent oscillation in corridors**: Add hysteresis to direction-change decisions
+
+constraints:
+- WiFi coverage and latency critical for real-time coordination
+- Floor surface quality affects navigation accuracy and wheel odometry
+- Mixed traffic (AGV + human + forklift) requires conservative safety margins
+- Swarm behavior testing requires large simulation before physical deployment
+tools_required:
+- AMR platforms (MiR, OTTO Motors, Locus Robotics, Fetch)
+- Fleet simulation (Isaac Sim, Gazebo, AnyLogic)
+- VDA 5050 middleware (SICK FleetConnect, NaviThor)
+- MQTT brokers (Mosquitto, HiveMQ)
+- Indoor positioning (UWB, LiDAR SLAM, QR code markers)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- swarm-robotics
+- agv
+- amr
+- fleet-coordination
+- automotive

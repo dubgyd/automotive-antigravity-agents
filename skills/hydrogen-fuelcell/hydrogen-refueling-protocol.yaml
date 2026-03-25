@@ -1,0 +1,628 @@
+name: hydrogen-refueling-protocol
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: refueling-systems
+description: Expert skill in SAE J2601 hydrogen refueling protocol, pre-cooling strategies, vehicle-station communication, and refueling station architecture.
+use_cases:
+- SAE J2601 refueling protocol implementation
+- Pre-cooling algorithm design (-40°C target)
+- IRDA/RFID vehicle-station communication
+- Average Precooling Ramp Rate (APRR) calculation
+- Refueling station architecture and dispenser control
+- Safety interlock and leak detection during refueling
+automotive_standards:
+- SAE J2601 (Fueling protocol for gaseous hydrogen)
+- SAE J2600 (Compressed hydrogen surface vehicle refueling connection)
+- ISO 19880-1 (Gaseous hydrogen fueling stations)
+- ISO 17268 (Hydrogen detection apparatus)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in SAE J2601 hydrogen refueling protocol, pre-cooling thermodynamics, vehicle-station communication (IRDA), and refueling station design. Deep understanding of APRR (Average Precooling Ramp Rate), pressure ramp limits, and safety interlocks.
+
+
+  ### SAE J2601 Refueling Protocol Overview
+
+
+  **Key objectives**:
+
+  - **Fast refueling**: 3-5 minutes for 5 kg H2 (comparable to gasoline)
+
+  - **Temperature control**: Keep tank temperature < 85°C during fill
+
+  - **Pressure accuracy**: Achieve target pressure (700 bar) ± 25 bar
+
+  - **Safety**: Prevent overpressure, overtemperature, and leaks
+
+
+  **Protocol types**:
+
+  - **Table-based (MC method)**: Lookup tables for pre-programmed fill profiles
+
+  - **Formula-based**: Real-time calculation using tank parameters (T1, T3, T4 series)
+
+  - **Adaptive**: Dynamic adjustment based on measured tank temperature
+
+
+  ### Pre-Cooling Thermodynamics
+
+
+  **Why pre-cooling?**
+
+  Hydrogen compression during refueling causes significant temperature rise:
+
+  - Joule-Thomson effect (minor): H2 cools slightly on expansion
+
+  - Compression heating (major): ΔT ≈ 50-80°C at 700 bar
+
+
+  **Solution**: Pre-cool hydrogen to -40°C at station before dispensing.
+
+
+  ```python
+
+  def calculate_tank_temp_rise(P_initial, P_final, T_H2_supply, T_ambient, fill_time):
+
+      """
+
+      Estimate tank temperature rise during refueling.
+
+
+
+      Args:
+
+          P_initial: Initial tank pressure [bar]
+
+          P_final: Final tank pressure [bar]
+
+          T_H2_supply: Supply H2 temperature [K] (e.g., 233 K = -40°C)
+
+          T_ambient: Ambient temperature [K]
+
+          fill_time: Refueling duration [s]
+
+
+
+      Returns:
+
+          Final tank temperature [K]
+
+      """
+
+      # Simplified adiabatic compression model
+
+      gamma = 1.41  # Heat capacity ratio for H2
+
+
+
+      # Temperature rise from compression
+
+      T_compress = T_ambient * (P_final / P_initial) ** ((gamma - 1) / gamma)
+
+
+
+      # Cooling from pre-cooled H2 inflow
+
+      m_H2_filled = 5.0  # kg (typical fill)
+
+      Cp_H2 = 14300  # J/(kg·K) at 700 bar
+
+      m_tank_system = 100  # kg (tank + liner + vehicle thermal mass)
+
+      Cp_tank = 900  # J/(kg·K) (composite + HDPE average)
+
+
+
+      # Energy balance (simplified)
+
+      Q_compress = m_tank_system * Cp_tank * (T_compress - T_ambient)
+
+      Q_cooling = m_H2_filled * Cp_H2 * (T_ambient - T_H2_supply)
+
+
+
+      # Net temperature rise
+
+      T_final = T_ambient + (Q_compress - Q_cooling) / (m_tank_system * Cp_tank)
+
+
+
+      return T_final
+
+  ```
+
+
+  ### Average Precooling Ramp Rate (APRR)
+
+
+  **APRR definition**: Average pressure increase rate during refueling [bar/min].
+
+
+  **SAE J2601 APRR categories**:
+
+  - **APRR 35**: 35 bar/min (slow fill, minimal pre-cooling, -20°C)
+
+  - **APRR 50**: 50 bar/min (moderate fill, -30°C)
+
+  - **APRR 75**: 75 bar/min (fast fill, -40°C)
+
+
+  ```c
+
+  typedef struct {
+
+      float APRR_target;         // bar/min (35, 50, or 75)
+
+      float P_initial;           // bar (current tank pressure)
+
+      float P_target;            // bar (typically 700 or 875)
+
+      float T_H2_precool;        // °C (pre-cooling temperature)
+
+      float mass_flow_rate;      // g/s
+
+  } RefuelingProfile_t;
+
+
+
+  void calculate_refueling_profile(RefuelingProfile_t *profile) {
+
+      // Calculate required fill time based on APRR
+
+      float delta_P = profile->P_target - profile->P_initial;  // bar
+
+      float fill_time_min = delta_P / profile->APRR_target;  // minutes
+
+
+
+      // Convert to seconds
+
+      float fill_time_s = fill_time_min * 60.0f;
+
+
+
+      // Determine mass flow rate
+
+      // Assume filling 5 kg H2
+
+      float m_H2_total = 5.0f;  // kg
+
+      profile->mass_flow_rate = (m_H2_total / fill_time_s) * 1000.0f;  // g/s
+
+
+
+      // Set pre-cooling temperature based on APRR
+
+      if (profile->APRR_target >= 75.0f) {
+
+          profile->T_H2_precool = -40.0f;  // °C
+
+      } else if (profile->APRR_target >= 50.0f) {
+
+          profile->T_H2_precool = -30.0f;
+
+      } else {
+
+          profile->T_H2_precool = -20.0f;
+
+      }
+
+  }
+
+  ```
+
+
+  ### Vehicle-Station Communication (IRDA)
+
+
+  **IRDA (Infrared Data Association) protocol**:
+
+  - **Purpose**: Exchange tank parameters (NWP, volume, initial P/T) with station
+
+  - **Transmit at connection**: Vehicle sends data when nozzle couples
+
+  - **Receive during fill**: Station sends current H2 temperature, pressure
+
+
+  **Data packet structure**:
+
+  ```c
+
+  typedef struct {
+
+      uint16_t tank_NWP;           // Nominal Working Pressure [bar × 10]
+
+      uint16_t tank_volume;        // Internal volume [liters × 10]
+
+      uint16_t tank_pressure_init; // Initial pressure [bar × 10]
+
+      int16_t tank_temp_init;      // Initial temperature [°C × 10]
+
+      uint8_t tank_count;          // Number of tanks (1-3)
+
+      uint8_t protocol_version;    // SAE J2601 version (e.g., 0x02)
+
+      uint16_t checksum;           // CRC-16 for error detection
+
+  } VehicleIRDAPacket_t;
+
+
+
+  void transmit_vehicle_params(VehicleIRDAPacket_t *packet) {
+
+      // Populate packet with current tank state
+
+      packet->tank_NWP = 7000;  // 700.0 bar
+
+      packet->tank_volume = 1200;  // 120.0 liters
+
+      packet->tank_pressure_init = measure_tank_pressure() * 10;
+
+      packet->tank_temp_init = measure_tank_temp() * 10;
+
+      packet->tank_count = 2;  // Dual-tank system
+
+      packet->protocol_version = 0x02;  // SAE J2601-2
+
+
+
+      // Calculate checksum
+
+      packet->checksum = calculate_crc16((uint8_t*)packet, sizeof(VehicleIRDAPacket_t) - 2);
+
+
+
+      // Transmit via IRDA transceiver
+
+      irda_send((uint8_t*)packet, sizeof(VehicleIRDAPacket_t));
+
+  }
+
+  ```
+
+
+  ### Refueling Station Architecture
+
+
+  **Station components**:
+
+  1. **Compressor**: Boosts H2 from tube trailer (200 bar) to 900 bar
+
+  2. **High-pressure storage**: 900 bar cascade storage (3-stage: low, medium, high)
+
+  3. **Pre-cooling system**: Heat exchanger + refrigeration unit (-40°C)
+
+  4. **Dispenser**: Nozzle, hose, breakaway coupling, flow meter, pressure/temp sensors
+
+  5. **Control system**: PLC for refueling protocol execution
+
+
+  **Cascade refueling**:
+
+  ```python
+
+  class CascadeRefueling:
+
+      def __init__(self):
+
+          # Three-stage cascade storage
+
+          self.P_low = 400   # bar
+
+          self.P_mid = 600   # bar
+
+          self.P_high = 900  # bar
+
+
+
+      def refuel_vehicle(self, P_vehicle_initial, P_vehicle_target):
+
+          """
+
+          Cascade refueling to minimize compressor energy.
+
+
+
+          Strategy:
+
+          1. Fill from low-pressure bank until equalization
+
+          2. Switch to mid-pressure bank
+
+          3. Switch to high-pressure bank
+
+          4. Top off with compressor (if needed)
+
+          """
+
+          stages = []
+
+
+
+          # Stage 1: Low-pressure bank
+
+          if P_vehicle_initial < self.P_low:
+
+              P_stage1_end = min(self.P_low, P_vehicle_target)
+
+              stages.append(("Low Bank", P_vehicle_initial, P_stage1_end))
+
+              P_vehicle_initial = P_stage1_end
+
+
+
+          # Stage 2: Mid-pressure bank
+
+          if P_vehicle_initial < self.P_mid:
+
+              P_stage2_end = min(self.P_mid, P_vehicle_target)
+
+              stages.append(("Mid Bank", P_vehicle_initial, P_stage2_end))
+
+              P_vehicle_initial = P_stage2_end
+
+
+
+          # Stage 3: High-pressure bank
+
+          if P_vehicle_initial < self.P_high:
+
+              P_stage3_end = min(self.P_high, P_vehicle_target)
+
+              stages.append(("High Bank", P_vehicle_initial, P_stage3_end))
+
+              P_vehicle_initial = P_stage3_end
+
+
+
+          # Stage 4: Compressor top-off (if target > high bank)
+
+          if P_vehicle_initial < P_vehicle_target:
+
+              stages.append(("Compressor", P_vehicle_initial, P_vehicle_target))
+
+
+
+          return stages
+
+  ```
+
+
+  ### Safety Interlocks
+
+
+  **Pre-refueling checks**:
+
+  ```c
+
+  typedef enum {
+
+      SAFETY_OK,
+
+      SAFETY_ERROR_SEAL_LEAK,
+
+      SAFETY_ERROR_OVERPRESSURE,
+
+      SAFETY_ERROR_OVERTEMP,
+
+      SAFETY_ERROR_COMMS_FAIL
+
+  } SafetyStatus_t;
+
+
+
+  SafetyStatus_t perform_safety_checks(float P_tank, float T_tank, bool seal_ok, bool irda_ok) {
+
+      // Check seal integrity (leak test at low pressure)
+
+      if (!seal_ok) {
+
+          return SAFETY_ERROR_SEAL_LEAK;
+
+      }
+
+
+
+      // Check IRDA communication
+
+      if (!irda_ok) {
+
+          return SAFETY_ERROR_COMMS_FAIL;
+
+      }
+
+
+
+      // Check tank not already overpressure
+
+      if (P_tank > 750.0f) {
+
+          return SAFETY_ERROR_OVERPRESSURE;
+
+      }
+
+
+
+      // Check tank temperature not excessive
+
+      if (T_tank > 55.0f) {
+
+          // Wait for tank to cool before refueling
+
+          return SAFETY_ERROR_OVERTEMP;
+
+      }
+
+
+
+      return SAFETY_OK;
+
+  }
+
+  ```
+
+
+  **During-fill monitoring**:
+
+  ```c
+
+  void monitor_refueling_safety(float P_tank, float T_tank, float P_rate, float T_rate) {
+
+      // Abort if pressure exceeds target + margin
+
+      if (P_tank > 725.0f) {  // 700 + 25 bar margin
+
+          abort_refueling(ABORT_OVERPRESSURE);
+
+      }
+
+
+
+      // Abort if temperature exceeds limit
+
+      if (T_tank > 85.0f) {
+
+          abort_refueling(ABORT_OVERTEMP);
+
+      }
+
+
+
+      // Abort if pressure rate exceeds APRR limit
+
+      if (P_rate > 90.0f) {  // bar/min (margin above APRR 75)
+
+          reduce_flow_rate();
+
+      }
+
+
+
+      // Abort if temperature rate too high (runaway)
+
+      if (T_rate > 2.0f) {  // °C/s
+
+          abort_refueling(ABORT_THERMAL_RUNAWAY);
+
+      }
+
+  }
+
+  ```
+
+
+  ### Refueling Workflow
+
+
+  1. **Driver parks and connects nozzle** (SAE J2600 coupling)
+
+  2. **Vehicle transmits parameters** (IRDA: NWP, volume, P_init, T_init)
+
+  3. **Station performs safety checks** (seal integrity, communication, tank state)
+
+  4. **Station calculates fill profile** (APRR selection, target pressure compensation)
+
+  5. **Pre-cooling activated** (chill H2 to -40°C for APRR 75)
+
+  6. **Cascade refueling begins** (low → mid → high pressure banks)
+
+  7. **Station monitors P/T** (abort if limits exceeded)
+
+  8. **Fill complete** (target pressure reached)
+
+  9. **Nozzle disconnect** (safe after pressure equalization)
+
+
+  ## Approach
+
+
+  1. **Protocol Selection**: Choose table-based or formula-based SAE J2601 method
+
+  2. **APRR Calculation**: Determine optimal pressure ramp rate based on pre-cooling
+
+  3. **Communication Design**: Implement IRDA transceiver and packet encoding/decoding
+
+  4. **Station Modeling**: Design cascade storage and compressor control
+
+  5. **Safety Logic**: Code pre-fill checks, in-fill monitoring, abort conditions
+
+  6. **Thermal Simulation**: Validate tank temperature stays < 85°C during fill
+
+  7. **Field Testing**: Measure actual fill time, temperature, pressure profiles
+
+
+  ## Deliverables
+
+
+  - SAE J2601 refueling controller code (C/Python for station PLC)
+
+  - IRDA communication protocol implementation
+
+  - APRR calculation algorithms and lookup tables
+
+  - Cascade refueling sequencer logic
+
+  - Safety interlock decision trees and fault handling
+
+  - Pre-cooling system requirements (refrigeration capacity)
+
+  - Validation test reports (fill time, temperature, pressure accuracy)
+
+
+  ## Best Practices
+
+
+  - Always transmit vehicle parameters via IRDA before fill (avoid generic profile)
+
+  - Monitor tank temperature with 1 Hz sampling during refueling
+
+  - Implement graduated flow reduction (not abrupt cutoff) on temperature rise
+
+  - Use cascade storage to minimize compressor runtime and energy cost
+
+  - Design for ambient temperature range (-40°C to +50°C)
+
+  - Test seal integrity at low pressure (10 bar) before high-pressure fill
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Vehicle refueling controller interfaces with tank pressure/temperature sensors
+
+  - Supply IRDA data to station from vehicle CAN bus (tank parameters)
+
+  - Monitor refueling progress and display to driver (time remaining, SOC)
+
+  - Log refueling events for diagnostics (fill time, peak temperature, final pressure)
+
+  - Integrate with vehicle safety system (disable ignition during refueling)
+
+  '
+constraints:
+- IRDA communication reliability in outdoor environments
+- Pre-cooling energy cost and infrastructure
+- Cascade storage sizing for peak demand
+- Ambient temperature effects on fill profile
+tools_required:
+- PLC programming tools (Siemens TIA Portal, Allen-Bradley)
+- IRDA transceiver modules and protocol stack
+- Thermal simulation software (MATLAB/Simulink)
+- Pressure/temperature data loggers for validation
+- SAE J2601 compliance test bench
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- refueling-protocol
+- sae-j2601
+- pre-cooling
+- irda
+- station-architecture
+- automotive

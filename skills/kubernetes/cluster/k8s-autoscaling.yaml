@@ -1,0 +1,523 @@
+---
+name: k8s-autoscaling
+version: 1.0.0
+description: Kubernetes autoscaling configuration (HPA, VPA, Cluster Autoscaler) for automotive workloads
+category: kubernetes
+subcategory: cluster
+tags: [autoscaling, hpa, vpa, cluster-autoscaler, automotive, performance]
+
+instructions: |
+  ## Kubernetes Autoscaling for Automotive Workloads
+
+  ### Overview
+
+  Kubernetes autoscaling dynamically adjusts compute resources to match workload
+  demand. In automotive cloud platforms, this is critical for handling variable
+  loads from fleet telemetry ingestion, ADAS data processing, OTA update
+  distribution, and diagnostic service requests.
+
+  ### Autoscaling Types
+
+  ```
+  ┌────────────────────────────────────────────────────────────┐
+  │                 Kubernetes Autoscaling                      │
+  │                                                            │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐ │
+  │  │     HPA      │  │     VPA      │  │    Cluster       │ │
+  │  │ (Horizontal) │  │ (Vertical)   │  │    Autoscaler    │ │
+  │  │              │  │              │  │                  │ │
+  │  │ Scale pod    │  │ Adjust CPU/  │  │ Add/remove      │ │
+  │  │ replicas     │  │ memory per   │  │ worker nodes    │ │
+  │  │ (1→N)        │  │ container    │  │ from cloud      │ │
+  │  └──────────────┘  └──────────────┘  └──────────────────┘ │
+  └────────────────────────────────────────────────────────────┘
+  ```
+
+  ### HPA (Horizontal Pod Autoscaler)
+
+  HPA adjusts the number of pod replicas based on observed metrics:
+
+  | Metric Type | Source | Example |
+  |-------------|--------|---------|
+  | Resource | metrics-server | CPU utilization > 70% |
+  | Pods | custom metrics adapter | Queue depth > 100 messages |
+  | Object | custom metrics adapter | Ingress requests/sec > 1000 |
+  | External | external metrics adapter | Cloud queue length |
+
+  HPA algorithm: `desiredReplicas = ceil(currentReplicas * (currentMetric / targetMetric))`
+
+  **Behavior configuration** controls scale-up and scale-down speed:
+  - `stabilizationWindowSeconds`: Prevents flapping by looking at metrics over a window
+  - `scaleDown.policies`: Limit how fast pods are removed (e.g., max 50% per minute)
+  - `scaleUp.policies`: Control how fast pods are added (e.g., max 100% per 30 seconds)
+
+  ### VPA (Vertical Pod Autoscaler)
+
+  VPA adjusts CPU and memory requests/limits for containers:
+  - **Recommender**: Analyzes historical resource usage
+  - **Updater**: Evicts pods that need resizing
+  - **Admission Controller**: Sets resources on new pods
+
+  Update modes:
+  - `Off`: Recommendations only (no changes applied)
+  - `Initial`: Set resources only at pod creation
+  - `Auto`: Evict and recreate pods with new resources
+
+  Do not use HPA and VPA on the same metric (e.g., both on CPU). They can
+  be combined if HPA uses custom metrics and VPA manages resource requests.
+
+  ### Cluster Autoscaler
+
+  Adds or removes worker nodes when pods cannot be scheduled or nodes are
+  underutilized. Key parameters:
+  - `--expander`: Strategy for choosing node group (least-waste, random, priority)
+  - `--scale-down-utilization-threshold`: Scale down if utilization < threshold (default 50%)
+  - `--scale-down-delay-after-add`: Wait time after adding a node before considering removal
+  - `--max-node-provision-time`: Timeout for node to become ready
+
+  ### Automotive Scaling Patterns
+
+  | Workload | Min Replicas | Scale Metric | Notes |
+  |----------|-------------|--------------|-------|
+  | Telemetry ingestion | 5 | Messages/sec | Scales with fleet size |
+  | ADAS processing | 3 | CPU + queue depth | Latency-sensitive, fast scale-up |
+  | OTA distribution | 2 | Concurrent downloads | Burst during rollout campaigns |
+  | Diagnostics API | 2 | Request rate | Scales with workshop demand |
+  | Battery analytics | 2 | CPU + memory | Predictive workload, slow changes |
+  | Fleet management | 2 | API requests/sec | Spiky during fleet operations |
+
+  ### Metrics Pipeline
+
+  ```
+  Pods → metrics-server → HPA controller
+  Pods → Prometheus → prometheus-adapter → HPA (custom metrics)
+  Cloud → external-metrics-adapter → HPA (external metrics)
+  ```
+
+  The `metrics-server` provides CPU and memory metrics. For custom metrics
+  (queue depth, request rate, processing latency), deploy the Prometheus
+  adapter or a cloud-specific adapter (e.g., AWS CloudWatch adapter).
+
+  ### Best Practices
+
+  - Always set resource requests and limits on containers (HPA needs them)
+  - Use multiple metrics for HPA decisions (CPU + custom business metric)
+  - Configure stabilization windows to prevent scaling oscillation
+  - Use PodDisruptionBudgets alongside autoscaling to protect availability
+  - Monitor autoscaling events with `kubectl describe hpa`
+  - Test autoscaling behavior under realistic load before production
+  - For safety-critical workloads, set higher minReplicas to absorb spike latency
+  - Consider cost implications of maxReplicas in cloud environments
+
+metadata:
+  author: Kubernetes Platform Engineer
+  created: 2026-03-19
+  stability: stable
+  prerequisites:
+    - Kubernetes cluster 1.25+
+    - metrics-server installed
+    - kubectl configured
+  use_cases:
+    - Dynamic workload scaling
+    - Resource optimization
+    - Cost reduction
+    - Performance management
+
+parameters:
+  autoscaling_type:
+    type: enum
+    description: Type of autoscaling to configure
+    values: [hpa, vpa, cluster-autoscaler, all]
+    default: all
+    required: true
+
+  metrics_server_enabled:
+    type: boolean
+    description: Install metrics-server if not present
+    default: true
+
+  hpa_enabled:
+    type: boolean
+    description: Enable Horizontal Pod Autoscaler
+    default: true
+
+  vpa_enabled:
+    type: boolean
+    description: Enable Vertical Pod Autoscaler
+    default: false
+
+  cluster_autoscaler_enabled:
+    type: boolean
+    description: Enable Cluster Autoscaler
+    default: true
+
+  cloud_provider:
+    type: enum
+    description: Cloud provider for cluster autoscaler
+    values: [aws, azure, gcp, on-premises]
+    default: aws
+
+steps:
+  - id: install_metrics_server
+    name: Install metrics-server
+    type: deployment
+    condition: metrics_server_enabled and not metrics_server_exists
+    commands:
+      - name: Deploy metrics-server
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: metrics-server
+            namespace: kube-system
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: system:metrics-server
+          rules:
+          - apiGroups: [""]
+            resources: ["pods", "nodes", "namespaces"]
+            verbs: ["get", "list", "watch"]
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: system:metrics-server
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: system:metrics-server
+          subjects:
+          - kind: ServiceAccount
+            name: metrics-server
+            namespace: kube-system
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: metrics-server
+            namespace: kube-system
+          spec:
+            selector:
+              matchLabels:
+                k8s-app: metrics-server
+            template:
+              metadata:
+                labels:
+                  k8s-app: metrics-server
+              spec:
+                serviceAccountName: metrics-server
+                containers:
+                - name: metrics-server
+                  image: registry.k8s.io/metrics-server/metrics-server:v0.7.0
+                  args:
+                  - --cert-dir=/tmp
+                  - --secure-port=10250
+                  - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+                  - --kubelet-use-node-status-port
+                  - --metric-resolution=15s
+                  - --kubelet-insecure-tls
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 200Mi
+                    limits:
+                      cpu: 500m
+                      memory: 512Mi
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: metrics-server
+            namespace: kube-system
+          spec:
+            selector:
+              k8s-app: metrics-server
+            ports:
+            - port: 443
+              targetPort: 10250
+          EOF
+
+          kubectl wait --for=condition=Available deployment/metrics-server -n kube-system --timeout=300s
+
+  - id: configure_hpa
+    name: Configure Horizontal Pod Autoscaler
+    type: configuration
+    condition: hpa_enabled
+    commands:
+      - name: Create HPA for ADAS service
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: autoscaling/v2
+          kind: HorizontalPodAutoscaler
+          metadata:
+            name: adas-processing-service-hpa
+            namespace: automotive-production
+          spec:
+            scaleTargetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: adas-processing-service
+            minReplicas: 3
+            maxReplicas: 20
+            metrics:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: Utilization
+                  averageUtilization: 70
+            - type: Resource
+              resource:
+                name: memory
+                target:
+                  type: Utilization
+                  averageUtilization: 80
+            - type: Pods
+              pods:
+                metric:
+                  name: adas_processing_queue_depth
+                target:
+                  type: AverageValue
+                  averageValue: "100"
+            behavior:
+              scaleDown:
+                stabilizationWindowSeconds: 300
+                policies:
+                - type: Percent
+                  value: 50
+                  periodSeconds: 60
+                - type: Pods
+                  value: 1
+                  periodSeconds: 60
+                selectPolicy: Min
+              scaleUp:
+                stabilizationWindowSeconds: 0
+                policies:
+                - type: Percent
+                  value: 100
+                  periodSeconds: 30
+                - type: Pods
+                  value: 2
+                  periodSeconds: 30
+                selectPolicy: Max
+          EOF
+
+  - id: install_vpa
+    name: Install Vertical Pod Autoscaler
+    type: deployment
+    condition: vpa_enabled
+    commands:
+      - name: Install VPA CRDs and controller
+        command: |
+          git clone https://github.com/kubernetes/autoscaler.git /tmp/autoscaler
+          cd /tmp/autoscaler/vertical-pod-autoscaler
+          ./hack/vpa-up.sh
+
+      - name: Create VPA for ADAS service
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: autoscaling.k8s.io/v1
+          kind: VerticalPodAutoscaler
+          metadata:
+            name: adas-processing-service-vpa
+            namespace: automotive-production
+          spec:
+            targetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: adas-processing-service
+            updatePolicy:
+              updateMode: "Auto"
+            resourcePolicy:
+              containerPolicies:
+              - containerName: adas-processor
+                minAllowed:
+                  cpu: 100m
+                  memory: 128Mi
+                maxAllowed:
+                  cpu: 4000m
+                  memory: 8Gi
+                controlledResources:
+                - cpu
+                - memory
+          EOF
+
+  - id: install_cluster_autoscaler
+    name: Install Cluster Autoscaler
+    type: deployment
+    condition: cluster_autoscaler_enabled
+    commands:
+      - name: Deploy Cluster Autoscaler for AWS
+        condition: cloud_provider == 'aws'
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: cluster-autoscaler
+            namespace: kube-system
+            annotations:
+              eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/cluster-autoscaler
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: cluster-autoscaler
+          rules:
+          - apiGroups: [""]
+            resources: ["events", "endpoints"]
+            verbs: ["create", "patch"]
+          - apiGroups: [""]
+            resources: ["pods/eviction"]
+            verbs: ["create"]
+          - apiGroups: [""]
+            resources: ["pods/status"]
+            verbs: ["update"]
+          - apiGroups: [""]
+            resources: ["endpoints"]
+            resourceNames: ["cluster-autoscaler"]
+            verbs: ["get", "update"]
+          - apiGroups: [""]
+            resources: ["nodes"]
+            verbs: ["watch", "list", "get", "update"]
+          - apiGroups: [""]
+            resources: ["pods", "services", "replicationcontrollers", "persistentvolumeclaims", "persistentvolumes"]
+            verbs: ["watch", "list", "get"]
+          - apiGroups: ["extensions"]
+            resources: ["replicasets", "daemonsets"]
+            verbs: ["watch", "list", "get"]
+          - apiGroups: ["policy"]
+            resources: ["poddisruptionbudgets"]
+            verbs: ["watch", "list"]
+          - apiGroups: ["apps"]
+            resources: ["statefulsets", "replicasets", "daemonsets"]
+            verbs: ["watch", "list", "get"]
+          - apiGroups: ["storage.k8s.io"]
+            resources: ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
+            verbs: ["watch", "list", "get"]
+          - apiGroups: ["batch", "extensions"]
+            resources: ["jobs"]
+            verbs: ["get", "list", "watch", "patch"]
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: cluster-autoscaler
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: cluster-autoscaler
+          subjects:
+          - kind: ServiceAccount
+            name: cluster-autoscaler
+            namespace: kube-system
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: cluster-autoscaler
+            namespace: kube-system
+            labels:
+              app: cluster-autoscaler
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: cluster-autoscaler
+            template:
+              metadata:
+                labels:
+                  app: cluster-autoscaler
+              spec:
+                serviceAccountName: cluster-autoscaler
+                containers:
+                - image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.28.0
+                  name: cluster-autoscaler
+                  command:
+                  - ./cluster-autoscaler
+                  - --v=4
+                  - --stderrthreshold=info
+                  - --cloud-provider=aws
+                  - --skip-nodes-with-local-storage=false
+                  - --expander=least-waste
+                  - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/automotive-prod
+                  - --balance-similar-node-groups
+                  - --skip-nodes-with-system-pods=false
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 300Mi
+                    limits:
+                      cpu: 500m
+                      memory: 1Gi
+                  env:
+                  - name: AWS_REGION
+                    value: us-west-2
+          EOF
+
+automotive_autoscaling_patterns:
+  adas_processing:
+    description: ADAS sensor data processing
+    characteristics:
+      - Variable load based on vehicle activity
+      - Latency-sensitive (< 100ms)
+      - Safety-critical (ASIL-B)
+    hpa_config:
+      minReplicas: 3
+      maxReplicas: 20
+      metrics:
+        - CPU: 70%
+        - Memory: 80%
+        - Custom: queue_depth < 100
+
+  battery_analytics:
+    description: Battery health monitoring
+    characteristics:
+      - Continuous monitoring
+      - Predictive workload
+      - Data-intensive
+    hpa_config:
+      minReplicas: 2
+      maxReplicas: 10
+      metrics:
+        - CPU: 60%
+        - Memory: 75%
+
+  fleet_management:
+    description: Fleet-wide management
+    characteristics:
+      - Batch processing
+      - Periodic spikes
+      - API-driven
+    hpa_config:
+      minReplicas: 2
+      maxReplicas: 50
+      metrics:
+        - CPU: 80%
+        - Custom: api_requests_per_second > 1000
+
+best_practices:
+  - Set realistic min/max replicas
+  - Use multiple metrics for better decisions
+  - Configure stabilization windows to prevent flapping
+  - Monitor autoscaling events
+  - Test autoscaling behavior under load
+  - Use PodDisruptionBudgets with autoscaling
+  - Consider cost implications of max replicas
+
+related_skills:
+  - k8s-monitoring-setup
+  - k8s-performance-tuning
+  - prometheus-setup
+
+examples:
+  - name: Configure complete autoscaling
+    command: |
+      k8s-autoscaling \
+        --autoscaling-type=all \
+        --hpa-enabled=true \
+        --cluster-autoscaler-enabled=true \
+        --cloud-provider=aws

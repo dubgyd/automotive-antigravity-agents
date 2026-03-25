@@ -1,0 +1,270 @@
+name: near-shoring-strategy
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: supply-chain-strategy
+description: Expert skill in evaluating and executing near-shoring strategies for automotive manufacturing, including total cost of ownership analysis, regional supplier development, trade compliance optimization, and production footprint rebalancing to reduce lead times and geopolitical risk.
+use_cases:
+- Total cost of ownership comparison between offshore, near-shore, and domestic sourcing
+- Regional supplier capability assessment and development programs
+- Trade compliance and tariff optimization for near-shore production networks
+- Production footprint rebalancing across USMCA, EU, and ASEAN regions
+- Greenfield and brownfield site selection using weighted multi-criteria analysis
+- Labor market analysis for skilled manufacturing workforce availability
+- Logistics network redesign for reduced lead time and carbon footprint
+- Risk-adjusted ROI modeling for near-shoring capital investment decisions
+automotive_standards:
+- USMCA Rules of Origin (automotive chapter)
+- EU CBAM (Carbon Border Adjustment Mechanism)
+- IATF 16949 (Supplier Development Requirements)
+- ISO 14001 (Environmental Requirements for New Sites)
+- ILO Labor Standards
+- WTO Rules of Origin
+- Regional content requirements (EU Battery Regulation)
+instructions: |
+
+  ## Overview
+
+  Near-shoring relocates manufacturing and sourcing from distant low-cost countries to
+  geographically closer regions, trading labor cost advantage for reduced lead times,
+  lower logistics cost, better IP protection, and reduced geopolitical risk. For automotive,
+  this means shifting from Asia-centric supply chains toward regional production networks
+  aligned with final assembly locations.
+
+  The automotive industry faces compounding near-shoring drivers: USMCA regional content
+  requirements (75% for passenger vehicles), EU battery regulation mandating local production,
+  semiconductor reshoring incentives (CHIPS Act, EU Chips Act), and carbon border taxes
+  penalizing long-distance transport of heavy components.
+
+
+  ## Key Concepts
+
+  ### Total Cost of Ownership (TCO) Components
+
+  - **Unit cost**: Raw material + labor + overhead + margin
+  - **Logistics**: Ocean freight, inland transport, customs brokerage, insurance
+  - **Inventory**: Pipeline stock (weeks in transit), safety stock, warehousing
+  - **Quality**: Incoming inspection, rejection rate, warranty claims, audit travel
+  - **Risk**: Disruption probability x production downtime cost
+  - **Tariffs/Duties**: Applied rate based on HS code and trade agreement eligibility
+  - **Carbon cost**: Transport emissions x carbon price (EU ETS, CBAM)
+  - **Working capital**: Payment terms, currency hedging, letter of credit costs
+
+  ### Regional Content Requirements
+
+  ```
+  USMCA (North America):
+    Vehicle:     75% regional value content
+    Core parts:  75% (engine, transmission, body, chassis)
+    Steel/Aluminum: 70% North American sourced
+    Labor:       LVC (Labor Value Content) 40-45% at $16+/hr
+
+  EU Battery Regulation:
+    2027: Carbon footprint declaration mandatory
+    2028: Maximum carbon footprint thresholds
+    2030: Recycled content minimums (Ni 6%, Li 6%, Co 16%)
+    Local production: Required for full EU content qualification
+  ```
+
+  ### Near-Shore Region Mapping
+
+  ```
+  Assembly in:     Near-Shore Options:
+  ============     ==================
+  US Southeast --> Mexico, Canada, US Midwest
+  Germany      --> Poland, Czech Republic, Hungary, Spain, Portugal
+  Japan        --> Thailand, Vietnam, Indonesia
+  China        --> Vietnam, India, Malaysia (for export)
+  Brazil       --> Argentina, Colombia
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: TCO Comparison Model
+
+  ```python
+  # Total cost of ownership analysis
+  class NearShoreTCO:
+      def __init__(self, annual_volume: int, part_weight_kg: float):
+          self.volume = annual_volume
+          self.weight = part_weight_kg
+
+      def calculate_scenario(self, scenario: dict) -> dict:
+          """Calculate full TCO for a sourcing scenario."""
+          unit_cost = scenario["piece_price"] * self.volume
+          logistics = self.calc_logistics(scenario)
+          inventory = self.calc_inventory_cost(scenario)
+          quality = self.calc_quality_cost(scenario)
+          tariff = scenario["piece_price"] * scenario["duty_rate"] * self.volume
+          risk = scenario["disruption_prob"] * scenario["downtime_cost_per_day"] * scenario["avg_disruption_days"]
+          carbon = self.calc_carbon_cost(scenario)
+          total = unit_cost + logistics + inventory + quality + tariff + risk + carbon
+          return {
+              "scenario": scenario["name"],
+              "unit_cost": unit_cost,
+              "logistics": logistics,
+              "inventory": inventory,
+              "quality": quality,
+              "tariff": tariff,
+              "risk_adjusted": risk,
+              "carbon_cost": carbon,
+              "total_tco": total,
+              "tco_per_unit": total / self.volume,
+          }
+
+      def calc_logistics(self, s: dict) -> float:
+          freight = s["freight_per_kg"] * self.weight * self.volume
+          customs = s["customs_clearance"] * (self.volume / s["parts_per_container"])
+          return freight + customs
+
+      def calc_inventory_cost(self, s: dict) -> float:
+          pipeline_weeks = s["transit_time_weeks"]
+          safety_weeks = s["safety_stock_weeks"]
+          weekly_demand_value = (self.volume / 52) * s["piece_price"]
+          carrying_rate = 0.20  # 20% annual carrying cost
+          return (pipeline_weeks + safety_weeks) * weekly_demand_value * carrying_rate
+  ```
+
+  ### Step 2: Supplier Development Program
+
+  ```yaml
+  supplier_development_phases:
+    phase_1_assessment:
+      duration_months: 3
+      activities:
+        - capability_audit_vda_6_3
+        - financial_due_diligence
+        - quality_system_gap_analysis
+        - workforce_skills_assessment
+        - infrastructure_evaluation
+    phase_2_qualification:
+      duration_months: 6
+      activities:
+        - APQP_support_and_mentoring
+        - process_capability_studies
+        - PPAP_submission_and_approval
+        - run_at_rate_validation
+        - logistics_setup_and_testing
+    phase_3_ramp_up:
+      duration_months: 6
+      activities:
+        - gradual_volume_transfer_20_50_80_100
+        - resident_quality_engineer_placement
+        - SPC_monitoring_and_feedback
+        - continuous_improvement_kaizen
+        - full_production_release
+  ```
+
+  ### Step 3: Site Selection Scoring
+
+  ```python
+  # Weighted multi-criteria site evaluation
+  class SiteSelector:
+      CRITERIA = {
+          "labor_cost": 0.15,
+          "labor_availability": 0.12,
+          "logistics_proximity": 0.15,
+          "infrastructure_quality": 0.10,
+          "trade_agreement_benefit": 0.12,
+          "energy_cost_and_green": 0.08,
+          "political_stability": 0.10,
+          "ip_protection": 0.08,
+          "supplier_ecosystem": 0.10,
+      }
+
+      def evaluate_site(self, site: dict) -> dict:
+          """Score candidate site on weighted criteria (1-10 scale)."""
+          weighted_score = sum(
+              site["scores"][criterion] * weight
+              for criterion, weight in self.CRITERIA.items()
+          )
+          return {
+              "site": site["name"],
+              "country": site["country"],
+              "weighted_score": round(weighted_score, 2),
+              "strengths": [c for c, w in self.CRITERIA.items() if site["scores"][c] >= 8],
+              "weaknesses": [c for c, w in self.CRITERIA.items() if site["scores"][c] <= 4],
+          }
+  ```
+
+  ### Step 4: Production Transfer Plan
+
+  ```
+  Month 1-3:   Supplier selection and tooling order
+  Month 4-9:   Tool build, first articles, PPAP
+  Month 10-12: Parallel production (old and new source)
+  Month 13-15: Volume ramp at new source (20% -> 50% -> 80%)
+  Month 16-18: Full transfer, decommission old source
+  Month 19+:   Performance monitoring and optimization
+  ```
+
+
+  ## Best Practices
+
+  - Never compare piece price alone -- always use full TCO including risk and carbon
+  - Maintain dual sourcing during transition (minimum 6 months parallel production)
+  - Invest in supplier development -- near-shore suppliers may need quality system upgrades
+  - Factor in regional content requirements early -- they determine eligible sourcing regions
+  - Account for currency risk when comparing cross-border scenarios
+  - Consider vertical integration for critical components when suppliers are scarce
+  - Engage trade compliance experts for rules of origin calculation before committing
+  - Plan for automation investment at near-shore sites to offset higher labor costs
+
+
+  ## Common Patterns
+
+  ### Decision Framework
+
+  ```
+  Near-shore when:                      Keep offshore when:
+  ================                      ==================
+  Lead time > 6 weeks                   Unit cost delta > 40%
+  Single-source risk = high             Volume justifies dedicated ship
+  Regional content required             Technology only available offshore
+  Quality issues from distance          Mature supply base exists
+  Carbon cost significant               Low disruption history
+  High engineering change frequency      Commodity with multiple global sources
+  ```
+
+  ### Phased Migration Strategy
+
+  ```
+  Phase 1: Move high-risk single-source components (12 months)
+  Phase 2: Move bulky/heavy parts where logistics cost dominates (18 months)
+  Phase 3: Move engineered components requiring close collaboration (24 months)
+  Phase 4: Move remaining commodities where TCO favors near-shore (36 months)
+  ```
+
+
+  ## Troubleshooting
+
+  - **Higher piece price kills business case**: Include disruption risk cost and carbon cost
+  - **No qualified suppliers in target region**: Invest in supplier development program
+  - **Rules of origin calculation complex**: Use customs broker with automotive specialization
+  - **Quality gap at new supplier**: Place resident engineer, implement intensive SPC program
+  - **Labor shortage at near-shore site**: Partner with local technical schools, invest in automation
+  - **Currency volatility undermines savings**: Use natural hedging (revenue and cost in same currency)
+
+constraints:
+- Supplier qualification for automotive takes 12-24 months minimum
+- Regional content rules add complexity to multi-region sourcing decisions
+- Near-shore labor costs are rising, reducing arbitrage window
+- Capital investment in new tooling required for each production transfer
+tools_required:
+- TCO modeling tools (Excel advanced, Coupa, JAGGAER)
+- Trade compliance (Amber Road, Descartes, Thomson Reuters ONESOURCE)
+- Site selection (IBM Plant Location International, Tractus Asia)
+- Supplier audit (VDA 6.3 audit tools, SQM platforms)
+- Supply chain network design (Llamasoft/Coupa, AIMMS)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- near-shoring
+- supply-chain
+- sourcing-strategy
+- automotive

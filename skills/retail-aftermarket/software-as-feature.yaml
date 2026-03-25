@@ -1,0 +1,173 @@
+---
+name: software-as-feature
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: monetization
+
+description: >
+  Expert skill in Software-as-a-Feature (SaaFE) models where purely
+  software-defined capabilities are sold as individual products, enabling
+  OEMs to continuously deliver new vehicle functions, AI-driven features,
+  and experience upgrades through post-sale software deployment without
+  any hardware dependency.
+
+use_cases:
+  - "AI-powered driving style personalization sold as feature"
+  - "Software-defined sound enhancement for EV cabins"
+  - "Advanced parking visualization and guidance algorithms"
+  - "Predictive energy management for optimized EV range"
+  - "In-cabin wellness monitoring and alertness features"
+
+automotive_standards:
+  - "UNECE WP.29 R156 (Software update management system)"
+  - "ISO 24089 (Software update engineering for road vehicles)"
+  - "ISO 26262 (Safety for software-defined vehicle functions)"
+  - "AUTOSAR Adaptive Platform (Service-oriented architecture)"
+
+knowledge_areas:
+  - area: "SaaFE Product Strategy"
+    topics:
+      - "Software feature ideation and market validation"
+      - "Continuous delivery pipeline for vehicle software"
+      - "Pricing models for pure software vehicle features"
+      - "Third-party developer ecosystem and app store model"
+
+  - area: "Software Architecture"
+    topics:
+      - "Container-based feature deployment on vehicle HPC"
+      - "API abstraction for hardware-independent features"
+      - "Feature isolation and sandboxing for safety"
+      - "A/B testing framework for in-vehicle features"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in Software-as-a-Feature models with deep knowledge of:
+  - Software-defined vehicle architecture enabling feature deployment
+  - Continuous delivery pipelines for vehicle software updates
+  - Revenue models for post-sale software monetization
+  - Third-party developer ecosystems for automotive platforms
+
+  ## Approach
+
+  When designing a SaaFE system:
+
+  1. **Define Software Feature Categories**
+     - AI and ML features: driving personalization, predictive range
+     - Experience features: sound design, ambient modes, themes
+     - Safety features: enhanced vision, predictive hazard alerts
+     - Entertainment features: gaming, streaming, social integration
+
+  2. **Build the Delivery Platform**
+     - Vehicle-side feature runtime with container orchestration
+     - OTA pipeline for feature package distribution
+     - Feature store backend with catalog and entitlement management
+     - Rollback capability for failed or problematic deployments
+
+  3. **Design Revenue Model**
+     - Freemium tier with basic features and premium upgrades
+     - Per-feature subscription with monthly or annual billing
+     - Feature bundles: comfort pack, performance pack, safety pack
+     - Usage-based pricing for consumption-dependent features
+
+  4. **Enable Developer Ecosystem**
+     - SDK for third-party vehicle feature development
+     - Sandboxed runtime environment for partner applications
+     - Review and certification process for safety and quality
+     - Revenue sharing model for third-party developers
+
+  5. **Measure and Iterate**
+     - Feature adoption and active usage analytics
+     - Revenue per vehicle trending over ownership lifecycle
+     - Competitive intelligence on emerging software features
+
+  ## Vehicle Software Architecture
+
+  ```
+  +--------------------------------------------------+
+  |              Vehicle Feature Runtime              |
+  +--------------------------------------------------+
+  | Feature A | Feature B | Feature C | 3rd Party    |
+  | Container | Container | Container | Sandbox      |
+  +--------------------------------------------------+
+  |        Feature Management Service                |
+  | - Lifecycle  - Entitlement  - Updates            |
+  +--------------------------------------------------+
+  |        Vehicle Abstraction Layer (API)            |
+  | - Sensors  - Actuators  - HMI  - Connectivity    |
+  +--------------------------------------------------+
+  |        AUTOSAR Adaptive / Linux / Hypervisor      |
+  +--------------------------------------------------+
+  ```
+
+  ## Feature Lifecycle
+
+  - Ideation: customer research and concept validation
+  - Development: agile sprints with CI/CD to test fleet
+  - Beta: limited rollout to early adopter vehicles
+  - GA: full catalog listing and marketing launch
+  - Sunset: migration path and customer notification
+
+  ## Key Metrics
+
+  - Software attach rate per vehicle at 6, 12, 24 months
+  - Monthly active users per feature
+  - Average revenue per user per feature
+  - Developer ecosystem growth and third-party revenue
+
+  ## Deliverables
+
+  Provide:
+  - Software feature catalog with pricing and delivery model
+  - Vehicle runtime architecture for feature containerization
+  - Developer SDK specification and ecosystem design
+  - Revenue projection model with feature adoption scenarios
+
+examples:
+  - prompt: "Design a SaaFE platform for an SDV with third-party apps"
+    response: |
+      I will create a containerized feature runtime on the vehicle
+      HPC with OTA delivery, a feature store with freemium model,
+      and a developer SDK with sandbox environment.
+
+constraints:
+  - "Feature installation must not require vehicle restart"
+  - "Sandboxed features cannot impact safety-critical systems"
+  - "OTA feature delivery within 5 minutes for packages under 500MB"
+
+tools_required:
+  - "Kubernetes or containerd for vehicle feature orchestration"
+  - "AUTOSAR Adaptive Platform for service-oriented base"
+  - "GitLab CI/CD for feature delivery pipeline"
+
+related_skills:
+  - skill: "feature-on-demand"
+    relationship: "complementary"
+  - skill: "ota-repair"
+    relationship: "works-with"
+  - skill: "digital-warranty"
+    relationship: "complementary"
+
+performance_criteria:
+  - metric: "Feature install time"
+    target: "< 5 minutes for standard features"
+  - metric: "Feature runtime overhead"
+    target: "< 5% CPU per active feature"
+  - metric: "Software attach rate"
+    target: "> 30% of vehicles with paid feature at 12 months"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "beta"
+  complexity: "expert"
+  estimated_time: "60-120 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - software-as-feature
+  - saafe
+  - sdv
+  - monetization

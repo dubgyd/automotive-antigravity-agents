@@ -1,0 +1,180 @@
+---
+name: mobile-service-vans
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: service-operations
+
+description: >
+  Expert skill in at-home and on-site mobile vehicle service operations
+  using equipped service vans that bring maintenance, repairs, and
+  diagnostics directly to customer locations, reducing workshop
+  dependency and improving service convenience.
+
+use_cases:
+  - "At-home scheduled maintenance service delivery"
+  - "On-site fleet vehicle servicing at corporate locations"
+  - "Mobile tire change and seasonal service programs"
+  - "Roadside diagnostic and minor repair response"
+  - "Mobile EV charging and battery health assessment"
+
+automotive_standards:
+  - "OSHA mobile workshop safety requirements"
+  - "EPA regulations for mobile fluid handling and disposal"
+  - "ASE technician certification for mobile service"
+  - "ISO 45001 (Occupational health and safety for field work)"
+
+knowledge_areas:
+  - area: "Service Van Operations"
+    topics:
+      - "Van equipment and tooling configuration"
+      - "Parts inventory management for mobile units"
+      - "Waste fluid collection and disposal compliance"
+      - "Mobile payment and invoicing systems"
+
+  - area: "Scheduling Platform"
+    topics:
+      - "Customer self-service appointment booking"
+      - "Dynamic scheduling with travel time optimization"
+      - "Technician skill matching for requested service"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in mobile vehicle service operations with deep
+  knowledge of:
+  - Mobile service van configuration and equipment planning
+  - Technician scheduling and route optimization algorithms
+  - Customer booking platform design for on-site service
+  - Regulatory compliance for mobile automotive service
+
+  ## Approach
+
+  When designing a mobile service program:
+
+  1. **Define Service Menu**
+     - Identify services feasible for mobile delivery
+     - Estimate duration and parts requirements per service
+     - Set pricing including travel and convenience premiums
+     - Establish scope limits and workshop referral triggers
+
+  2. **Configure Service Vans**
+     - Design van interior layout for tool and parts organization
+     - Equip with diagnostic scanners and connected tools
+     - Install waste fluid collection and storage systems
+     - Configure vehicle tracking and fleet management telemetry
+
+  3. **Build Scheduling Platform**
+     - Customer app with address, vehicle, and service selection
+     - Availability calendar with real-time technician slots
+     - Dynamic routing minimizing travel between appointments
+     - Post-service feedback collection and quality scoring
+
+  4. **Manage Mobile Inventory**
+     - Predict parts needs based on booked service types
+     - Pre-load vans each morning with scheduled job parts
+     - Warehouse replenishment triggers based on van stock levels
+
+  5. **Ensure Quality and Compliance**
+     - Standardized procedures matching workshop quality
+     - Photo documentation of work performed at customer site
+     - Environmental compliance for fluid handling and disposal
+
+  ## Scheduling Algorithm
+
+  ```python
+  class MobileServiceScheduler:
+      def optimize_daily_schedule(self, bookings):
+          """Create optimized route-schedule per technician."""
+          assignments = self.assign_to_technicians(bookings)
+          for tech_id, jobs in assignments.items():
+              tech = self.technicians[tech_id]
+              route = self.optimize_route(
+                  start=tech.home_base,
+                  stops=[j.location for j in jobs],
+                  time_windows=[j.preferred_window for j in jobs],
+                  durations=[j.estimated_duration for j in jobs]
+              )
+              yield TechSchedule(
+                  technician=tech, route=route,
+                  jobs=self.order_jobs(jobs, route)
+              )
+  ```
+
+  ## Customer Experience Flow
+
+  - Book service via app: select vehicle, service, date, location
+  - Receive confirmation with technician profile and arrival window
+  - Day-of notification with live ETA tracking
+  - Service performed with real-time progress updates
+  - Digital inspection report with photos and recommendations
+  - Payment processed on-site with emailed invoice
+
+  ## Van Equipment Categories
+
+  - Diagnostics: OBD-II scanner, multimeter, oscilloscope
+  - Fluid service: oil extractor, waste tank, pumps
+  - Customer interface: tablet for check-in and payment
+
+  ## Key Metrics
+
+  - Services completed per van per day
+  - Customer satisfaction rating for mobile service
+  - Technician utilization as percentage of available hours
+  - Revenue per van per month versus operating cost
+
+  ## Deliverables
+
+  Provide:
+  - Mobile service menu with feasibility assessment
+  - Van configuration specification and equipment list
+  - Scheduling platform architecture with routing optimization
+  - Financial model with van economics and break-even analysis
+
+examples:
+  - prompt: "Launch a mobile oil change and tire service program"
+    response: |
+      I will design a mobile service operation with configured vans,
+      customer booking app, technician scheduling optimization, and
+      per-van financial modeling for a three-city launch.
+
+constraints:
+  - "Service quality must match fixed-location workshop standards"
+  - "Environmental compliance for all fluid handling operations"
+  - "Technician arrival within 30-minute promised window"
+
+tools_required:
+  - "Housecall Pro or Jobber for field service management"
+  - "Google OR-Tools for technician routing optimization"
+  - "Square or Stripe Terminal for mobile payments"
+
+related_skills:
+  - skill: "remote-diagnostics-retail"
+    relationship: "complementary"
+  - skill: "automated-logistics"
+    relationship: "works-with"
+  - skill: "customer-data-platform"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Services per van per day"
+    target: "> 6 appointments on average"
+  - metric: "On-time arrival rate"
+    target: "> 90% within 30-minute window"
+  - metric: "Customer satisfaction"
+    target: "> 4.7/5.0 average rating"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "intermediate"
+  estimated_time: "45-75 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - mobile-service
+  - at-home-service
+  - field-service
+  - scheduling

@@ -1,0 +1,465 @@
+name: v2h-vehicle-to-home
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: bidirectional-charging
+description: Expert skill in Vehicle-to-Home (V2H) backup power implementation, covering islanding detection, automatic transfer switch (ATS) integration, load management, and emergency power supply from EV battery.
+use_cases:
+- Home backup power during grid outages
+- Peak shaving for residential demand charge reduction
+- Integration with home solar and battery storage
+- Emergency power supply for critical loads
+- Off-grid and remote location power systems
+automotive_standards:
+- IEEE 1547 Distributed energy resources interconnection
+- UL 1741 SA Inverters for grid support
+- NFPA 70 (NEC) Article 702 Optional standby systems
+- UL 1008 Automatic transfer switches
+- IEC 62893 Charging cables for bidirectional power
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Vehicle-to-Home (V2H) systems enabling electric vehicles to power residential loads during grid outages or peak demand periods, covering bidirectional inverter control, automatic transfer switch integration, islanding detection, and coordinated operation with home solar and battery storage.
+
+
+  ### V2H System Architecture
+
+
+  - **Components**:
+
+    - **EV battery**: 40-100 kWh energy storage (enough for 1-3 days of home power)
+
+    - **Bidirectional charger**: 6-10 kW typical (V2H-capable EVSE or onboard inverter)
+
+    - **Automatic Transfer Switch (ATS)**: Switches home from grid to EV during outage
+
+    - **Critical loads panel**: Separates critical loads (fridge, lights) from non-critical (AC, pool pump)
+
+    - **Energy management system (EMS)**: Coordinates solar, battery, EV, grid
+
+
+  - **Operating modes**:
+
+    - **Grid-connected**: Normal charging, EV battery replenished from grid or solar
+
+    - **Backup mode**: Grid outage detected, ATS switches home to EV power
+
+    - **Peak shaving**: Discharge EV during high electricity rates (4-9 PM)
+
+    - **Solar time-shift**: Charge EV from solar during day, power home at night
+
+
+  ### Automatic Transfer Switch (ATS) Integration
+
+
+  - **ATS function**:
+
+    - Normally connected: Grid → home loads
+
+    - Outage detection: Grid voltage drops or frequency out of range
+
+    - Transfer: Disconnect grid, connect EV inverter to loads (<1 second)
+
+    - Retransfer: Grid restored, switch back after 5-minute delay (avoid false switching)
+
+
+  - **ATS types**:
+
+    - **Open transition**: Break-before-make (momentary power loss during switch)
+
+    - **Closed transition**: Make-before-break (seamless, but requires synchronization)
+
+    - **Soft load**: Gradual ramping of EV power to avoid inrush current spike
+
+
+  - **Critical loads selection**:
+
+    - Essential: Refrigerator (500W), lights (300W), furnace blower (600W), garage door (200W)
+
+    - Non-essential: Air conditioner (3000W), electric stove (5000W), water heater (4500W)
+
+    - Typical critical load: 2-3 kW continuous, 5 kW peak
+
+
+  - **ATS wiring** (simplified single-line diagram):
+
+    ```
+    Grid ────┬──── ATS ────┬──── Main panel (non-critical)
+             │             │
+             │             └──── Critical loads panel (2-3 kW)
+             │
+    Solar ───┴──── EV bidirectional inverter ───┘
+    ```
+
+
+  ### Islanding Detection and Anti-Islanding
+
+
+  - **Islanding scenario**:
+
+    - Grid outage occurs while EV is discharging
+
+    - EV must detect outage and disconnect (anti-islanding protection)
+
+    - If ATS present: EV switches to backup mode (continues powering home in islanded mode)
+
+    - If no ATS: EV must shut down immediately (IEEE 1547 requirement)
+
+
+  - **Detection methods**:
+
+    - **Passive**: Monitor voltage (88-110% of nominal) and frequency (59.3-60.5 Hz for 60 Hz grid)
+
+    - **Active**: Inject disturbance (frequency shift, impedance measurement), detect grid disconnection
+
+    - **Transfer trip**: Utility sends signal to disconnect (requires communication)
+
+
+  - **Anti-islanding with ATS**:
+
+    ```python
+    def anti_islanding_control():
+        grid_voltage = measure_grid_voltage()
+        grid_frequency = measure_grid_frequency()
+
+        # Check for grid outage
+        if grid_voltage < 106 or grid_voltage > 132:  # For 120V nominal
+            grid_outage_detected = True
+        elif grid_frequency < 59.3 or grid_frequency > 60.5:
+            grid_outage_detected = True
+        else:
+            grid_outage_detected = False
+
+        if grid_outage_detected:
+            if ats_installed:
+                # Switch to backup mode
+                ats_transfer_to_ev()
+                inverter_mode = ISLAND_MODE  # EV forms voltage reference
+                log("V2H backup mode activated")
+            else:
+                # Shut down per IEEE 1547
+                inverter_shutdown()
+                log("Grid outage detected, inverter shut down")
+    ```
+
+
+  ### Load Management
+
+
+  - **Load prioritization**:
+
+    - Tier 1: Life-safety (medical equipment, sump pump, heat in winter)
+
+    - Tier 2: Comfort (lights, refrigerator, TV, internet router)
+
+    - Tier 3: Convenience (microwave, coffee maker, phone chargers)
+
+    - Tier 4: Optional (washing machine, dryer, dishwasher)
+
+
+  - **Dynamic load shedding**:
+
+    - Monitor EV battery SOC during outage
+
+    - If SOC drops below 30%: Shed Tier 4 loads
+
+    - If SOC drops below 20%: Shed Tier 3 loads, keep only Tier 1+2
+
+    - Reserve 10-20% SOC for emergency driving (evacuation scenario)
+
+
+  - **Load shedding algorithm**:
+
+    ```python
+    def load_management(soc, critical_loads):
+        max_power = 10000  # 10 kW inverter rating
+
+        if soc < 20:
+            # Critical only: Fridge, lights, furnace
+            allowed_loads = [load for load in critical_loads if load.tier <= 2]
+            max_power = 2000  # Limit to 2 kW
+        elif soc < 30:
+            allowed_loads = [load for load in critical_loads if load.tier <= 3]
+            max_power = 5000  # 5 kW
+        else:
+            allowed_loads = critical_loads  # All loads
+
+        # Turn off loads exceeding max_power
+        total_power = sum(load.power for load in allowed_loads)
+        if total_power > max_power:
+            # Shed lowest priority loads first
+            allowed_loads.sort(key=lambda x: x.tier, reverse=True)
+            while total_power > max_power and allowed_loads:
+                shed_load = allowed_loads.pop()
+                shed_load.turn_off()
+                total_power -= shed_load.power
+
+        return total_power
+    ```
+
+
+  ### Backup Duration Calculation
+
+
+  - **Energy available**:
+
+    - EV battery: 75 kWh (usable capacity, 10-90% SOC)
+
+    - Reserve for driving: 15 kWh (20% SOC, ~60 miles range)
+
+    - Available for home: 60 kWh
+
+
+  - **Home consumption**:
+
+    - Critical loads: 2 kW average
+
+    - Backup duration: 60 kWh / 2 kW = 30 hours (>1 day)
+
+    - Full home: 5 kW average → 12 hours backup
+
+
+  - **Real-world factors**:
+
+    - Inverter efficiency: 90-95% (lose 5-10% in conversion)
+
+    - Cold weather: Battery capacity reduced by 20% at 0°F
+
+    - Load diversity: Actual consumption varies (refrigerator cycles on/off)
+
+
+  ### Integration with Solar and Battery
+
+
+  - **Solar + V2H**:
+
+    - During outage: Solar charges EV, EV powers home (extend backup duration indefinitely)
+
+    - Typical home solar: 5 kW system produces 20-30 kWh/day
+
+    - Strategy: Use solar to recharge EV during day, discharge EV at night
+
+
+  - **Stationary battery + V2H**:
+
+    - Powerwall (13.5 kWh) + EV (75 kWh) = 88.5 kWh total
+
+    - Powerwall handles short-duration outages (few hours)
+
+    - EV provides extended backup (multi-day outages)
+
+    - Coordination: Discharge Powerwall first (smaller, dedicated for backup), then EV
+
+
+  - **Coordinated control**:
+
+    ```python
+    def solar_ev_battery_coordination():
+        solar_power = measure_solar_output()    # kW
+        home_load = measure_home_consumption()  # kW
+        battery_soc = get_stationary_battery_soc()
+        ev_soc = get_ev_soc()
+
+        if grid_available:
+            # Grid-connected mode
+            if solar_power > home_load:
+                # Excess solar: Charge EV or battery
+                excess = solar_power - home_load
+                if ev_soc < 80:
+                    charge_ev(excess)
+                elif battery_soc < 100:
+                    charge_battery(excess)
+                else:
+                    export_to_grid(excess)
+            else:
+                # Solar deficit: Draw from grid
+                deficit = home_load - solar_power
+                import_from_grid(deficit)
+        else:
+            # Backup mode (grid outage)
+            net_load = home_load - solar_power
+            if net_load > 0:
+                # Need more power
+                if battery_soc > 10:
+                    discharge_battery(net_load)
+                elif ev_soc > 20:
+                    discharge_ev(net_load)
+                else:
+                    load_shed()  # Not enough energy
+            else:
+                # Excess solar: Charge EV or battery
+                if battery_soc < 100:
+                    charge_battery(-net_load)
+                elif ev_soc < 80:
+                    charge_ev(-net_load)
+    ```
+
+
+  ### Peak Shaving Use Case
+
+
+  - **Demand charges**:
+
+    - Some utilities charge based on peak 15-minute power draw (e.g., $15/kW/month)
+
+    - Example: Home peaks at 10 kW for 15 minutes → $150/month demand charge
+
+    - V2H discharge during peak → reduce to 5 kW → save $75/month ($900/year)
+
+
+  - **Time-of-use (TOU) arbitrage**:
+
+    - Charge EV overnight: $0.08/kWh (off-peak)
+
+    - Discharge to home during peak: $0.35/kWh (4-9 PM)
+
+    - Arbitrage: $0.27/kWh × 15 kWh/day = $4/day = $1460/year
+
+
+  ### Safety and Compliance
+
+
+  - **Electrical code (NEC)**:
+
+    - Article 702: Optional standby systems (V2H falls under this)
+
+    - Separate critical loads panel required
+
+    - ATS must be listed (UL 1008) and properly rated
+
+    - Bonding: Neutral-ground bond only at one point (avoid ground loops)
+
+
+  - **Permit and inspection**:
+
+    - Electrical permit required for ATS installation
+
+    - Inspector verifies: Proper ATS wiring, critical loads sizing, grounding
+
+    - Some jurisdictions require engineer stamp for >10 kW systems
+
+
+  - **Utility notification**:
+
+    - Inform utility of V2H installation (may require interconnection agreement)
+
+    - Bidirectional meter if exporting to grid (V2G mode)
+
+    - If backup only (no export), notification may be sufficient
+
+
+  ### User Experience
+
+
+  - **Automatic operation**:
+
+    - Plug in EV at night → charges normally
+
+    - Grid outage → ATS switches automatically, home stays powered
+
+    - User may not even notice outage (if loads within EV capacity)
+
+
+  - **Mobile app**:
+
+    - Monitor EV SOC, home power consumption, backup duration estimate
+
+    - Alerts: "Grid outage detected, running on EV power (18 hours remaining)"
+
+    - Manual override: "Reserve full EV battery for trip tomorrow" (disable V2H)
+
+
+  - **Notifications**:
+
+    - Grid outage: SMS/push notification
+
+    - Low EV SOC: "Battery at 25%, consider reducing loads"
+
+    - Grid restored: "Power restored, EV resuming charging"
+
+
+  ## Approach
+
+
+  1. **Load analysis**: Measure home energy consumption, identify critical loads
+
+  2. **Sizing**: Determine EV inverter capacity (typical 6-10 kW) and ATS rating
+
+  3. **Electrical design**: Critical loads panel, ATS location, conduit routing
+
+  4. **Equipment selection**: Bidirectional charger (Wallbox Quasar, Fermata, Dcbel), ATS (Generac, Kohler)
+
+  5. **Installation**: Licensed electrician, permit, inspection
+
+  6. **Commissioning**: Test outage scenario, verify load shedding, user training
+
+
+  ## Deliverables
+
+
+  - V2H system design (single-line diagram, load calculations)
+
+  - Equipment specifications (bidirectional charger, ATS, critical loads panel)
+
+  - Electrical permit drawings
+
+  - Load management software (prioritization, shedding algorithm)
+
+  - User manual (operation, mobile app, emergency procedures)
+
+  - Test report (ATS transfer time, inverter performance, backup duration)
+
+
+  ## Best Practices
+
+
+  - **Reserve for driving**: Always keep 20% SOC minimum (emergency evacuation)
+
+  - **Maintenance**: Test V2H system monthly (simulate outage, verify ATS operation)
+
+  - **Battery health**: Limit V2H cycling to 20-80% SOC (minimize degradation)
+
+  - **Solar integration**: Prioritize solar charging during outages (extend duration)
+
+  - **User education**: Train homeowner on load management, SOC monitoring
+
+
+  ## Integration
+
+
+  - **Home energy management**: Coordinate with smart thermostat, appliances (OpenHAB, Home Assistant)
+
+  - **Solar inverter**: Data sharing via Modbus or API (SolarEdge, Enphase)
+
+  - **Stationary battery**: Powerwall API for coordinated dispatch
+
+  - **Utility programs**: Demand response enrollment (earn incentives for peak shaving)
+
+
+  '
+constraints:
+- High installation cost ($5K-15K for ATS, electrical work, permitting)
+- Requires professional electrician and permit (not DIY)
+- Battery degradation from cycling (need compensation or battery warranty)
+- Limited availability of V2H-capable EVs and chargers (market growing)
+tools_required:
+- Bidirectional charger with V2H capability (Wallbox Quasar, Fermata, Dcbel)
+- Automatic transfer switch (Generac, Kohler, Eaton)
+- Critical loads panel and subpanel
+- Energy management system (custom or commercial HEMS)
+- Clamp-on power meter for load monitoring
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- charging-infrastructure
+- v2h
+- vehicle-to-home
+- backup-power
+- islanding
+- load-management
+- automotive

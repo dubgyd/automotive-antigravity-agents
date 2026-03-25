@@ -1,0 +1,313 @@
+name: predictive-shop-floor
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: predictive-analytics
+description: Expert skill in building predictive analytics systems for automotive shop floors that forecast equipment failures, quality deviations, throughput bottlenecks, and energy consumption using machine learning models trained on historical and real-time production data.
+use_cases:
+- Predictive maintenance forecasting remaining useful life of robot gearboxes and servo drives
+- Throughput prediction models identifying future bottlenecks before they materialize
+- Quality prediction correlating upstream process parameters with downstream defect rates
+- Energy consumption forecasting for demand response and peak load management
+- Tool wear prediction for press dies, welding electrodes, and cutting tools
+- Unplanned downtime prediction from vibration, temperature, and current signatures
+- Production schedule optimization based on predicted equipment availability
+- Spare parts demand forecasting from predictive maintenance alerts
+automotive_standards:
+- ISO 13381 Condition Monitoring and Diagnostics -- Prognostics
+- ISO 17359 Condition Monitoring and Diagnostics -- General Guidelines
+- ISO 10816 Mechanical Vibration Evaluation
+- VDI 3423 Availability of Machines and Production Lines
+- IATF 16949 (Preventive Maintenance Requirements)
+- ISO 55000 Asset Management
+- DIN 31051 Maintenance Terminology
+instructions: |
+
+  ## Overview
+
+  Predictive shop floor analytics transforms reactive maintenance and firefighting into
+  proactive, data-driven operations management. By applying machine learning to sensor
+  data, production logs, and quality records, manufacturing teams can forecast what will
+  happen on the shop floor hours, days, or weeks ahead -- enabling interventions before
+  problems impact production.
+
+  For automotive plants producing 1,000+ vehicles per day, even a 1% improvement in
+  unplanned downtime translates to 10+ additional vehicles per day. Predictive models
+  targeting the top failure modes of critical equipment deliver ROI within months, not
+  years.
+
+
+  ## Key Concepts
+
+  ### Predictive Analytics Maturity Levels
+
+  ```
+  Level 1: Descriptive    "What happened?"     (dashboards, reports)
+  Level 2: Diagnostic     "Why did it happen?"  (root cause analysis)
+  Level 3: Predictive     "What will happen?"   (ML forecasting)
+  Level 4: Prescriptive   "What should we do?"  (optimization + action)
+  ```
+
+  ### Key Prediction Targets
+
+  - **Remaining Useful Life (RUL)**: Time until equipment failure (hours/days)
+  - **Degradation Score**: 0-100% health indicator for gradual wear
+  - **Anomaly Probability**: Likelihood of abnormal behavior in next N cycles
+  - **Quality Risk Score**: Probability of defect based on current process state
+  - **Throughput Forecast**: Predicted output for next shift/day/week
+  - **Energy Demand**: Predicted kW consumption for next hours
+
+  ### Data Sources for Prediction
+
+  ```
+  Source                  Data Type              Sample Rate
+  =====================   ====================   ===========
+  Vibration sensors       Acceleration (g)       10 kHz
+  Current sensors         Motor amps             1 kHz
+  Temperature sensors     Bearing/gearbox C      1 Hz
+  PLC cycle data          Cycle time, counts     Per cycle
+  Quality measurements    SPC data, vision       Per part
+  MES logs                Status, alarms, OEE    Per event
+  Maintenance records     Work orders, parts      Per event
+  Energy meters           kW, kWh                15 min
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: Data Collection and Preparation
+
+  ```python
+  # Shop floor data pipeline
+  class ShopFloorDataPipeline:
+      def __init__(self, historian_url: str, mes_url: str):
+          self.historian = historian_url
+          self.mes = mes_url
+
+      def collect_equipment_data(self, equipment_id: str, window_days: int) -> dict:
+          """Collect and align multi-source data for ML model training."""
+          vibration = self.historian.query(
+              equipment_id, signal="vibration_rms", window_days=window_days, resample="1min"
+          )
+          temperature = self.historian.query(
+              equipment_id, signal="bearing_temp_c", window_days=window_days, resample="1min"
+          )
+          current = self.historian.query(
+              equipment_id, signal="motor_current_a", window_days=window_days, resample="1min"
+          )
+          failures = self.mes.query_work_orders(
+              equipment_id, type="breakdown", window_days=window_days
+          )
+          # Align timestamps and merge
+          merged = self.time_align_and_merge([vibration, temperature, current])
+          merged["failure_labels"] = self.label_pre_failure_windows(merged, failures, window_hours=24)
+          return merged
+  ```
+
+  ### Step 2: Feature Engineering
+
+  ```python
+  # Feature extraction for predictive maintenance
+  import numpy as np
+
+  class PdMFeatureEngineer:
+      def extract_features(self, raw_data: dict, window_size: int = 60) -> dict:
+          """Extract statistical and domain features from raw sensor data."""
+          features = {}
+          for signal_name, signal_data in raw_data.items():
+              if signal_name.startswith("_"):
+                  continue
+              window = signal_data[-window_size:]
+              features[f"{signal_name}_mean"] = np.mean(window)
+              features[f"{signal_name}_std"] = np.std(window)
+              features[f"{signal_name}_max"] = np.max(window)
+              features[f"{signal_name}_min"] = np.min(window)
+              features[f"{signal_name}_rms"] = np.sqrt(np.mean(np.square(window)))
+              features[f"{signal_name}_kurtosis"] = self.kurtosis(window)
+              features[f"{signal_name}_trend"] = np.polyfit(range(len(window)), window, 1)[0]
+              # Frequency domain features
+              fft = np.fft.rfft(window)
+              features[f"{signal_name}_peak_freq_hz"] = np.argmax(np.abs(fft))
+              features[f"{signal_name}_spectral_energy"] = np.sum(np.abs(fft) ** 2)
+          return features
+
+      def kurtosis(self, data):
+          n = len(data)
+          mean = np.mean(data)
+          std = np.std(data)
+          if std == 0:
+              return 0
+          return np.sum(((data - mean) / std) ** 4) / n - 3
+  ```
+
+  ### Step 3: Remaining Useful Life Model
+
+  ```python
+  # RUL prediction model
+  class RULPredictor:
+      def __init__(self, model_type: str = "gradient_boosting"):
+          self.model_type = model_type
+          self.model = None
+
+      def train(self, training_data, labels):
+          """Train RUL prediction model on historical run-to-failure data."""
+          from sklearn.ensemble import GradientBoostingRegressor
+          self.model = GradientBoostingRegressor(
+              n_estimators=300,
+              max_depth=6,
+              learning_rate=0.05,
+              loss="huber",
+          )
+          self.model.fit(training_data, labels)
+
+      def predict_rul(self, current_features: dict) -> dict:
+          """Predict remaining useful life from current sensor features."""
+          rul_hours = self.model.predict([list(current_features.values())])[0]
+          confidence = self.estimate_confidence(current_features)
+          return {
+              "predicted_rul_hours": max(0, round(rul_hours, 0)),
+              "confidence_pct": round(confidence * 100, 1),
+              "alert_level": self.classify_urgency(rul_hours),
+              "recommended_action": self.recommend_action(rul_hours),
+          }
+
+      def classify_urgency(self, rul_hours: float) -> str:
+          if rul_hours < 24:
+              return "critical"
+          elif rul_hours < 168:  # 1 week
+              return "warning"
+          elif rul_hours < 720:  # 1 month
+              return "plan"
+          return "normal"
+
+      def recommend_action(self, rul_hours: float) -> str:
+          if rul_hours < 24:
+              return "schedule_immediate_maintenance_next_shift_break"
+          elif rul_hours < 168:
+              return "schedule_maintenance_next_planned_downtime"
+          return "continue_monitoring"
+  ```
+
+  ### Step 4: Throughput Prediction
+
+  ```python
+  # Production throughput forecasting
+  class ThroughputForecaster:
+      def predict_shift_output(self, historical_data, current_state: dict) -> dict:
+          """Predict shift output based on current equipment state and history."""
+          base_capacity = historical_data["avg_vehicles_per_shift"]
+          adjustments = {
+              "equipment_health": self.equipment_factor(current_state["oee_current"]),
+              "quality_rate": current_state["quality_rate"],
+              "planned_downtime": 1 - (current_state["planned_stops_min"] / 480),
+              "model_mix": self.model_mix_factor(current_state["variant_schedule"]),
+          }
+          predicted = base_capacity
+          for factor_name, factor_value in adjustments.items():
+              predicted *= factor_value
+          return {
+              "predicted_output": round(predicted),
+              "confidence_interval": [round(predicted * 0.95), round(predicted * 1.05)],
+              "limiting_factor": min(adjustments, key=adjustments.get),
+              "suggested_action": self.suggest_improvement(adjustments),
+          }
+  ```
+
+  ### Step 5: Dashboard and Alerting
+
+  ```yaml
+  predictive_dashboard:
+    equipment_health_view:
+      - equipment_id: robot_cell_01
+        health_score: 87
+        rul_hours: 340
+        alert_level: plan
+        top_risk: gearbox_axis_2_vibration_trend
+    throughput_forecast:
+      - shift: day_shift_2026_03_19
+        predicted_output: 312
+        target: 320
+        gap_reason: paint_booth_3_color_change_delay
+    quality_prediction:
+      - station: weld_station_15
+        defect_risk_score: 0.15
+        risk_factor: electrode_wear_at_85pct
+        action: schedule_electrode_change_at_break
+    energy_forecast:
+      - period: next_4_hours
+        predicted_kw: 2850
+        peak_threshold_kw: 3000
+        action: stagger_press_line_starts
+  ```
+
+
+  ## Best Practices
+
+  - Start with equipment that has highest downtime cost and sufficient sensor data
+  - Require minimum 3 run-to-failure cycles for supervised RUL model training
+  - Use anomaly detection (unsupervised) when failure data is insufficient
+  - Validate model predictions against actual failures for at least 3 months before trusting
+  - Integrate predictive alerts with CMMS for automatic work order generation
+  - Retrain models quarterly as equipment ages and operating conditions change
+  - Show maintenance technicians the data behind predictions to build trust
+  - Track prediction accuracy KPIs: precision, recall, lead time of true positive alerts
+
+
+  ## Common Patterns
+
+  ### Predictive Maintenance Implementation Sequence
+
+  ```
+  Month 1-2:  Instrument top 10 critical machines with vibration and temperature
+  Month 3-4:  Collect baseline data, establish normal operating profiles
+  Month 5-6:  Train initial anomaly detection models (unsupervised)
+  Month 7-9:  Deploy alerts to maintenance team, collect feedback
+  Month 10-12: Train supervised RUL models as failure data accumulates
+  Year 2+:    Scale to 50+ machines, integrate with CMMS and scheduling
+  ```
+
+  ### Model Selection by Data Availability
+
+  ```
+  Data Availability         Recommended Model         Training Data
+  ====================      ====================      =============
+  Many run-to-failure       Gradient Boosting RUL     Labeled lifecycle data
+  Few failures, many sensors  Anomaly detection       Normal operation only
+  Time series patterns      LSTM / Temporal CNN       Sequential sensor data
+  Known physics model       Physics-informed ML       Hybrid simulation+data
+  No historical data        Rule-based thresholds     Expert knowledge
+  ```
+
+
+  ## Troubleshooting
+
+  - **Too many false alarms**: Increase alert threshold, require sustained anomaly signal
+  - **Missed failure prediction**: Check sensor coverage, add relevant signals
+  - **Model accuracy degrades over time**: Implement automated drift detection, schedule retraining
+  - **Insufficient failure data for training**: Use transfer learning from similar equipment types
+  - **Maintenance team ignores alerts**: Show prediction accuracy scorecard, reduce false positive rate
+  - **Data quality issues**: Validate sensor health, implement data quality checks in pipeline
+
+constraints:
+- Sufficient run-to-failure data needed for supervised RUL models (often scarce)
+- Sensor retrofit on legacy equipment may require downtime for installation
+- Model predictions are probabilistic, not deterministic -- false alarms will occur
+- IT/OT network integration requires cybersecurity review per IEC 62443
+tools_required:
+- Vibration monitoring (SKF, Bruel & Kjaer, ifm)
+- Data historians (OSIsoft PI, InfluxDB, TimescaleDB)
+- ML platforms (Databricks, AWS SageMaker, Azure ML)
+- CMMS integration (SAP PM, Maximo, Fiix)
+- Dashboard tools (Grafana, Power BI, Tableau)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- manufacturing
+- predictive-analytics
+- predictive-maintenance
+- machine-learning
+- shop-floor
+- automotive

@@ -1,0 +1,754 @@
+name: sotif-ml-safety-assurance
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: ml-safety
+description: ML model safety case for perception/planning, training data quality, model verification, performance monitoring, and concept drift detection.
+use_cases:
+- ML safety case development for SOTIF
+- Training data quality assurance
+- ML model verification and validation
+- Runtime monitoring for ML degradation
+- Concept drift detection and mitigation
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO/TR 4804 Safety of AI in Road Vehicles
+- UL 4600 Autonomous Systems Safety
+- ISO 26262-6 (Software Development)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in safety assurance for ML-based perception and planning in ADAS/AD systems, addressing unique SOTIF challenges of data-driven algorithms including training data coverage, out-of-distribution behavior, and concept drift.
+
+
+  ### ML Safety Challenges for SOTIF
+
+
+  **Training Data Limitations**:
+
+  - Underrepresented scenarios (long-tail distribution)
+
+  - Geographic bias (trained on California, deployed in Michigan)
+
+  - Temporal bias (summer data only, tested in winter)
+
+  - Annotation errors (ground truth inaccuracies)
+
+  - Sensor bias (training sensor vs deployment sensor mismatch)
+
+
+  **Model Behavior Uncertainty**:
+
+  - Out-of-distribution (OOD) inputs (novel scenarios not in training)
+
+  - Adversarial vulnerability (physical adversarial patches)
+
+  - False positives and false negatives (algorithm insufficiency)
+
+  - Overconfidence (high softmax probability on wrong prediction)
+
+  - Lack of interpretability (black-box decision-making)
+
+
+  **Deployment Challenges**:
+
+  - Concept drift (real-world distribution shifts over time)
+
+  - Performance degradation (sensor degradation, environmental changes)
+
+  - Continuous learning risks (updating model may introduce new failures)
+
+  - Verification complexity (billions of potential inputs)
+
+
+  ### Training Data Quality Assurance
+
+
+  **Coverage Analysis**:
+
+
+  ```python
+
+  import numpy as np
+
+  import pandas as pd
+
+  from sklearn.decomposition import PCA
+
+  import matplotlib.pyplot as plt
+
+
+  class TrainingDataCoverageAnalyzer:
+
+      """Analyze training data coverage for SOTIF"""
+
+
+      def __init__(self, training_data, validation_data):
+
+          """
+
+          Parameters:
+
+          - training_data: Features from training dataset
+
+          - validation_data: Features from validation/deployment dataset
+
+          """
+
+          self.training_data = training_data
+
+          self.validation_data = validation_data
+
+
+
+      def visualize_coverage(self):
+
+          """
+
+          Visualize training vs validation data in feature space using PCA
+
+          """
+
+          # Reduce to 2D for visualization
+
+          pca = PCA(n_components=2)
+
+          training_2d = pca.fit_transform(self.training_data)
+
+          validation_2d = pca.transform(self.validation_data)
+
+
+          plt.figure(figsize=(10, 6))
+
+          plt.scatter(training_2d[:, 0], training_2d[:, 1], alpha=0.5, label=''Training'', s=10)
+
+          plt.scatter(validation_2d[:, 0], validation_2d[:, 1], alpha=0.5, label=''Validation'', s=10)
+
+          plt.xlabel(''PC1'')
+
+          plt.ylabel(''PC2'')
+
+          plt.legend()
+
+          plt.title(''Training Data Coverage'')
+
+          plt.show()
+
+
+
+      def calculate_novelty_score(self):
+
+          """
+
+          Calculate novelty score for validation data (distance from training distribution)
+
+          """
+
+          from sklearn.neighbors import NearestNeighbors
+
+
+          # Fit nearest neighbor model on training data
+
+          nn = NearestNeighbors(n_neighbors=5)
+
+          nn.fit(self.training_data)
+
+
+          # Calculate distance to nearest training sample for each validation sample
+
+          distances, _ = nn.kneighbors(self.validation_data)
+
+          novelty_scores = distances.mean(axis=1)
+
+
+          return novelty_scores
+
+
+
+      def identify_underrepresented_scenarios(self, scenario_labels_training,
+
+                                               scenario_labels_validation):
+
+          """
+
+          Identify scenario categories underrepresented in training data
+
+          """
+
+          training_dist = pd.Series(scenario_labels_training).value_counts(normalize=True)
+
+          validation_dist = pd.Series(scenario_labels_validation).value_counts(normalize=True)
+
+
+          # Calculate coverage gap
+
+          gap = validation_dist - training_dist.reindex(validation_dist.index, fill_value=0)
+
+
+          underrepresented = gap[gap > 0.05].sort_values(ascending=False)  # 5% threshold
+
+
+          return underrepresented
+
+
+  # Example usage
+
+  # Assume features extracted from sensor data (e.g., scene embeddings)
+
+  training_features = np.random.randn(10000, 128)  # 10k training samples, 128-dim features
+
+  validation_features = np.random.randn(1000, 128) + 0.5  # Slight distribution shift
+
+
+  analyzer = TrainingDataCoverageAnalyzer(training_features, validation_features)
+
+
+  novelty_scores = analyzer.calculate_novelty_score()
+
+  print(f"Validation samples with high novelty (OOD): {(novelty_scores > 2.0).sum()}")
+
+  ```
+
+
+  **Data Quality Metrics**:
+
+  - Annotation accuracy (inter-annotator agreement, Kappa score)
+
+  - Scenario diversity (coverage of ODD parameter space)
+
+  - Long-tail representation (rare but critical scenarios)
+
+  - Sensor quality (resolution, noise, artifacts)
+
+  - Temporal coverage (time of day, season, weather)
+
+
+  ### Model Verification and Validation
+
+
+  **Test Set Curation**:
+
+  - OOD test set (scenarios outside training distribution)
+
+  - Corner case test set (challenging scenarios discovered through SOTIF analysis)
+
+  - Regression test set (ensure updates don''t break existing performance)
+
+  - Cross-domain test set (different geographic regions, sensors)
+
+
+  **Performance Metrics**:
+
+  - Precision, Recall, F1-score (object detection)
+
+  - Mean Average Precision (mAP) at IoU thresholds
+
+  - False positive rate (critical for SOTIF — phantom objects cause braking)
+
+  - False negative rate (critical for safety — missed objects cause collisions)
+
+  - Calibration error (does confidence reflect true probability?)
+
+
+  **Verification Testing**:
+
+
+  ```python
+
+  import torch
+
+  import torch.nn as nn
+
+
+  class MLModelVerifier:
+
+      """Verify ML model for SOTIF compliance"""
+
+
+      def __init__(self, model, test_dataset):
+
+          self.model = model
+
+          self.test_dataset = test_dataset
+
+
+
+      def evaluate_performance(self):
+
+          """
+
+          Evaluate model on test dataset
+
+          """
+
+          self.model.eval()
+
+          total_correct = 0
+
+          total_samples = 0
+
+          false_positives = 0
+
+          false_negatives = 0
+
+
+          with torch.no_grad():
+
+              for inputs, labels in self.test_dataset:
+
+                  outputs = self.model(inputs)
+
+                  predictions = outputs.argmax(dim=1)
+
+
+                  total_correct += (predictions == labels).sum().item()
+
+                  total_samples += labels.size(0)
+
+
+                  # FP/FN analysis (assuming binary classification for simplicity)
+
+                  false_positives += ((predictions == 1) & (labels == 0)).sum().item()
+
+                  false_negatives += ((predictions == 0) & (labels == 1)).sum().item()
+
+
+          accuracy = total_correct / total_samples
+
+          fp_rate = false_positives / total_samples
+
+          fn_rate = false_negatives / total_samples
+
+
+          return {
+
+              "accuracy": accuracy,
+
+              "false_positive_rate": fp_rate,
+
+              "false_negative_rate": fn_rate
+
+          }
+
+
+
+      def test_adversarial_robustness(self, epsilon=0.03):
+
+          """
+
+          Test model robustness to adversarial perturbations
+
+          """
+
+          from torchattacks import FGSM
+
+
+          attack = FGSM(self.model, eps=epsilon)
+
+          total_samples = 0
+
+          adversarial_failures = 0
+
+
+          for inputs, labels in self.test_dataset:
+
+              adv_inputs = attack(inputs, labels)
+
+              outputs = self.model(adv_inputs)
+
+              predictions = outputs.argmax(dim=1)
+
+
+              adversarial_failures += (predictions != labels).sum().item()
+
+              total_samples += labels.size(0)
+
+
+          robustness = 1 - (adversarial_failures / total_samples)
+
+          return robustness
+
+
+
+      def measure_uncertainty(self):
+
+          """
+
+          Measure model uncertainty using dropout Monte Carlo
+
+          """
+
+          self.model.train()  # Enable dropout
+
+          num_samples = 20
+
+          uncertainties = []
+
+
+          for inputs, labels in self.test_dataset:
+
+              predictions = []
+
+
+              # Multiple forward passes with dropout
+
+              for _ in range(num_samples):
+
+                  with torch.no_grad():
+
+                      outputs = self.model(inputs)
+
+                      probabilities = torch.softmax(outputs, dim=1)
+
+                      predictions.append(probabilities)
+
+
+              # Calculate variance (uncertainty)
+
+              predictions = torch.stack(predictions)
+
+              uncertainty = predictions.var(dim=0).mean(dim=1)
+
+              uncertainties.extend(uncertainty.tolist())
+
+
+          return uncertainties
+
+  ```
+
+
+  ### Runtime Monitoring
+
+
+  **OOD Detection**:
+
+
+  ```python
+
+  class RuntimeOODMonitor:
+
+      """Detect out-of-distribution inputs at runtime"""
+
+
+      def __init__(self, model, training_statistics):
+
+          """
+
+          Parameters:
+
+          - training_statistics: Mean and covariance of training feature distribution
+
+          """
+
+          self.model = model
+
+          self.training_mean = training_statistics[''mean'']
+
+          self.training_cov = training_statistics[''covariance'']
+
+
+
+      def detect_ood_mahalanobis(self, input_data):
+
+          """
+
+          Detect OOD using Mahalanobis distance
+
+          """
+
+          # Extract features from input
+
+          with torch.no_grad():
+
+              features = self.model.extract_features(input_data)
+
+
+          # Calculate Mahalanobis distance
+
+          diff = features - self.training_mean
+
+          inv_cov = torch.inverse(self.training_cov)
+
+          mahalanobis_dist = torch.sqrt(diff @ inv_cov @ diff.T)
+
+
+          # Threshold (calibrated on validation set)
+
+          ood_threshold = 3.0  # Example threshold
+
+
+          is_ood = mahalanobis_dist > ood_threshold
+
+
+          return is_ood, mahalanobis_dist.item()
+
+
+
+      def monitor_prediction_confidence(self, input_data):
+
+          """
+
+          Monitor prediction confidence (low confidence indicates uncertainty)
+
+          """
+
+          with torch.no_grad():
+
+              output = self.model(input_data)
+
+              probabilities = torch.softmax(output, dim=1)
+
+              max_prob, predicted_class = torch.max(probabilities, dim=1)
+
+
+          # Low confidence threshold
+
+          confidence_threshold = 0.7
+
+
+          is_uncertain = max_prob < confidence_threshold
+
+
+          return is_uncertain, max_prob.item(), predicted_class.item()
+
+  ```
+
+
+  **Concept Drift Detection**:
+
+
+  ```python
+
+  from scipy.stats import ks_2samp
+
+
+  class ConceptDriftDetector:
+
+      """Detect concept drift in deployed ML model"""
+
+
+      def __init__(self, baseline_data):
+
+          """
+
+          Parameters:
+
+          - baseline_data: Feature distribution from training/validation
+
+          """
+
+          self.baseline_data = baseline_data
+
+
+
+      def detect_drift_ks_test(self, current_data, significance=0.05):
+
+          """
+
+          Detect distribution shift using Kolmogorov-Smirnov test
+
+          """
+
+          drift_detected = False
+
+
+          # Compare each feature dimension
+
+          for i in range(self.baseline_data.shape[1]):
+
+              statistic, p_value = ks_2samp(self.baseline_data[:, i], current_data[:, i])
+
+
+              if p_value < significance:
+
+                  drift_detected = True
+
+                  break
+
+
+          return drift_detected
+
+
+
+      def detect_drift_performance(self, current_accuracy, baseline_accuracy,
+
+                                    threshold=0.05):
+
+          """
+
+          Detect drift based on performance degradation
+
+          """
+
+          performance_drop = baseline_accuracy - current_accuracy
+
+
+          drift_detected = performance_drop > threshold
+
+
+          return drift_detected, performance_drop
+
+  ```
+
+
+  ### ML Safety Case Structure
+
+
+  **Claims**:
+
+  1. Training data covers relevant ODD scenarios
+
+  2. Model achieves acceptable performance on test set
+
+  3. Model is robust to OOD and adversarial inputs
+
+  4. Runtime monitoring detects degradation
+
+  5. Continuous improvement process in place
+
+
+  **Evidence**:
+
+  - Training data coverage analysis
+
+  - Test set performance metrics (precision, recall, F1)
+
+  - Adversarial robustness test results
+
+  - OOD detection validation
+
+  - Concept drift monitoring plan
+
+
+  **Arguments**:
+
+  - Training data representative → Model learns correct patterns
+
+  - Test performance acceptable → Model generalizes to deployment
+
+  - OOD monitoring active → Novel scenarios flagged for review
+
+  - Concept drift detection → Performance degradation caught early
+
+
+  ## Deliverables
+
+
+  - ML safety case document
+
+  - Training data coverage analysis report
+
+  - Model verification test results (performance, robustness, uncertainty)
+
+  - Runtime monitoring architecture (OOD detection, concept drift)
+
+  - Continuous improvement process (retraining strategy, A/B testing)
+
+  - Traceability: Training data → Model → Test results → Safety requirements
+
+
+  ## Best Practices
+
+
+  - Curate diverse training data (cover ODD parameter space)
+
+  - Use multiple test sets (in-distribution, OOD, adversarial)
+
+  - Quantify model uncertainty (Bayesian NNs, dropout Monte Carlo)
+
+  - Implement runtime OOD detection (do not trust all predictions equally)
+
+  - Monitor for concept drift (distribution shift over time)
+
+  - Plan for continuous learning (safe retraining and deployment)
+
+  - Use interpretability tools where possible (Grad-CAM, LIME)
+
+  - Red team adversarial testing (dedicated team tries to fool model)
+
+
+  ## ISO/TR 4804 Recommendations
+
+
+  - Data quality management (annotation, diversity, bias)
+
+  - Model development process (training, validation, verification)
+
+  - Deployment monitoring (OOD, drift, performance)
+
+  - Update management (retraining, A/B testing, rollback)
+
+  - Safety argumentation (claims, evidence, arguments)
+
+
+  ## Tools
+
+
+  - **Training**: PyTorch, TensorFlow, Keras
+
+  - **Data management**: Roboflow, Scale AI, Label Studio
+
+  - **Adversarial testing**: Foolbox, CleverHans, Adversarial Robustness Toolbox
+
+  - **Monitoring**: Weights & Biases, MLflow, Evidently AI
+
+  - **Interpretability**: Captum, LIME, SHAP
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Training Data** → Cover triggering conditions from SOTIF analysis
+
+  2. **Model Verification** → Test on known unsafe scenarios (Area 2)
+
+  3. **OOD Detection** → Flag potential Area 3 scenarios at runtime
+
+  4. **Field Monitoring** → Discover concept drift, update model
+
+  5. **Continuous Improvement** → Retrain with field data, close SOTIF loop
+
+
+  ## Common Pitfalls
+
+
+  - Insufficient training data diversity (missing edge cases)
+
+  - Overconfidence in model (not quantifying uncertainty)
+
+  - No runtime OOD detection (model used outside training distribution)
+
+  - Ignoring concept drift (performance degrades over time)
+
+  - No rollback plan for model updates (unsafe retraining)
+
+  - Black-box models without interpretability (difficult to debug failures)
+
+  '
+constraints:
+- Training data never fully represents real world
+- Model verification combinatorially explosive
+- OOD detection has false positives (conservative vs permissive tradeoff)
+- Concept drift detection requires baseline data
+tools_required:
+- ML frameworks (PyTorch, TensorFlow)
+- Data management platforms
+- Adversarial testing libraries
+- Monitoring and observability tools
+- Safety case management tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- ml-safety
+- training-data
+- model-verification
+- ood-detection
+- concept-drift
+- adversarial-robustness
+- safety-case

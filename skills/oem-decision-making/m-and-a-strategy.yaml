@@ -1,0 +1,160 @@
+name: m-and-a-strategy
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: m_and_a_strategy
+description: Acquisition target identification, due diligence process, post-merger integration for automotive tech
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Mergers and acquisitions strategy in the automotive industry has intensified as OEMs and Tier-1 suppliers
+  seek to rapidly acquire capabilities in electrification, autonomous driving, software, and connected
+  services. Traditional automotive M&A focused on scale and geographic expansion; modern automotive M&A
+  is driven by technology gap-filling and talent acquisition. This skill covers target identification and
+  screening, valuation methodologies, due diligence processes, deal structuring, post-merger integration
+  (PMI), and portfolio rationalization for automotive companies.
+
+  ## Key Concepts
+
+  ### M&A Strategic Rationales in Automotive
+  - **Technology acquisition**: Buy capabilities faster than build (ADAS, battery, software, AI/ML)
+  - **Vertical integration**: Secure supply chain for critical components (cells, semiconductors, sensors)
+  - **Scale synergies**: Manufacturing footprint consolidation, purchasing power, R&D amortization
+  - **Market access**: Geographic expansion through local OEM or distributor acquisition
+  - **Talent acquisition (acqui-hire)**: Buy companies primarily for engineering talent in scarce domains
+  - **Portfolio transformation**: Divest ICE assets, acquire EV and mobility capabilities
+
+  ### Valuation Methodologies
+  - **Discounted Cash Flow (DCF)**: Intrinsic value based on projected free cash flows and WACC
+  - **Comparable company analysis**: EV/EBITDA, P/E, EV/Revenue multiples from public peers
+  - **Precedent transaction analysis**: Multiples paid in recent comparable automotive M&A deals
+  - **Sum-of-the-parts (SOTP)**: Separate valuation for distinct business units (ICE, EV, software)
+  - **Technology-specific metrics**: Value per engineer (acqui-hire), $/patent (IP), $/GWh (battery)
+  - **Synergy valuation**: Present value of identified cost and revenue synergies net of integration costs
+
+  ### Due Diligence Workstreams
+  - **Financial DD**: Historical financials, quality of earnings, working capital, tax, pensions
+  - **Commercial DD**: Market position, customer concentration, pipeline, competitive dynamics
+  - **Technical DD**: Technology maturity (TRL), IP quality, technical debt, architecture assessment
+  - **Operational DD**: Manufacturing capabilities, supply chain, capacity utilization, quality metrics
+  - **Legal DD**: Contracts, litigation, regulatory compliance, employment obligations
+  - **ESG DD**: Environmental liabilities, social compliance, governance quality
+  - **Cybersecurity DD**: Security posture, vulnerability history, compliance with ISO 21434/UN R155
+
+  ## Implementation Guide
+
+  ### Step 1: Target Identification and Screening
+  - Define strategic acquisition criteria aligned with corporate technology roadmap gaps
+  - Build long-list of 50-100 potential targets through market mapping and technology scouting
+  - Apply quantitative screening filters: size, geography, technology fit, financial health
+  - Narrow to short-list of 5-10 targets with preliminary strategic fit assessment
+
+  ### Step 2: Valuation and Approach
+  - Develop standalone valuation using multiple methodologies (DCF, comparables, precedent)
+  - Model synergy scenarios: conservative (achievable in year 1-2), stretch (year 3-5)
+  - Define acceptable price range with walk-away threshold approved by board
+  - Initiate confidential approach to target management or shareholders
+
+  ### Step 3: Due Diligence and Deal Execution
+  - Conduct comprehensive due diligence across all workstreams (typically 6-12 weeks)
+  - Identify deal-breakers, value adjustments, and integration risks during DD
+  - Negotiate purchase agreement with appropriate representations, warranties, and indemnities
+  - Obtain regulatory approvals: antitrust (EU Commission, DOJ/FTC), foreign investment (CFIUS), sector
+
+  ### Step 4: Post-Merger Integration (PMI)
+  - Launch Day 1 readiness program 60-90 days before closing with detailed integration plan
+  - Establish Integration Management Office (IMO) with dedicated full-time leadership
+  - Execute integration in waves: immediate (legal, finance, IT), medium-term (operations), long-term (culture)
+  - Track synergy realization with monthly reporting to executive steering committee
+
+  ## Decision Frameworks
+
+  ### Acquisition vs. Alternatives Decision
+  | Criterion | Acquire | JV/Partnership | License | Build Internally |
+  |-----------|---------|---------------|---------|-----------------|
+  | Time to capability | Fast (months) | Medium (1-2 years) | Fast | Slow (3-5 years) |
+  | Capital required | Very high | Shared | Low | High over time |
+  | Control over IP | Full | Shared | Limited | Full |
+  | Integration risk | High | Medium | Low | None |
+  | Cultural risk | High | Medium | None | None |
+  | Talent retention risk | High | Low | N/A | N/A |
+
+  ### Target Evaluation Scorecard
+  - **Strategic fit (25%)**: Technology relevance, portfolio complementarity, customer overlap
+  - **Technology quality (20%)**: IP strength, TRL maturity, engineering team depth
+  - **Financial attractiveness (20%)**: Valuation relative to intrinsic value, synergy potential
+  - **Integration feasibility (15%)**: Cultural compatibility, systems compatibility, geographic fit
+  - **Risk profile (10%)**: Legal exposure, customer concentration, key person dependency
+  - **ESG alignment (10%)**: Environmental liabilities, governance quality, social compliance
+
+  ### PMI Value Capture Framework
+  - **Quick wins (0-100 days)**: Procurement synergies, duplicate cost elimination, organizational clarity
+  - **Medium-term (100 days - 1 year)**: System integration, product portfolio rationalization, cross-selling
+  - **Long-term (1-3 years)**: Technology integration, culture alignment, full operational synergies
+  - **Track record**: Only 40-60% of automotive M&A achieves projected synergies; plan conservatively
+
+  ## Best Practices
+
+  - Start PMI planning during due diligence, not after deal close
+  - Retain key talent with structured retention packages tied to integration milestones (18-36 months)
+  - Prioritize speed of integration for customer-facing and revenue-generating functions
+  - Maintain operating performance of both businesses during integration (avoid "integration distraction")
+  - Assign dedicated integration team that is not simultaneously running day-to-day operations
+  - Communicate early and often with employees, customers, and suppliers of both organizations
+  - Model realistic synergy timelines: cost synergies typically take 18-24 months, revenue synergies 24-36
+  - Conduct rigorous technology due diligence with independent technical experts, not just financial advisors
+  - Have clear walk-away criteria and discipline to abandon overpriced deals despite strategic attractiveness
+  - Review cultural compatibility early; cultural misalignment is the top reason automotive M&A fails
+
+  ## Examples
+
+  ### Example 1: ADAS Software Company Acquisition
+  An OEM acquires a 300-person ADAS startup for 800M EUR (12x revenue). Strategic rationale: close 3-year
+  gap in L3 highway pilot capability. DD reveals strong perception algorithms but weak systems integration.
+  PMI plan: integrate ADAS team into OEM software division, retain CTO and key architects with 3-year
+  packages, sunset startup's proprietary middleware in favor of OEM vehicle OS. Synergy target: avoid
+  500M EUR in alternative internal development costs over 5 years.
+
+  ### Example 2: Tier-1 Supplier Consolidation
+  Two mid-size Tier-1 suppliers merge to achieve scale in power electronics. Combined entity: 4B EUR
+  revenue, 25% global market share. Key synergies: 150M EUR annual procurement savings, 80M EUR from
+  plant rationalization (close 2 of 8 plants), 40M EUR from shared R&D platforms. Integration timeline:
+  3 years. Antitrust: EU Commission approval with remedy (divest one product line to maintain competition).
+
+  ### Example 3: Portfolio Transformation Divestiture
+  An OEM divests ICE powertrain division (engines, transmissions) to a PE firm for 3B EUR. Rationale:
+  free capital for EV investment, shed declining ICE R&D obligations, simplify organization. Carve-out
+  complexity: 8,000 employees, 4 plants, shared engineering resources require transition service
+  agreements (TSAs) for 24 months. Proceeds reinvested into battery gigafactory and software center.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- m-and-a-strategy
+- automotive
+- oem

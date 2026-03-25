@@ -1,0 +1,155 @@
+name: digital-cockpit-integration
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Seamless multi-screen ecosystem design for next-generation digital cockpits, covering cross-display rendering, domain controllers, and unified HMI frameworks."
+use_cases:
+  - "Designing unified multi-display architectures with shared rendering pipelines"
+  - "Implementing cross-screen content migration and drag-and-drop interactions"
+  - "Configuring cockpit domain controllers for centralized display management"
+  - "Building adaptive layout engines that respond to driving mode transitions"
+  - "Integrating instrument cluster, CID, and passenger displays into a single UX"
+automotive_standards:
+  - "AUTOSAR Adaptive Platform for cockpit domain controllers"
+  - "GENIVI Alliance Display Manager specifications"
+  - "ISO 15005 - Ergonomic aspects of transport information and control systems"
+  - "Google Built-in and Apple CarPlay HMI integration guidelines"
+  - "MISRA C++ for safety-critical rendering paths"
+instructions: |
+  # Digital Cockpit Integration
+
+  ## Overview
+  Modern vehicles feature three to five interconnected displays forming a seamless digital
+  cockpit. This skill covers the architecture, protocols, and best practices for building
+  a unified multi-screen ecosystem that delivers a coherent user experience across
+  instrument cluster, central information display, head-up display, passenger screen,
+  and rear-seat entertainment panels.
+
+  ## Key Concepts
+
+  ### Cockpit Domain Controller (CDC)
+  A high-performance SoC (e.g., Qualcomm SA8295P, Samsung Exynos Auto V920) that drives
+  all displays from a single compute platform. The CDC runs multiple virtual machines or
+  containers, each owning a display output:
+  - Safety VM for instrument cluster (ASIL-B rated)
+  - Android Automotive VM for infotainment
+  - RTOS partition for HUD rendering with strict latency budgets
+
+  ### Cross-Display Rendering Pipeline
+  Shared GPU resources managed through a hypervisor compositor:
+  - Surface flinger or Wayland compositor routes surfaces to physical outputs
+  - Priority-based rendering ensures cluster frames are never dropped
+  - Shared texture memory allows zero-copy content migration between screens
+
+  ### Unified HMI Framework
+  A single UI toolkit (e.g., Qt for MCU, Kanzi, EB GUIDE) renders across all displays:
+  - Responsive layouts adapt to different screen sizes and resolutions
+  - Theme engine applies consistent styling, colors, and typography
+  - Animation framework synchronizes transitions across display boundaries
+
+  ## Implementation Guide
+
+  ### Step 1 - Define Display Topology
+  Map every physical display with its resolution, refresh rate, color gamut, and viewing
+  angle. Create a display manifest file consumed by the compositor:
+  - Cluster display typically runs at 60 Hz with ASIL-B safety constraints
+  - CID runs at 60-120 Hz for smooth touch interaction
+  - HUD renders at 60 Hz minimum with sub-10 ms latency requirement
+
+  ### Step 2 - Configure the Hypervisor Layer
+  Use a Type-1 hypervisor (QNX, ACRN, Xen) to partition GPU resources:
+  - Assign dedicated GPU contexts per VM
+  - Configure shared memory regions for cross-VM surface passing
+  - Set scheduling priorities so cluster VM preempts infotainment VM
+
+  ### Step 3 - Implement the Compositor
+  Build or configure a multi-display compositor:
+  - Register each display as an output with its transform matrix
+  - Implement surface routing rules based on application ID and display target
+  - Add a cross-display gesture handler for drag operations spanning screens
+
+  ### Step 4 - Build Adaptive Layouts
+  Design layouts that restructure based on driving mode:
+  - Drive mode prioritizes navigation and vehicle status on cluster
+  - Park mode expands media and comfort controls across all screens
+  - Autonomous mode transforms the cockpit into a lounge configuration
+
+  ### Step 5 - Integrate Smartphone Projection
+  Support both Android Auto and Apple CarPlay within the multi-display framework:
+  - Dedicate a rendering surface for projection protocols
+  - Route audio through the vehicle audio manager
+  - Handle input events through the projection SDK touchpad API
+
+  ## Best Practices
+
+  ### Performance Budgets
+  - Cluster rendering must complete within 16 ms per frame with no frame drops
+  - Touch-to-photon latency must stay below 100 ms for perceived responsiveness
+  - Cross-screen animations should maintain 60 fps on both source and target displays
+  - GPU memory allocation should reserve 30% headroom for burst workloads
+
+  ### Safety Isolation
+  - Cluster VM must continue rendering even if infotainment VM crashes
+  - Implement a watchdog that restarts failed VMs without affecting others
+  - Use hardware-enforced memory protection between safety and non-safety domains
+  - Test failover scenarios where the CDC reboots into a safe-state display
+
+  ### UX Coherence
+  - Maintain consistent interaction paradigms across all screens
+  - Use a shared design system with tokens for color, spacing, and motion
+  - Ensure font rendering is identical across all display outputs
+  - Synchronize day/night mode transitions across every screen simultaneously
+
+  ## Troubleshooting
+
+  ### Display Tearing or Frame Drops
+  Check that vsync is enabled on all display outputs. Verify GPU scheduling priorities
+  are correctly assigned in the hypervisor configuration. Monitor GPU utilization to
+  ensure no single VM is starving others.
+
+  ### Cross-Screen Drag Feels Laggy
+  Measure the inter-VM communication latency for surface handoff. Shared memory regions
+  with zero-copy semantics should yield sub-5 ms handoff times. If using socket-based
+  IPC, migrate to shared memory.
+
+  ### Inconsistent Theme Across Displays
+  Verify the theme engine is loading the same asset bundle version on all VMs. Check
+  that color profiles are calibrated identically for each physical panel. Use a
+  centralized theme server that pushes updates atomically to all displays.
+
+  ### Smartphone Projection Not Rendering
+  Confirm the USB or Wi-Fi link is established before the projection surface is created.
+  Check that the audio routing table includes the projection source. Verify the video
+  codec negotiation succeeded by inspecting projection protocol logs.
+
+  ## Integration Patterns
+
+  ### Multi-VM Communication
+  Inter-VM communication for cross-display features requires careful design:
+  - Use shared memory with explicit ownership transfer for frame buffer passing
+  - Implement a publish-subscribe message bus for UI events across VMs
+  - Define a protocol buffer schema for cross-display notifications and commands
+  - Monitor IPC latency continuously and alert if it exceeds the 5 ms budget
+
+  ### OTA Update Strategy
+  Updating a multi-VM cockpit system requires coordinated deployment:
+  - Stage updates to all VMs before activating any single update
+  - Implement A/B partition schemes independently per VM for rollback capability
+  - Validate display output after each VM update before proceeding to the next
+  - Never update the safety VM and infotainment VM in the same maintenance window
+
+  ## Testing and Validation
+
+  ### Display Latency Measurement
+  Verify timing requirements with instrumented test setups:
+  - Use a photodiode on the display surface triggered by a touch event to measure latency
+  - Capture cross-screen animation timing with a high-speed camera at 240 fps
+  - Measure GPU render time per frame using vendor profiling tools
+  - Validate frame drop rates over 24-hour continuous operation stress tests
+
+  ### Failover Testing
+  Verify safety isolation through systematic fault injection:
+  - Kill the infotainment VM process and verify cluster continues uninterrupted
+  - Corrupt shared memory regions and confirm safety island takes over rendering
+  - Simulate GPU hang conditions and measure recovery time to safe-state display
+  - Test simultaneous failure of multiple non-safety VMs under high CPU load

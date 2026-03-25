@@ -1,0 +1,586 @@
+name: sotif-field-monitoring
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: validation
+description: Post-deployment monitoring, event recording, fleet data analysis, and continuous SOTIF improvement loop for deployed systems.
+use_cases:
+- Fleet data collection and analysis
+- Disengagement pattern identification
+- Near-miss event detection
+- Continuous SOTIF improvement post-deployment
+- Safety performance monitoring
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-8 (Supporting Processes)
+- UN ECE R157 (ALKS Software Update)
+- GDPR (Data Privacy)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in post-deployment field monitoring for SOTIF, analyzing fleet data to discover unknown unsafe scenarios (Area 3), validate residual risk assumptions, and enable continuous safety improvement.
+
+
+  ### Field Monitoring Objectives
+
+
+  **Primary Goals**:
+
+  - Discover new Area 3 scenarios (unknown unsafe) not identified during validation
+
+  - Validate residual risk assumptions from Area 4 analysis
+
+  - Monitor system performance degradation over time
+
+  - Identify emerging misuse patterns
+
+  - Support continuous improvement (software updates)
+
+
+  **Key Metrics**:
+
+  - Disengagement rate (safety driver takeovers per million km)
+
+  - Critical event rate (TTC < threshold, hard braking, lane departure)
+
+  - ODD exit frequency (how often system leaves operational domain)
+
+  - System availability (percentage of time system can operate)
+
+  - Misuse incidents (hands-off duration, eyes-off duration)
+
+
+  ### Data Collection Architecture
+
+
+  **Event Data Recorder (EDR)**:
+
+  - Pre-crash data (5-10s before event)
+
+  - Crash data (accelerometer, airbag deployment)
+
+  - Post-crash data (2-3s after event)
+
+  - Mandatory in many jurisdictions (US, EU)
+
+
+  **Autonomous System Data Logger**:
+
+  - Sensor data (camera images, lidar point clouds, radar tracks)
+
+  - Perception outputs (object detections, classifications, tracks)
+
+  - Planning decisions (trajectory, speed, lane change intent)
+
+  - Control commands (steering, throttle, brake)
+
+  - System state (ODD status, warnings, disengagements)
+
+
+  **Triggering Conditions**:
+
+  - Disengagement (driver takeover)
+
+  - Near-miss (TTC < 2.5s, hard braking > 0.5g)
+
+  - ODD exit (system deactivation due to conditions)
+
+  - Sensor fault or degradation
+
+  - Misuse detection (driver monitoring alerts)
+
+
+  **Privacy Considerations**:
+
+  - Anonymize personally identifiable information (PII)
+
+  - Aggregate data before transmission (privacy-preserving)
+
+  - Comply with GDPR, CCPA (data protection regulations)
+
+  - User consent for data collection
+
+
+  ### Fleet Data Analysis Pipeline
+
+
+  ```python
+
+  import pandas as pd
+
+  import numpy as np
+
+  from sklearn.cluster import DBSCAN
+
+
+  class FleetDataAnalyzer:
+
+      """Analyze fleet data to identify safety-critical patterns"""
+
+
+      def __init__(self, fleet_data_df):
+
+          """
+
+          Parameters:
+
+          - fleet_data_df: DataFrame with columns [timestamp, vehicle_id, event_type,
+
+                           ego_speed, ttc, weather, location, ...]
+
+          """
+
+          self.data = fleet_data_df
+
+
+
+      def calculate_disengagement_rate(self):
+
+          """
+
+          Calculate disengagement rate per million km
+
+          """
+
+          total_km = self.data[''distance_km''].sum()
+
+          num_disengagements = len(self.data[self.data[''event_type''] == ''disengagement''])
+
+
+          rate = (num_disengagements / total_km) * 1e6  # per million km
+
+          return rate
+
+
+
+      def identify_near_miss_events(self, ttc_threshold=2.5):
+
+          """
+
+          Extract near-miss events (TTC below threshold)
+
+          """
+
+          near_misses = self.data[
+
+              (self.data[''ttc''] < ttc_threshold) &
+
+              (self.data[''ttc''] > 0)
+
+          ]
+
+          return near_misses
+
+
+
+      def cluster_disengagement_scenarios(self):
+
+          """
+
+          Use clustering to identify common disengagement patterns
+
+          """
+
+          # Extract features for clustering
+
+          disengagements = self.data[self.data[''event_type''] == ''disengagement'']
+
+
+          features = disengagements[[
+
+              ''ego_speed'', ''ttc'', ''road_curvature'', ''weather_code'', ''time_of_day''
+
+          ]].values
+
+
+          # DBSCAN clustering
+
+          clustering = DBSCAN(eps=0.5, min_samples=5).fit(features)
+
+          disengagements[''cluster''] = clustering.labels_
+
+
+          # Analyze clusters
+
+          cluster_summary = disengagements.groupby(''cluster'').agg({
+
+              ''vehicle_id'': ''count'',
+
+              ''ego_speed'': ''mean'',
+
+              ''ttc'': ''mean'',
+
+              ''weather_code'': lambda x: x.mode()[0] if len(x) > 0 else None
+
+          })
+
+
+          return cluster_summary
+
+
+
+      def detect_performance_degradation(self, window_days=30):
+
+          """
+
+          Detect if system performance is degrading over time
+
+          """
+
+          self.data[''date''] = pd.to_datetime(self.data[''timestamp'']).dt.date
+
+
+          # Calculate rolling disengagement rate
+
+          daily_stats = self.data.groupby(''date'').agg({
+
+              ''event_type'': lambda x: (x == ''disengagement'').sum(),
+
+              ''distance_km'': ''sum''
+
+          })
+
+
+          daily_stats[''disengagement_rate''] = (
+
+              daily_stats[''event_type''] / daily_stats[''distance_km'']
+
+          ) * 1e6
+
+
+          rolling_avg = daily_stats[''disengagement_rate''].rolling(window=window_days).mean()
+
+
+          # Check for upward trend (degradation)
+
+          recent_avg = rolling_avg.iloc[-30:].mean()
+
+          baseline_avg = rolling_avg.iloc[:90].mean()
+
+
+          degradation = (recent_avg - baseline_avg) / baseline_avg
+
+
+          return {
+
+              "recent_avg": recent_avg,
+
+              "baseline_avg": baseline_avg,
+
+              "degradation_percent": degradation * 100
+
+          }
+
+
+
+      def analyze_odd_exits(self):
+
+          """
+
+          Analyze reasons for ODD exits
+
+          """
+
+          odd_exits = self.data[self.data[''event_type''] == ''odd_exit'']
+
+
+          exit_reasons = odd_exits[''exit_reason''].value_counts()
+
+
+          return exit_reasons
+
+
+  # Example usage
+
+  fleet_data = pd.DataFrame({
+
+      ''timestamp'': pd.date_range(''2026-01-01'', periods=10000, freq=''H''),
+
+      ''vehicle_id'': np.random.randint(1, 100, 10000),
+
+      ''event_type'': np.random.choice([''disengagement'', ''near_miss'', ''odd_exit'', ''normal''],
+
+                                       10000, p=[0.01, 0.02, 0.05, 0.92]),
+
+      ''distance_km'': np.random.uniform(50, 200, 10000),
+
+      ''ego_speed'': np.random.uniform(60, 120, 10000),
+
+      ''ttc'': np.random.uniform(1, 10, 10000),
+
+      ''road_curvature'': np.random.uniform(0, 0.01, 10000),
+
+      ''weather_code'': np.random.choice([0, 1, 2], 10000),  # 0=clear, 1=rain, 2=fog
+
+      ''time_of_day'': np.random.uniform(0, 24, 10000),
+
+      ''exit_reason'': np.random.choice([''rain'', ''fog'', ''sensor_fault'', ''none''], 10000)
+
+  })
+
+
+  analyzer = FleetDataAnalyzer(fleet_data)
+
+
+  disengage_rate = analyzer.calculate_disengagement_rate()
+
+  print(f"Disengagement rate: {disengage_rate:.2f} per million km")
+
+
+  near_misses = analyzer.identify_near_miss_events(ttc_threshold=2.5)
+
+  print(f"Near-miss events: {len(near_misses)}")
+
+
+  clusters = analyzer.cluster_disengagement_scenarios()
+
+  print(f"Disengagement clusters:\\n{clusters}")
+
+
+  degradation = analyzer.detect_performance_degradation()
+
+  print(f"Performance degradation: {degradation[''degradation_percent'']:.1f}%")
+
+  ```
+
+
+  ### Shadow Mode Testing
+
+
+  **Concept**:
+
+  - Deploy new software version in parallel with production version
+
+  - New version does not control vehicle (shadow mode)
+
+  - Compare decisions between versions
+
+  - Flag divergences for investigation
+
+
+  ```python
+
+  class ShadowModeTester:
+
+      """Compare production and shadow algorithm outputs"""
+
+
+      def __init__(self):
+
+          self.divergences = []
+
+
+
+      def compare_outputs(self, production_output, shadow_output, scenario):
+
+          """
+
+          Compare production vs shadow decisions
+
+          """
+
+          # Check for significant divergence
+
+          steering_diff = abs(production_output[''steering_angle''] -
+
+                              shadow_output[''steering_angle''])
+
+          speed_diff = abs(production_output[''target_speed''] -
+
+                           shadow_output[''target_speed''])
+
+
+          if steering_diff > 5.0 or speed_diff > 10.0:  # Thresholds
+
+              self.divergences.append({
+
+                  ''scenario'': scenario,
+
+                  ''production'': production_output,
+
+                  ''shadow'': shadow_output,
+
+                  ''steering_diff'': steering_diff,
+
+                  ''speed_diff'': speed_diff
+
+              })
+
+
+
+      def get_divergence_report(self):
+
+          """Generate report on divergences"""
+
+          return pd.DataFrame(self.divergences)
+
+  ```
+
+
+  ### Continuous Improvement Loop
+
+
+  **Process**:
+
+  1. **Monitor**: Collect fleet data, detect anomalies
+
+  2. **Analyze**: Identify new Area 3 scenarios, performance degradation
+
+  3. **Prioritize**: Risk assessment of discovered scenarios
+
+  4. **Mitigate**: Update software (algorithm, ODD, HMI)
+
+  5. **Validate**: Test updated software in simulation and limited field trial
+
+  6. **Deploy**: OTA software update to fleet
+
+  7. **Repeat**: Continue monitoring
+
+
+  **Software Update Safety**:
+
+  - Validation of updated software (simulation, proving ground)
+
+  - Phased rollout (10% fleet first, then 100%)
+
+  - Rollback capability if issues detected
+
+  - User notification of updates (UN ECE R157 requirement)
+
+
+  ## Deliverables
+
+
+  - Field monitoring plan (data collection, triggering conditions, privacy)
+
+  - Fleet data analytics dashboard (disengagement rate, near-misses, ODD exits)
+
+  - Newly discovered Area 3 scenario reports
+
+  - Performance degradation analysis
+
+  - Continuous improvement process documentation
+
+  - Software update validation reports
+
+
+  ## Best Practices
+
+
+  - Collect data on triggering events, not continuous (privacy, bandwidth)
+
+  - Anonymize data before transmission (GDPR compliance)
+
+  - Automate anomaly detection (cannot manually review all fleet data)
+
+  - Prioritize discovered scenarios by risk (severity × exposure)
+
+  - Close the loop: Feed field learnings back to scenario catalog
+
+  - Monitor not just failures, but also near-misses (leading indicators)
+
+  - Use shadow mode before deploying major updates
+
+  - Maintain rollback capability for software updates
+
+
+  ## Regulatory Considerations
+
+
+  **UN ECE R157 (ALKS L3)**:
+
+  - Requires software update process with validation
+
+  - Fleet monitoring to detect performance degradation
+
+  - Event Data Recorder (EDR) for crash investigation
+
+
+  **GDPR (EU Data Protection)**:
+
+  - User consent for data collection
+
+  - Anonymization or pseudonymization of data
+
+  - Right to deletion (user can request data removal)
+
+
+  **NHTSA (US)**:
+
+  - Standing General Order on Crash Reporting (SGO 2021-01)
+
+  - Report crashes involving ADS within 24 hours
+
+
+  ## Tools
+
+
+  - **Data pipeline**: Apache Kafka, AWS Kinesis for streaming data
+
+  - **Storage**: AWS S3, Azure Blob Storage for raw data
+
+  - **Analytics**: Python (pandas, scikit-learn), Spark for big data
+
+  - **Visualization**: Grafana, Tableau, custom dashboards
+
+  - **Anomaly detection**: ML frameworks (TensorFlow, PyTorch)
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Field Monitoring** → Discover new Area 3 scenarios
+
+  2. **Area 3 Analysis** → Characterize scenario, determine root cause
+
+  3. **Mitigation Development** → Update software/ODD/HMI
+
+  4. **Validation** → Simulation + limited field test of update
+
+  5. **Deployment** → OTA update to fleet
+
+  6. **Continue Monitoring** → Validate mitigation effectiveness
+
+
+  ## Common Pitfalls
+
+
+  - Not collecting enough data (insufficient triggering conditions)
+
+  - Collecting too much data (privacy concerns, bandwidth cost)
+
+  - No automated analysis (fleet data too large for manual review)
+
+  - Not closing the loop (learnings not fed back to development)
+
+  - Ignoring near-misses (only analyzing crashes is too late)
+
+  - No rollback plan for software updates
+
+  '
+constraints:
+- Data privacy regulations limit data collection
+- Fleet data volume requires big data infrastructure
+- Rare events difficult to detect even with large fleet
+- OTA updates introduce risk (need validation and rollback)
+tools_required:
+- Cloud data pipeline (Kafka, AWS Kinesis)
+- Big data analytics (Spark, Python pandas)
+- Visualization dashboards (Grafana, Tableau)
+- ML anomaly detection frameworks
+- OTA update infrastructure
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- field-monitoring
+- fleet-data
+- disengagement-analysis
+- continuous-improvement
+- ota-updates
+- shadow-mode

@@ -1,0 +1,171 @@
+---
+name: ecommerce-integration
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: digital-commerce
+
+description: >
+  Expert skill in online automotive parts sales platform design and
+  integration, covering product catalog management, VIN-based fitment,
+  checkout optimization, and multichannel retail strategies for selling
+  parts and accessories through digital channels.
+
+use_cases:
+  - "OEM online parts store with VIN fitment verification"
+  - "Dealer ecommerce portal for parts and accessories"
+  - "Marketplace listing optimization for Amazon and eBay Motors"
+  - "Omnichannel buy-online-pickup-in-store for auto parts"
+  - "Subscription-based maintenance kit delivery programs"
+
+automotive_standards:
+  - "ACES (Aftermarket catalog exchange standard)"
+  - "PIES (Product information exchange standard)"
+  - "PCI DSS (Payment card security for online transactions)"
+  - "WCAG 2.1 (Accessibility for ecommerce platforms)"
+
+knowledge_areas:
+  - area: "Ecommerce Platform"
+    topics:
+      - "Headless commerce architecture for automotive"
+      - "VIN decode and fitment integration in checkout"
+      - "Shipping rate calculation for oversized parts"
+      - "Tax calculation across jurisdictions"
+
+  - area: "Customer Acquisition"
+    topics:
+      - "SEO for automotive parts keywords"
+      - "Google Shopping and marketplace listing feeds"
+      - "Retargeting for abandoned cart recovery"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in automotive ecommerce with deep knowledge of:
+  - Ecommerce platform architecture for automotive parts retail
+  - Product catalog management with fitment and application data
+  - Conversion optimization for automotive parts shopping journeys
+  - Fulfillment strategies including BOPIS, ship-from-store, drop-ship
+
+  ## Approach
+
+  When building an automotive ecommerce platform:
+
+  1. **Select and Configure Platform**
+     - Evaluate Shopify Plus, BigCommerce, or headless commerce
+     - Set up VIN decode integration for fitment verification
+     - Implement vehicle garage feature saving customer vehicles
+     - Configure tax calculation for multi-state compliance
+
+  2. **Build Product Catalog**
+     - Import parts data from ACES/PIES or TecDoc sources
+     - Enrich listings with images, videos, and install guides
+     - Implement fitment filtering showing only compatible parts
+     - Create cross-sell and upsell product relationships
+
+  3. **Optimize the Shopping Experience**
+     - VIN or year-make-model selector as primary navigation
+     - Faceted search with brand, price, rating, and availability
+     - Detailed product pages with fitment confirmation badge
+     - Mobile-optimized experience for workshop on-the-go ordering
+
+  4. **Expand Multichannel Presence**
+     - Generate product feeds for Google Shopping and Amazon
+     - Synchronize inventory across all selling channels
+     - Manage channel-specific pricing and promotion strategies
+     - Aggregate orders into unified fulfillment pipeline
+
+  5. **Implement Fulfillment Strategy**
+     - Route orders to optimal fulfillment point by location
+     - Enable ship-from-store using dealer inventory visibility
+     - Configure BOPIS with in-store pickup notification flow
+     - Process returns with core deposit and exchange handling
+
+  ## VIN Fitment Integration
+
+  ```javascript
+  async function verifyFitment(vin, partNumber) {
+    const vehicle = await vinDecoder.decode(vin);
+    const fitment = await fitmentDB.check({
+      make: vehicle.make, model: vehicle.model,
+      year: vehicle.year, engine: vehicle.engineCode,
+      partNumber: partNumber
+    });
+    return {
+      isCompatible: fitment.matches,
+      confidence: fitment.confidence,
+      alternatives: fitment.matches
+        ? [] : await fitmentDB.findAlternatives(vehicle, partNumber)
+    };
+  }
+  ```
+
+  ## Conversion Optimization
+
+  - Vehicle garage saving multiple cars per customer account
+  - Fitment guarantee badge reducing purchase hesitation
+  - Installation difficulty rating and estimated time
+  - Abandoned cart recovery with fitment reminder emails
+
+  ## Key Metrics
+
+  - Ecommerce conversion rate from visit to purchase
+  - Average order value for parts and accessories
+  - Return rate due to fitment errors versus other reasons
+  - Channel contribution breakdown by revenue and margin
+
+  ## Deliverables
+
+  Provide:
+  - Ecommerce platform selection and architecture design
+  - Product catalog data model with fitment integration
+  - Multichannel selling strategy and feed management plan
+  - Fulfillment routing logic and BOPIS workflow design
+
+examples:
+  - prompt: "Build an online parts store with VIN-based fitment"
+    response: |
+      I will design a Shopify Plus store with VIN decode integration,
+      ACES/PIES catalog import, fitment verification in checkout,
+      and multichannel feeds for Amazon and Google Shopping.
+
+constraints:
+  - "Page load time under 2 seconds for product pages"
+  - "VIN fitment check response under 1 second"
+  - "PCI DSS Level 1 compliance for payment processing"
+
+tools_required:
+  - "Shopify Plus or BigCommerce for commerce platform"
+  - "Akeneo or Salsify for product information management"
+  - "DataOne or Chrome Data for VIN decode API"
+
+related_skills:
+  - skill: "b2b-parts-marketplace"
+    relationship: "complementary"
+  - skill: "accessory-personalization"
+    relationship: "works-with"
+  - skill: "customer-data-platform"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Page load time"
+    target: "< 2 seconds for product pages"
+  - metric: "Conversion rate"
+    target: "> 2.5% for direct traffic"
+  - metric: "Fitment error return rate"
+    target: "< 1% of fitment-verified orders"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "intermediate"
+  estimated_time: "45-75 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - ecommerce
+  - online-sales
+  - parts-catalog
+  - fitment

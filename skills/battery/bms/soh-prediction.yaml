@@ -1,0 +1,296 @@
+name: soh-prediction
+description: State of Health (SOH) prediction using capacity fade models, cycle counting, and machine learning
+category: battery-bms
+
+instructions: |
+  Implement SOH estimation and prediction for battery aging management:
+
+  Capacity fade models:
+  - Semi-empirical aging models (power-law, exponential)
+  - Calendar aging: temperature and SOC dependent
+  - Cycle aging: depth of discharge (DOD) and C-rate dependent
+  - Combined stress factors
+
+  Cycle counting:
+  - Rainflow counting algorithm for irregular cycles
+  - Equivalent full cycles (EFC) calculation
+  - Weighted damage accumulation
+
+  Machine learning:
+  - Feature extraction from cycling data
+  - LSTM/GRU for temporal degradation patterns
+  - Remaining Useful Life (RUL) prediction
+  - Transfer learning across different cell chemistries
+
+  Health indicators:
+  - Capacity: Q_current / Q_nominal
+  - Internal resistance increase
+  - Power fade
+  - Energy fade
+
+  Targets:
+  - SOH accuracy: ±3%
+  - RUL prediction: ±10% error at 80% SOH
+  - Update frequency: daily or per charge cycle
+
+dependencies:
+  - NumPy, SciPy for models
+  - rainflow for cycle counting
+  - scikit-learn for ML
+  - PyTorch for deep learning
+
+examples:
+  - description: "Semi-empirical SOH model with rainflow counting"
+    input: "Implement SOH estimator with capacity fade modeling"
+    output: |
+      ```python
+      import numpy as np
+      from dataclasses import dataclass
+      from typing import List, Tuple
+      import matplotlib.pyplot as plt
+
+      @dataclass
+      class CycleData:
+          depth_of_discharge: float  # 0.0 to 1.0
+          avg_current_rate: float    # C-rate
+          avg_temperature_c: float
+          timestamp: float
+
+      class SOHEstimator:
+          def __init__(self, nominal_capacity_ah: float,
+                       initial_resistance_ohm: float = 0.01):
+              self.nominal_capacity_ah = nominal_capacity_ah
+              self.initial_resistance_ohm = initial_resistance_ohm
+
+              # Current state
+              self.current_capacity_ah = nominal_capacity_ah
+              self.current_resistance_ohm = initial_resistance_ohm
+
+              # Cycle history
+              self.cycles: List[CycleData] = []
+              self.equivalent_full_cycles = 0.0
+
+              # Aging model parameters (calibrated for NMC cells)
+              self.calendar_aging_rate = 2.5e-5  # per day
+              self.cycle_aging_rate = 5e-5       # per EFC
+
+              # Stress factors
+              self.temp_ref_c = 25.0
+              self.activation_energy = 0.3  # eV (temperature dependency)
+
+              self.start_time = 0.0
+
+          def add_cycle(self, cycle: CycleData):
+              """Add cycle data and update SOH"""
+              self.cycles.append(cycle)
+
+              # Calculate equivalent full cycle with stress factors
+              efc = self._calculate_efc(cycle)
+              self.equivalent_full_cycles += efc
+
+              # Update capacity based on aging models
+              self._update_capacity()
+              self._update_resistance()
+
+          def _calculate_efc(self, cycle: CycleData) -> float:
+              """Calculate equivalent full cycle with stress multipliers"""
+              # Base EFC from DOD
+              base_efc = cycle.depth_of_discharge
+
+              # DOD stress factor (higher DOD = more aging)
+              # Using Wöhler curve concept
+              dod_stress = (cycle.depth_of_discharge ** 1.5)
+
+              # C-rate stress factor
+              c_rate_stress = 1.0 + 0.5 * abs(cycle.avg_current_rate - 1.0)
+
+              # Temperature stress factor (Arrhenius)
+              temp_stress = self._temperature_factor(cycle.avg_temperature_c)
+
+              # Combined EFC
+              efc = base_efc * dod_stress * c_rate_stress * temp_stress
+
+              return efc
+
+          def _temperature_factor(self, temp_c: float) -> float:
+              """Arrhenius temperature dependency"""
+              k = 8.617e-5  # Boltzmann constant in eV/K
+              temp_k = temp_c + 273.15
+              temp_ref_k = self.temp_ref_c + 273.15
+
+              factor = np.exp(
+                  (self.activation_energy / k) *
+                  (1 / temp_ref_k - 1 / temp_k)
+              )
+              return factor
+
+          def _update_capacity(self):
+              """Update capacity based on aging"""
+              # Cycle aging
+              cycle_fade = self.cycle_aging_rate * self.equivalent_full_cycles
+
+              # Calendar aging (simplified: proportional to time)
+              # In reality, depends on storage SOC and temperature
+              days_elapsed = (self.cycles[-1].timestamp - self.start_time) / 86400
+              calendar_fade = self.calendar_aging_rate * days_elapsed
+
+              # Combined capacity fade
+              total_fade_fraction = cycle_fade + calendar_fade
+
+              # Update capacity
+              self.current_capacity_ah = self.nominal_capacity_ah * (1 - total_fade_fraction)
+              self.current_capacity_ah = max(self.current_capacity_ah,
+                                             self.nominal_capacity_ah * 0.6)  # Min 60%
+
+          def _update_resistance(self):
+              """Update internal resistance (increases with aging)"""
+              # Resistance increase correlates with capacity fade
+              soh = self.get_soh()
+
+              # Empirical relation: R increases as SOH decreases
+              resistance_multiplier = 1.0 / (soh ** 0.5)
+
+              self.current_resistance_ohm = self.initial_resistance_ohm * resistance_multiplier
+
+          def get_soh(self) -> float:
+              """Get State of Health (capacity-based)"""
+              return self.current_capacity_ah / self.nominal_capacity_ah
+
+          def get_resistance_increase(self) -> float:
+              """Get resistance increase factor"""
+              return self.current_resistance_ohm / self.initial_resistance_ohm
+
+          def predict_rul(self, eol_threshold: float = 0.8) -> Tuple[float, float]:
+              """
+              Predict Remaining Useful Life
+              Returns: (remaining_efc, remaining_days)
+              """
+              current_soh = self.get_soh()
+
+              if current_soh <= eol_threshold:
+                  return 0.0, 0.0
+
+              # Capacity fade remaining
+              fade_remaining = current_soh - eol_threshold
+
+              # Estimate remaining EFCs (assuming linear fade - simplified)
+              if self.equivalent_full_cycles > 0:
+                  fade_per_efc = (1.0 - current_soh) / self.equivalent_full_cycles
+                  remaining_efc = fade_remaining / (fade_per_efc + 1e-10)
+              else:
+                  remaining_efc = float('inf')
+
+              # Estimate remaining days (based on recent cycling pattern)
+              if len(self.cycles) >= 2:
+                  recent_cycles = self.cycles[-10:]
+                  avg_efc_per_day = sum(c.depth_of_discharge for c in recent_cycles) / (
+                      (recent_cycles[-1].timestamp - recent_cycles[0].timestamp) / 86400 + 1e-10
+                  )
+                  remaining_days = remaining_efc / (avg_efc_per_day + 1e-10)
+              else:
+                  remaining_days = float('inf')
+
+              return remaining_efc, remaining_days
+
+          def get_statistics(self) -> dict:
+              """Get aging statistics"""
+              return {
+                  'soh': self.get_soh(),
+                  'current_capacity_ah': self.current_capacity_ah,
+                  'capacity_fade_percent': (1 - self.get_soh()) * 100,
+                  'resistance_increase_percent': (self.get_resistance_increase() - 1) * 100,
+                  'equivalent_full_cycles': self.equivalent_full_cycles,
+                  'total_cycles': len(self.cycles),
+                  'current_resistance_ohm': self.current_resistance_ohm
+              }
+
+
+      def rainflow_count_simple(data: np.ndarray) -> List[Tuple[float, float]]:
+          """
+          Simplified rainflow counting algorithm
+          Returns list of (range, mean) for each counted cycle
+          """
+          # This is a simplified implementation
+          # For production, use the 'rainflow' package
+          cycles = []
+
+          # Extract peaks and valleys
+          peaks_valleys = []
+          for i in range(1, len(data) - 1):
+              if (data[i] > data[i-1] and data[i] > data[i+1]) or \
+                 (data[i] < data[i-1] and data[i] < data[i+1]):
+                  peaks_valleys.append(data[i])
+
+          # Count cycles (simplified: consecutive peak-valley pairs)
+          for i in range(0, len(peaks_valleys) - 1, 2):
+              if i + 1 < len(peaks_valleys):
+                  range_val = abs(peaks_valleys[i+1] - peaks_valleys[i])
+                  mean_val = (peaks_valleys[i+1] + peaks_valleys[i]) / 2
+                  cycles.append((range_val, mean_val))
+
+          return cycles
+
+
+      # Usage example
+      if __name__ == "__main__":
+          estimator = SOHEstimator(nominal_capacity_ah=50.0)
+
+          # Simulate battery usage over time
+          np.random.seed(42)
+
+          print("Simulating battery aging over 1000 cycles...")
+          print("\nCycle | EFC   | SOH   | Cap(Ah) | Res(mΩ) | RUL(EFC) | RUL(days)")
+          print("-" * 80)
+
+          for i in range(1000):
+              # Simulate realistic driving cycles
+              dod = np.random.uniform(0.2, 0.9)
+              c_rate = np.random.uniform(0.5, 2.0)
+              temp_c = np.random.uniform(20, 35)
+              timestamp = i * 86400  # Daily cycles
+
+              cycle = CycleData(
+                  depth_of_discharge=dod,
+                  avg_current_rate=c_rate,
+                  avg_temperature_c=temp_c,
+                  timestamp=timestamp
+              )
+
+              estimator.add_cycle(cycle)
+
+              # Print statistics every 100 cycles
+              if (i + 1) % 100 == 0:
+                  stats = estimator.get_statistics()
+                  rul_efc, rul_days = estimator.predict_rul(eol_threshold=0.8)
+
+                  print(f"{i+1:5d} | {stats['equivalent_full_cycles']:5.1f} | "
+                        f"{stats['soh']:5.3f} | {stats['current_capacity_ah']:7.3f} | "
+                        f"{stats['current_resistance_ohm']*1000:7.3f} | "
+                        f"{rul_efc:8.1f} | {rul_days:9.1f}")
+
+          # Final statistics
+          print("\n" + "=" * 80)
+          final_stats = estimator.get_statistics()
+          print("Final Battery Health:")
+          print(f"  SOH: {final_stats['soh']:.3f} ({final_stats['soh']*100:.1f}%)")
+          print(f"  Capacity: {final_stats['current_capacity_ah']:.2f} Ah "
+                f"(fade: {final_stats['capacity_fade_percent']:.1f}%)")
+          print(f"  Resistance: {final_stats['current_resistance_ohm']*1000:.2f} mΩ "
+                f"(increase: {final_stats['resistance_increase_percent']:.1f}%)")
+          print(f"  Equivalent Full Cycles: {final_stats['equivalent_full_cycles']:.1f}")
+
+          rul_efc, rul_days = estimator.predict_rul(eol_threshold=0.8)
+          print(f"\nRemaining Useful Life (to 80% SOH):")
+          print(f"  {rul_efc:.0f} equivalent full cycles")
+          print(f"  {rul_days:.0f} days (based on recent usage pattern)")
+      ```
+
+tags:
+  - battery
+  - bms
+  - soh-prediction
+  - aging-model
+  - capacity-fade
+  - rainflow-counting
+  - remaining-useful-life
+  - degradation

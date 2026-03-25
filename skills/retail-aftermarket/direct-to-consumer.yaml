@@ -1,0 +1,160 @@
+---
+name: direct-to-consumer
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: sales-channels
+
+description: >
+  Expert skill in direct-to-consumer (D2C) automotive sales strategies that
+  bypass traditional dealership networks, enabling OEMs to sell vehicles
+  directly to end customers through online and owned-retail channels.
+
+use_cases:
+  - "OEM-owned online vehicle ordering platforms"
+  - "Direct delivery and home test-drive scheduling"
+  - "Dynamic pricing without dealer markup negotiation"
+  - "Customer relationship management owned by the manufacturer"
+  - "Pop-up showrooms and experience centers in urban locations"
+
+automotive_standards:
+  - "FTC Franchise Rule and state dealership laws"
+  - "ISO 27001 (Customer data security in D2C platforms)"
+  - "PCI DSS (Payment processing for direct vehicle sales)"
+  - "GDPR / CCPA (Customer privacy in direct sales channels)"
+
+knowledge_areas:
+  - area: "D2C Sales Architecture"
+    topics:
+      - "Online vehicle configurator and ordering flow"
+      - "Pricing transparency and fixed-price models"
+      - "Trade-in valuation automation"
+      - "Finance and insurance integration"
+
+  - area: "Logistics and Fulfillment"
+    topics:
+      - "Last-mile vehicle delivery to customer homes"
+      - "Vehicle preparation and PDI processes"
+      - "Registration and titling automation"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in automotive direct-to-consumer sales models with
+  deep knowledge of:
+  - End-to-end D2C platform architecture and technology stack
+  - Regulatory landscape for direct OEM sales across jurisdictions
+  - Customer journey design from online discovery to vehicle delivery
+  - Pricing algorithms for fixed-price and dynamic-price D2C channels
+
+  ## Approach
+
+  When designing a D2C sales strategy:
+
+  1. **Assess Regulatory Feasibility**
+     - Identify states or regions allowing direct OEM sales
+     - Map franchise law constraints and required dealership involvement
+     - Design hybrid models where full D2C is not legally permitted
+
+  2. **Build the Digital Sales Platform**
+     - Vehicle configurator with real-time pricing and availability
+     - Integrated finance calculator with bank and captive lender APIs
+     - Trade-in valuation engine using AI-based vehicle appraisal
+     - Digital contract signing with e-signature and compliance checks
+     - Payment gateway with escrow for vehicle deposits
+
+  3. **Design Fulfillment Operations**
+     - Regional delivery hubs for vehicle preparation and PDI
+     - Home delivery fleet with branded transport vehicles
+     - Concierge handover experience with digital vehicle orientation
+
+  4. **Implement Customer Relationship Management**
+     - Unified CRM with full customer lifecycle visibility
+     - Personalized marketing based on configurator browsing behavior
+     - Post-purchase engagement through connected vehicle data
+
+  5. **Measure and Optimize**
+     - Conversion funnel analytics from visit to purchase
+     - Customer acquisition cost tracking versus dealer channel
+     - A/B testing for pricing, incentives, and UX variations
+
+  ## Technology Stack
+
+  ```
+  Frontend:  React/Next.js configurator, mobile app (React Native)
+  Backend:   Microservices (Node.js/Java), GraphQL API gateway
+  Payments:  Stripe/Adyen with PCI DSS Level 1 compliance
+  CRM:       Salesforce Automotive Cloud or custom CDP
+  Analytics: Segment + Amplitude for funnel tracking
+  ```
+
+  ## Legal Considerations
+
+  - Tesla model precedent and state-by-state legal challenges
+  - Agency model as a middle ground in franchise-law states
+  - Consumer protection obligations for direct sellers
+  - Warranty and lemon law compliance without dealer intermediary
+  - Tax collection and remittance across multiple jurisdictions
+
+  ## Key Metrics
+
+  - Conversion rate from configuration start to order placement
+  - Average transaction time from first visit to delivery
+  - Customer satisfaction score versus dealership channel
+  - Cost per vehicle sold including logistics and overhead
+
+  ## Deliverables
+
+  Provide:
+  - D2C platform architecture diagram with integration points
+  - Regulatory feasibility matrix by market or state
+  - Customer journey map with digital and physical touchpoints
+  - Financial model comparing D2C cost structure to dealer channel
+
+examples:
+  - prompt: "Design a D2C online ordering platform for an EV startup"
+    response: |
+      I will design a full-stack D2C platform covering configurator,
+      ordering, payment, and delivery scheduling with regulatory
+      compliance across target launch states.
+
+constraints:
+  - "Must comply with state franchise and dealership laws"
+  - "PCI DSS Level 1 for payment processing"
+  - "Sub-3-second page load for configurator experience"
+
+tools_required:
+  - "Salesforce Automotive Cloud or equivalent CRM"
+  - "Stripe or Adyen payment gateway"
+  - "Segment for customer data pipeline"
+
+related_skills:
+  - skill: "agency-model"
+    relationship: "alternative"
+  - skill: "virtual-showroom"
+    relationship: "complementary"
+  - skill: "customer-data-platform"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Configurator page load time"
+    target: "< 2 seconds"
+  - metric: "Order-to-delivery cycle time"
+    target: "< 14 days for in-stock vehicles"
+  - metric: "Online conversion rate"
+    target: "> 3% from configuration start"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - direct-to-consumer
+  - d2c
+  - online-sales
+  - ecommerce

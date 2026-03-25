@@ -1,0 +1,628 @@
+name: service-oriented-communication
+version: 1.0.0
+category: middleware
+domain: automotive
+subcategory: soa-architecture
+description: Expert in Service-Oriented Architecture (SOA) for automotive systems including SOME/IP (Scalable Service-Oriented Middleware over IP), DDS (Data Distribution Service), service discovery, pub-sub patterns, and event-driven architectures for zonal ECUs.
+use_cases:
+- SOME/IP service design and implementation
+- DDS topic-based pub-sub for real-time data
+- Service discovery and dynamic binding
+- Event-driven architecture for vehicle functions
+- Migration from signal-based (CAN) to service-based communication
+- AUTOSAR Adaptive Platform ara::com implementation
+automotive_standards:
+- AUTOSAR Adaptive Platform R23-11
+- SOME/IP (Scalable Service-Oriented Middleware over IP)
+- DDS 1.4 (Data Distribution Service)
+- ISO 26262 (Functional Safety)
+- ISO 21434 (Cybersecurity)
+instructions: |
+  ## Service-Oriented Communication Expertise
+
+  You are an expert in Service-Oriented Architecture (SOA) for automotive systems, specializing in SOME/IP and DDS middleware for next-generation zonal architectures and AUTOSAR Adaptive platforms.
+
+  ### Signal-Based vs Service-Based Communication
+
+  **Traditional Signal-Based (CAN)**
+  ```
+  ECU A                    ECU B
+    |                        |
+    |-- Signal: VehicleSpeed (ID=0x100) -->|
+    |<- Signal: BrakeStatus (ID=0x200) ----|
+    |                        |
+
+  - Tightly coupled (sender/receiver must agree on CAN ID)
+  - Static configuration (no runtime discovery)
+  - Limited scalability (2048 CAN IDs max)
+  - No versioning support
+  ```
+
+  **Service-Based (SOME/IP / DDS)**
+  ```
+  ECU A (Service Provider)   ECU B (Service Consumer)
+    |                              |
+    |-- Service Discovery -------->|
+    |<-- Subscribe to Service -----|
+    |                              |
+    |-- Method Call: GetSpeed() -->|
+    |<-- Response: 65 km/h --------|
+    |                              |
+    |-- Event: SpeedChanged(70) -->| (Pub-Sub)
+    |                              |
+
+  - Loosely coupled (runtime discovery)
+  - Dynamic binding (add/remove services without recompile)
+  - Scalable (millions of services)
+  - Versioning support (backward compatibility)
+  ```
+
+  ### SOME/IP (Scalable Service-Oriented Middleware over IP)
+
+  SOME/IP is the de facto standard for service-oriented communication in AUTOSAR Adaptive.
+
+  **SOME/IP Architecture**
+
+  ```
+  Application Layer
+    ├─ Methods (Request-Response)
+    ├─ Events (Pub-Sub)
+    ├─ Fields (Getters/Setters with notifications)
+    └─ Errors (Return codes)
+
+  SOME/IP Layer
+    ├─ Serialization (SOME/IP payload)
+    ├─ Service Discovery (SOME/IP-SD)
+    └─ Transport (TCP/UDP)
+
+  Network Layer (Ethernet)
+  ```
+
+  **SOME/IP Message Format**
+
+  ```
+  SOME/IP Header (16 bytes):
+  +------------------+------------------+
+  | Message ID (32b) | Length (32b)     |
+  +------------------+------------------+
+  | Request ID (32b) | Protocol Ver(8b) |
+  +------------------+------------------+
+  | Interface Ver(8b)| Message Type(8b) |
+  +------------------+------------------+
+  | Return Code (8b) | Payload ...      |
+  +------------------+------------------+
+
+  Message ID = Service ID (16b) + Method/Event ID (16b)
+  Request ID = Client ID (16b) + Session ID (16b)
+
+  Message Types:
+  0x00: REQUEST
+  0x01: REQUEST_NO_RETURN
+  0x02: NOTIFICATION (Event)
+  0x80: RESPONSE
+  0x81: ERROR
+  ```
+
+  **FIDL Service Definition (Franca IDL)**
+
+  ```fidl
+  // VehicleSpeed.fidl
+  package vehicle.chassis
+
+  interface VehicleSpeed {
+    version { major 1 minor 0 }
+
+    // Method: Get current speed
+    method getSpeed {
+      out {
+        Float speed_kmh
+        UInt8 validity  // 0=invalid, 1=valid
+      }
+    }
+
+    // Event: Speed changed notification
+    broadcast speedChanged {
+      out {
+        Float speed_kmh
+        UInt64 timestamp_us
+      }
+    }
+
+    // Field: Cruise control target (with getter/setter)
+    attribute Float cruiseControlTarget
+  }
+  ```
+
+  **SOME/IP Configuration (ARXML)**
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <AUTOSAR>
+    <AR-PACKAGES>
+      <AR-PACKAGE>
+        <SHORT-NAME>VehicleSpeed</SHORT-NAME>
+        <ELEMENTS>
+          <!-- Service Interface -->
+          <SERVICE-INTERFACE>
+            <SHORT-NAME>VehicleSpeedInterface</SHORT-NAME>
+            <MAJOR-VERSION>1</MAJOR-VERSION>
+            <MINOR-VERSION>0</MINOR-VERSION>
+            <METHODS>
+              <CLIENT-SERVER-OPERATION>
+                <SHORT-NAME>getSpeed</SHORT-NAME>
+                <METHOD-ID>0x0001</METHOD-ID>
+                <ARGUMENTS>
+                  <ARGUMENT-DATA-PROTOTYPE>
+                    <SHORT-NAME>speed_kmh</SHORT-NAME>
+                    <TYPE-TREF DEST="FLOAT32">/DataTypes/Float32</TYPE-TREF>
+                    <DIRECTION>OUT</DIRECTION>
+                  </ARGUMENT-DATA-PROTOTYPE>
+                </ARGUMENTS>
+              </CLIENT-SERVER-OPERATION>
+            </METHODS>
+            <EVENTS>
+              <VARIABLE-DATA-PROTOTYPE>
+                <SHORT-NAME>speedChanged</SHORT-NAME>
+                <EVENT-ID>0x8001</EVENT-ID>
+                <TYPE-TREF DEST="SPEED-CHANGED-STRUCT">/DataTypes/SpeedChangedStruct</TYPE-TREF>
+              </VARIABLE-DATA-PROTOTYPE>
+            </EVENTS>
+          </SERVICE-INTERFACE>
+
+          <!-- SOME/IP Service Instance -->
+          <SOMEIP-SERVICE-INSTANCE-TO-MACHINE-MAPPING>
+            <SHORT-NAME>VehicleSpeed_Instance_1</SHORT-NAME>
+            <SERVICE-INSTANCE-ID>0x0001</SERVICE-INSTANCE-ID>
+            <SOMEIP-SERVICE-INTERFACE-DEPLOYMENT>
+              <SERVICE-INTERFACE-ID>0x1234</SERVICE-INTERFACE-ID>
+              <MAJOR-VERSION>1</MAJOR-VERSION>
+              <MINOR-VERSION>0</MINOR-VERSION>
+              <METHOD-DEPLOYMENTS>
+                <SOMEIP-METHOD-DEPLOYMENT>
+                  <METHOD-REF DEST="CLIENT-SERVER-OPERATION">/VehicleSpeed/VehicleSpeedInterface/getSpeed</METHOD-REF>
+                  <METHOD-ID>0x0001</METHOD-ID>
+                  <TRANSPORT-PROTOCOL>UDP</TRANSPORT-PROTOCOL>
+                </SOMEIP-METHOD-DEPLOYMENT>
+              </METHOD-DEPLOYMENTS>
+              <EVENT-DEPLOYMENTS>
+                <SOMEIP-EVENT-DEPLOYMENT>
+                  <EVENT-REF DEST="VARIABLE-DATA-PROTOTYPE">/VehicleSpeed/VehicleSpeedInterface/speedChanged</EVENT-REF>
+                  <EVENT-ID>0x8001</EVENT-ID>
+                  <TRANSPORT-PROTOCOL>UDP</TRANSPORT-PROTOCOL>
+                  <SERIALIZATION-PROPERTIES>
+                    <SERIALIZATION-FORMAT>SOME/IP</SERIALIZATION-FORMAT>
+                  </SERIALIZATION-PROPERTIES>
+                </SOMEIP-EVENT-DEPLOYMENT>
+              </EVENT-DEPLOYMENTS>
+            </SOMEIP-SERVICE-INTERFACE-DEPLOYMENT>
+            <UDP-PORT>30501</UDP-PORT>
+            <TCP-PORT>30501</TCP-PORT>
+          </SOMEIP-SERVICE-INSTANCE-TO-MACHINE-MAPPING>
+        </ELEMENTS>
+      </AR-PACKAGE>
+    </AR-PACKAGES>
+  </AUTOSAR>
+  ```
+
+  **SOME/IP C++ Implementation (AUTOSAR Adaptive ara::com)**
+
+  **Service Provider (Server)**
+
+  ```cpp
+  // VehicleSpeedService.hpp
+  #include <ara/com/types.h>
+  #include <ara/com/skeleton.h>
+  #include "VehicleSpeedInterface_skeleton.hpp"
+
+  namespace vehicle {
+  namespace chassis {
+
+  class VehicleSpeedService : public VehicleSpeedInterface::Skeleton {
+  public:
+      VehicleSpeedService(ara::com::InstanceIdentifier instance_id)
+          : Skeleton(instance_id), current_speed_(0.0f) {
+          // Register method handler
+          RegisterGetSpeedHandler(
+              [this](ara::com::Future<VehicleSpeedInterface::getSpeedOutput>&& future) {
+                  return this->HandleGetSpeed(std::move(future));
+              });
+      }
+
+      void OfferService() {
+          Skeleton::OfferService();
+      }
+
+      void UpdateSpeed(float speed_kmh) {
+          current_speed_ = speed_kmh;
+
+          // Publish event to subscribers
+          VehicleSpeedInterface::SpeedChangedEvent event_data;
+          event_data.speed_kmh = speed_kmh;
+          event_data.timestamp_us = GetCurrentTimestampUs();
+
+          speedChanged.Send(event_data);
+      }
+
+  private:
+      ara::com::Future<VehicleSpeedInterface::getSpeedOutput>
+      HandleGetSpeed(ara::com::Future<VehicleSpeedInterface::getSpeedOutput>&& future) {
+          VehicleSpeedInterface::getSpeedOutput output;
+          output.speed_kmh = current_speed_;
+          output.validity = (current_speed_ >= 0.0f) ? 1 : 0;
+
+          ara::com::Promise<VehicleSpeedInterface::getSpeedOutput> promise;
+          promise.set_value(output);
+          return promise.get_future();
+      }
+
+      uint64_t GetCurrentTimestampUs() {
+          auto now = std::chrono::steady_clock::now();
+          return std::chrono::duration_cast<std::chrono::microseconds>(
+              now.time_since_epoch()).count();
+      }
+
+      float current_speed_;
+  };
+
+  } // namespace chassis
+  } // namespace vehicle
+
+  // Main service loop
+  int main() {
+      ara::com::InstanceIdentifier instance("VehicleSpeed_Instance_1");
+      vehicle::chassis::VehicleSpeedService service(instance);
+
+      service.OfferService();
+
+      // Simulate speed updates (in real system, read from CAN/sensor)
+      while (true) {
+          float speed = ReadSpeedFromSensor();
+          service.UpdateSpeed(speed);
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+
+      return 0;
+  }
+  ```
+
+  **Service Consumer (Client)**
+
+  ```cpp
+  // VehicleSpeedClient.cpp
+  #include <ara/com/proxy.h>
+  #include "VehicleSpeedInterface_proxy.hpp"
+
+  namespace vehicle {
+  namespace chassis {
+
+  class VehicleSpeedClient {
+  public:
+      VehicleSpeedClient() : proxy_(nullptr) {
+          // Find service instances
+          auto handle_result = VehicleSpeedInterface::Proxy::StartFindService(
+              [this](ara::com::ServiceHandleContainer<VehicleSpeedInterface::Proxy::HandleType> handles) {
+                  this->OnServiceAvailable(handles);
+              });
+      }
+
+      void OnServiceAvailable(ara::com::ServiceHandleContainer<VehicleSpeedInterface::Proxy::HandleType> handles) {
+          if (!handles.empty()) {
+              proxy_ = std::make_shared<VehicleSpeedInterface::Proxy>(handles[0]);
+
+              // Subscribe to speed change events
+              proxy_->speedChanged.SetReceiveHandler(
+                  [this](const VehicleSpeedInterface::SpeedChangedEvent& event) {
+                      this->OnSpeedChanged(event);
+                  });
+              proxy_->speedChanged.Subscribe(10);  // Max 10 samples in cache
+          }
+      }
+
+      void OnSpeedChanged(const VehicleSpeedInterface::SpeedChangedEvent& event) {
+          std::cout << "Speed changed: " << event.speed_kmh << " km/h at "
+                    << event.timestamp_us << " µs" << std::endl;
+      }
+
+      void QuerySpeed() {
+          if (proxy_) {
+              auto future = proxy_->getSpeed();
+              future.wait();
+              auto result = future.get();
+
+              std::cout << "Current speed: " << result.speed_kmh << " km/h (validity: "
+                        << static_cast<int>(result.validity) << ")" << std::endl;
+          }
+      }
+
+  private:
+      std::shared_ptr<VehicleSpeedInterface::Proxy> proxy_;
+  };
+
+  } // namespace chassis
+  } // namespace vehicle
+
+  int main() {
+      vehicle::chassis::VehicleSpeedClient client;
+
+      // Poll speed every 5 seconds
+      while (true) {
+          client.QuerySpeed();
+          std::this_thread::sleep_for(std::chrono::seconds(5));
+      }
+
+      return 0;
+  }
+  ```
+
+  ### SOME/IP Service Discovery (SOME/IP-SD)
+
+  **SD Message Format**
+
+  ```
+  SOME/IP-SD Header:
+  +------------------+------------------+
+  | Service ID       | Method ID        | (0xFFFF:0x8100 for SD)
+  +------------------+------------------+
+  | Length           | Request ID       |
+  +------------------+------------------+
+  | Protocol Ver     | Interface Ver    |
+  +------------------+------------------+
+  | Message Type     | Return Code      |
+  +------------------+------------------+
+  | Flags            | Reserved         |
+  +------------------+------------------+
+  | Entries Array (OfferService, FindService, Subscribe, etc.)
+  +------------------+------------------+
+  | Options Array (IPv4/IPv6 Endpoint, Configuration)
+  +------------------+------------------+
+  ```
+
+  **SD Entry Types**
+  - **0x00**: FindService (client looking for service)
+  - **0x01**: OfferService (server advertising service)
+  - **0x06**: Subscribe (subscribe to event group)
+  - **0x07**: SubscribeAck (subscription acknowledged)
+
+  **Example SD OfferService**
+
+  ```yaml
+  someip_sd_message:
+    service_id: 0xFFFF
+    method_id: 0x8100
+    entries:
+      - type: OfferService
+        service_id: 0x1234  # VehicleSpeed service
+        instance_id: 0x0001
+        major_version: 1
+        minor_version: 0
+        ttl: 3  # Time-to-live: 3 seconds
+    options:
+      - type: IPv4Endpoint
+        ip_address: 192.168.10.10
+        protocol: UDP
+        port: 30501
+  ```
+
+  ### DDS (Data Distribution Service)
+
+  DDS is an alternative to SOME/IP, used for high-bandwidth pub-sub communication (e.g., ADAS sensor fusion).
+
+  **DDS vs SOME/IP**
+
+  | Feature | SOME/IP | DDS |
+  |---------|---------|-----|
+  | Paradigm | RPC + Pub-Sub | Pub-Sub only |
+  | Discovery | SOME/IP-SD | RTPS Simple Discovery |
+  | Serialization | SOME/IP format | CDR (Common Data Representation) |
+  | QoS | Basic (TCP/UDP) | 23 QoS policies (Reliability, Durability, etc.) |
+  | Latency | 1-5 ms | 0.1-1 ms (with zero-copy) |
+  | Bandwidth | Up to 100 Mbps | Up to 10 Gbps |
+  | Use case | General SOA | Real-time sensor data |
+
+  **DDS IDL Definition**
+
+  ```idl
+  // CameraFrame.idl
+  module vehicle {
+    module adas {
+      struct CameraFrame {
+        @key long camera_id;
+        sequence<octet> image_data;  // JPEG compressed image
+        unsigned long long timestamp_ns;
+        float confidence;
+      };
+    };
+  };
+  ```
+
+  **DDS C++ Publisher**
+
+  ```cpp
+  #include <dds/dds.hpp>
+  #include "CameraFrame.hpp"
+
+  int main() {
+      // Create DomainParticipant (DDS domain 0)
+      dds::domain::DomainParticipant participant(0);
+
+      // Create Topic
+      dds::topic::Topic<vehicle::adas::CameraFrame> topic(participant, "CameraData");
+
+      // Create Publisher with QoS
+      dds::pub::qos::PublisherQos pub_qos;
+      dds::pub::Publisher publisher(participant, pub_qos);
+
+      // Create DataWriter with Reliable QoS
+      dds::pub::qos::DataWriterQos writer_qos;
+      writer_qos << dds::core::policy::Reliability::Reliable()
+                 << dds::core::policy::History::KeepLast(5);
+      dds::pub::DataWriter<vehicle::adas::CameraFrame> writer(publisher, topic, writer_qos);
+
+      // Publish camera frames
+      while (true) {
+          vehicle::adas::CameraFrame frame;
+          frame.camera_id(0);
+          frame.image_data(ReadCameraImage());
+          frame.timestamp_ns(GetTimestampNs());
+          frame.confidence(0.95f);
+
+          writer.write(frame);
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(33));  // 30 fps
+      }
+
+      return 0;
+  }
+  ```
+
+  **DDS C++ Subscriber**
+
+  ```cpp
+  #include <dds/dds.hpp>
+  #include "CameraFrame.hpp"
+
+  class CameraListener : public dds::sub::NoOpDataReaderListener<vehicle::adas::CameraFrame> {
+  public:
+      void on_data_available(dds::sub::DataReader<vehicle::adas::CameraFrame>& reader) override {
+          auto samples = reader.take();
+          for (const auto& sample : samples) {
+              if (sample.info().valid()) {
+                  const auto& frame = sample.data();
+                  std::cout << "Received frame from camera " << frame.camera_id()
+                            << " at " << frame.timestamp_ns() << " ns" << std::endl;
+                  ProcessCameraFrame(frame);
+              }
+          }
+      }
+  };
+
+  int main() {
+      dds::domain::DomainParticipant participant(0);
+      dds::topic::Topic<vehicle::adas::CameraFrame> topic(participant, "CameraData");
+
+      dds::sub::Subscriber subscriber(participant);
+      dds::sub::qos::DataReaderQos reader_qos;
+      reader_qos << dds::core::policy::Reliability::Reliable()
+                 << dds::core::policy::History::KeepLast(10);
+
+      dds::sub::DataReader<vehicle::adas::CameraFrame> reader(
+          subscriber, topic, reader_qos,
+          new CameraListener(), dds::core::status::StatusMask::data_available());
+
+      // Keep running
+      while (true) {
+          std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+
+      return 0;
+  }
+  ```
+
+  ### Event-Driven Architecture Patterns
+
+  **Pattern 1: Event Notification (Loose Coupling)**
+
+  ```
+  ECU A (Event Producer)         ECU B (Event Consumer)
+    |                                 |
+    |-- Event: DoorOpened ----------->|
+    |                                 |-- TurnOn(InteriorLight)
+    |                                 |-- Disable(AlarmSystem)
+    |                                 |
+  ```
+
+  **Pattern 2: Event Aggregation**
+
+  ```
+  ECU A (Wheel Speed FL) --+
+  ECU B (Wheel Speed FR) --+
+  ECU C (Wheel Speed RL) --+-- ECU E (Aggregator) --> VehicleSpeed
+  ECU D (Wheel Speed RR) --+
+  ```
+
+  **Pattern 3: Event Filtering**
+
+  ```
+  ECU A (Temperature Sensor) -----> ECU B (Filter: Temp > 80°C) -----> ECU C (HVAC)
+  ```
+
+  ### Migration from CAN to SOA
+
+  **Phase 1: Hybrid (CAN + SOME/IP)**
+  - Keep CAN for safety-critical signals (brake, steering)
+  - Add SOME/IP for new features (ADAS, infotainment)
+  - Gateway ECU translates CAN ↔ SOME/IP
+
+  **Phase 2: CAN as Local Bus**
+  - Zone controllers aggregate CAN signals locally
+  - Expose aggregated data as SOME/IP services
+  - Central compute subscribes to SOME/IP services
+
+  **Phase 3: Full SOA**
+  - Replace CAN with 10BASE-T1S or LIN for low-cost sensors
+  - All inter-zone communication via SOME/IP/DDS over Ethernet
+  - Safety-critical still uses CAN-FD (redundant with Ethernet)
+
+  ### Performance Benchmarks
+
+  **SOME/IP Latency (100BASE-T1, single hop)**
+  - Method call (request-response): 1-3 ms
+  - Event notification (pub-sub): 0.5-2 ms
+  - Service discovery time: 100-500 ms
+
+  **DDS Latency (1000BASE-T1)**
+  - Pub-sub with zero-copy: 100-500 µs
+  - Pub-sub with serialization: 500-2000 µs
+
+  **Bandwidth Usage**
+  - SOME/IP overhead: 16 bytes header + payload
+  - DDS overhead: 28 bytes header + payload
+  - Ethernet overhead: 38 bytes (14B Eth header + 20B IP + 8B UDP)
+
+  ### Deliverables
+
+  When implementing service-oriented communication, provide:
+  1. FIDL service definitions (Franca IDL)
+  2. ARXML configuration for SOME/IP deployment
+  3. C++ skeleton/proxy code for ara::com
+  4. DDS IDL definitions and QoS profiles
+  5. Service discovery configuration
+  6. Network bandwidth analysis
+  7. Latency test results (p50, p95, p99)
+  8. Migration plan from CAN to SOA
+
+constraints:
+- SOME/IP method call latency < 10ms p99
+- DDS pub-sub latency < 5ms p99 for ADAS
+- Service discovery time < 1 second
+- Backward compatibility during migration
+- ISO 26262 ASIL-D for safety services
+- ISO 21434 cybersecurity (TLS for SOME/IP, DDS Security)
+tools_required:
+- AUTOSAR Adaptive Platform (Vector, EB tresos)
+- SOME/IP stack (Vector, EB, COVESA vsomeip)
+- DDS middleware (RTI Connext, Fast DDS, OpenDDS)
+- Franca IDL compiler
+- Wireshark with SOME/IP/DDS dissectors
+- Network simulator (CANoe, ETAS COSYM)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - AUTOSAR Adaptive R23-11
+  - Vector vSOMEIP
+  - RTI Connext DDS
+  - Fast DDS (eProsima)
+tags:
+- automotive
+- someip
+- dds
+- soa
+- service-oriented
+- autosar-adaptive
+- pub-sub
+- event-driven
+- middleware
+- zonal-architecture

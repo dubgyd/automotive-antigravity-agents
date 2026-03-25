@@ -1,0 +1,463 @@
+name: v2l-vehicle-to-load
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: bidirectional-charging
+description: Expert skill in Vehicle-to-Load (V2L) mobile power outlet implementation, covering onboard inverter control, AC outlet integration, protection circuits, and portable power delivery from EV battery.
+use_cases:
+- Outdoor power supply for camping, tailgating, job sites
+- Emergency power during roadside assistance or natural disasters
+- Power tools operation from EV battery
+- Mobile office or food truck power supply
+- Backup power for RVs and trailers
+automotive_standards:
+- SAE J3072 V2L communication and control
+- IEC 60884-1 Plugs and socket-outlets for household use
+- UL 2089 Vehicle battery adapters
+- NFPA 70 (NEC) Article 551 Recreational vehicles
+- IEC 61851-1 EV conductive charging (safety requirements)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Vehicle-to-Load (V2L) systems enabling electric vehicles to supply AC power to external loads via built-in outlets or adapters, covering onboard inverter control, protection circuits, power management, and use cases for portable power delivery.
+
+
+  ### V2L System Overview
+
+
+  - **Purpose**: Use EV battery as mobile power source (40-100 kWh = portable generator)
+
+  - **Power levels**:
+
+    - Standard V2L: 1.5-1.9 kW (15A @ 120V, single outlet)
+
+    - High-power V2L: 3.6-3.8 kW (30A @ 120V or 15A @ 240V, dual outlets)
+
+    - Heavy-duty V2L: 7.2-9.6 kW (40A @ 240V, for power tools, RV)
+
+
+  - **Outlet locations**:
+
+    - **Interior cabin**: Under rear seats or in cargo area (Hyundai Ioniq 5, Kia EV6)
+
+    - **Exterior**: Hidden behind charge port door or bumper panel (Ford F-150 Lightning)
+
+    - **Adapter**: Plug into charge inlet, convert to AC outlet (Nissan Leaf, Tesla with third-party adapter)
+
+
+  - **Duration**:
+
+    - 75 kWh battery @ 1.5 kW load → 50 hours continuous (2 days+)
+
+    - 75 kWh battery @ 3.6 kW load → 20 hours continuous (overnight camping)
+
+
+  ### Onboard Inverter Design
+
+
+  - **Inverter topology**:
+
+    - Pure sine wave: THD <3% (clean power for electronics, motors)
+
+    - H-bridge: 4 IGBTs or MOSFETs, LC filter for smooth waveform
+
+    - Isolated: Transformer isolation for safety (EV battery high-voltage DC isolated from AC output)
+
+
+  - **Power stages**:
+
+    - DC-DC converter: Step down HV battery (400V or 800V) to 48V or 120V DC bus
+
+    - Inverter: 120V DC → 120V AC @ 60 Hz (or 230V AC @ 50 Hz in Europe/Asia)
+
+    - Output filter: LC filter to reduce switching harmonics (<3% THD)
+
+
+  - **Efficiency**: 85-92% (losses in DC-DC conversion and inverter switching)
+
+
+  - **Cooling**: Air-cooled heatsink for <2 kW, liquid-cooled for >3 kW (shares vehicle thermal system)
+
+
+  ### AC Outlet Integration
+
+
+  - **Outlet types**:
+
+    - **NEMA 5-15R**: Standard 120V 15A outlet (North America)
+
+    - **NEMA 5-20R**: 120V 20A outlet (T-slot for 15A or 20A plug)
+
+    - **NEMA 14-50R**: 240V 50A outlet (RV, high-power tools) — Ford F-150 Lightning
+
+    - **NEMA L14-30R**: 240V 30A twist-lock (generator-style) — work trucks
+
+
+  - **Outlet placement** (interior cabin example):
+
+    - Under rear seat or in center console
+
+    - Weatherproof cover (IP54 rating if exposed to spills)
+
+    - LED indicator: Green = power available, Red = fault, Off = inverter disabled
+
+
+  - **Outlet circuit**:
+
+    ```
+    HV Battery (400V DC)
+      ↓
+    DC-DC Converter (400V → 120V DC)
+      ↓
+    Inverter (120V DC → 120V AC @ 60 Hz)
+      ↓
+    GFCI Protection (30 mA trip)
+      ↓
+    Circuit Breaker (15A)
+      ↓
+    NEMA 5-15R Outlet (120V AC, 1800W max)
+    ```
+
+
+  ### Protection Circuits
+
+
+  - **Ground Fault Circuit Interrupter (GFCI)**:
+
+    - Detects leakage current >30 mA (person touching hot wire to ground)
+
+    - Trip time: <25 ms (prevents electrocution)
+
+    - Required for outdoor outlets per NEC
+
+
+  - **Arc Fault Circuit Interrupter (AFCI)** (optional):
+
+    - Detects arcing faults (damaged cords, loose connections)
+
+    - Reduces fire risk
+
+
+  - **Overcurrent protection**:
+
+    - Circuit breaker: 15A or 20A (trips if load exceeds rating)
+
+    - Electronic current limit: Inverter shuts down if output current >120% rated for >30 seconds
+
+
+  - **Overvoltage/undervoltage**:
+
+    - Shut down if output voltage <102V or >132V (for 120V nominal)
+
+    - Protects connected equipment from damage
+
+
+  - **Thermal protection**:
+
+    - Monitor inverter temperature, derate power if >80°C
+
+    - Shut down if >95°C (prevent thermal runaway)
+
+
+  - **Battery protection**:
+
+    - Reserve SOC: Disable V2L if battery <20% (ensure enough charge to drive to charger)
+
+    - Low voltage cutoff: Stop discharge if battery voltage drops below minimum (prevent cell damage)
+
+
+  ### Control Logic and User Interface
+
+
+  - **Activation**:
+
+    - Button on dashboard: "V2L Enable" (some vehicles require vehicle in Park and key on)
+
+    - Automatic: Plug in device, inverter activates (Hyundai/Kia approach)
+
+    - App control: Enable/disable V2L remotely via mobile app
+
+
+  - **Power management**:
+
+    ```python
+    def v2l_control():
+        battery_soc = get_battery_soc()
+        outlet_current = measure_outlet_current()
+        inverter_temp = measure_inverter_temp()
+
+        # Safety checks
+        if battery_soc < 20:
+            disable_v2l()
+            display_message("Battery too low for V2L (reserve for driving)")
+            return
+
+        if inverter_temp > 95:
+            disable_v2l()
+            display_message("Inverter overheat, V2L disabled")
+            return
+
+        # Thermal derating
+        if inverter_temp > 80:
+            max_current = 12  # Derate from 15A to 12A
+        else:
+            max_current = 15
+
+        # Current limit
+        if outlet_current > max_current:
+            trip_circuit_breaker()
+            display_message("Overcurrent, breaker tripped")
+
+        # Normal operation
+        enable_inverter()
+        update_display(battery_soc, outlet_current, remaining_runtime())
+    ```
+
+
+  - **Display information**:
+
+    - Battery SOC: 65%
+
+    - Output power: 1.2 kW (outlet load)
+
+    - Estimated runtime: 38 hours (based on current draw)
+
+
+  ### Use Cases and Applications
+
+
+  - **Camping and outdoor recreation**:
+
+    - Power camping stove, portable fridge (50-100W), lights, phone chargers
+
+    - Example: 75 kWh battery → run 200W of loads for 375 hours (15 days!)
+
+
+  - **Tailgating and events**:
+
+    - Portable speakers, TV (100W), grill fan, string lights
+
+    - Example: 3-4 hours of tailgating @ 500W → 1.5 kWh used (2% battery SOC)
+
+
+  - **Job sites and construction**:
+
+    - Power drills, saws, compressor (1-2 kW intermittent)
+
+    - Example: Full day of work @ 1.5 kW average → 12 kWh used (16% SOC)
+
+
+  - **Emergency power**:
+
+    - During natural disaster or grid outage: Power fridge, medical devices, lights
+
+    - Example: 3 days @ 1 kW average → 72 kWh (nearly full EV battery)
+
+
+  - **RV and trailer power**:
+
+    - Plug RV into EV V2L outlet (30A @ 240V for high-power V2L)
+
+    - Run RV AC, fridge, water pump without generator or hookup
+
+    - Example: Overnight RV use @ 2 kW → 16 kWh (21% SOC)
+
+
+  - **Mobile food trucks**:
+
+    - Power freezer, cooking equipment, POS system
+
+    - Example: 8-hour event @ 3 kW → 24 kWh (32% SOC)
+
+
+  ### Adapter-Based V2L (for EVs without built-in V2L)
+
+
+  - **Charge port adapter**:
+
+    - Plugs into vehicle charge inlet (J1772 or CCS)
+
+    - Contains inverter (converts DC from charge port to AC outlet)
+
+    - Power: Typically 1.5-1.9 kW (limited by charge port communication)
+
+
+  - **Communication**:
+
+    - Adapter signals to vehicle: "I am a charger, please provide DC power"
+
+    - Vehicle responds: "OK, providing DC power to charge port"
+
+    - Adapter inverts DC to AC and outputs to NEMA 5-15R outlet
+
+
+  - **Limitations**:
+
+    - Vehicle must support bidirectional communication (CHAdeMO easier than CCS)
+
+    - Power limited by charge port rating (typically <2 kW)
+
+    - Not officially supported by most OEMs (aftermarket solution)
+
+
+  - **Example products**:
+
+    - Nissan Leaf: CHAdeMO to AC adapter (Japan market, 1.5 kW)
+
+    - Tesla: Third-party adapters exist but not OEM-supported
+
+
+  ### Safety Considerations
+
+
+  - **Carbon monoxide**: No risk (EV has no exhaust, unlike gas generator)
+
+  - **Shock hazard**: GFCI required, proper grounding to vehicle chassis
+
+  - **Fire hazard**: AFCI recommended, overcurrent protection mandatory
+
+  - **Battery depletion**: Reserve SOC to avoid being stranded (20% minimum)
+
+  - **Inverter overload**: Do not exceed rated power (will trip breaker or damage inverter)
+
+
+  ### Power Quality
+
+
+  - **Voltage regulation**: ±5% (114-126V for 120V nominal)
+
+  - **Frequency stability**: ±0.1 Hz (59.9-60.1 Hz)
+
+  - **Total Harmonic Distortion (THD)**: <3% (clean sine wave)
+
+  - **Power factor**: >0.95 (efficient for inductive loads like motors)
+
+
+  - **Compatible loads**:
+
+    - Resistive: Heaters, incandescent lights, toasters (power factor = 1.0)
+
+    - Inductive: Motors, compressors, power tools (power factor = 0.6-0.8)
+
+    - Capacitive: LED drivers, switch-mode power supplies (power factor = 0.9+)
+
+
+  - **Incompatible loads** (may damage inverter):
+
+    - Extremely inductive: Large welders, arc furnaces (high inrush current)
+
+    - Sensitive electronics: Medical equipment requiring <1% THD (inverter THD may be too high)
+
+
+  ### Runtime Estimation
+
+
+  - **Formula**:
+
+    ```
+    Runtime (hours) = (Battery Capacity × Usable SOC × Inverter Efficiency) / Load Power
+
+    Example:
+    Battery: 75 kWh
+    Usable SOC: 70% (from 20% to 90% SOC)
+    Inverter efficiency: 90%
+    Load: 1.5 kW
+
+    Runtime = (75 × 0.70 × 0.90) / 1.5 = 31.5 hours
+    ```
+
+
+  - **Variable loads**:
+
+    - Refrigerator: Cycles on (150W) for 20 min/hour, off for 40 min/hour → average 50W
+
+    - Power tools: Intermittent use → average 30% duty cycle
+
+    - Lights: Continuous → 100% duty cycle
+
+
+  ## Approach
+
+
+  1. **Requirements**: Determine power level (1.5 kW standard or 3.6 kW high-power)
+
+  2. **Inverter design**: Pure sine wave, isolated topology, THD <3%
+
+  3. **Outlet selection**: NEMA 5-15R (120V 15A) or NEMA 14-50R (240V 50A) for high-power
+
+  4. **Protection**: Integrate GFCI, circuit breaker, thermal shutdown
+
+  5. **Integration**: Connect to vehicle CAN bus for SOC monitoring, user interface
+
+  6. **Testing**: Load testing (resistive, inductive, capacitive), efficiency measurement, safety compliance
+
+
+  ## Deliverables
+
+
+  - V2L inverter design (schematic, PCB layout, thermal analysis)
+
+  - AC outlet integration (mounting, wiring, weatherproofing)
+
+  - Protection circuits (GFCI, breaker, overvoltage/undervoltage)
+
+  - Control software (battery management, user interface, fault handling)
+
+  - Test reports (power quality, efficiency, load testing, safety compliance)
+
+  - User manual (operation, compatible loads, runtime estimation)
+
+
+  ## Best Practices
+
+
+  - **Reserve SOC**: Always maintain 20% battery for driving (avoid being stranded)
+
+  - **Load matching**: Do not exceed inverter rating (1.5 kW typical)
+
+  - **Thermal management**: Ensure adequate cooling, avoid continuous operation at max power in hot weather
+
+  - **User education**: Teach users about runtime estimation, compatible loads, safety
+
+  - **Maintenance**: Inspect outlets for damage, test GFCI monthly
+
+
+  ## Integration
+
+
+  - **Mobile app**: Display V2L status, power consumption, estimated runtime
+
+  - **Smart home**: Control V2L remotely (enable/disable via app)
+
+  - **Fleet management**: Track V2L usage for work trucks (job site power consumption)
+
+  - **Emergency systems**: Integrate with disaster response (mobile charging station for phones, medical devices)
+
+
+  '
+constraints:
+- Power limited to 1.5-3.6 kW typical (not suitable for high-power loads like welders)
+- Battery degradation from cycling (though minimal for occasional V2L use)
+- User must monitor SOC to avoid depletion (risk of being stranded)
+- Not available on all EV models (aftermarket adapters may be unofficial)
+tools_required:
+- Pure sine wave inverter (1.5-3.6 kW)
+- GFCI circuit breaker (15-20A)
+- AC outlet (NEMA 5-15R or NEMA 14-50R)
+- Power quality analyzer (oscilloscope, THD meter)
+- Load bank for testing (resistive, inductive, capacitive loads)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- charging-infrastructure
+- v2l
+- vehicle-to-load
+- inverter
+- portable-power
+- camping
+- automotive

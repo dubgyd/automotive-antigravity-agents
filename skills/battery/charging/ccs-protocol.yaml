@@ -1,0 +1,368 @@
+name: ccs-protocol
+description: Combined Charging System (CCS) protocol implementation for DC fast charging with ISO 15118 communication
+category: battery-charging
+
+instructions: |
+  Implement CCS charging protocol stack:
+
+  Protocol layers:
+  - Physical: PLC (Power Line Communication) HPGP
+  - Data Link: IEEE 1901
+  - Network: IPv6
+  - Transport: TCP/UDP
+  - Application: ISO 15118-2/20
+
+  Charging phases:
+  1. Plugin detection and wake-up
+  2. Communication setup (SLAC)
+  3. Authentication and authorization
+  4. Charge parameter discovery
+  5. Cable check and pre-charge
+  6. Power delivery (CV/CC control)
+  7. Welding check and disconnect
+
+  Power profiles:
+  - CCS Combo 1 (Type 1): up to 350 kW
+  - CCS Combo 2 (Type 2): up to 350 kW
+  - Voltage: 200-920V DC
+  - Current: up to 500A
+
+  Safety requirements:
+  - Isolation monitoring
+  - Ground fault detection
+  - Overcurrent protection
+  - Temperature monitoring
+  - Emergency stop handling
+
+dependencies:
+  - pyslac for SLAC protocol
+  - pyiso15118 for ISO 15118 stack
+  - python-can for CAN bus communication
+
+examples:
+  - description: "CCS charging controller implementation"
+    input: "Implement CCS charging session management"
+    output: |
+      ```python
+      import numpy as np
+      from dataclasses import dataclass
+      from enum import Enum
+      from typing import Optional, Tuple
+
+      class ChargingState(Enum):
+          IDLE = 0
+          PLUGIN_DETECTED = 1
+          COMM_SETUP = 2
+          AUTHENTICATION = 3
+          PARAM_DISCOVERY = 4
+          CABLE_CHECK = 5
+          PRECHARGE = 6
+          POWER_DELIVERY = 7
+          WELDING_CHECK = 8
+          DISCONNECTED = 9
+          ERROR = 10
+
+      @dataclass
+      class ChargeParameters:
+          target_voltage_v: float
+          target_current_a: float
+          max_voltage_v: float
+          max_current_a: float
+          max_power_kw: float
+          energy_request_kwh: Optional[float] = None
+          departure_time: Optional[float] = None
+
+      @dataclass
+      class EVSECapability:
+          max_voltage_v: float = 920.0
+          max_current_a: float = 500.0
+          max_power_kw: float = 350.0
+          min_voltage_v: float = 200.0
+          min_current_a: float = 10.0
+
+      @dataclass
+      class ChargingStatus:
+          present_voltage_v: float
+          present_current_a: float
+          present_power_kw: float
+          soc_percent: float
+          energy_delivered_kwh: float
+          charging_complete: bool
+          fault_code: int = 0
+
+      class CCSCharger:
+          def __init__(self, evse_capability: EVSECapability):
+              self.evse = evse_capability
+              self.state = ChargingState.IDLE
+
+              # Charging session data
+              self.charge_params: Optional[ChargeParameters] = None
+              self.status = ChargingStatus(0, 0, 0, 0, 0, False)
+
+              # Control parameters
+              self.voltage_tolerance = 5.0  # V
+              self.current_tolerance = 2.0  # A
+
+          def handle_plugin(self) -> bool:
+              """Handle vehicle plugin detection"""
+              print("Vehicle detected, initiating SLAC...")
+              self.state = ChargingState.PLUGIN_DETECTED
+
+              # Simulate SLAC communication setup
+              comm_ok = self._slac_setup()
+
+              if comm_ok:
+                  self.state = ChargingState.COMM_SETUP
+                  return True
+              else:
+                  self.state = ChargingState.ERROR
+                  return False
+
+          def authenticate(self, vehicle_id: str, auth_token: str) -> bool:
+              """Authenticate vehicle"""
+              print(f"Authenticating vehicle {vehicle_id}...")
+              self.state = ChargingState.AUTHENTICATION
+
+              # Simplified authentication
+              auth_ok = len(auth_token) > 0
+
+              if auth_ok:
+                  self.state = ChargingState.PARAM_DISCOVERY
+                  return True
+              else:
+                  self.state = ChargingState.ERROR
+                  return False
+
+          def negotiate_parameters(self, ev_params: ChargeParameters) -> bool:
+              """Negotiate charging parameters with vehicle"""
+              print("Negotiating charge parameters...")
+              self.state = ChargingState.PARAM_DISCOVERY
+
+              # Check compatibility
+              if ev_params.max_voltage_v > self.evse.max_voltage_v:
+                  print(f"ERROR: EV voltage ({ev_params.max_voltage_v}V) exceeds EVSE limit")
+                  self.state = ChargingState.ERROR
+                  return False
+
+              if ev_params.max_current_a > self.evse.max_current_a:
+                  print(f"WARNING: EV current limited to EVSE max ({self.evse.max_current_a}A)")
+                  ev_params.max_current_a = self.evse.max_current_a
+
+              # Calculate power limit
+              max_power = min(
+                  ev_params.max_power_kw,
+                  self.evse.max_power_kw,
+                  (ev_params.max_voltage_v * ev_params.max_current_a) / 1000
+              )
+
+              ev_params.max_power_kw = max_power
+
+              self.charge_params = ev_params
+              print(f"Parameters negotiated: {max_power:.1f} kW, "
+                    f"{ev_params.max_voltage_v:.0f}V, {ev_params.max_current_a:.0f}A")
+
+              self.state = ChargingState.CABLE_CHECK
+              return True
+
+          def cable_check(self) -> bool:
+              """Perform cable check and insulation test"""
+              print("Performing cable check...")
+              self.state = ChargingState.CABLE_CHECK
+
+              # Simulate insulation resistance measurement
+              # Should be > 100 Ω/V minimum
+              insulation_resistance = 500.0  # Ω/V
+
+              if insulation_resistance < 100.0:
+                  print("ERROR: Insulation failure")
+                  self.state = ChargingState.ERROR
+                  return False
+
+              print(f"Cable check OK (R_iso = {insulation_resistance:.0f} Ω/V)")
+              self.state = ChargingState.PRECHARGE
+              return True
+
+          def precharge(self, battery_voltage_v: float) -> bool:
+              """Precharge DC link to match battery voltage"""
+              print(f"Precharging to {battery_voltage_v:.1f}V...")
+              self.state = ChargingState.PRECHARGE
+
+              # Simulate voltage ramp-up
+              target_voltage = battery_voltage_v
+              present_voltage = 0.0
+
+              while present_voltage < target_voltage - 5:
+                  present_voltage += 10.0  # 10V/step
+                  self.status.present_voltage_v = present_voltage
+
+              # Check voltage match
+              voltage_diff = abs(present_voltage - target_voltage)
+
+              if voltage_diff > self.voltage_tolerance:
+                  print(f"ERROR: Precharge voltage mismatch ({voltage_diff:.1f}V)")
+                  self.state = ChargingState.ERROR
+                  return False
+
+              print("Precharge complete, closing contactors")
+              self.state = ChargingState.POWER_DELIVERY
+              return True
+
+          def power_delivery(self, dt: float) -> ChargingStatus:
+              """Execute power delivery phase"""
+              if self.state != ChargingState.POWER_DELIVERY:
+                  return self.status
+
+              # CC/CV charging control
+              if self.status.present_voltage_v < self.charge_params.target_voltage_v:
+                  # Constant Current (CC) phase
+                  self.status.present_current_a = self.charge_params.target_current_a
+                  self.status.present_voltage_v += 0.1 * dt  # Simulate voltage rise
+              else:
+                  # Constant Voltage (CV) phase
+                  self.status.present_voltage_v = self.charge_params.target_voltage_v
+                  # Current tapers off
+                  self.status.present_current_a *= 0.999
+
+              # Calculate power
+              self.status.present_power_kw = (
+                  self.status.present_voltage_v * self.status.present_current_a / 1000
+              )
+
+              # Update energy delivered
+              self.status.energy_delivered_kwh += (
+                  self.status.present_power_kw * dt / 3600
+              )
+
+              # Estimate SOC (simplified)
+              if self.charge_params.energy_request_kwh:
+                  self.status.soc_percent = min(
+                      100,
+                      (self.status.energy_delivered_kwh /
+                       self.charge_params.energy_request_kwh) * 100
+                  )
+
+              # Check charging complete
+              if self.status.present_current_a < 5.0 or self.status.soc_percent >= 100:
+                  self.status.charging_complete = True
+                  print("Charging complete")
+                  self.state = ChargingState.WELDING_CHECK
+
+              return self.status
+
+          def welding_check(self) -> bool:
+              """Check for contactor welding"""
+              print("Performing welding check...")
+              self.state = ChargingState.WELDING_CHECK
+
+              # Open contactors and measure voltage
+              self.status.present_current_a = 0
+
+              # Simulate voltage measurement
+              measured_voltage = 2.0  # Should be near 0V
+
+              if measured_voltage > 10.0:
+                  print("ERROR: Contactor welding detected")
+                  self.status.fault_code = 1
+                  self.state = ChargingState.ERROR
+                  return False
+
+              print("Welding check OK")
+              self.state = ChargingState.DISCONNECTED
+              return True
+
+          def _slac_setup(self) -> bool:
+              """SLAC (Signal Level Attenuation Characterization) setup"""
+              # Simplified SLAC simulation
+              # Real implementation uses homeplug green PHY
+              print("SLAC matching...")
+              return True
+
+          def emergency_stop(self):
+              """Emergency stop procedure"""
+              print("EMERGENCY STOP TRIGGERED")
+              self.status.present_current_a = 0
+              self.status.present_power_kw = 0
+              self.state = ChargingState.ERROR
+              self.status.fault_code = 99
+
+
+      # Usage example
+      if __name__ == "__main__":
+          evse = EVSECapability(
+              max_voltage_v=920,
+              max_current_a=500,
+              max_power_kw=350
+          )
+
+          charger = CCSCharger(evse)
+
+          # Simulate charging session
+          print("=== CCS Charging Session ===\n")
+
+          # 1. Plugin
+          if not charger.handle_plugin():
+              print("Plugin failed")
+              exit(1)
+
+          # 2. Authentication
+          if not charger.authenticate("VEHICLE_123", "AUTH_TOKEN"):
+              print("Authentication failed")
+              exit(1)
+
+          # 3. Parameter negotiation
+          ev_params = ChargeParameters(
+              target_voltage_v=800.0,
+              target_current_a=400.0,
+              max_voltage_v=800.0,
+              max_current_a=400.0,
+              max_power_kw=320.0,
+              energy_request_kwh=80.0
+          )
+
+          if not charger.negotiate_parameters(ev_params):
+              print("Parameter negotiation failed")
+              exit(1)
+
+          # 4. Cable check
+          if not charger.cable_check():
+              print("Cable check failed")
+              exit(1)
+
+          # 5. Precharge
+          if not charger.precharge(battery_voltage_v=650.0):
+              print("Precharge failed")
+              exit(1)
+
+          # 6. Power delivery
+          print("\nStarting power delivery...\n")
+          print("Time(s) | Voltage(V) | Current(A) | Power(kW) | Energy(kWh) | SOC(%)")
+          print("-" * 80)
+
+          for t in range(0, 3600, 60):  # 1 hour simulation
+              status = charger.power_delivery(dt=60.0)
+
+              print(f"{t:7d} | {status.present_voltage_v:10.1f} | "
+                    f"{status.present_current_a:10.1f} | "
+                    f"{status.present_power_kw:9.1f} | "
+                    f"{status.energy_delivered_kwh:11.2f} | "
+                    f"{status.soc_percent:6.1f}")
+
+              if status.charging_complete:
+                  break
+
+          # 7. Welding check
+          charger.welding_check()
+
+          print("\n=== Charging Session Complete ===")
+          print(f"Total energy delivered: {status.energy_delivered_kwh:.2f} kWh")
+          print(f"Final SOC: {status.soc_percent:.1f}%")
+      ```
+
+tags:
+  - battery
+  - charging
+  - ccs
+  - iso15118
+  - dc-fast-charging
+  - ev-charging
+  - power-delivery

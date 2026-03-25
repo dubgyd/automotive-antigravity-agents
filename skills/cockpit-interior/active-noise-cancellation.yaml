@@ -1,0 +1,162 @@
+name: active-noise-cancellation
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "AI-based cabin noise control covering road noise cancellation, engine order cancellation, wind noise reduction, and adaptive algorithm design for automotive environments."
+use_cases:
+  - "Implementing road noise cancellation using accelerometer and microphone arrays"
+  - "Designing engine order cancellation synchronized to RPM for ICE and hybrid vehicles"
+  - "Building adaptive ANC algorithms that learn and compensate for tire and road changes"
+  - "Creating quiet zones at individual seat positions using zonal ANC"
+  - "Integrating ANC with the vehicle audio system for transparent sound enhancement"
+automotive_standards:
+  - "ISO 362 - Vehicle exterior noise measurement methodology"
+  - "ISO 11654 - Sound absorption classification for cabin materials"
+  - "SAE J1477 - Measurement of interior sound levels"
+  - "AES standard for active noise control system measurement"
+  - "ISO 26262 - Functional safety for ANC actuator control paths"
+instructions: |
+  # Active Noise Cancellation
+
+  ## Overview
+  Active noise cancellation reduces unwanted cabin noise by generating anti-phase sound
+  through the vehicle speaker system. Accelerometers on the vehicle structure sense
+  vibrations from the road, engine, and wind before they become audible noise inside the
+  cabin. AI-based algorithms predict the noise arriving at each occupant's ears and
+  generate cancellation signals in real time, creating a quieter and more comfortable
+  driving experience.
+
+  ## Key Concepts
+
+  ### Noise Sources in Vehicles
+  Three primary noise categories dominate the cabin environment:
+  - Road noise from tire-pavement interaction transmitted through suspension (20-500 Hz)
+  - Engine and powertrain noise with distinct harmonic orders tied to RPM (30-300 Hz)
+  - Wind noise from turbulent airflow around mirrors and seals (500-4000 Hz)
+  Each source requires different sensing strategies and cancellation approaches.
+
+  ### Feedforward vs Feedback Architecture
+  Two fundamental ANC control topologies:
+  - Feedforward uses reference sensors (accelerometers) to detect noise before it arrives,
+    allowing time for the algorithm to compute the anti-noise signal
+  - Feedback uses error microphones near the listener to measure residual noise and
+    iteratively reduce it, working well for predictable tonal noise
+  - Hybrid systems combine both approaches for broadband and tonal noise simultaneously
+
+  ### Adaptive Algorithms
+  Real-time filter adaptation tracks changing noise conditions:
+  - Filtered-x Least Mean Squares (FxLMS) is the foundational automotive ANC algorithm
+  - Secondary path modeling captures the transfer function from speaker to error mic
+  - Neural network-based predictors can model nonlinear noise generation mechanisms
+  - Algorithm convergence rate must balance adaptation speed against stability
+
+  ## Implementation Guide
+
+  ### Step 1 - Instrument the Vehicle
+  Install reference sensors and error microphones:
+  - Mount 3-axis accelerometers on suspension strut tops and subframe mounts
+  - Place error microphones near each occupant head position in the headliner
+  - Install additional reference microphones in wheel wells for tire noise sensing
+  - Use the existing cabin speaker array as the cancellation actuator system
+
+  ### Step 2 - Characterize Transfer Paths
+  Measure the acoustic and vibration transfer functions:
+  - Primary path from noise source to error microphone (vibration to sound)
+  - Secondary path from cancellation speaker to error microphone (speaker to ear)
+  - Measure at multiple operating points covering speed, load, and temperature ranges
+  - Store transfer function models for online adaptation initialization
+
+  ### Step 3 - Implement the ANC Algorithm
+  Deploy the real-time control system:
+  - Run FxLMS with at least 512 filter taps at 4 kHz sample rate for road noise
+  - Implement engine order cancellation with RPM-tracked reference signal synthesis
+  - Use multiple independent control channels for per-seat noise reduction
+  - Target 3 to 10 dB cancellation in the 50 to 500 Hz range at the headrest
+
+  ### Step 4 - Train AI Enhancement
+  Augment traditional ANC with machine learning:
+  - Train a neural network on vehicle noise data to predict noise 10 to 20 ms ahead
+  - Use the prediction to improve feedforward controller performance at high frequencies
+  - Implement online learning that adapts to tire wear, road surface, and load changes
+  - Validate AI models do not introduce instability under any operating condition
+
+  ### Step 5 - Integrate with Audio System
+  Merge ANC with the vehicle sound system seamlessly:
+  - Route cancellation signals through the same amplifiers and speakers as entertainment
+  - Ensure ANC signal generation has highest priority in the audio DSP processing chain
+  - Implement sound enhancement features that shape the cabin sound positively
+  - Support engine sound enhancement for sporty driving modes using synthesized sound
+
+  ## Best Practices
+
+  ### Stability and Safety
+  - Implement amplitude limiters on ANC output to prevent speaker damage or loud artifacts
+  - Monitor convergence metrics and freeze adaptation if divergence is detected
+  - Design fail-safe behavior where ANC mutes gracefully rather than producing noise boost
+  - Test ANC stability during rapid driving condition changes like pothole impacts
+
+  ### Cancellation Performance
+  - Focus cancellation energy on frequencies below 500 Hz where it is most effective
+  - Accept that ANC cannot cancel noise above 1 kHz due to wavelength and zone size
+  - Optimize for the driver head position first, then extend to other seat positions
+  - Measure performance with the vehicle moving on multiple road surface types
+
+  ### Power and Thermal Budget
+  - ANC DSP processing typically requires 2 to 5 watts of compute power
+  - Cancellation signals add 1 to 3 watts average power through the amplifier system
+  - Ensure thermal management accounts for continuous ANC operation
+  - In EV mode, ANC power draw should be below 0.1% of battery consumption per hour
+
+  ## Troubleshooting
+
+  ### ANC Creates Audible Artifacts or Thumps
+  Check for filter divergence by monitoring adaptation coefficients. Verify secondary path
+  models are current and accurate. Inspect for mechanical resonances excited by the
+  cancellation signal through the speaker mounting.
+
+  ### Cancellation Works at Low Speed but Not at Highway
+  At higher speeds, the noise spectrum shifts upward beyond effective ANC bandwidth.
+  Check reference sensor signal-to-noise ratio at highway speed. Consider adding more
+  reference accelerometers closer to the dominant noise transmission path.
+
+  ### Engine Order Cancellation Misses During Rapid Acceleration
+  Verify RPM signal tracking latency is below 5 ms. Check that the harmonic synthesizer
+  updates frequency fast enough for the engine acceleration rate. Increase the adaptation
+  rate for the engine order controller during transient conditions.
+
+  ### ANC Interferes with Phone Call Audio
+  Ensure the ANC path is excluded from the acoustic echo cancellation reference signal.
+  Verify that ANC does not cancel the phone audio playing through cabin speakers. Check
+  for microphone placement conflicts between ANC error mics and voice capture mics.
+
+  ## Integration Patterns
+
+  ### Road Surface Classification
+  Adapting ANC parameters based on the road type being driven:
+  - Use accelerometer spectral signatures to classify road surface type in real time
+  - Select pre-optimized ANC filter sets for smooth asphalt, concrete, and cobblestone
+  - Accelerate filter adaptation when a road surface change is detected
+  - Log road surface classifications for fleet-level road quality mapping
+
+  ### EV-Specific Noise Challenges
+  Addressing the unique noise profile of electric vehicles:
+  - No engine masking noise makes road and wind noise more prominent and annoying
+  - Target cancellation of tire cavity resonance that is newly audible in EVs
+  - Address electric motor whine at specific speed and torque operating points
+  - Consider adding engineered sound enhancement to replace the lost engine character
+
+  ## Testing and Validation
+
+  ### Objective Noise Reduction Measurement
+  Quantify ANC performance using standardized metrics:
+  - Measure A-weighted SPL at the driver head position with ANC on versus off
+  - Report noise reduction per octave band from 20 Hz to 1 kHz
+  - Test on at least five different road surface types at three speed points each
+  - Capture steady-state and transient noise reduction for impulsive road inputs
+
+  ### Subjective Listening Evaluation
+  Validate perceived noise improvement with human evaluators:
+  - Conduct paired comparison tests with and without ANC using 20 trained listeners
+  - Rate perceived noise quality using the Aachen Head scale for annoyance
+  - Evaluate for artifacts including pumping, breathing, and tonal residuals
+  - Validate that ANC does not degrade perceived audio quality when music is playing

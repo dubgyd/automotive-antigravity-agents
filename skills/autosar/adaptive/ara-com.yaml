@@ -1,0 +1,253 @@
+name: "AUTOSAR Adaptive Communication (ara::com)"
+version: "1.0.0"
+description: "Skills for AUTOSAR Adaptive Platform service-oriented communication"
+category: "autosar-adaptive"
+
+instructions: |
+  ## AUTOSAR Adaptive ara::com Communication Guide
+
+  ### Overview
+
+  ara::com is the communication middleware API of the AUTOSAR Adaptive Platform,
+  enabling service-oriented communication between Adaptive Applications (AA).
+  It abstracts the underlying transport (SOME/IP, DDS, IPC) and provides a
+  type-safe C++ API for methods, events, and fields.
+
+  ### Architecture
+
+  ```
+  Adaptive Application A                    Adaptive Application B
+  ┌─────────────────────┐                  ┌─────────────────────┐
+  │  Proxy (Consumer)   │ ◄──────────────► │  Skeleton (Provider) │
+  │  - FindService()    │   SOME/IP or DDS │  - OfferService()    │
+  │  - Subscribe()      │                  │  - Send()            │
+  │  - Call()           │                  │  - Fire()            │
+  └─────────────────────┘                  └─────────────────────┘
+  ```
+
+  ### Service Interface Definition (ARXML)
+
+  Every ara::com service starts with an ARXML service interface definition
+  that specifies methods, events, and fields. The toolchain generates C++
+  proxy and skeleton classes from this definition.
+
+  Key elements in the ServiceInterface ARXML:
+  - **Methods**: Request-response operations with typed arguments
+  - **Events**: Publish-subscribe notifications with typed payloads
+  - **Fields**: Combination of notifier, getter, and setter
+  - **ApplicationErrors**: Typed error returns from methods
+
+  ### Service Discovery
+
+  Service discovery uses SOME/IP-SD (Service Discovery) protocol or DDS
+  discovery to find service instances on the network at runtime.
+
+  **FindService patterns**:
+  - `StartFindService()` with callback: Asynchronous, recommended for production
+  - `FindService()` blocking: Synchronous, useful for initialization
+  - Both return `ServiceHandleContainer` with matched instances
+
+  **Service instance manifest** defines:
+  - Service ID and instance ID mappings
+  - Transport binding (SOME/IP, IPC, DDS)
+  - Network endpoint (IP, port, protocol)
+  - Event group assignments
+
+  ### Proxy (Client) Side
+
+  The proxy class is generated from the service interface and provides:
+
+  ```cpp
+  // Find and use a service
+  auto handles = proxy::RadarServiceProxy::FindService(instanceSpec);
+  auto proxy = std::make_unique<proxy::RadarServiceProxy>(handles[0]);
+
+  // Subscribe to events
+  proxy->BrakeEvent.Subscribe(10);  // max 10 samples in cache
+  proxy->BrakeEvent.SetReceiveHandler([&]() {
+      proxy->BrakeEvent.GetNewSamples([](auto sample) {
+          ProcessBrakeData(*sample);
+      });
+  });
+
+  // Call methods (returns ara::core::Future)
+  auto future = proxy->Calibrate(sensorId, params);
+  auto result = future.get();  // Blocking wait
+  ```
+
+  ### Skeleton (Server) Side
+
+  The skeleton class is generated and must be subclassed:
+
+  ```cpp
+  class RadarServiceImpl : public skeleton::RadarServiceSkeleton {
+  public:
+      RadarServiceImpl(ara::core::InstanceSpecifier spec)
+          : RadarServiceSkeleton(spec) {}
+
+      // Implement method handlers
+      ara::core::Future<CalibrationOutput> Calibrate(
+          uint32_t sensorId, CalibrationParams params) override {
+          ara::core::Promise<CalibrationOutput> promise;
+          // Process calibration
+          CalibrationOutput result{true, 0.98};
+          promise.set_value(result);
+          return promise.get_future();
+      }
+
+      // Send events
+      void SendBrakeEvent(const BrakeEventData& data) {
+          BrakeEvent.Send(data);
+      }
+  };
+  ```
+
+  ### Event Communication
+
+  Events follow publish-subscribe semantics:
+  - **Publisher** allocates sample, fills data, calls `Send()`
+  - **Subscriber** calls `Subscribe()`, sets receive handler, processes samples
+  - Subscription states: kSubscribed, kNotSubscribed, kSubscriptionPending
+  - Max sample count limits memory usage on subscriber side
+
+  ### Field Communication
+
+  Fields combine getter, setter, and notifier:
+  - **Getter**: On-demand read of current value
+  - **Setter**: Write a new value
+  - **Notifier**: Automatic notification on value change
+  - Fields always have an initial value available after subscription
+
+  ### SOME/IP Binding Configuration
+
+  SOME/IP is the primary transport for ara::com in automotive:
+
+  | Parameter | Typical Value | Description |
+  |-----------|--------------|-------------|
+  | Service ID | 0x0001-0xFFFE | Unique per service type |
+  | Instance ID | 0x0001-0xFFFE | Unique per service instance |
+  | Method ID | 0x0001-0x7FFF | Per-method identifier |
+  | Event ID | 0x8001-0xFFFE | Per-event identifier |
+  | Event Group | 0x0001-0xFFFE | Group events for subscription |
+
+  Transport options:
+  - **UDP**: Low latency, no connection overhead, for events
+  - **TCP**: Reliable delivery, for methods and large payloads
+  - **Local IPC**: Shared memory for same-ECU communication
+
+  ### Serialization
+
+  SOME/IP serialization supports:
+  - TLV (Tag-Length-Value): Flexible, backward compatible
+  - Length-delimited: For variable-length fields
+  - Fixed-length: For primitive types
+  - Byte order: Big-endian (network byte order)
+
+  ### Error Handling
+
+  ara::com uses typed errors and exceptions:
+  - `ara::com::ComErrc`: Communication-level errors
+  - `ApplicationError`: Service-defined error codes
+  - `ara::core::Future` with `GetResult()` returns `Result<T, E>`
+  - Handle `ComOfferServiceErrc` for service offering failures
+
+  ### Thread Safety
+
+  - Proxy and skeleton methods are thread-safe by default
+  - Event receive handlers execute in middleware context (not application thread)
+  - Use `ara::core::Promise` for asynchronous method returns
+  - Avoid blocking in receive handlers; queue work for processing threads
+
+  ### Testing and Debugging
+
+  - Use SOME/IP dissector in Wireshark for protocol analysis
+  - vsomeip logging (VSOMEIP_LOGLEVEL) for middleware tracing
+  - Mock services using test skeletons for unit testing
+  - Validate service discovery with SOME/IP-SD packet captures
+
+  ### Best Practices
+
+  - Define clear service interfaces with versioning strategy
+  - Use event groups to minimize network traffic (subscribe only needed events)
+  - Set appropriate max sample counts to bound memory usage
+  - Handle service availability changes (gone/available transitions)
+  - Use `ara::core::Future::then()` for non-blocking method chains
+  - Keep method handler execution short; offload heavy work to threads
+  - Test with network delays and packet loss for robustness
+  - Version service interfaces for backward compatibility
+
+skills:
+  - id: "adaptive-service-definition"
+    name: "Define Service Interface"
+    description: "Create service interface with methods, events, and fields"
+    tags: ["adaptive", "ara-com", "service"]
+    implementation: |
+      Define AUTOSAR Adaptive service interface:
+      1. Create service interface in ARXML (ServiceInterface)
+      2. Define methods with input/output arguments
+      3. Add events for publish-subscribe patterns
+      4. Define fields (notifier, getter/setter)
+      5. Specify error handling with ApplicationErrors
+      6. Configure serialization (SOME/IP)
+      7. Generate C++ proxy/skeleton classes
+
+  - id: "adaptive-service-discovery"
+    name: "Implement Service Discovery"
+    description: "Use ara::com for dynamic service discovery"
+    tags: ["adaptive", "service-discovery", "someip"]
+    implementation: |
+      Implement service discovery:
+      1. Configure service instance manifest
+      2. Use StartFindService() to discover services
+      3. Handle FindServiceHandler callbacks
+      4. Create proxy instance from service handle
+      5. Subscribe to service availability events
+      6. Handle service instance lifecycle
+      7. Configure SOME/IP-SD parameters
+
+  - id: "adaptive-event-communication"
+    name: "Use Event-Based Communication"
+    description: "Implement publish-subscribe with ara::com events"
+    tags: ["adaptive", "events", "pubsub"]
+    implementation: |
+      Event-based communication:
+      1. On skeleton side: Allocate event sample
+      2. Fill event data in allocated sample
+      3. Send event via Send() method
+      4. On proxy side: Subscribe to event
+      5. Setup event receive handler callback
+      6. Process received event samples
+      7. Handle subscription state changes
+
+  - id: "adaptive-method-call"
+    name: "Invoke Service Methods"
+    description: "Call remote methods with Future/Promise pattern"
+    tags: ["adaptive", "methods", "rpc"]
+    implementation: |
+      Service method invocation:
+      1. Proxy: Call method and get Future
+      2. Proxy: Wait for result or use callback
+      3. Handle method errors via exceptions
+      4. Skeleton: Implement method handler
+      5. Skeleton: Return Promise result
+      6. Configure method timeout
+      7. Handle fire-and-forget methods
+
+  - id: "adaptive-someip-config"
+    name: "Configure SOME/IP Binding"
+    description: "Setup SOME/IP transport and serialization"
+    tags: ["adaptive", "someip", "middleware"]
+    implementation: |
+      Configure SOME/IP:
+      1. Define service instance IDs
+      2. Configure method/event IDs
+      3. Setup TCP/UDP endpoints
+      4. Configure serialization (TLV, LV)
+      5. Define SOME/IP-SD parameters
+      6. Setup multicast event groups
+      7. Configure transport layer security (TLS)
+
+metadata:
+  autosar_version: "R22-11"
+  middleware: ["SOME/IP", "DDS"]
+  programming_language: "C++17"

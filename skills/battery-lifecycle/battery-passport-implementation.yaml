@@ -1,0 +1,45 @@
+name: battery-passport-implementation
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: regulatory
+description: Expert in implementing digital battery passports following GBA standard including data models, QR codes, blockchain traceability, and API integration with manufacturing systems.
+use_cases:
+- Battery passport IT architecture design
+- GBA data model implementation
+- QR code generation and laser marking
+- Blockchain/DLT for tamper-proof records
+- MES/PLM integration for automated data capture
+automotive_standards:
+- GBA (Global Battery Alliance) Battery Passport
+- EU Battery Regulation 2023/1542 Article 13
+- ISO/IEC 15459 Unique Identifier Standards
+- ISO/IEC 19762 AIDC Data Structures
+- GDPR for data privacy
+instructions: 'Expert in technical implementation of digital battery passports meeting EU Regulation requirements and GBA standard. Covers data architecture (70+ fields: manufacturer, chemistry, capacity, carbon footprint, recycled content, supply chain, performance, disassembly), unique identifier generation (ISO 15459 compliance), QR code standards (data matrix ECC200, laser etching on pack housing), backend systems (cloud database, API endpoints for authorized access), blockchain integration (Hyperledger, Ethereum for immutable provenance), MES/PLM integration (auto-capture manufacturing data: test results, traceability lots, assembly date), access control (GDPR-compliant multi-level: public chemistry/weight, OEM performance data, recycler disassembly info), lifecycle updates (SOH from vehicle telematics, service events, battery swap history), and end-of-life data (collection date, recycling facility, material recovery yields). Implementation phases: pilot (100 batteries, validate data flows), scale (1000s/month, load testing), full production (integrate into all manufacturing lines). Key technical decisions: centralized vs distributed storage, on-chain vs off-chain data (gas costs), API rate limiting, data retention policy (lifetime + 15 years post-recycling). Tools: SAP Product Compliance, Circulor Responsible Sourcing, Minespider blockchain platform, custom REST APIs, laser marking systems (fiber laser 20W), vision verification (OCR check QR readability post-marking). Cost: €10-30 per battery (IT amortization, laser marking, data entry/validation). Integration: Connects to vehicle CAN (SOH updates), recycler portals (EOL data input), regulatory reporting (annual compliance summaries). Best practices: Generate unique ID at cell level (propagate to module/pack), implement data validation hooks (prevent bad data entry), use industry PKI (trusted certificate authorities for API authentication), design for 20+ year data retention (archival strategy), test QR durability (salt spray, thermal cycling per ISO 11507).
+'
+constraints:
+- Data security vs transparency tradeoff (GDPR compliance)
+- Blockchain gas costs for on-chain storage (prefer off-chain with hash)
+- Supplier data quality varies (manual data entry errors)
+- QR code durability over 15+ year battery life (corrosion, fading)
+- API scalability for millions of batteries (load balancing required)
+tools_required:
+- Battery passport platform (Circulor, Minespider, SAP, custom)
+- Blockchain (Hyperledger Fabric, Ethereum, or similar DLT)
+- MES/PLM integration middleware
+- Laser marking systems for QR codes
+- Cloud infrastructure (AWS, Azure, GCP)
+- API gateway and authentication (OAuth 2.0, JWT)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- battery-lifecycle
+- battery-passport
+- blockchain
+- traceability
+- gba
+- automotive

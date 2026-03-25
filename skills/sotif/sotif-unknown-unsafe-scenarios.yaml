@@ -1,0 +1,627 @@
+name: sotif-unknown-unsafe-scenarios
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-analysis
+description: Techniques for discovering Area 3 (unknown unsafe) scenarios through systematic exploration, simulation, and field monitoring.
+use_cases:
+- Corner case discovery in simulation
+- Edge case identification from field data
+- ML model failure mode exploration
+- Adversarial scenario generation
+- Continuous safety improvement post-deployment
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO/TR 4804 Safety of AI
+- ISO 26262-4
+- UN ECE R157 (ALKS)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in discovering Area 3 (unknown unsafe) scenarios — hazardous situations not identified during design but discovered through extensive testing, simulation, or field operation.
+
+
+  ### Area 3 Definition
+
+
+  **Unknown Unsafe**: Scenarios where:
+
+  - Hazard exists but was not identified during analysis
+
+  - Discovered through validation activities or field deployment
+
+  - Once discovered, moved to Area 2 (known unsafe) for mitigation
+
+  - Represents residual risk in SOTIF safety case
+
+
+  **Goal**: Systematically reduce Area 3 through:
+
+  - Comprehensive simulation-based exploration
+
+  - Statistical field testing
+
+  - Fleet monitoring and event analysis
+
+  - Adversarial testing techniques
+
+
+  ### Discovery Methods
+
+
+  **Simulation-Based Exploration**:
+
+  - Monte Carlo parameter variation (billions of scenarios)
+
+  - Adversarial scenario generation
+
+  - Rare event simulation (importance sampling)
+
+  - Search-based testing (genetic algorithms)
+
+
+  **Field Testing**:
+
+  - Extensive mileage accumulation (millions of km)
+
+  - Diverse geographic/environmental coverage
+
+  - Critical scenario triggering (safety driver intervention)
+
+  - Disengagement analysis
+
+
+  **Fleet Monitoring**:
+
+  - Continuous data collection from deployed vehicles
+
+  - Anomaly detection algorithms
+
+  - Near-miss event identification
+
+  - Shadow mode testing (parallel execution without control)
+
+
+  **Human-in-the-Loop**:
+
+  - Expert test drivers exploring edge cases
+
+  - Driving simulator studies
+
+  - Crowdsourced scenario reporting
+
+
+  ## Simulation-Based Discovery
+
+
+  **Monte Carlo Parameter Sweep**:
+
+
+  ```python
+
+  import numpy as np
+
+  from typing import List, Tuple
+
+
+  class Area3Explorer:
+
+      """Discover unknown unsafe scenarios through simulation"""
+
+
+      def __init__(self, num_scenarios=1000000):
+
+          self.num_scenarios = num_scenarios
+
+          self.discovered_unsafe = []
+
+
+
+      def generate_random_scenario(self) -> dict:
+
+          """Generate scenario with random parameters across full physical range"""
+
+          return {
+
+              "ego_speed": np.random.uniform(0, 150),  # km/h
+
+              "lead_vehicle_speed": np.random.uniform(0, 150),
+
+              "lead_vehicle_distance": np.random.uniform(5, 200),  # meters
+
+              "cut_in_lateral_offset": np.random.uniform(0, 3.5),  # meters
+
+              "cut_in_speed": np.random.uniform(-30, 30),  # relative m/s
+
+              "road_curvature": np.random.uniform(0, 0.01),  # 1/m
+
+              "rain_intensity": np.random.uniform(0, 50),  # mm/h
+
+              "visibility": np.random.uniform(10, 500),  # meters
+
+              "sun_angle": np.random.uniform(0, 90),  # degrees
+
+              "road_friction": np.random.uniform(0.3, 1.0),
+
+          }
+
+
+
+      def simulate_scenario(self, scenario: dict) -> Tuple[bool, str]:
+
+          """
+
+          Simulate scenario and detect if unsafe
+
+          Returns (is_unsafe, failure_mode)
+
+          """
+
+          # Placeholder: Replace with actual simulation
+
+          # Returns True if collision/lane departure/other hazard occurred
+
+          is_unsafe = False
+
+          failure_mode = ""
+
+
+          # Example: Time-to-collision check
+
+          relative_speed = scenario["ego_speed"]/3.6 - scenario["lead_vehicle_speed"]/3.6
+
+          if relative_speed > 0:
+
+              ttc = scenario["lead_vehicle_distance"] / relative_speed
+
+              if ttc < 1.5:  # Critical TTC threshold
+
+                  is_unsafe = True
+
+                  failure_mode = f"Insufficient TTC: {ttc:.2f}s"
+
+
+          # Example: Sensor performance check
+
+          if scenario["rain_intensity"] > 20 and scenario["visibility"] < 100:
+
+              detection_range = 50  # degraded sensor
+
+              if scenario["lead_vehicle_distance"] > detection_range:
+
+                  is_unsafe = True
+
+                  failure_mode = "Sensor blind in heavy rain"
+
+
+          return is_unsafe, failure_mode
+
+
+
+      def explore(self) -> List[dict]:
+
+          """Run Monte Carlo exploration to discover Area 3 scenarios"""
+
+          for i in range(self.num_scenarios):
+
+              scenario = self.generate_random_scenario()
+
+              is_unsafe, failure_mode = self.simulate_scenario(scenario)
+
+
+              if is_unsafe:
+
+                  # Unknown unsafe scenario discovered!
+
+                  self.discovered_unsafe.append({
+
+                      "scenario": scenario,
+
+                      "failure_mode": failure_mode,
+
+                      "iteration": i
+
+                  })
+
+
+          return self.discovered_unsafe
+
+
+
+  # Usage
+
+  explorer = Area3Explorer(num_scenarios=1000000)
+
+  unsafe_scenarios = explorer.explore()
+
+  print(f"Discovered {len(unsafe_scenarios)} unknown unsafe scenarios in {explorer.num_scenarios} simulations")
+
+
+  # Analyze discovered scenarios to identify patterns
+
+  for scenario_data in unsafe_scenarios[:10]:
+
+      print(f"Failure: {scenario_data[''failure_mode'']}")
+
+      print(f"Scenario: {scenario_data[''scenario'']}")
+
+  ```
+
+
+  **Adversarial Scenario Generation**:
+
+
+  ```python
+
+  import torch
+
+  import torch.nn as nn
+
+  import torch.optim as optim
+
+
+  class AdversarialScenarioGenerator:
+
+      """Generate scenarios that maximize system failure likelihood"""
+
+
+      def __init__(self, system_model):
+
+          self.system_model = system_model  # Black-box or surrogate model
+
+
+
+      def optimize_for_failure(self, initial_scenario, num_iterations=100):
+
+          """
+
+          Use gradient-based optimization to find worst-case scenario
+
+          """
+
+          # Convert scenario to tensor
+
+          scenario_params = torch.tensor([
+
+              initial_scenario["ego_speed"],
+
+              initial_scenario["lead_vehicle_distance"],
+
+              initial_scenario["cut_in_speed"],
+
+          ], requires_grad=True)
+
+
+          optimizer = optim.Adam([scenario_params], lr=0.1)
+
+
+          for iteration in range(num_iterations):
+
+              optimizer.zero_grad()
+
+
+              # Simulate system response
+
+              collision_risk = self.system_model(scenario_params)
+
+
+              # Maximize collision risk (minimize negative risk)
+
+              loss = -collision_risk
+
+              loss.backward()
+
+              optimizer.step()
+
+
+              # Constrain parameters to physical ranges
+
+              with torch.no_grad():
+
+                  scenario_params[0].clamp_(0, 150)  # speed
+
+                  scenario_params[1].clamp_(5, 200)  # distance
+
+                  scenario_params[2].clamp_(-30, 30)  # relative speed
+
+
+          # Return adversarial scenario
+
+          return {
+
+              "ego_speed": scenario_params[0].item(),
+
+              "lead_vehicle_distance": scenario_params[1].item(),
+
+              "cut_in_speed": scenario_params[2].item(),
+
+              "collision_risk": collision_risk.item()
+
+          }
+
+  ```
+
+
+  ## Field Data Analysis
+
+
+  **Disengagement Mining**:
+
+  - Analyze all safety driver interventions
+
+  - Cluster disengagement scenarios by similarity
+
+  - Identify common patterns (new triggering conditions)
+
+  - Investigate near-miss events (TTC < threshold)
+
+
+  **Shadow Mode Testing**:
+
+  - Run new algorithm version in parallel without actuation
+
+  - Compare behavior to deployed version
+
+  - Flag divergences (potential unknown unsafe in new version)
+
+
+  **Anomaly Detection**:
+
+
+  ```python
+
+  from sklearn.ensemble import IsolationForest
+
+  import pandas as pd
+
+
+  class FieldDataAnomalyDetector:
+
+      """Detect unusual scenarios in fleet data"""
+
+
+      def __init__(self):
+
+          self.model = IsolationForest(contamination=0.01, random_state=42)
+
+
+
+      def fit(self, normal_scenario_data: pd.DataFrame):
+
+          """Train on known safe (Area 1) scenarios"""
+
+          self.model.fit(normal_scenario_data)
+
+
+
+      def detect_anomalies(self, field_data: pd.DataFrame) -> pd.DataFrame:
+
+          """Identify scenarios that deviate from normal patterns"""
+
+          predictions = self.model.predict(field_data)
+
+
+          # -1 indicates anomaly, 1 indicates normal
+
+          anomalies = field_data[predictions == -1]
+
+
+          return anomalies
+
+
+  # Usage
+
+  detector = FieldDataAnomalyDetector()
+
+  detector.fit(area1_training_data)
+
+
+  # Analyze one day of fleet data
+
+  anomalous_scenarios = detector.detect_anomalies(fleet_data_today)
+
+  print(f"Found {len(anomalous_scenarios)} anomalous scenarios for manual review")
+
+  ```
+
+
+  ## Genetic Algorithm Search
+
+
+  ```python
+
+  import random
+
+  from deap import base, creator, tools, algorithms
+
+
+  def evaluate_scenario_criticality(scenario):
+
+      """
+
+      Fitness function: Return criticality score (higher = more critical)
+
+      """
+
+      # Simulate scenario and return inverse of safety margin
+
+      # Example: 1 / time_to_collision
+
+      ttc = simulate_and_get_ttc(scenario)
+
+      return (1.0 / ttc,)  # Return tuple for DEAP framework
+
+
+  # Setup genetic algorithm
+
+  creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+
+  creator.create("Individual", list, fitness=creator.FitnessMax)
+
+
+  toolbox = base.Toolbox()
+
+  toolbox.register("attr_speed", random.uniform, 60, 120)
+
+  toolbox.register("attr_distance", random.uniform, 10, 150)
+
+  toolbox.register("individual", tools.initCycle, creator.Individual,
+
+                   (toolbox.attr_speed, toolbox.attr_distance), n=1)
+
+  toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+  toolbox.register("evaluate", evaluate_scenario_criticality)
+
+  toolbox.register("mate", tools.cxTwoPoint)
+
+  toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=10, indpb=0.2)
+
+  toolbox.register("select", tools.selTournament, tournsize=3)
+
+
+  # Run genetic algorithm to find critical scenarios
+
+  population = toolbox.population(n=100)
+
+  result, log = algorithms.eaSimple(population, toolbox,
+
+                                     cxpb=0.5, mutpb=0.2, ngen=50,
+
+                                     verbose=False)
+
+
+  # Extract most critical scenarios found
+
+  critical_scenarios = tools.selBest(result, k=10)
+
+  ```
+
+
+  ## Deliverables
+
+
+  - Unknown unsafe scenario discovery report (from simulation/field data)
+
+  - Scenario database updated with newly discovered Area 3 scenarios
+
+  - Root cause analysis for each discovered scenario
+
+  - Mitigation proposals (move to Area 2 with mitigations)
+
+  - Statistical estimate of remaining Area 3 (residual unknown risk)
+
+  - Continuous monitoring plan for post-deployment discovery
+
+
+  ## Best Practices
+
+
+  - Combine multiple discovery methods (simulation + field + adversarial)
+
+  - Use importance sampling to focus on rare but critical events
+
+  - Investigate all safety driver disengagements (not just crashes)
+
+  - Continuously update scenario database with field learnings
+
+  - Re-run Area 3 exploration after system design changes
+
+  - Use surrogate models to accelerate search-based testing
+
+  - Validate discovered scenarios on real system before declaring unsafe
+
+
+  ## Statistical Acceptance
+
+
+  To claim sufficient Area 3 reduction, demonstrate:
+
+  - X million simulation km without new critical scenario discovered
+
+  - Y million field test km with disengagement rate below threshold
+
+  - Z fleet vehicle-years with no safety-critical events
+
+
+  Example (UN ECE R157 ALKS):
+
+  - Simulation: 10 billion km equivalent
+
+  - Field testing: 5 million km
+
+  - Fleet monitoring: 100,000 vehicle operating hours
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Discovery**: Use methods above to find unknown unsafe scenarios
+
+  2. **Classification**: Characterize scenario, determine severity
+
+  3. **Root Cause**: Analyze functional insufficiency or misuse
+
+  4. **Move to Area 2**: Add to known unsafe catalog
+
+  5. **Mitigation**: Develop countermeasures (design, ODD, HMI)
+
+  6. **Verification**: Validate mitigation effectiveness
+
+  7. **Repeat**: Continue exploration to reduce remaining Area 3
+
+
+  ## Tools
+
+
+  - **CARLA**: Open-source simulator with Python API for scenario generation
+
+  - **Scenic**: Probabilistic programming language for scenario generation
+
+  - **CommonRoad**: Benchmark scenarios and motion planning verification
+
+  - **AutoFuzz**: Automated test case generation for autonomous systems
+
+  - **Baidu Apollo**: Shadow mode and field monitoring infrastructure
+
+
+  ## Common Pitfalls
+
+
+  - Over-reliance on simulation (may not capture all real-world complexity)
+
+  - Insufficient parameter space coverage (missing critical combinations)
+
+  - Ignoring low-probability but high-severity scenarios
+
+  - Not investigating near-misses (only analyzing actual failures)
+
+  - Stopping exploration too early (statistical confidence insufficient)
+
+  '
+constraints:
+- Cannot prove Area 3 is empty (unknown unknowns by definition)
+- Simulation fidelity limits (real world always more complex)
+- Computational cost of exhaustive exploration
+- Field testing requires massive mileage for rare events
+tools_required:
+- Simulation platforms (CARLA, IPG CarMaker, SUMO)
+- Optimization libraries (SciPy, PyTorch)
+- Machine learning frameworks (scikit-learn, TensorFlow)
+- Scenario generation tools (Scenic, OpenSCENARIO)
+- Fleet data analytics platforms
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- area-3
+- unknown-unsafe
+- corner-cases
+- adversarial-testing
+- fleet-monitoring
+- simulation

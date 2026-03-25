@@ -1,0 +1,162 @@
+name: modular-interior
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Reconfigurable cabin layouts with modular seating, removable consoles, and adaptable cargo-passenger configurations for multi-purpose vehicle interiors."
+use_cases:
+  - "Designing modular seat rail systems for configurable cabin layouts"
+  - "Implementing quick-release mechanisms for removable center consoles and tables"
+  - "Building software-driven cabin configuration management with preset layouts"
+  - "Creating fold-flat seat systems that convert passenger space to cargo volume"
+  - "Integrating modular interior components with vehicle safety and comfort systems"
+automotive_standards:
+  - "FMVSS 207 - Seating system anchorage for modular rail systems"
+  - "FMVSS 210 - Seat belt assembly anchorage for variable seat positions"
+  - "ECE R14 - Safety belt anchorage strength for modular installations"
+  - "ISO 27956 - Cargo area load restraint for convertible cabin/cargo layouts"
+  - "FMVSS 226 - Ejection mitigation for reconfigured seating positions"
+instructions: |
+  # Modular Interior
+
+  ## Overview
+  Modular interior systems allow vehicle cabins to be reconfigured for different use
+  cases: commuting with maximum passenger seating, cargo delivery with seats removed,
+  mobile office with workspace tables, or camping with fold-flat sleeping surfaces.
+  Universal rail systems, quick-release mounting points, and intelligent connection
+  interfaces enable occupants to rearrange the cabin in minutes, while the vehicle
+  automatically adapts safety systems, climate, and lighting to the current configuration.
+
+  ## Key Concepts
+
+  ### Universal Rail System
+  A standardized mounting rail enables flexible component placement:
+  - Floor-mounted T-slot rails running longitudinally and laterally across the cabin
+  - Rail pitch of 50 mm provides fine-grained positioning options
+  - Load rating of 500 kg per rail meter for seat and cargo mounting
+  - Quick-lock mechanisms allow single-action attachment and release with visual confirmation
+
+  ### Modular Components
+  Interchangeable cabin elements designed for the rail system:
+  - Individual bucket seats that slide and lock at any rail position
+  - Bench seat modules for three-abreast seating in multi-row configurations
+  - Fold-out table modules for workspace or dining configurations
+  - Storage bins and cargo dividers for delivery and logistics use
+  - Sleeping platform modules that span the full cabin width when seats are removed
+
+  ### Configuration Intelligence
+  The vehicle adapts automatically when the cabin layout changes:
+  - NFC or RFID tags on each module identify what is installed and where
+  - The body controller reconfigures seatbelt availability per occupied positions
+  - Climate zones adjust based on which seats are installed and occupied
+  - Airbag deployment maps update to reflect the current seating arrangement
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Rail Infrastructure
+  Engineer the floor rail system for the target vehicle platform:
+  - Define rail layout geometry considering structural floor members and crash load paths
+  - Specify rail material (typically high-strength aluminum alloy for weight optimization)
+  - Design the locking mechanism for one-handed operation with over-center lock feel
+  - Include electrical and pneumatic connection points at regular rail intervals
+
+  ### Step 2 - Create Module Interfaces
+  Standardize the connection between modules and the vehicle:
+  - Define a universal mounting foot that engages the rail lock mechanism
+  - Include a multi-pin electrical connector for seat heating, sensors, and communication
+  - Add a pneumatic quick-connect for modules requiring air supply (massage, support)
+  - Implement a mechanical alignment feature that prevents incorrect module orientation
+
+  ### Step 3 - Build Configuration Detection
+  Implement the system that identifies the current cabin layout:
+  - Read NFC tags from each installed module to determine type and position
+  - Validate the configuration against a database of approved layouts
+  - Reject configurations that violate safety constraints (e.g., no seat at driver position)
+  - Display the current configuration on the vehicle HMI with a cabin map visualization
+
+  ### Step 4 - Adapt Safety Systems
+  Reconfigure occupant protection based on the detected layout:
+  - Enable or disable airbag zones based on which seat positions are occupied
+  - Adjust seatbelt pretensioner configuration for the installed seat type
+  - Update crash pulse management algorithms for the current mass distribution
+  - Configure child seat detection for positions where ISOFIX modules are installed
+
+  ### Step 5 - Manage Comfort and Convenience
+  Adapt climate and lighting to the cabin configuration:
+  - Activate HVAC vents only in zones with installed and occupied seats
+  - Route ambient lighting patterns to match the current module arrangement
+  - Configure the audio system zone map based on installed speaker-equipped modules
+  - Adjust display content routing to screens present in the current layout
+
+  ## Best Practices
+
+  ### Weight Management
+  - Track total installed module weight and warn if vehicle payload capacity is exceeded
+  - Optimize individual module weight with aluminum frames and composite structures
+  - Provide weight information per module on the configuration HMI screen
+  - Consider weight distribution effects on vehicle dynamics and adjust ESC accordingly
+
+  ### Ease of Reconfiguration
+  - Design modules for single-person installation weighing under 20 kg each
+  - Provide clear visual indicators showing locked versus unlocked state on each mount
+  - Include handles and grip points on every module for ergonomic handling
+  - Target complete cabin reconfiguration in under 5 minutes for common layout changes
+
+  ### Durability of Interfaces
+  - Rate rail lock mechanisms for 10000 engagement cycles minimum
+  - Specify electrical connectors for 5000 mating cycles with gold-plated contacts
+  - Test rail systems with corrosion exposure simulating 15-year vehicle life
+  - Validate locking mechanism retention under 20 g crash deceleration loads
+
+  ## Troubleshooting
+
+  ### Module Not Detected After Installation
+  Clean the NFC tag surface on the module base and the reader surface on the rail.
+  Verify the module is fully seated by checking the visual lock indicator. Try
+  repositioning the module one rail pitch forward or backward to test adjacent readers.
+
+  ### Safety System Warning After Reconfiguration
+  Check for an unapproved configuration combination in the diagnostic menu. Verify all
+  modules are fully locked by inspecting each mount point individually. Ensure no module
+  is installed in a position that conflicts with airbag deployment zones.
+
+  ### Electrical Functions Not Working on Module
+  Inspect the multi-pin connector for bent pins or debris. Verify the rail connection
+  point is supplying power by testing voltage at the connector. Check that the module
+  type is recognized and the correct driver software has loaded.
+
+  ### Module Difficult to Remove from Rail
+  Check for debris in the rail channel that may be jamming the lock mechanism. Verify
+  the release handle is fully disengaging the lock before attempting to slide. Apply
+  approved rail lubricant if the slide action feels stiff.
+
+  ## Integration Patterns
+
+  ### Fleet Management Integration
+  Coordinating modular interiors with fleet operations:
+  - Track which modules are installed in each fleet vehicle through telematics
+  - Recommend configurations based on upcoming bookings (passenger vs cargo)
+  - Alert fleet managers when modules need maintenance based on usage data
+  - Provide module swap instructions to fleet technicians through a mobile app
+
+  ### Digital Twin Synchronization
+  Maintaining a virtual representation of the cabin configuration:
+  - Update the vehicle digital twin whenever a module change is detected
+  - Simulate new configurations in the digital twin before physical installation
+  - Use the digital twin for crash simulation with non-standard module arrangements
+  - Synchronize configuration state between the vehicle and cloud management platform
+
+  ## Testing and Validation
+
+  ### Crash Safety Certification
+  Validate occupant protection across all approved configurations:
+  - Define the matrix of all permitted module combinations per vehicle platform
+  - Run sled tests for each configuration variant with instrumented test dummies
+  - Verify module retention under 30 g frontal and 20 g side impact deceleration
+  - Certify each new module type through the full regulatory approval process
+
+  ### Environmental Durability
+  Test modular components under harsh automotive conditions:
+  - Expose rail systems to salt spray for 1000 hours per ISO 9227 for corrosion resistance
+  - Test electrical connectors through 500 thermal cycles with humidity exposure
+  - Validate module latch operation after sand and dust ingress testing per ISO 20653
+  - Verify NFC tag readability after 15 years equivalent UV and thermal aging

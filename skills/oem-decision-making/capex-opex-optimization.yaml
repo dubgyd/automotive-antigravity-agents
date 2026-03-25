@@ -1,0 +1,157 @@
+name: capex-opex-optimization
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: capex_opex_optimization
+description: Investment planning, ROI analysis, depreciation strategy, budget allocation models
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  CapEx/OpEx optimization in automotive manufacturing determines how OEMs and suppliers allocate capital
+  investments (plant, tooling, equipment) versus operating expenditures (labor, materials, maintenance)
+  to maximize return on invested capital while maintaining production flexibility. The shift to EVs,
+  gigafactories, and software-defined vehicles is fundamentally altering the CapEx/OpEx balance, requiring
+  new investment planning models, depreciation strategies, and budget allocation frameworks. This skill
+  covers ROI analysis, asset lifecycle management, and financial optimization for automotive operations.
+
+  ## Key Concepts
+
+  ### Capital Expenditure Categories in Automotive
+  - **Greenfield investments**: New plant construction, gigafactory builds, paint shop installations
+  - **Brownfield conversions**: Retooling ICE lines for EV production, mixed-line flexibility
+  - **Tooling and dies**: Stamping dies, injection molds, welding fixtures (typically 3-7 year lifecycle)
+  - **Automation and robotics**: Assembly line robots, AGVs, vision systems, cobots
+  - **IT and digital infrastructure**: MES systems, digital twin platforms, cloud infrastructure
+  - **R&D facilities**: Testing labs, validation centers, prototype workshops
+
+  ### Operating Expenditure Optimization Levers
+  - **Direct labor**: Automation ROI, shift patterns, overtime management, temporary workforce flex
+  - **Materials and consumables**: Commodity hedging, waste reduction, recycling revenue
+  - **Energy management**: Power purchase agreements, on-site renewables, load shifting, efficiency audits
+  - **Maintenance**: Predictive vs. preventive vs. reactive maintenance cost modeling
+  - **Logistics**: Inbound/outbound freight, warehousing, just-in-time vs. just-in-case inventory
+  - **Software and licensing**: SaaS vs. on-premise, cloud cost optimization, license consolidation
+
+  ### Investment Analysis Methodologies
+  - **Net Present Value (NPV)**: Discounted cash flow analysis with automotive-specific discount rates
+  - **Internal Rate of Return (IRR)**: Hurdle rates typically 12-18% for automotive manufacturing
+  - **Payback period**: Simple and discounted payback for equipment and tooling decisions
+  - **Economic Value Added (EVA)**: Returns above weighted average cost of capital (WACC)
+  - **Real options analysis**: Flexibility value for modular investments in uncertain EV demand
+  - **Monte Carlo simulation**: Probabilistic modeling for demand uncertainty and commodity volatility
+
+  ## Implementation Guide
+
+  ### Step 1: Investment Portfolio Assessment
+  - Catalog all planned and in-flight CapEx projects with current status and spend-to-date
+  - Classify investments by strategic category: growth, maintenance, compliance, efficiency
+  - Map investments to product programs with clear volume assumptions and timing
+  - Identify interdependencies between investments (e.g., paint shop upgrade needed before new model)
+
+  ### Step 2: Financial Modeling and Prioritization
+  - Build standardized business case templates with consistent assumptions (discount rate, tax, inflation)
+  - Model each investment with base, upside, and downside scenarios tied to volume sensitivity
+  - Apply multi-criteria scoring: NPV, strategic alignment, risk, flexibility, sustainability impact
+  - Create a prioritized investment portfolio ranked by value-to-investment ratio
+
+  ### Step 3: OpEx Baseline and Optimization
+  - Establish activity-based costing for manufacturing operations (cost per unit, per line, per shift)
+  - Benchmark operating costs against industry peers and internal best-performing plants
+  - Identify top-10 OpEx reduction opportunities ranked by savings potential and implementation ease
+  - Develop improvement roadmap with clear targets, owners, and milestone dates
+
+  ### Step 4: Budget Governance and Monitoring
+  - Implement stage-gate approval process for CapEx above defined thresholds (e.g., >1M EUR)
+  - Establish monthly variance reporting for CapEx projects (committed vs. spent vs. forecast)
+  - Track OpEx performance against budget with root-cause analysis for variances exceeding 5%
+  - Conduct quarterly investment portfolio reviews with executive steering committee
+
+  ## Decision Frameworks
+
+  ### CapEx Approval Decision Tree
+  1. Does the investment support an approved product program? If yes, proceed to financial analysis
+  2. NPV positive at base-case volumes? If no, evaluate strategic value or compliance necessity
+  3. Payback within acceptable window (typically <5 years for tooling, <10 years for facilities)?
+  4. IRR exceeds hurdle rate at downside scenario? Risk-adjusted go/no-go decision
+  5. Can investment be phased or made modular to reduce commitment under uncertainty?
+
+  ### CapEx vs. OpEx Classification Decision
+  | Criterion | Capitalize (CapEx) | Expense (OpEx) |
+  |-----------|-------------------|----------------|
+  | Useful life | >1 year | <1 year |
+  | Value threshold | Above capitalization limit | Below limit |
+  | Asset nature | Tangible/intangible asset | Consumable/service |
+  | Accounting treatment | Depreciate over life | Expense immediately |
+  | Cash flow impact | Front-loaded | Spread over time |
+  | Financial ratio impact | Improves current P&L | Reduces current earnings |
+
+  ### EV Transition Investment Sequencing
+  - **Phase 1 (Years 1-2)**: Battery assembly/pack line, e-motor test benches, HV safety equipment
+  - **Phase 2 (Years 2-4)**: Dedicated EV body shop, skateboard platform tooling, charging test infra
+  - **Phase 3 (Years 4-7)**: Gigafactory or cell JV, solid-state pilot line, software integration center
+  - **Phase 4 (Years 7+)**: Full plant conversion, ICE line decommission, circular economy facilities
+
+  ## Best Practices
+
+  - Maintain a rolling 5-year CapEx plan updated quarterly with latest volume and timing assumptions
+  - Separate sustaining CapEx (maintenance, compliance) from growth CapEx in reporting and governance
+  - Apply standardized depreciation schedules aligned with actual asset useful life, not just tax rules
+  - Build flexibility premiums into investment cases for modular and scalable production systems
+  - Track post-investment actuals vs. business case for accountability (post-audit within 18 months)
+  - Hedge commodity exposure on CapEx-intensive projects (steel, copper, lithium for EV investments)
+  - Consider leasing and equipment-as-a-service models to shift CapEx to OpEx where flexibility needed
+  - Align CapEx timing with government incentive programs (IRA, IPCEI, national EV subsidies)
+  - Model stranded asset risk for ICE-specific investments given accelerating EV adoption curves
+  - Integrate sustainability CapEx (solar, heat recovery, water recycling) with operational savings
+
+  ## Examples
+
+  ### Example 1: Mixed ICE/EV Production Line Investment
+  An OEM must decide between a dedicated EV line (400M EUR) or flexible mixed line (500M EUR). NPV analysis
+  at base EV volume shows dedicated line has higher NPV, but real options analysis reveals the flexible line
+  has 120M EUR option value if EV demand ramps slower than expected. Decision: invest in flexible line with
+  modular stations that can convert fully to EV when demand crosses 60% threshold.
+
+  ### Example 2: Predictive Maintenance OpEx Reduction
+  A stamping plant spends 12M EUR annually on reactive maintenance. Pilot of predictive maintenance using
+  vibration sensors and ML models on 3 press lines shows 35% reduction in unplanned downtime and 22% parts
+  cost reduction. CapEx for plant-wide rollout: 2.8M EUR. Payback: 14 months. Approved with mandate to
+  expand to all 6 plants in the network within 24 months.
+
+  ### Example 3: Cloud vs. On-Premise Infrastructure Decision
+  Engineering IT requests 15M EUR for on-premise HPC refresh (CapEx, 5-year depreciation). Alternative:
+  migrate to cloud HPC (3.5M EUR/year OpEx). Five-year TCO comparison: on-premise 22M EUR vs. cloud 17.5M
+  EUR including migration costs. Cloud option provides burst capacity for crash simulation peaks and avoids
+  technology obsolescence risk. Decision: hybrid model with cloud for burst and on-premise for steady-state.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- capex-opex-optimization
+- automotive
+- oem

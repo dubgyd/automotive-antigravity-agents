@@ -1,0 +1,443 @@
+name: megawatt-charging
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: heavy-duty-charging
+description: Expert skill in MCS (Megawatt Charging System) for heavy-duty commercial EVs, covering SAE J3271 standard, liquid-cooled cables, and ultra-high-power delivery up to 3.75 MW.
+use_cases:
+- Electric truck and bus depot charging
+- MCS charging station design for logistics fleets
+- Liquid-cooled cable and connector implementation
+- Heavy-duty vehicle fleet electrification
+- Port and mining equipment charging infrastructure
+automotive_standards:
+- SAE J3271 Megawatt Charging System (MCS)
+- IEC 61851-23 DC EV charging (high-power extension)
+- ISO 15118-20 Vehicle-to-Grid (V2G) for MCS
+- IEC 62893 Charging cables for EVs (liquid cooling)
+- CharIN MCS specification
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Megawatt Charging System (MCS) implementation for heavy-duty electric vehicles including trucks, buses, construction equipment, and marine vessels, covering ultra-high-power delivery (up to 3.75 MW), liquid-cooled cables, and charging orchestration for depot and corridor charging.
+
+
+  ### MCS Overview
+
+
+  - **Target vehicles**:
+
+    - Class 7-8 electric trucks (e.g., Tesla Semi, Freightliner eCascadia)
+
+    - Electric buses (battery capacity: 300-600 kWh)
+
+    - Construction equipment (excavators, loaders, dump trucks)
+
+    - Port equipment (gantry cranes, straddle carriers)
+
+    - Marine vessels (electric ferries, tugboats)
+
+
+  - **Power levels**:
+
+    - MCS1: Up to 1 MW (1000V × 1000A)
+
+    - MCS2: Up to 1.5 MW (1250V × 1200A)
+
+    - MCS3: Up to 3 MW (1500V × 2000A)
+
+    - MCS4 (future): Up to 3.75 MW (1500V × 2500A)
+
+
+  - **Charging speed examples**:
+
+    - 500 kWh battery at 1 MW: 30 minutes to 80% SOC (400 kWh delivered)
+
+    - 1 MWh battery at 3 MW: 20 minutes to 80% SOC (800 kWh delivered)
+
+
+  ### SAE J3271 Connector Specification
+
+
+  - **Physical design**:
+
+    - Connector weight: ~3-5 kg (without cable)
+
+    - Cable diameter: 50-70 mm (includes coolant hoses)
+
+    - Pins: 4 power + 4 communication + 2 cooling + ground
+
+    - Locking mechanism: Electric actuator (manual unlocking impossible at this size)
+
+    - IP rating: IP67 (submersible for outdoor/marine use)
+
+
+  - **Pin configuration**:
+
+    - Pin 1: DC+ (positive power, 1000-1500V)
+
+    - Pin 2: DC- (negative power return)
+
+    - Pin 3: Ground (PE, protective earth)
+
+    - Pin 4: DC+ sense (voltage measurement for droop compensation)
+
+    - Pin 5: DC- sense (voltage measurement)
+
+    - Pin 6: CAN-H (communication, 500 kbps)
+
+    - Pin 7: CAN-L (communication)
+
+    - Pin 8: Auxiliary power (12V/24V for connector lock, cooling pump)
+
+    - Pin 9: Coolant inlet (glycol-water mix)
+
+    - Pin 10: Coolant outlet (return to charger heat exchanger)
+
+
+  ### Liquid Cooling System
+
+
+  - **Thermal challenges**:
+
+    - Cable power loss: ~1 kW heat generation at 2000A (50 µΩ/m × 5 m cable)
+
+    - Connector contact resistance: ~50 µΩ per contact → 200W heat at 2000A
+
+    - Pin temperature limit: <80°C (derating required above this)
+
+
+  - **Cooling loop design**:
+
+    - Coolant: 50/50 water-glycol (ethylene glycol or propylene glycol)
+
+    - Flow rate: 5-10 L/min per cable (maintains conductor <60°C at 2000A)
+
+    - Pump: Centrifugal pump in charger cabinet, 1-2 bar pressure
+
+    - Heat exchanger: Plate heat exchanger, coolant to ambient air or water
+
+    - Hose diameter: 1/2" (12.7 mm) for inlet/outlet in cable
+
+
+  - **Temperature monitoring**:
+
+    - NTC thermistors at connector inlet, cable mid-point, charger outlet
+
+    - Safety threshold: Abort charge if any sensor >75°C
+
+    - Derating: Reduce current by 10% per 5°C above 60°C
+
+
+  - **Coolant control**:
+
+    ```c
+    #define MAX_TEMP_C 75.0
+    #define DERATE_START_TEMP_C 60.0
+
+    float CalculateMaxCurrent(float connector_temp) {
+        float max_current = 2000.0;  // Rated 2000A
+
+        if (connector_temp > MAX_TEMP_C) {
+            return 0.0;  // Emergency stop
+        }
+
+        if (connector_temp > DERATE_START_TEMP_C) {
+            // Derate 10% per 5°C above 60°C
+            float derate_factor = 1.0 - 0.1 * ((connector_temp - DERATE_START_TEMP_C) / 5.0);
+            max_current *= derate_factor;
+        }
+
+        return max_current;
+    }
+    ```
+
+
+  ### Power Delivery Architecture
+
+
+  - **Charger topology**:
+
+    - AC input: Three-phase 480V or 690V (industrial grid connection)
+
+    - Rectifier: SiC-based three-phase PFC rectifier (>98% efficiency)
+
+    - DC-DC converter: Modular paralleled converters (10× 300 kW modules = 3 MW)
+
+    - Output voltage: 600-1500V (match truck battery voltage)
+
+    - Output filter: LC filter to reduce ripple to <1% at rated current
+
+
+  - **Modular architecture** (3 MW charger):
+
+    - 10× 300 kW power modules (each rated 1200V × 250A)
+
+    - Parallel output: All modules share DC bus via current-sharing control
+
+    - Redundancy: N+1 design (9 modules for 2.7 MW, 1 spare)
+
+    - Hot-swap: Failed module can be replaced without shutting down charger
+
+
+  - **Grid connection**:
+
+    - Transformer: 690V or 12.47 kV medium voltage to 480/690V AC
+
+    - Power factor: >0.95 with active PFC
+
+    - Harmonic distortion: THD <5% (meet IEEE 519 limits)
+
+    - Demand charge management: Integrate battery buffer to shave peak power from grid
+
+
+  ### Communication Protocol
+
+
+  - **ISO 15118-20 over CAN**:
+
+    - CAN baud rate: 500 kbps (faster than 250 kbps for light-duty)
+
+    - Message period: 50 ms (20 Hz for fast response)
+
+    - EXI-encoded messages: Efficient binary XML for parameter exchange
+
+
+  - **Key parameters exchanged**:
+
+    - Battery capacity (kWh), current SOC (%)
+
+    - Maximum charge voltage (V), maximum charge current (A)
+
+    - Battery temperature, cell balancing status
+
+    - Desired energy to be delivered (kWh)
+
+    - Time available for charging (minutes, for depot scheduling)
+
+
+  - **Dynamic current control**:
+
+    ```python
+    def mcs_charging_loop():
+        while charging:
+            # Receive vehicle demand (20 Hz)
+            vehicle_msg = can_receive(0x200)
+            target_voltage = vehicle_msg.target_voltage  # V
+            target_current = vehicle_msg.target_current  # A
+
+            # Apply system limits
+            actual_current = min(
+                target_current,
+                CHARGER_MAX_CURRENT,
+                CABLE_MAX_CURRENT,
+                thermal_limit(connector_temp)
+            )
+
+            # Compensate for cable voltage drop
+            cable_drop = actual_current * CABLE_RESISTANCE  # e.g., 2000A × 0.05Ω = 100V
+            charger_output_voltage = target_voltage + cable_drop
+
+            # Send to power modules
+            set_output(charger_output_voltage, actual_current)
+
+            # Report back to vehicle
+            can_send(0x201, present_voltage, present_current, charger_status)
+
+            time.sleep(0.05)  # 50 ms loop
+    ```
+
+
+  ### Depot Charging Management
+
+
+  - **Fleet scheduling**:
+
+    - Vehicles return to depot at staggered times (evening for buses, night for trucks)
+
+    - Charging priority: Route assignment for next day (high priority), battery health (low SOC first)
+
+    - Load balancing: Distribute available grid power (e.g., 10 MW) across 20 chargers
+
+
+  - **Smart charging algorithm**:
+
+    ```python
+    def depot_load_management(vehicles, total_power_available):
+        # Sort by departure time (earliest first)
+        vehicles.sort(key=lambda v: v.departure_time)
+
+        for vehicle in vehicles:
+            energy_needed = (vehicle.target_soc - vehicle.current_soc) * vehicle.battery_capacity
+            time_available = vehicle.departure_time - current_time
+            min_power_required = energy_needed / time_available
+
+            # Allocate power
+            allocated_power = min(min_power_required, total_power_available, MCS_MAX_POWER)
+            vehicle.charger.set_power(allocated_power)
+            total_power_available -= allocated_power
+
+        # Redistribute unused power to lower-priority vehicles
+        if total_power_available > 0:
+            # Increase charge power for vehicles with flexible departure times
+            pass
+    ```
+
+
+  - **V2G for depot**:
+
+    - Discharge truck batteries to power depot operations during peak demand
+
+    - Reduce demand charges (utility tariff based on peak 15-min power draw)
+
+    - Example: 10 trucks × 500 kWh each = 5 MWh storage, provide 1 MW for 2 hours during peak
+
+
+  ### Safety Systems
+
+
+  - **High-voltage isolation**:
+
+    - Insulation resistance: >500 Ω/V (e.g., >750 kΩ for 1500V system)
+
+    - Test method: DC voltage injection (500V test voltage), measure leakage current
+
+
+  - **Arc flash protection**:
+
+    - Arc detection: Optical sensors detect UV flash from arc
+
+    - Fast disconnect: Open contactors within 5 ms of arc detection
+
+    - Energy limitation: <40 cal/cm² incident energy (per NFPA 70E)
+
+
+  - **Ground fault protection**:
+
+    - Differential current sensing: I_DC+ + I_DC- < 50 mA (tighter than 20 mA for light-duty)
+
+    - Trip time: <20 ms for fast fault clearing
+
+
+  - **Connector interlock**:
+
+    - Weight: Cannot be lifted manually while energized (electric actuator required)
+
+    - Sensor: Verify connector fully seated before energizing (contact pressure switch)
+
+
+  ### Installation Requirements
+
+
+  - **Physical infrastructure**:
+
+    - Concrete pad: Reinforced for charger weight (2-3 tons per charger)
+
+    - Cable management: Overhead cable retractor or floor-mounted dispenser
+
+    - Lighting: 200 lux minimum for nighttime operation
+
+
+  - **Electrical infrastructure**:
+
+    - Service entrance: 480V/690V three-phase, 3000A+ for 3 MW charger
+
+    - Transformer: Padmount or indoor, 3-5 MVA rating for multi-charger depot
+
+    - Switchgear: Medium-voltage (12.47 kV) for large depots (10+ chargers)
+
+
+  - **HVAC**:
+
+    - Charger cooling: Air-cooled heat exchanger or glycol-to-water (if building chilled water available)
+
+    - Ambient temperature: Charger rated for -30°C to +50°C operation
+
+
+  ## Approach
+
+
+  1. **Fleet analysis**: Determine vehicle battery capacity, daily energy consumption, charge windows
+
+  2. **Power planning**: Calculate total power required (# vehicles × avg energy / charge time)
+
+  3. **Grid interconnection**: Work with utility for service upgrade (may require substation transformer)
+
+  4. **Charger selection**: MCS charger vendor (ABB, Siemens, ChargePoint, etc.)
+
+  5. **Installation**: Site work, electrical, coolant plumbing, communication network
+
+  6. **Commissioning**: Test each charger, verify cooling system, grid power quality
+
+  7. **Fleet integration**: Connect to fleet management system for charge scheduling
+
+
+  ## Deliverables
+
+
+  - MCS charger specification (power, voltage range, cooling requirements)
+
+  - Depot layout design (charger placement, cable routing, electrical single-line)
+
+  - Load management system (software for smart charging)
+
+  - Safety analysis (arc flash study, ground fault coordination)
+
+  - Installation drawings (civil, electrical, mechanical)
+
+  - Commissioning test reports (power delivery, cooling, safety, communication)
+
+
+  ## Best Practices
+
+
+  - **Redundancy**: N+1 charger design (spare charger for high-uptime fleets)
+
+  - **Battery buffer**: 1-2 MWh stationary battery to reduce grid peak demand charges
+
+  - **Preventive maintenance**: Monthly coolant testing, quarterly connector inspection
+
+  - **Cable strain relief**: Proper support for heavy cables (avoid kinking, dragging on ground)
+
+  - **Monitoring**: 24/7 remote monitoring with alerts for faults, performance degradation
+
+
+  ## Integration
+
+
+  - **Fleet management**: API to telematics system (vehicle SOC, location, route plan)
+
+  - **Energy management**: Integrate with building energy management system (BEMS)
+
+  - **Utility demand response**: Curtail charging during grid peak events (earn incentive payments)
+
+  - **Payment**: Automated billing for mixed fleets (owner-operator trucks at public depot)
+
+
+  '
+constraints:
+- Extremely high infrastructure cost ($500K-$1M per MCS charger installed)
+- Limited vehicle availability (MCS standard finalized 2024, vehicles rolling out 2025-2027)
+- Grid capacity limitations (3 MW per charger requires substation-level power)
+- Liquid cooling maintenance complexity (coolant quality, leak detection)
+tools_required:
+- MCS connector and liquid-cooled cable (CharIN certified)
+- CAN analyzer for ISO 15118-20 protocol
+- High-voltage DC power supply (1500V, 2000A) for testing
+- Coolant circulation system (pump, heat exchanger, sensors)
+- Arc flash PPE and testing equipment
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: expert
+tags:
+- charging-infrastructure
+- mcs
+- megawatt-charging
+- heavy-duty
+- liquid-cooling
+- depot-charging
+- automotive

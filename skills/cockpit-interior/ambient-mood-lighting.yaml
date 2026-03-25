@@ -1,0 +1,163 @@
+name: ambient-mood-lighting
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Adaptive RGB ambient lighting systems for automotive interiors, covering LED strip integration, dynamic color scenes, synchronized effects, and human factors design for cabin illumination."
+use_cases:
+  - "Designing multi-zone RGB ambient lighting with per-seat color control"
+  - "Implementing dynamic lighting scenes that respond to music and driving mode"
+  - "Building welcome and farewell lighting sequences synchronized with door events"
+  - "Creating functional lighting that communicates vehicle state through color cues"
+  - "Integrating ambient lighting with ADAS warnings for peripheral visual alerts"
+automotive_standards:
+  - "ISO 15008 - Visual presentation ergonomics for interior information"
+  - "SAE J578 - Color specification for vehicle lighting"
+  - "ECE R48 - Vehicle interior lighting regulations"
+  - "ISO 26262 - Functional safety for lighting used in warning communication"
+  - "CIE S 026 - Metrology of non-visual effects of light on human physiology"
+instructions: |
+  # Ambient Mood Lighting
+
+  ## Overview
+  Ambient lighting has evolved from simple footwell illumination into a sophisticated
+  multi-zone RGB system that shapes the emotional character of the cabin. Hundreds of
+  individually addressable LEDs embedded in door panels, dashboard, center console,
+  headliner, and seat bases create immersive lighting scenes. These systems serve both
+  aesthetic and functional purposes, from setting a relaxing mood to communicating
+  navigation directions and safety warnings through peripheral light cues.
+
+  ## Key Concepts
+
+  ### LED Technologies
+  Several LED types serve different ambient lighting roles:
+  - RGB LED strips with individual pixel control for smooth color gradients
+  - RGBW LEDs add a dedicated white channel for warmer, more natural tones
+  - Side-emitting fiber optics create thin continuous light lines in trim surfaces
+  - Micro-LED matrices behind translucent trim enable pixelated patterns and animations
+
+  ### Light Zones and Topology
+  The cabin is divided into independently controlled lighting zones:
+  - Door panel contour lights (4 zones, left-front, left-rear, right-front, right-rear)
+  - Dashboard accent line spanning the full width
+  - Center console and gear selector illumination
+  - Footwell lights per seat position
+  - Headliner map lights and ambient wash
+  - Seat base and under-seat accent lighting
+
+  ### Color Science
+  Proper color management ensures consistent appearance across zones:
+  - CIE 1931 color space defines achievable gamut for the LED mix
+  - Color temperature ranging from 2700 K warm white to 6500 K cool white
+  - Dimming follows a perceptual curve (gamma correction) for smooth brightness steps
+  - LED binning ensures color consistency across production vehicle batches
+
+  ## Implementation Guide
+
+  ### Step 1 - Define the Lighting Architecture
+  Map every light zone with its LED type, count, and controller:
+  - Create a zone map with physical location, LED count, and maximum brightness
+  - Assign each zone to a lighting controller on the vehicle LIN or CAN bus
+  - Define power budget per zone, typically 0.5 to 2 watts each
+  - Specify the total addressable LED count across the vehicle (200 to 500 typical)
+
+  ### Step 2 - Design the Control Protocol
+  Build the communication path from HMI to individual LEDs:
+  - Use LIN bus for cost-effective zone controllers in door and footwell modules
+  - Implement a scene protocol that broadcasts color and brightness targets to all zones
+  - Support 60 fps update rate for smooth animations and music synchronization
+  - Define a priority scheme where safety alerts override entertainment lighting
+
+  ### Step 3 - Create Lighting Scenes
+  Design pre-built scene profiles and the tools for user customization:
+  - Default scenes for driving modes like comfort, sport, eco, and autonomous
+  - Welcome sequence that illuminates progressively as the driver approaches
+  - Music visualization mode that maps audio frequency bands to zone colors
+  - Navigation mode that pulses ambient light in the direction of the next turn
+
+  ### Step 4 - Implement Functional Lighting
+  Use ambient light to communicate vehicle information:
+  - Red pulse in the relevant zone for door-ajar or seatbelt warnings
+  - Directional blue sweep indicating incoming phone call from left or right
+  - Gradual color shift from blue to red reflecting cabin temperature status
+  - ADAS warning integration with red flash across dashboard and door zones
+
+  ### Step 5 - Validate Human Factors
+  Test lighting effects for driver safety and comfort:
+  - Verify ambient light levels do not cause display reflection on windshield
+  - Test that functional lighting cues are distinguishable from aesthetic scenes
+  - Measure nighttime distraction potential using driver simulator studies
+  - Ensure lighting does not affect night vision adaptation for safe driving
+
+  ## Best Practices
+
+  ### Brightness Management
+  - Limit ambient lighting to 10 nits maximum to avoid windshield reflections
+  - Implement automatic dimming linked to ambient light sensor and headlight state
+  - Reduce animation speed and brightness in night driving conditions
+  - Allow per-zone brightness adjustment so passengers can reduce their area
+
+  ### Color Consistency
+  - Calibrate LED color output per vehicle during end-of-line production testing
+  - Compensate for LED aging by tracking cumulative on-hours per zone
+  - Use color sensors in critical zones to provide closed-loop correction
+  - Ensure replacement LED modules match the original color calibration
+
+  ### Energy Efficiency
+  - Turn off zones not visible to any occupant (empty rear seats)
+  - Use PWM dimming at frequencies above 400 Hz to avoid visible flicker
+  - Budget total ambient lighting power below 20 watts at typical brightness
+  - Implement a low-power standby mode that maintains only welcome lighting
+
+  ## Troubleshooting
+
+  ### Uneven Color Across a Light Strip
+  Check for LED failures in the strip by running a diagnostic white-full-brightness test.
+  Verify the power supply voltage at both ends of long strips to detect voltage drop.
+  Recalibrate the zone color correction coefficients if LEDs have aged unevenly.
+
+  ### Ambient Light Creates Windshield Glare
+  Reduce brightness of dashboard-facing zones during nighttime driving. Adjust the light
+  guide geometry to direct output downward rather than toward the windshield. Apply an
+  anti-glare shield above the highest dashboard light strip.
+
+  ### Music Sync Feels Delayed
+  Reduce the audio analysis buffer size to lower latency below 50 ms. Check the LIN bus
+  update rate is achieving 60 fps for animation commands. Verify the audio tap point is
+  before any DSP processing delay.
+
+  ### Functional Alerts Not Noticed by Driver
+  Increase the contrast between alert lighting and the current ambient scene. Use a
+  distinct flash pattern (rapid pulse) that differs from any entertainment animation.
+  Add a brief audio chime paired with the lighting alert for multi-modal notification.
+
+  ## Integration Patterns
+
+  ### ADAS Warning Integration
+  Using ambient lighting as a visual warning channel for safety systems:
+  - Map forward collision warning to a rapid red flash across the dashboard light bar
+  - Indicate blind spot detection with amber pulses on the relevant door panel lighting
+  - Signal lane departure with directional amber sweep on the dashboard zone
+  - Ensure ADAS lighting overrides any active entertainment or mood lighting scene
+
+  ### Circadian Rhythm Support
+  Adapting ambient lighting to support occupant biological rhythms:
+  - Use warm color temperatures (2700 K) in evening and nighttime driving
+  - Shift to cooler color temperatures (5000 K) during morning commutes for alertness
+  - Follow sunrise and sunset timing based on GPS location and date
+  - Integrate with the scent dispersion system for multi-sensory circadian support
+
+  ## Testing and Validation
+
+  ### Color Accuracy Measurement
+  Verify LED output meets design specifications:
+  - Measure CIE coordinates at each light zone using a calibrated spectrometer
+  - Compare measured color to target across 16 standard scene profiles
+  - Verify color consistency between left and right symmetric zones within delta-E of 3
+  - Test color stability over temperature from -20 C to 60 C cabin conditions
+
+  ### Distraction Assessment
+  Evaluate ambient lighting impact on driver attention:
+  - Conduct simulator studies measuring reaction time with various lighting animations
+  - Verify that no animation pattern exceeds acceptable distraction thresholds
+  - Test nighttime visibility impact by measuring dark adaptation recovery time
+  - Validate that functional warning lighting is distinguishable within 500 ms

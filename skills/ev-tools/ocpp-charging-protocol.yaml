@@ -1,0 +1,393 @@
+name: ocpp-charging-protocol
+version: 1.0.0
+category: ev-tools
+domain: automotive
+subcategory: charging-infrastructure
+description: Expert skill in OCPP (Open Charge Point Protocol) implementation for EV charging stations and central systems.
+use_cases:
+- EV charge point software development
+- Central system (CSMS) integration
+- Smart charging and load management
+- OCPP 1.6J and OCPP 2.0.1 protocol implementation
+- Charging session management and billing
+automotive_standards:
+- OCPP 1.6J (JSON over WebSocket)
+- OCPP 2.0.1 (ISO 15118 integration)
+- IEC 61851 EV charging systems
+- ISO 15118 Vehicle-to-Grid communication
+- IEC 63110 Management of EV charging infrastructure
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Open Charge Point Protocol (OCPP) implementation for electric vehicle charging infrastructure, covering charge point firmware, central system integration, and smart charging orchestration.
+
+
+  ### OCPP Protocol Versions
+
+
+  - **OCPP 1.6J** (most widely deployed):
+
+    - JSON messages over WebSocket (secure wss:// or plain ws://)
+
+    - Core profile: Boot, heartbeat, authorize, start/stop transaction, meter values
+
+    - Smart charging profile: Charging profiles, composite schedules
+
+    - Reservation profile: Reserve charging connector
+
+    - Firmware management profile: Remote firmware updates
+
+
+  - **OCPP 2.0.1** (emerging standard):
+
+    - Enhanced security with ISO 15118 Plug & Charge
+
+    - Device model for advanced configuration
+
+    - Improved smart charging with detailed power schedules
+
+    - Display messages for driver interaction
+
+    - Tariff and cost information
+
+    - Data transfer extensions
+
+
+  ### Charge Point Architecture
+
+
+  - **Hardware components**:
+
+    - Charging controller (STM32, NXP S32, Raspberry Pi)
+
+    - Power electronics (AC EVSE or DC fast charger)
+
+    - Energy meter (MID-certified for billing)
+
+    - RFID reader for user authentication
+
+    - Display and HMI (status LEDs, LCD/touchscreen)
+
+    - Connectivity (Ethernet, 4G LTE, WiFi)
+
+
+  - **Software stack**:
+
+    - OCPP client library (C++, Java, Python)
+
+    - WebSocket client with TLS/SSL
+
+    - Local authorization cache (RFID whitelist)
+
+    - Transaction logging and persistence
+
+    - Real-time clock and time synchronization (NTP)
+
+    - Watchdog and fault recovery
+
+
+  ### OCPP Message Flow
+
+
+  - **Initialization**:
+
+    1. BootNotification: Charge point registers with CSMS
+
+    2. CSMS responds with Accepted/Pending/Rejected + heartbeat interval
+
+    3. GetConfiguration: CSMS retrieves charge point settings
+
+    4. ChangeConfiguration: CSMS sets parameters (e.g., MeterValueSampleInterval)
+
+
+  - **Authentication**:
+
+    1. Authorize: Send RFID tag ID to CSMS
+
+    2. CSMS checks user account status, responds with Accepted/Blocked/Invalid
+
+    3. Local authorization: If offline, check cached ID list
+
+
+  - **Charging session**:
+
+    1. StartTransaction: Report connector ID, RFID tag, meter start value, timestamp
+
+    2. CSMS responds with transaction ID
+
+    3. MeterValues: Periodic energy/power measurements during charging
+
+    4. StopTransaction: Report meter stop value, stop reason, transaction data
+
+    5. CSMS responds with acknowledgment
+
+
+  - **Smart charging**:
+
+    1. SetChargingProfile: CSMS sends power limit schedule (kW vs time)
+
+    2. Charge point applies composite schedule from all active profiles
+
+    3. GetCompositeSchedule: Query effective charging limit
+
+    4. ClearChargingProfile: Remove expired or superseded profiles
+
+
+  - **Firmware management**:
+
+    1. UpdateFirmware: CSMS provides firmware URL and install time
+
+    2. Charge point downloads firmware, verifies checksum
+
+    3. FirmwareStatusNotification: Downloaded -> Installing -> Installed
+
+    4. Reboot and resume operation
+
+
+  ### Central System (CSMS) Integration
+
+
+  - **Backend architecture**:
+
+    - WebSocket server farm (Node.js, Spring Boot, Go)
+
+    - Database: PostgreSQL for transactions, MongoDB for device state
+
+    - Message queue: RabbitMQ or Kafka for async processing
+
+    - Load balancer: NGINX or AWS ALB for charge point connections
+
+    - Cache: Redis for session state and authorization lists
+
+
+  - **Business logic**:
+
+    - User management: Accounts, RFID cards, payment methods
+
+    - Tariff engine: Time-of-use pricing, demand charges, subscription plans
+
+    - Load management: Distribute available power across charge points
+
+    - Reporting: Energy delivered, utilization, revenue analytics
+
+    - Notifications: SMS/email for session start/stop, faults
+
+
+  - **Third-party integrations**:
+
+    - Payment gateways: Stripe, PayPal, credit card processing
+
+    - Roaming networks: Hubject, Gireve for cross-operator access
+
+    - Fleet management: API for fleet operator dashboards
+
+    - Grid operators: Demand response signals, grid services
+
+
+  ### Smart Charging Implementation
+
+
+  - **Use cases**:
+
+    - **Peak shaving**: Limit charging power during high electricity demand periods
+
+    - **Solar integration**: Maximize charging when PV generation is high
+
+    - **Load balancing**: Share building power capacity across charge points
+
+    - **TOU optimization**: Charge when electricity is cheapest
+
+    - **V2G (Vehicle-to-Grid)**: Discharge EV battery to grid (OCPP 2.0.1 + ISO 15118)
+
+
+  - **Charging profile types**:
+
+    - **ChargePointMaxProfile**: Absolute limit on charge point power
+
+    - **TxDefaultProfile**: Default profile for new transactions
+
+    - **TxProfile**: Per-transaction specific schedule
+
+
+  - **Example**: Limit charge point to 11 kW between 6 PM and 10 PM
+
+    ```json
+
+    {
+
+      "chargingProfileId": 1,
+
+      "stackLevel": 0,
+
+      "chargingProfilePurpose": "ChargePointMaxProfile",
+
+      "chargingProfileKind": "Recurring",
+
+      "recurrencyKind": "Daily",
+
+      "chargingSchedule": {
+
+        "startSchedule": "2026-03-19T18:00:00Z",
+
+        "duration": 14400,
+
+        "chargingRateUnit": "W",
+
+        "chargingSchedulePeriod": [
+
+          {"startPeriod": 0, "limit": 11000}
+
+        ]
+
+      }
+
+    }
+
+    ```
+
+
+  ### Security Considerations
+
+
+  - **Transport security**:
+
+    - Use wss:// (WebSocket Secure) with TLS 1.2+
+
+    - Certificate-based authentication for charge points
+
+    - Firewall rules to restrict CSMS access
+
+
+  - **Authentication**:
+
+    - RFID local authorization list with expiry dates
+
+    - Central authorization with offline fallback
+
+    - ISO 15118 Plug & Charge with certificate provisioning (OCPP 2.0.1)
+
+
+  - **Data integrity**:
+
+    - MID-certified energy meters for legal billing
+
+    - Signed meter values (OCPP 2.0.1) to prevent tampering
+
+    - Transaction logs with cryptographic hash
+
+
+  - **Firmware security**:
+
+    - Signed firmware images with public key verification
+
+    - Secure boot to prevent malicious code execution
+
+
+  ## Approach
+
+
+  1. **Requirements**: Define charge point type (AC/DC), power rating, connectivity
+
+  2. **OCPP version selection**: Choose 1.6J for compatibility or 2.0.1 for advanced features
+
+  3. **Client implementation**: Integrate OCPP library (e.g., Steve, Open Charge Point Protocol C++ library)
+
+  4. **CSMS setup**: Deploy backend (SteVe open-source CSMS, or commercial solution)
+
+  5. **Configuration**: Set charge point parameters (heartbeat, meter sampling, timezone)
+
+  6. **Testing**: OCPP compliance testing with protocol analyzer
+
+  7. **Deployment**: Field installation, cellular/Ethernet connectivity, cloud registration
+
+  8. **Monitoring**: Dashboard for charge point status, sessions, revenue
+
+
+  ## Deliverables
+
+
+  - OCPP client firmware for charge point (C/C++/Python)
+
+  - WebSocket client configuration (URL, credentials, TLS certificates)
+
+  - CSMS integration API documentation
+
+  - Smart charging profile definitions (JSON)
+
+  - Test reports (OCPP compliance, connectivity, performance)
+
+  - User manual for charge point operation and troubleshooting
+
+  - Backend dashboard for fleet management
+
+
+  ## Best Practices
+
+
+  - **Offline resilience**: Cache authorization list, queue transactions, sync when online
+
+  - **Idempotency**: Handle duplicate messages (retransmission after network failure)
+
+  - **Clock synchronization**: Use NTP or CSMS time sync for accurate timestamps
+
+  - **Logging**: Persistent storage of OCPP messages for debugging and audit
+
+  - **Error handling**: Retry with exponential backoff, graceful degradation
+
+  - **Over-the-air updates**: Remote firmware update without site visit
+
+  - **Monitoring**: Heartbeat monitoring, alert on offline charge points
+
+
+  ## Integration with EV and Grid
+
+
+  - **ISO 15118**: Plug & Charge, encrypted communication, bidirectional power flow
+
+  - **IEC 61851**: Control pilot signal (PWM duty cycle for current limit)
+
+  - **OpenADR**: Demand response integration for grid services
+
+  - **Modbus/DNP3**: Integration with building energy management systems
+
+  - **OCPI**: Roaming protocol for cross-network charging access
+
+
+  ## OCPP Ecosystem
+
+
+  - **Open-source CSMS**: SteVe, OCPP Central System
+
+  - **Commercial CSMS**: ChargeLab, Driivz, Greenlots, EVBox Everon
+
+  - **Testing tools**: OCPP compliance tester, Wireshark WebSocket analyzer
+
+  - **Standards bodies**: Open Charge Alliance (OCA), CharIN for ISO 15118
+
+  '
+constraints:
+- Network reliability (cellular coverage, latency, bandwidth)
+- Backward compatibility with OCPP 1.6J for existing infrastructure
+- Billing accuracy requirements (MID-certified meters)
+- Security for financial transactions and user data
+tools_required:
+- OCPP client library (C++, Java, Python)
+- WebSocket library with TLS support
+- SteVe or commercial CSMS for backend
+- Protocol analyzer (Wireshark, OCPP tester)
+- Certificate management tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- ev-tools
+- ocpp
+- charging-infrastructure
+- smart-charging
+- iso-15118
+- websocket
+- automotive

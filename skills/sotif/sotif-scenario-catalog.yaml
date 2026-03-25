@@ -1,0 +1,669 @@
+name: sotif-scenario-catalog
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-management
+description: Building and maintaining a comprehensive scenario catalog for SOTIF validation using logical, concrete, and abstract scenario representations.
+use_cases:
+- Scenario database construction for ADAS/AD validation
+- Traceability from triggering conditions to test cases
+- Scenario parameterization and variation
+- Test case generation from catalog
+- Scenario reuse across projects
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 34502 Road Vehicle Test Scenarios
+- ASAM OpenSCENARIO 2.0
+- ASAM OpenDRIVE 1.7
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in building and maintaining comprehensive scenario catalogs for SOTIF validation, using structured representations from abstract concepts to concrete test cases.
+
+
+  ### Scenario Abstraction Levels
+
+
+  **Logical Scenarios**:
+
+  - High-level description in natural language
+
+  - Example: "Vehicle cuts in front of ego vehicle"
+
+  - No specific parameter values
+
+  - Used for initial hazard identification
+
+
+  **Abstract Scenarios**:
+
+  - Parameterized with ranges
+
+  - Example: "Vehicle cuts in at distance [10-50m], speed difference [-20 to +10 km/h]"
+
+  - Captures family of similar scenarios
+
+  - Used for coverage analysis
+
+
+  **Concrete Scenarios**:
+
+  - Specific parameter values
+
+  - Example: "Vehicle cuts in at 25m, 15 km/h slower than ego"
+
+  - Directly executable in simulation or test track
+
+  - Used for actual validation testing
+
+
+  ### Scenario Database Structure
+
+
+  ```yaml
+
+  # Example scenario catalog entry
+
+  scenario_id: SOTIF-ACC-001
+
+  logical_description: "Cut-in vehicle from adjacent lane"
+
+  function: Adaptive Cruise Control
+
+  sotif_area: Area 2 (Known Unsafe)
+
+  triggering_condition: Close-range cut-in with high relative velocity
+
+
+  abstract_parameters:
+
+    ego_speed: [60, 120]  # km/h
+
+    cut_in_distance: [10, 50]  # meters
+
+    relative_velocity: [-30, -5]  # km/h (cut-in vehicle slower)
+
+    lateral_offset: [0.2, 1.5]  # meters from lane center
+
+    road_curvature: [0, 0.005]  # 1/m
+
+
+  hazard: Rear-end collision with cut-in vehicle
+
+  severity: ASIL D
+
+  mitigation: Emergency braking, driver warning
+
+
+  concrete_instances:
+
+    - instance_id: SOTIF-ACC-001-C01
+
+      ego_speed: 100
+
+      cut_in_distance: 25
+
+      relative_velocity: -20
+
+      lateral_offset: 0.5
+
+      road_curvature: 0.002
+
+      expected_result: System brakes, TTC > 2.5s maintained
+
+
+    - instance_id: SOTIF-ACC-001-C02
+
+      ego_speed: 80
+
+      cut_in_distance: 15
+
+      relative_velocity: -25
+
+      lateral_offset: 0.8
+
+      road_curvature: 0
+
+      expected_result: System brakes, driver warning issued
+
+  ```
+
+
+  ## Catalog Construction Process
+
+
+  1. **Triggering Condition Identification**: Use STPA/FMEA to identify triggering conditions
+
+  2. **Logical Scenario Definition**: Convert triggering conditions to natural language scenarios
+
+  3. **Parameterization**: Identify relevant parameters and their ranges (abstract scenarios)
+
+  4. **Combinatorial Generation**: Generate concrete instances covering parameter space
+
+  5. **Prioritization**: Rank scenarios by risk (severity × exposure × controllability)
+
+  6. **Traceability**: Link scenarios to hazards, requirements, and test cases
+
+
+  ## OpenSCENARIO Representation
+
+
+  ```xml
+
+  <?xml version="1.0" encoding="UTF-8"?>
+
+  <OpenSCENARIO>
+
+    <FileHeader revMajor="2" revMinor="0" date="2026-03-19"
+
+                description="Cut-in scenario for ACC SOTIF validation"/>
+
+
+    <ParameterDeclarations>
+
+      <ParameterDeclaration name="ego_speed" parameterType="double" value="100.0"/>
+
+      <ParameterDeclaration name="cut_in_distance" parameterType="double" value="25.0"/>
+
+      <ParameterDeclaration name="relative_velocity" parameterType="double" value="-20.0"/>
+
+    </ParameterDeclarations>
+
+
+    <Entities>
+
+      <ScenarioObject name="Ego">
+
+        <Vehicle name="vehicle.tesla.model3" vehicleCategory="car"/>
+
+      </ScenarioObject>
+
+      <ScenarioObject name="Adversary">
+
+        <Vehicle name="vehicle.audi.a2" vehicleCategory="car"/>
+
+      </ScenarioObject>
+
+    </Entities>
+
+
+    <Storyboard>
+
+      <Init>
+
+        <Actions>
+
+          <Private entityRef="Ego">
+
+            <PrivateAction>
+
+              <LongitudinalAction>
+
+                <SpeedAction>
+
+                  <SpeedActionDynamics dynamicsShape="step" value="0"/>
+
+                  <SpeedActionTarget>
+
+                    <AbsoluteTargetSpeed value="$ego_speed"/>
+
+                  </SpeedActionTarget>
+
+                </SpeedAction>
+
+              </LongitudinalAction>
+
+            </PrivateAction>
+
+          </Private>
+
+
+          <Private entityRef="Adversary">
+
+            <PrivateAction>
+
+              <TeleportAction>
+
+                <Position>
+
+                  <RelativeObjectPosition entityRef="Ego" dx="$cut_in_distance" dy="-3.5" dz="0"/>
+
+                </Position>
+
+              </TeleportAction>
+
+            </PrivateAction>
+
+            <PrivateAction>
+
+              <LongitudinalAction>
+
+                <SpeedAction>
+
+                  <SpeedActionDynamics dynamicsShape="step" value="0"/>
+
+                  <SpeedActionTarget>
+
+                    <AbsoluteTargetSpeed value="${ego_speed + relative_velocity}"/>
+
+                  </SpeedActionTarget>
+
+                </SpeedAction>
+
+              </LongitudinalAction>
+
+            </PrivateAction>
+
+          </Private>
+
+        </Actions>
+
+      </Init>
+
+
+      <Story name="CutInStory">
+
+        <Act name="CutInAct">
+
+          <ManeuverGroup maximumExecutionCount="1" name="CutInManeuver">
+
+            <Actors selectTriggeringEntities="false">
+
+              <EntityRef entityRef="Adversary"/>
+
+            </Actors>
+
+            <Maneuver name="LaneChangeManeuver">
+
+              <Event name="LaneChangeEvent" priority="overwrite">
+
+                <Action name="LaneChangeAction">
+
+                  <PrivateAction>
+
+                    <LateralAction>
+
+                      <LaneChangeAction>
+
+                        <LaneChangeActionDynamics dynamicsShape="sinusoidal" value="2.0"/>
+
+                        <LaneChangeTarget>
+
+                          <RelativeTargetLane entityRef="Ego" value="0"/>
+
+                        </LaneChangeTarget>
+
+                      </LaneChangeAction>
+
+                    </LateralAction>
+
+                  </PrivateAction>
+
+                </Action>
+
+                <StartTrigger>
+
+                  <ConditionGroup>
+
+                    <Condition name="StartCondition" delay="0" conditionEdge="rising">
+
+                      <ByValueCondition>
+
+                        <SimulationTimeCondition value="2.0" rule="greaterThan"/>
+
+                      </ByValueCondition>
+
+                    </Condition>
+
+                  </ConditionGroup>
+
+                </StartTrigger>
+
+              </Event>
+
+            </Maneuver>
+
+          </ManeuverGroup>
+
+
+          <StartTrigger>
+
+            <ConditionGroup>
+
+              <Condition name="ActStartCondition" delay="0" conditionEdge="rising">
+
+                <ByValueCondition>
+
+                  <SimulationTimeCondition value="0" rule="greaterThan"/>
+
+                </ByValueCondition>
+
+              </Condition>
+
+            </ConditionGroup>
+
+          </StartTrigger>
+
+        </Act>
+
+      </Story>
+
+    </Storyboard>
+
+  </OpenSCENARIO>
+
+  ```
+
+
+  ## Scenario Generation Techniques
+
+
+  **Combinatorial Coverage**:
+
+
+  ```python
+
+  from itertools import product
+
+  import pandas as pd
+
+
+  def generate_scenario_combinations(parameter_ranges):
+
+      """
+
+      Generate all combinations of parameters for coverage testing
+
+      """
+
+      # Define discrete values for each parameter
+
+      params = {
+
+          "ego_speed": [60, 80, 100, 120],  # km/h
+
+          "cut_in_distance": [10, 20, 30, 40, 50],  # meters
+
+          "relative_velocity": [-30, -20, -10, -5],  # km/h
+
+          "road_curvature": [0, 0.002, 0.005],  # 1/m
+
+      }
+
+
+      # Generate all combinations
+
+      combinations = list(product(*params.values()))
+
+
+      # Create DataFrame
+
+      scenarios = pd.DataFrame(combinations, columns=params.keys())
+
+
+      # Add scenario IDs
+
+      scenarios["scenario_id"] = [f"SOTIF-ACC-001-C{i:03d}" for i in range(len(scenarios))]
+
+
+      return scenarios
+
+
+  scenarios = generate_scenario_combinations()
+
+  print(f"Generated {len(scenarios)} concrete scenarios")
+
+  # Output: 240 scenarios (4 × 5 × 4 × 3)
+
+  ```
+
+
+  **Latin Hypercube Sampling** (efficient parameter space coverage):
+
+
+  ```python
+
+  from scipy.stats import qmc
+
+  import numpy as np
+
+
+  def generate_lhs_scenarios(num_samples=100):
+
+      """
+
+      Generate scenarios using Latin Hypercube Sampling for efficient coverage
+
+      """
+
+      # Define parameter bounds
+
+      bounds = np.array([
+
+          [60, 120],     # ego_speed
+
+          [10, 50],      # cut_in_distance
+
+          [-30, -5],     # relative_velocity
+
+          [0, 0.005],    # road_curvature
+
+      ])
+
+
+      # Generate LHS samples
+
+      sampler = qmc.LatinHypercube(d=4)
+
+      samples = sampler.random(n=num_samples)
+
+
+      # Scale to parameter bounds
+
+      scenarios = qmc.scale(samples, bounds[:, 0], bounds[:, 1])
+
+
+      return pd.DataFrame(scenarios, columns=[
+
+          "ego_speed", "cut_in_distance", "relative_velocity", "road_curvature"
+
+      ])
+
+
+  lhs_scenarios = generate_lhs_scenarios(1000)
+
+  print(f"Generated {len(lhs_scenarios)} LHS scenarios")
+
+  ```
+
+
+  ## Catalog Management
+
+
+  **Database Schema** (SQL example):
+
+
+  ```sql
+
+  CREATE TABLE scenarios (
+
+      scenario_id VARCHAR(50) PRIMARY KEY,
+
+      logical_description TEXT,
+
+      function VARCHAR(100),
+
+      sotif_area ENUM(''Area1'', ''Area2'', ''Area3'', ''Area4''),
+
+      triggering_condition VARCHAR(255),
+
+      hazard TEXT,
+
+      severity VARCHAR(10),
+
+      mitigation TEXT
+
+  );
+
+
+  CREATE TABLE abstract_parameters (
+
+      scenario_id VARCHAR(50),
+
+      parameter_name VARCHAR(100),
+
+      min_value FLOAT,
+
+      max_value FLOAT,
+
+      unit VARCHAR(20),
+
+      FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id)
+
+  );
+
+
+  CREATE TABLE concrete_instances (
+
+      instance_id VARCHAR(50) PRIMARY KEY,
+
+      scenario_id VARCHAR(50),
+
+      parameter_values JSON,
+
+      expected_result TEXT,
+
+      test_status ENUM(''pending'', ''passed'', ''failed'', ''blocked''),
+
+      execution_date DATE,
+
+      FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id)
+
+  );
+
+
+  CREATE TABLE test_results (
+
+      result_id INT AUTO_INCREMENT PRIMARY KEY,
+
+      instance_id VARCHAR(50),
+
+      execution_platform VARCHAR(50),
+
+      actual_result TEXT,
+
+      pass_fail ENUM(''pass'', ''fail''),
+
+      timestamp DATETIME,
+
+      FOREIGN KEY (instance_id) REFERENCES concrete_instances(instance_id)
+
+  );
+
+  ```
+
+
+  ## Deliverables
+
+
+  - Scenario catalog database (1000+ scenarios for L2+ ADAS)
+
+  - OpenSCENARIO XML files for simulation execution
+
+  - Traceability matrix: Triggering condition → Scenario → Test case → Result
+
+  - Parameter coverage analysis report
+
+  - Scenario prioritization (risk-based ranking)
+
+  - Catalog versioning and change management process
+
+
+  ## Best Practices
+
+
+  - Use standardized formats (OpenSCENARIO, OpenDRIVE) for interoperability
+
+  - Version control scenario catalog (treat as safety artifact)
+
+  - Link scenarios to triggering conditions and hazards (traceability)
+
+  - Use efficient sampling (LHS, DOE) to reduce test burden
+
+  - Prioritize scenarios by risk (test high-severity scenarios first)
+
+  - Update catalog continuously (add newly discovered Area 3 scenarios)
+
+  - Share catalog across projects (reuse validated scenarios)
+
+
+  ## Tools
+
+
+  - **OpenSCENARIO Editor**: GUI for creating scenario files
+
+  - **esmini**: Open-source OpenSCENARIO player
+
+  - **CARLA ScenarioRunner**: Execute OpenSCENARIO in CARLA simulator
+
+  - **ASAM OSI**: Open Simulation Interface for sensor models
+
+  - **Database**: PostgreSQL, MySQL for catalog storage
+
+  - **Version control**: Git with LFS for large scenario files
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Triggering Condition Analysis** → Logical scenarios
+
+  2. **Parameterization** → Abstract scenarios
+
+  3. **Test Generation** → Concrete scenarios
+
+  4. **Validation Execution** → Test results linked to scenarios
+
+  5. **Continuous Improvement** → Add newly discovered scenarios to catalog
+
+
+  ## Common Pitfalls
+
+
+  - Too many scenarios (combinatorial explosion without prioritization)
+
+  - Insufficient parameterization (missing critical edge cases)
+
+  - Lack of traceability (cannot link test results back to hazards)
+
+  - Not version controlling catalog (inconsistent testing across teams)
+
+  - Ignoring scenario reuse (reinventing wheel for each project)
+
+  '
+constraints:
+- Combinatorial explosion of parameter space
+- Maintaining catalog consistency across tools/platforms
+- Ensuring scenario fidelity in simulation vs real world
+- Managing catalog evolution without breaking traceability
+tools_required:
+- OpenSCENARIO editor and players
+- Database management system
+- Simulation platforms (CARLA, VTD, IPG)
+- Version control (Git)
+- Scenario generation libraries (Python, MATLAB)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- sotif
+- scenario-catalog
+- openscenario
+- test-generation
+- traceability
+- database
+- validation

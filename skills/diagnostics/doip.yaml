@@ -1,0 +1,305 @@
+---
+name: doip
+category: diagnostics
+description: Diagnostics over IP (DoIP) protocol skills for Ethernet-based ECU diagnostics
+
+instructions: |
+  ## Diagnostics over IP (DoIP) — ISO 13400 Guide
+
+  ### Overview
+
+  DoIP enables UDS (ISO 14229) diagnostic communication over Ethernet/IP networks,
+  replacing or complementing traditional CAN-based diagnostics. It is mandatory for
+  modern vehicles with Automotive Ethernet (100BASE-T1, 1000BASE-T1) and provides
+  higher bandwidth, faster flash programming, and support for remote diagnostics.
+
+  ### Protocol Architecture
+
+  ```
+  Diagnostic Tester                  Vehicle
+  ┌──────────────────┐              ┌──────────────────────────────┐
+  │ Diagnostic App   │              │  DoIP Gateway (ECU)          │
+  │ (UDS Client)     │   TCP/UDP    │  ┌────────┐  ┌────────┐     │
+  │                  │◄────────────►│  │ DoIP   │  │ DoIP   │     │
+  │ DoIP Stack       │  Port 13400  │  │ Edge   │  │ Edge   │     │
+  │ (ISO 13400)      │              │  │ Node 1 │  │ Node 2 │     │
+  └──────────────────┘              │  └────────┘  └────────┘     │
+                                    └──────────────────────────────┘
+  ```
+
+  ### Connection Sequence
+
+  1. **Vehicle Discovery** (UDP broadcast to port 13400):
+     - Tester sends Vehicle Identification Request (0x0001)
+     - ECUs respond with Vehicle Announcement (0x0004) containing VIN, EID, GID
+     - Tester selects target ECU by IP address
+
+  2. **Routing Activation** (TCP connection to port 13400):
+     - Tester establishes TCP connection
+     - Sends Routing Activation Request (0x0005) with tester source address
+     - Gateway responds with Routing Activation Response (0x0006)
+     - Response code 0x10 = success, routing activated
+
+  3. **Diagnostic Messaging**:
+     - UDS requests wrapped in DoIP Diagnostic Message (0x8001)
+     - Header: source address (2 bytes) + target address (2 bytes)
+     - Gateway routes to correct ECU based on target address
+     - Positive Acknowledgement (0x8002) confirms delivery
+     - UDS response returned in same wrapper format
+
+  ### DoIP Message Format
+
+  ```
+  ┌─────────────┬──────────┬──────────────┬──────────────────┐
+  │ Version (1) │ Inv (1)  │ Payload Type │ Payload Length(4)│
+  │ 0x03        │ 0xFC     │ (2 bytes)    │                  │
+  ├─────────────┴──────────┴──────────────┴──────────────────┤
+  │                    Payload Data                           │
+  └──────────────────────────────────────────────────────────┘
+  ```
+
+  Protocol version 0x03 = ISO 13400-2:2019. Inverse version is bitwise NOT.
+
+  ### Key Message Types
+
+  | Type   | Name | Direction | Transport |
+  |--------|------|-----------|-----------|
+  | 0x0001 | Vehicle ID Request | Tester->Vehicle | UDP |
+  | 0x0004 | Vehicle Announcement | Vehicle->Tester | UDP |
+  | 0x0005 | Routing Activation Req | Tester->Gateway | TCP |
+  | 0x0006 | Routing Activation Resp | Gateway->Tester | TCP |
+  | 0x0007 | Alive Check Request | Gateway->Tester | TCP |
+  | 0x0008 | Alive Check Response | Tester->Gateway | TCP |
+  | 0x4001 | Entity Status Request | Tester->Gateway | TCP |
+  | 0x8001 | Diagnostic Message | Bidirectional | TCP |
+  | 0x8002 | Diag Positive Ack | Gateway->Tester | TCP |
+  | 0x8003 | Diag Negative Ack | Gateway->Tester | TCP |
+
+  ### TLS Security (Port 3496)
+
+  DoIP supports TLS 1.2/1.3 on port 3496 for encrypted diagnostic sessions:
+  - Server certificate verification (gateway authenticates to tester)
+  - Optional client certificate (tester authenticates to gateway)
+  - All diagnostic messages encrypted after TLS handshake
+  - Required for remote diagnostics and OTA scenarios
+
+  ### VLAN Configuration
+
+  Automotive Ethernet networks use VLANs to segment traffic domains:
+  - Diagnostic VLAN (e.g., VLAN 100) isolates diagnostic traffic
+  - QoS priority tagging ensures diagnostic traffic is not starved
+  - VLAN configuration must match between tester and vehicle gateway
+
+  ### Error Handling
+
+  Negative Acknowledgement codes (0x8003):
+  - 0x02: Invalid source address
+  - 0x03: Unknown target address
+  - 0x04: Diagnostic message too large
+  - 0x05: Out of memory
+  - 0x06: Target unreachable
+
+  ### Timing Parameters
+
+  | Parameter | Value | Description |
+  |-----------|-------|-------------|
+  | T_TCP_Initial | 2s | TCP connection timeout |
+  | T_TCP_General | 5s | General inactivity timeout |
+  | T_TCP_Alive | 500ms | Alive check response timeout |
+  | A_DoIP_Ctrl | 2s | Routing activation timeout |
+
+  ### Best Practices
+
+  - Use UDP broadcast for vehicle discovery, then switch to TCP for diagnostics
+  - Implement alive check handling to maintain connection during long operations
+  - Handle TCP connection drops gracefully with automatic reconnection
+  - Use connection pooling for multi-ECU diagnostics through a single gateway
+  - Prefer TLS for any diagnostic session involving security access or flash
+  - Log all DoIP messages with timestamps for protocol analysis
+  - Test with Wireshark DoIP dissector for protocol validation
+
+skills:
+  - name: doip_vehicle_discovery
+    description: Discover DoIP-enabled vehicles on network
+    task: |
+      Vehicle discovery via DoIP:
+      1. Send UDP broadcast to 255.255.255.255:13400
+      2. Transmit Vehicle Identification Request message
+      3. Receive Vehicle Announcement messages from ECUs
+      4. Parse VIN, EID (Entity ID), GID (Group ID)
+      5. Build list of discoverable ECUs with IP addresses
+    tools:
+      - python_uds_adapter
+    validation:
+      - Broadcast sent successfully
+      - Vehicle announcements received
+      - ECU list complete
+
+  - name: doip_routing_activation
+    description: Activate DoIP routing for diagnostic communication
+    task: |
+      Routing activation sequence:
+      1. Establish TCP connection to vehicle (port 13400)
+      2. Send Routing Activation Request with source address
+      3. Include activation type (default, WWH-OBD, etc.)
+      4. Receive Routing Activation Response
+      5. Verify activation successful and connection established
+    tools:
+      - python_uds_adapter
+    validation:
+      - TCP connection established
+      - Routing activated successfully
+      - Diagnostic address assigned
+
+  - name: doip_diagnostic_message
+    description: Send diagnostic messages over DoIP
+    task: |
+      DoIP diagnostic messaging:
+      1. Wrap UDS request in DoIP Diagnostic Message (type 0x8001)
+      2. Include source and target addresses
+      3. Send via established TCP connection
+      4. Receive DoIP Diagnostic Message Positive Acknowledgement
+      5. Extract UDS response from DoIP wrapper
+    tools:
+      - python_uds_adapter
+    validation:
+      - DoIP message sent successfully
+      - Acknowledgement received
+      - UDS response extracted
+
+  - name: doip_alive_check
+    description: Perform DoIP connection alive check
+    task: |
+      Keep-alive mechanism:
+      1. Send Alive Check Request periodically
+      2. Expect Alive Check Response within timeout
+      3. Detect connection loss if no response
+      4. Re-establish routing activation if needed
+      5. Track connection health metrics
+    tools:
+      - python_uds_adapter
+    validation:
+      - Alive check messages exchanged
+      - Connection maintained
+      - Loss detected correctly
+
+  - name: doip_entity_status
+    description: Read DoIP entity status information
+    task: |
+      Entity status retrieval:
+      1. Send DoIP Entity Status Request
+      2. Receive Entity Status Response
+      3. Parse node type, max open sockets, current open sockets
+      4. Check max data size parameter
+      5. Validate entity capabilities
+    tools:
+      - python_uds_adapter
+    validation:
+      - Status retrieved successfully
+      - Parameters parsed correctly
+      - Capabilities identified
+
+  - name: doip_power_mode
+    description: Read DoIP power mode information
+    task: |
+      Power mode monitoring:
+      1. Send Diagnostic Power Mode Information Request
+      2. Receive power mode status response
+      3. Decode power mode (not ready, ready, not supported)
+      4. Use to determine if diagnostics can proceed
+      5. Log power mode transitions
+    tools:
+      - python_uds_adapter
+    validation:
+      - Power mode read correctly
+      - Status decoded accurately
+      - Transitions logged
+
+  - name: doip_connection_management
+    description: Manage multiple DoIP connections
+    task: |
+      Connection management:
+      1. Maintain pool of TCP connections to different ECUs
+      2. Track active routing activations per connection
+      3. Handle concurrent diagnostic sessions
+      4. Implement connection timeout and cleanup
+      5. Enforce maximum concurrent connection limits
+    tools:
+      - python_uds_adapter
+    validation:
+      - Multiple connections managed
+      - Timeouts enforced
+      - Cleanup on disconnect
+
+  - name: doip_tls_security
+    description: Implement TLS-secured DoIP connections
+    task: |
+      Secure DoIP with TLS:
+      1. Establish TLS handshake on port 3496 (DoIP TLS port)
+      2. Verify server certificate
+      3. Use client certificate authentication if required
+      4. Encrypt all DoIP messages via TLS
+      5. Maintain security context for session
+    tools:
+      - python_uds_adapter
+    validation:
+      - TLS handshake successful
+      - Certificates validated
+      - Messages encrypted
+
+  - name: doip_error_handling
+    description: Handle DoIP-specific errors
+    task: |
+      DoIP error management:
+      1. Parse negative acknowledgement codes (0x00-0x06)
+      2. Handle routing activation denials
+      3. Detect unknown target addresses
+      4. Manage out-of-memory conditions
+      5. Implement retry logic for transient errors
+    tools:
+      - python_uds_adapter
+    validation:
+      - Error codes parsed correctly
+      - Denials handled gracefully
+      - Retries appropriate
+
+  - name: doip_vlan_configuration
+    description: Configure DoIP over VLAN networks
+    task: |
+      VLAN support:
+      1. Configure network interface for VLAN tagging
+      2. Set VLAN ID for diagnostic network (e.g., VLAN 100)
+      3. Send DoIP messages with correct VLAN tag
+      4. Handle VLAN priority (QoS)
+      5. Validate connectivity across VLAN boundary
+    tools:
+      - python_uds_adapter
+    validation:
+      - VLAN configured correctly
+      - Messages tagged properly
+      - Connectivity verified
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 10
+  standard: ISO 13400 (DoIP)
+  transport: Ethernet (TCP/UDP over IPv4/IPv6)
+  ports:
+    - 13400: DoIP discovery (UDP) and diagnostic (TCP)
+    - 3496: DoIP TLS (secure diagnostic)
+  message_types:
+    - 0x0001: Vehicle Identification Request
+    - 0x0004: Vehicle Announcement
+    - 0x0005: Routing Activation Request
+    - 0x0006: Routing Activation Response
+    - 0x0007: Alive Check Request
+    - 0x0008: Alive Check Response
+    - 0x4001: DoIP Entity Status Request
+    - 0x4002: DoIP Entity Status Response
+    - 0x4003: Diagnostic Power Mode Request
+    - 0x4004: Diagnostic Power Mode Response
+    - 0x8001: Diagnostic Message
+    - 0x8002: Diagnostic Message Positive Acknowledgement
+    - 0x8003: Diagnostic Message Negative Acknowledgement

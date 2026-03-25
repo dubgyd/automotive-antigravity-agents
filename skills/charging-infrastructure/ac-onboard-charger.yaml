@@ -1,0 +1,461 @@
+name: ac-onboard-charger
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: power-electronics
+description: Expert skill in AC onboard charger (OBC) design for electric vehicles, covering PFC rectifier, LLC resonant converter, power factor correction, THD compliance, and EMC design.
+use_cases:
+- Onboard charger design for EVs (3.3 kW to 22 kW)
+- Power factor correction (PFC) topology selection and design
+- LLC resonant converter for high-efficiency DC-DC conversion
+- EMC compliance (conducted and radiated emissions)
+- Bidirectional OBC for V2G capability
+automotive_standards:
+- IEC 61851-1 EV conductive charging (AC)
+- SAE J1772 AC Level 1/Level 2 charging
+- IEC 61000-3-2 Harmonic current emission limits
+- CISPR 25 Limits for conducted/radiated EMI in vehicles
+- ISO 7637-2 Electrical disturbances by conduction
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in onboard charger (OBC) design for electric vehicles, converting AC grid power to DC for battery charging, covering power factor correction, LLC resonant topology, control strategies, thermal management, and EMC compliance for automotive environments.
+
+
+  ### OBC Architecture
+
+
+  - **Power levels**:
+
+    - **3.3 kW**: Single-phase 120V/230V @ 16A (entry-level EVs)
+
+    - **6.6 kW**: Single-phase 230V @ 32A (most common, overnight charging)
+
+    - **11 kW**: Three-phase 400V @ 16A (faster charging, European market)
+
+    - **22 kW**: Three-phase 400V @ 32A (high-end EVs, fastest AC charging)
+
+
+  - **Block diagram**:
+
+    ```
+    AC Input (L1, L2, L3, N) → EMI Filter → PFC Rectifier → DC Bus (400V) → LLC DC-DC Converter → Battery (200-420V)
+                                                                  ↓
+                                                            Controller (DSP, STM32)
+                                                                  ↓
+                                                     CAN (to BMS), CP Signal (to EVSE)
+    ```
+
+
+  ### Power Factor Correction (PFC) Stage
+
+
+  - **Objective**: Convert AC to DC with high power factor (>0.95) and low THD (<5%)
+
+
+  - **Topology options**:
+
+    - **Boost PFC**: Most common, single-phase, continuous conduction mode (CCM)
+
+    - **Totem-pole PFC**: Higher efficiency (99%), uses GaN FETs, bridgeless design
+
+    - **Vienna rectifier**: Three-phase, three-level output, high power density
+
+
+  - **Boost PFC circuit**:
+
+    ```
+    AC Input → Bridge Rectifier → Inductor (L) → MOSFET (Q) → DC Bus (400V)
+                                                  ↓
+                                              Diode (D)
+    ```
+
+
+  - **Control**: Average current mode control (ACMC)
+
+    - Inductor current follows rectified AC voltage waveform (sinusoidal shape)
+
+    - PI controller adjusts PWM duty cycle to maintain DC bus voltage (e.g., 400V)
+
+    - Switching frequency: 65-100 kHz (trade-off: efficiency vs inductor size)
+
+
+  - **PFC control code**:
+
+    ```c
+    void PFC_ControlLoop(void) {
+        // Voltage outer loop (slow, 1 kHz)
+        float v_dc_bus = ADC_ReadVoltage(CH_DC_BUS);
+        float v_dc_ref = 400.0;  // Target DC bus voltage
+        float i_ref_peak = PI_Update(&pi_voltage, v_dc_bus, v_dc_ref, 0.001);
+
+        // Current inner loop (fast, 100 kHz)
+        float v_ac_rectified = ADC_ReadVoltage(CH_AC_RECTIFIED);
+        float i_L = ADC_ReadCurrent(CH_INDUCTOR);
+        float i_ref = i_ref_peak * v_ac_rectified / V_AC_PEAK;  // Sinusoidal reference
+
+        float duty = PI_Update(&pi_current, i_L, i_ref, 0.00001);
+        PWM_SetDuty(duty);
+    }
+    ```
+
+
+  - **Component sizing**:
+
+    - **Inductor**: L = (V_AC_peak × D) / (f_sw × ΔI_L)
+
+      - Example: (325V × 0.5) / (100 kHz × 2A) = 812 µH → use 1 mH
+
+    - **Capacitor**: C = (P_out × Δt) / (V_DC × ΔV_DC)
+
+      - Example: (6600W × 0.01s) / (400V × 20V) = 8.25 mF → use 10 mF (electrolytic)
+
+    - **MOSFET**: 600V or 650V rating (for 400V DC bus), R_DS(on) <50 mΩ (e.g., IPW60R045CP)
+
+
+  ### LLC Resonant DC-DC Converter
+
+
+  - **Topology**: Full-bridge LLC resonant converter (soft-switching for high efficiency)
+
+
+  - **Circuit**:
+
+    ```
+    DC Bus (400V) → Full-Bridge (4× MOSFETs) → Resonant Tank (Lr, Cr) → Transformer (isolation) → Rectifier → Output Filter → Battery (300V)
+    ```
+
+
+  - **Key features**:
+
+    - **Soft-switching**: Zero-voltage switching (ZVS) reduces MOSFET switching losses
+
+    - **Isolation**: High-frequency transformer (100 kHz) provides galvanic isolation
+
+    - **Efficiency**: 95-98% (higher than hard-switched topologies)
+
+
+  - **Resonant tank design**:
+
+    - Resonant frequency: f_r = 1 / (2π √(L_r × C_r))
+
+    - Magnetizing inductance: L_m (determines ZVS range)
+
+    - Quality factor: Q = √(L_r / C_r) / R_load
+
+
+  - **Control**: Variable frequency control
+
+    - Above resonance (f > f_r): Output voltage decreases with frequency (regulate by adjusting f)
+
+    - Below resonance (f < f_r): Avoid (hard switching, high losses)
+
+    - Typical range: 80-150 kHz (f_r = 100 kHz)
+
+
+  - **LLC control code**:
+
+    ```c
+    void LLC_ControlLoop(void) {
+        float v_battery = ADC_ReadVoltage(CH_BATTERY);
+        float i_battery = ADC_ReadCurrent(CH_BATTERY);
+        float v_target = GetBatteryTargetVoltage();  // From BMS via CAN
+
+        // PI controller adjusts switching frequency
+        float freq_ref = PI_Update(&pi_llc, v_battery, v_target, 0.0001);
+
+        // Clamp frequency to safe range
+        if (freq_ref < 80000) freq_ref = 80000;
+        if (freq_ref > 150000) freq_ref = 150000;
+
+        PWM_SetFrequency(freq_ref);
+    }
+    ```
+
+
+  - **Component selection**:
+
+    - **MOSFETs**: 600V, low Q_g (gate charge) for high-frequency switching (e.g., IPP60R045C7)
+
+    - **Transformer**: Ferrite core (3C95, 3F3), Litz wire for reduced skin effect
+
+    - **Diodes**: Fast recovery or SiC Schottky for rectifier (e.g., C3D10060A)
+
+
+  ### EMI Filter Design
+
+
+  - **Objective**: Reduce conducted emissions to meet CISPR 25 Class 5 (automotive)
+
+
+  - **Filter topology**: Two-stage LC filter
+
+    ```
+    AC Input → CM Choke (L_CM) → Differential Mode Capacitor (C_X) → Common Mode Capacitor (C_Y) → PFC Stage
+    ```
+
+
+  - **Common mode (CM) noise**: High-frequency noise on both AC lines relative to ground
+
+    - CM choke: Toroidal core, windings in same direction (magnetic flux adds)
+
+    - C_Y capacitors: Line to ground, typically 2.2-4.7 nF (limited by leakage current <3.5 mA)
+
+
+  - **Differential mode (DM) noise**: Noise between AC lines
+
+    - C_X capacitors: Line to line, 220-470 nF
+
+    - DM inductor: Optional, improves attenuation at high frequency
+
+
+  - **Design guidelines**:
+
+    - CM choke inductance: 1-5 mH (higher = better attenuation, but larger size)
+
+    - Corner frequency: f_c = 1 / (2π √(L × C)) ≈ 10-50 kHz (below PFC switching frequency)
+
+
+  ### Power Factor and THD
+
+
+  - **Power factor (PF)**: Ratio of real power to apparent power
+
+    - PF = cos(φ) × distortion factor
+
+    - Target: PF >0.95 (EU EN 61000-3-2, US Energy Star)
+
+
+  - **Total Harmonic Distortion (THD)**:
+
+    - THD = √(Σ I_n²) / I_1 (ratio of harmonic RMS to fundamental RMS)
+
+    - Target: THD <5% per IEC 61000-3-2 Class A
+
+
+  - **Measurement**:
+
+    ```python
+    def calculate_thd(current_waveform, fundamental_freq):
+        # FFT to extract harmonics
+        fft = np.fft.fft(current_waveform)
+        freqs = np.fft.fftfreq(len(current_waveform), sample_rate)
+
+        # Fundamental (50 or 60 Hz)
+        i1 = abs(fft[freqs == fundamental_freq])
+
+        # Harmonics (2nd, 3rd, ..., 40th)
+        harmonic_sum = 0
+        for n in range(2, 41):
+            in_harmonic = abs(fft[freqs == n * fundamental_freq])
+            harmonic_sum += in_harmonic**2
+
+        thd = np.sqrt(harmonic_sum) / i1
+        return thd * 100  # Percentage
+    ```
+
+
+  ### Thermal Management
+
+
+  - **Heat sources**:
+
+    - PFC MOSFETs: ~30W loss @ 6.6 kW (conduction + switching)
+
+    - LLC MOSFETs: ~20W loss (ZVS reduces switching loss)
+
+    - Transformer: ~15W loss (core + copper)
+
+    - Rectifier diodes: ~25W loss
+
+
+  - **Cooling methods**:
+
+    - **Air-cooled**: Heatsink + fan, 100-200 CFM airflow (for 3.3-6.6 kW)
+
+    - **Liquid-cooled**: Glycol-water loop, cold plate (for 11-22 kW, shared with motor/inverter cooling)
+
+
+  - **Thermal design**:
+
+    - Junction-to-case: θ_JC = 0.5°C/W (typical for power MOSFET)
+
+    - Case-to-heatsink: θ_CH = 0.2°C/W (with thermal interface material)
+
+    - Heatsink-to-ambient: θ_HA = 1.0°C/W (forced air cooling)
+
+    - Total: θ_JA = 0.5 + 0.2 + 1.0 = 1.7°C/W
+
+    - Junction temp: T_J = T_ambient + P_loss × θ_JA = 25°C + 30W × 1.7 = 76°C (OK, <150°C max)
+
+
+  ### Bidirectional OBC (for V2G/V2H)
+
+
+  - **Topology**: Bidirectional PFC and bidirectional LLC
+
+    - Forward (G2V): AC → DC (charging)
+
+    - Reverse (V2G): DC → AC (discharging)
+
+
+  - **Bidirectional PFC**:
+
+    - Replace diode bridge with active rectifier (4× MOSFETs)
+
+    - Control: Grid-tied inverter control (synchronize with grid voltage and frequency)
+
+
+  - **Bidirectional LLC**:
+
+    - Replace output rectifier with active bridge (4× MOSFETs)
+
+    - Control: Phase-shift control for power flow direction
+
+
+  - **V2G control**:
+
+    ```c
+    void V2G_ControlLoop(void) {
+        float grid_voltage = ADC_ReadVoltage(CH_GRID);
+        float grid_freq = MeasureFrequency();
+        float target_power = GetV2GPowerCommand();  // From aggregator via OCPP
+
+        if (target_power > 0) {
+            // Charging mode (G2V)
+            PFC_ChargingMode();
+            LLC_ChargingMode();
+        } else if (target_power < 0) {
+            // Discharging mode (V2G)
+            PFC_InverterMode(grid_voltage, grid_freq);
+            LLC_DischargingMode();
+        } else {
+            // Idle
+            PFC_Disable();
+            LLC_Disable();
+        }
+    }
+    ```
+
+
+  ### Charging Curve Implementation
+
+
+  - **Constant Current (CC) to Constant Voltage (CV)**:
+
+    - CC phase: Charge at max current (e.g., 16A) until battery reaches max voltage (e.g., 420V)
+
+    - CV phase: Hold voltage at 420V, current tapers from 16A to <1A as battery fills
+
+
+  - **Control**:
+
+    ```c
+    void ChargingCurve(void) {
+        float v_battery = ADC_ReadVoltage(CH_BATTERY);
+        float i_battery = ADC_ReadCurrent(CH_BATTERY);
+        float v_max = GetBatteryMaxVoltage();  // From BMS, e.g., 420V
+        float i_max = GetBatteryMaxCurrent();  // From BMS, e.g., 16A
+
+        if (v_battery < v_max * 0.95) {
+            // CC mode
+            SetChargerCurrent(i_max);
+        } else {
+            // CV mode
+            SetChargerVoltage(v_max);
+            // Current will naturally taper
+        }
+
+        if (i_battery < 1.0) {
+            // Charging complete
+            StopCharging();
+        }
+    }
+    ```
+
+
+  ## Approach
+
+
+  1. **Topology selection**: PFC (boost, totem-pole) + LLC (full-bridge, half-bridge)
+
+  2. **Component selection**: MOSFETs, diodes, magnetics (inductor, transformer)
+
+  3. **Control design**: PI loops for PFC and LLC, voltage/current regulation
+
+  4. **EMI filter**: Design CM/DM filter, verify with spectrum analyzer
+
+  5. **PCB layout**: Minimize parasitic inductance, separate high-current and low-current traces
+
+  6. **Testing**: Efficiency measurement, THD analysis, EMC pre-compliance, thermal testing
+
+
+  ## Deliverables
+
+
+  - OBC design (schematic, PCB layout, BOM)
+
+  - Control firmware (PFC and LLC loops, charging curve logic)
+
+  - Magnetics design (inductor, transformer specs)
+
+  - EMI filter design and simulation
+
+  - Test reports (efficiency, power factor, THD, EMC compliance)
+
+  - Thermal analysis and cooling design
+
+
+  ## Best Practices
+
+
+  - **Soft-start**: Ramp inrush current limiter (NTC thermistor or relay) to protect AC input
+
+  - **Overtemperature**: Derate power if heatsink >80°C, shutdown if >95°C
+
+  - **CAN communication**: Coordinate with BMS for voltage/current limits, SOC, temperature
+
+  - **Safety**: Isolation monitoring, ground fault detection, fuse/circuit breaker
+
+  - **Efficiency optimization**: Operate LLC near resonance, use SiC MOSFETs for low R_DS(on)
+
+
+  ## Integration
+
+
+  - **BMS**: CAN messages for battery voltage, current limits, SOC, temperature
+
+  - **EVSE**: Control pilot (CP) PWM signal for available current, proximity pilot (PP) for cable rating
+
+  - **Vehicle CAN**: Report charging status, faults, estimated time to full
+
+  - **Thermal system**: Share cooling loop with motor inverter and DC-DC converter
+
+
+  '
+constraints:
+- Space and weight constraints (typical OBC: 5-10 kg, 5-10 liters)
+- Automotive temperature range (-40°C to +105°C ambient)
+- EMC compliance challenging (proximity to motor inverter, high-voltage cables)
+- Safety isolation requirements (4 mm creepage/clearance for 400V DC)
+tools_required:
+- Power electronics simulation (PLECS, LTspice)
+- EMI filter design tools (ANSYS Q3D, FEMM)
+- Oscilloscope (200 MHz, 4 channels) for switching waveforms
+- Power analyzer (Yokogawa WT3000) for efficiency and THD
+- EMC chamber for conducted/radiated emissions testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- charging-infrastructure
+- onboard-charger
+- power-electronics
+- pfc
+- llc
+- emc
+- automotive

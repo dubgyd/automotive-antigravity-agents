@@ -1,0 +1,163 @@
+name: cabin-air-quality
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "HEPA filtration, CO2 monitoring, VOC detection, and intelligent air quality management for automotive cabin environments covering sensor integration, filter systems, and purification technologies."
+use_cases:
+  - "Designing multi-stage cabin air filtration with HEPA and activated carbon filters"
+  - "Implementing real-time CO2 and VOC monitoring with automated ventilation response"
+  - "Building predictive air quality management using external pollution data feeds"
+  - "Creating plasma ionization and UV-C air purification for pathogen reduction"
+  - "Integrating cabin air quality display with driver wellness and comfort systems"
+automotive_standards:
+  - "ISO 12219 - Interior air quality for road vehicles"
+  - "ISO 16000 - Indoor air quality measurement methods adapted for vehicles"
+  - "EN 1822 - HEPA filter classification and testing standards"
+  - "VDA 278 - Thermal desorption analysis of VOC from vehicle interior materials"
+  - "WHO Air Quality Guidelines for particulate matter and CO2 thresholds"
+instructions: |
+  # Cabin Air Quality
+
+  ## Overview
+  Cabin air quality management ensures occupants breathe clean, fresh air regardless of
+  external pollution, traffic conditions, or cabin material off-gassing. Modern systems
+  combine multi-stage filtration with real-time sensor monitoring, automated ventilation
+  control, and active purification technologies. External air quality data from connected
+  services enables predictive actions like closing vents before entering a pollution zone
+  or switching to recirculation mode near industrial areas.
+
+  ## Key Concepts
+
+  ### Multi-Stage Filtration
+  Sequential filter layers address different contaminant types:
+  - Pre-filter captures large particles (pollen, dust) above 10 microns
+  - HEPA H13 filter captures 99.95% of particles at 0.3 microns including PM2.5
+  - Activated carbon layer adsorbs gaseous pollutants, VOCs, and odors
+  - Optional biofunctional coating on filter media neutralizes allergens and bacteria
+  - Combined filter assembly typically fits within the existing cabin filter housing
+
+  ### Air Quality Sensors
+  In-cabin sensors continuously measure air composition:
+  - CO2 sensor (NDIR type) detects occupant-generated carbon dioxide (target below 1000 ppm)
+  - PM2.5 sensor (laser scattering) measures fine particulate concentration
+  - VOC sensor (metal oxide) detects volatile organic compounds from materials and exhaust
+  - Humidity sensor supports dew point management and mold prevention
+  - External air quality sensor mounted in the fresh air intake for comparison
+
+  ### Active Purification Technologies
+  Technologies that actively destroy or neutralize contaminants:
+  - Bipolar ionization generates charged ions that aggregate particles for filter capture
+  - UV-C germicidal lamps neutralize bacteria and viruses in the air stream
+  - Photocatalytic oxidation uses TiO2 coating activated by UV to decompose VOCs
+  - Plasma generators create reactive species that break down odor molecules
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Filtration System
+  Specify filter performance for the target vehicle HVAC:
+  - Calculate required air flow rate based on cabin volume and occupant count
+  - Select HEPA filter grade balancing particle capture efficiency with pressure drop
+  - Size the activated carbon layer for the target VOC adsorption capacity
+  - Design the filter housing for tool-free replacement accessible from the glove box
+
+  ### Step 2 - Integrate Air Quality Sensors
+  Place sensors for accurate and representative measurements:
+  - Mount the CO2 sensor in the return air path to measure cabin concentration
+  - Place the PM2.5 sensor downstream of the filter to verify filtration effectiveness
+  - Position the VOC sensor away from HVAC duct direct airflow for stable readings
+  - Install the external air quality sensor in the cowl area fresh air intake
+
+  ### Step 3 - Build the Control Algorithm
+  Implement intelligent air quality management:
+  - Compare internal and external air quality to decide between fresh and recirculated air
+  - Increase fan speed automatically when CO2 exceeds 800 ppm to bring in fresh air
+  - Switch to recirculation when external PM2.5 exceeds 50 micrograms per cubic meter
+  - Activate purification systems when VOC levels exceed comfort thresholds
+
+  ### Step 4 - Connect External Data Sources
+  Integrate real-time pollution data for predictive management:
+  - Subscribe to air quality index feeds from government monitoring stations
+  - Use navigation route data to predict upcoming pollution zones (tunnels, industrial)
+  - Pre-switch to recirculation before entering known high-pollution areas
+  - Display air quality comparison between cabin and outside on the HMI
+
+  ### Step 5 - Validate System Effectiveness
+  Test the complete air quality system under realistic conditions:
+  - Measure cabin PM2.5 reduction rate from ambient to clean target level
+  - Test CO2 management with full occupancy over a 2-hour drive cycle
+  - Verify VOC levels after vehicle thermal soak meet VDA 278 targets
+  - Measure ozone generation from ionizers to ensure it stays below 50 ppb
+
+  ## Best Practices
+
+  ### Filter Lifecycle Management
+  - Track filter usage by hours of operation and accumulated particle load
+  - Display filter replacement recommendation on the vehicle maintenance screen
+  - Warn the driver when filter efficiency drops below 80% of new condition
+  - Design replacement intervals of 15000 km or 12 months, whichever comes first
+
+  ### Sensor Calibration
+  - CO2 sensors require auto-baseline calibration referencing fresh outdoor air (400 ppm)
+  - PM2.5 sensors need periodic zero-check in clean filtered air conditions
+  - VOC sensors drift over time and benefit from annual calibration verification
+  - Store calibration coefficients in sensor module EEPROM for replacement continuity
+
+  ### Energy Efficiency
+  - HEPA filters increase HVAC pressure drop by 100 to 200 Pa compared to standard filters
+  - Compensate with appropriately sized blower motors to maintain airflow at higher load
+  - Activate purification technologies only when sensor data indicates a need
+  - UV-C lamps should operate intermittently based on contamination levels, not continuously
+
+  ## Troubleshooting
+
+  ### CO2 Levels Remain High Despite Fresh Air Mode
+  Verify the fresh air flap is fully open by checking actuator position feedback. Inspect
+  the external air intake for blockage from leaves or debris. Check that the blower speed
+  is sufficient for the current occupant count.
+
+  ### Musty Smell When AC Starts
+  Microbial growth on the evaporator surface is the most common cause. Run the evaporator
+  dry-out cycle (blower on, AC off) for 3 minutes after every AC use. Apply an
+  antimicrobial treatment to the evaporator surface during service.
+
+  ### PM2.5 Sensor Reads High Even with New Filter
+  Verify the filter is properly seated with no bypass gaps around the seal. Check if the
+  sensor is contaminated and needs cleaning. Confirm the sensor is measuring downstream
+  of the filter and not picking up unfiltered air.
+
+  ### Ionizer Produces Noticeable Ozone Smell
+  Reduce ionizer output power or duty cycle. Verify the ionizer model is rated for the
+  cabin volume to avoid over-ionization. Measure ozone concentration with a calibrated
+  detector to confirm levels are within the 50 ppb safety limit.
+
+  ## Integration Patterns
+
+  ### Route-Based Air Management
+  Using navigation data to proactively manage cabin air quality:
+  - Pre-switch to recirculation before entering known tunnels or industrial zones
+  - Increase fresh air intake when approaching parks or rural areas with clean air
+  - Alert the driver when the route passes through areas with air quality advisories
+  - Log air quality data along routes for fleet-level environmental impact reporting
+
+  ### HVAC System Coordination
+  Optimizing air quality management within the overall climate control strategy:
+  - Balance fresh air intake needs against cabin temperature maintenance efficiency
+  - Coordinate filter bypass for maximum airflow when defog is urgently needed
+  - Manage the trade-off between recirculation efficiency and CO2 accumulation
+  - Implement predictive filter loading estimation based on driving environment history
+
+  ## Testing and Validation
+
+  ### Filtration Efficiency Verification
+  Measure filter performance under standardized conditions:
+  - Test HEPA filtration efficiency at 0.3 micron particle size per EN 1822 methodology
+  - Measure activated carbon adsorption capacity for NO2, SO2, and benzene specifically
+  - Verify filter pressure drop at rated airflow to ensure HVAC fan can maintain throughput
+  - Test filtration performance after 12 months equivalent dust loading simulation
+
+  ### Sensor Accuracy Validation
+  Confirm air quality sensor measurements against reference instruments:
+  - Calibrate CO2 sensors against a NDIR reference analyzer at 400, 1000, and 2000 ppm
+  - Verify PM2.5 sensor accuracy against a gravimetric reference sampler
+  - Test VOC sensor response time and recovery time for step concentration changes
+  - Validate sensor performance after 2 years equivalent aging acceleration testing

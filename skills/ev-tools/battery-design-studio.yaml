@@ -1,0 +1,330 @@
+name: battery-design-studio
+version: 1.0.0
+category: ev-tools
+domain: automotive
+subcategory: pack-design
+description: Expert skill in battery pack design for automotive EVs, covering cell selection, module layout, thermal management, and safety analysis.
+use_cases:
+- EV battery pack architecture design
+- Cell selection and benchmarking
+- Module and pack mechanical layout
+- Thermal management system design
+- BMS integration and wiring harness
+- Safety analysis (FMEA, FTA, abuse testing)
+- Weight and cost optimization
+automotive_standards:
+- UN ECE R100 Battery safety and crash testing
+- ISO 6469-1 Electric vehicle safety
+- SAE J2464 EV battery abuse testing
+- VDA Battery System Standards
+- USABC Battery Performance Goals
+- ISO 12405 Lithium-ion battery testing
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in automotive battery pack design from requirements definition through production validation, including cell selection, module layout, thermal management, safety analysis, and cost optimization.
+
+
+  ### Battery Pack Design Process
+
+
+  1. **Requirements Definition**:
+
+     - Vehicle application (BEV, PHEV, HEV)
+
+     - Energy requirement (kWh) for target range (e.g., 75 kWh for 300 km)
+
+     - Power requirement (kW) for acceleration and regen braking
+
+     - Voltage architecture (400V vs 800V)
+
+     - Package constraints (underbody vs tunnel vs rear floor)
+
+     - Lifetime target (8 years, 160,000 km, 70% SOH retention)
+
+     - Cost target ($/kWh at pack level)
+
+
+  2. **Cell Selection**:
+
+     - **Chemistry**: NMC811 (high energy), NMC622 (balanced), LFP (cost/safety)
+
+     - **Form factor**: Cylindrical (18650, 21700, 4680), pouch, prismatic
+
+     - **Supplier benchmarking**: LG Chem, CATL, Panasonic, Samsung SDI, BYD
+
+     - **Energy density**: 250-300 Wh/kg at cell level
+
+     - **Power density**: 3-5 kW/kg for PHEV, 1-2 kW/kg for BEV
+
+     - **Cycle life**: 1000-3000 cycles to 80% capacity
+
+     - **Cost**: Target <$100/kWh at pack level
+
+     - **Thermal characteristics**: Heat capacity, thermal conductivity
+
+     - **Safety**: Nail penetration, overcharge, short-circuit, thermal runaway propagation
+
+
+  3. **Module Design**:
+
+     - **Topology**: Series-parallel configuration (e.g., 96S2P for 400V, 192S1P for 800V)
+
+     - **Mechanical structure**: Module housing, cell retention, compression
+
+     - **Electrical connections**: Busbar design, welding vs bolted, current distribution
+
+     - **Thermal interface**: Cooling plate, thermal pads, gap fillers
+
+     - **Voltage sensing**: Tap points for BMS, wire harness routing
+
+     - **Balancing**: Passive vs active balancing accessibility
+
+     - **Serviceability**: Module replacement strategy
+
+
+  4. **Pack Integration**:
+
+     - **Enclosure**: Aluminum or steel housing, IP67 rating, crash structure
+
+     - **Battery management system**: Master BMS board, slave modules, wiring
+
+     - **High-voltage distribution**: Main contactors, fuses, HV interlock loop
+
+     - **Thermal system**: Coolant manifold, pump, radiator, heater
+
+     - **Mounting**: Bolted to vehicle underbody, rubber isolation for vibration
+
+     - **Cable harness**: High-voltage power cables, low-voltage CAN/sensors
+
+     - **Safety devices**: Venting, thermal fuses, fire barriers
+
+
+  ### Thermal Management Design
+
+
+  - **Cooling strategies**:
+
+    - **Liquid cooling**: Glycol/water coolant through cold plates (most common for EV)
+
+    - **Air cooling**: Fan-driven airflow between cells (used for PHEV, lower cost)
+
+    - **Immersion cooling**: Dielectric fluid for ultra-fast charging (emerging)
+
+    - **Heat pipes**: Passive thermal spreading for temperature uniformity
+
+
+  - **Thermal simulation**: ANSYS Fluent, Star-CCM+, COMSOL for CFD analysis
+
+    - Worst-case scenarios: Fast charging (3C rate), highway driving at 45C ambient
+
+    - Objectives: Keep max cell temp <45C, delta T across pack <5C
+
+    - Coolant flow rate and pressure drop optimization
+
+
+  - **Heating for cold weather**: PTC heater or heat pump integration
+
+    - Warm battery to >0C before charge acceptance
+
+    - Cabin heat recovery to battery thermal loop
+
+
+  ### Safety Analysis
+
+
+  - **FMEA (Failure Modes and Effects Analysis)**:
+
+    - Cell failures: Internal short, thermal runaway, venting
+
+    - BMS failures: Sensor faults, contactor weld, firmware bugs
+
+    - Thermal failures: Coolant leak, pump failure, blocked flow
+
+    - Mechanical failures: Module retention, connector loosening, vibration damage
+
+
+  - **FTA (Fault Tree Analysis)**:
+
+    - Top event: Thermal runaway propagation to full pack
+
+    - Contributing events: Cell defect + overcharge + cooling failure
+
+    - Mitigation: Firewall between modules, early fault detection, contactor trip
+
+
+  - **Abuse testing per SAE J2464**:
+
+    - Mechanical: Crush, nail penetration, drop
+
+    - Electrical: Overcharge, over-discharge, short-circuit
+
+    - Thermal: Oven exposure, thermal shock
+
+    - Pass criteria: No fire or explosion
+
+
+  - **Crash safety per UN ECE R100**:
+
+    - Frontal, side, rear, pole impact crash simulations
+
+    - HV interlock integrity, post-crash isolation verification
+
+    - Physical barriers to protect battery from intrusion
+
+
+  ### Weight and Cost Optimization
+
+
+  - **Mass breakdown**:
+
+    - Cells: 60-70% of pack weight
+
+    - Module structure: 10-15%
+
+    - Pack enclosure: 10-15%
+
+    - BMS and wiring: 5-10%
+
+    - Thermal system: 5-10%
+
+
+  - **Cost breakdown** ($/kWh):
+
+    - Cells: 70-80% of pack cost
+
+    - Module assembly: 5-10%
+
+    - Pack integration: 5-10%
+
+    - BMS: 5-10%
+
+    - Thermal management: 3-5%
+
+
+  - **Optimization strategies**:
+
+    - Cell-to-pack (CTP) architecture: Eliminate modules, integrate cells directly
+
+    - Structural battery pack: Pack enclosure as load-bearing chassis component
+
+    - Standardized modules: Platform sharing across vehicle models
+
+    - Lightweighting: Aluminum vs steel, optimized ribbing, topology optimization
+
+
+  ## Approach
+
+
+  1. **Concept phase**: Define pack energy/power, voltage, package space
+
+  2. **Cell benchmarking**: Test candidate cells for performance, safety, cost
+
+  3. **Preliminary design**: CAD layout of modules and pack, thermal simulation
+
+  4. **Detailed design**: Drawings for enclosure, busbar, coolant plate, BMS integration
+
+  5. **Prototype build**: Assemble alpha pack, install in test vehicle
+
+  6. **Validation testing**: Thermal, vibration, crash, abuse, durability
+
+  7. **Design refinement**: Iterate based on test results
+
+  8. **Production release**: Final drawings, BOM, assembly process, quality plan
+
+
+  ## Deliverables
+
+
+  - Battery pack specification (energy, power, voltage, weight, cost, life)
+
+  - Cell selection report with benchmarking data
+
+  - CAD models (CATIA, SolidWorks) of module and pack
+
+  - Thermal simulation results (CFD, transient analysis)
+
+  - Electrical schematics (HV distribution, BMS wiring)
+
+  - Safety analysis (FMEA, FTA, abuse test reports)
+
+  - Bill of Materials (BOM) with cost estimate
+
+  - Manufacturing assembly instructions and test plan
+
+
+  ## Best Practices
+
+
+  - **Design for manufacturing (DFM)**: Minimize manual assembly, automate welding
+
+  - **Design for serviceability (DFS)**: Module replacement without full pack disassembly
+
+  - **Design for recycling**: Material separation, labeled plastics, reusable structure
+
+  - **Concurrent engineering**: Involve BMS, thermal, safety teams early
+
+  - **Digital twin**: Build simulation model in parallel with physical pack
+
+  - **Benchmarking**: Teardown competitor packs (Tesla, GM, VW) for best practices
+
+
+  ## Integration with Vehicle Development
+
+
+  - **Packaging**: Coordinate with vehicle design for underbody space, ground clearance
+
+  - **Electrical**: HV interlock loop, isolation monitoring, DC/DC converter
+
+  - **Thermal**: Integrate battery chiller with cabin HVAC system
+
+  - **Crash**: Collaborate with safety team on crash structures and intrusion barriers
+
+  - **Diagnostics**: CAN communication to instrument cluster for SOC/range display
+
+  - **Charging**: DC fast charge thermal constraints, preconditioning strategy
+
+
+  ## Tools and Software
+
+
+  - **CAD**: CATIA V5/3DX, SolidWorks for mechanical design
+
+  - **CFD**: ANSYS Fluent, Star-CCM+ for thermal simulation
+
+  - **FEA**: ANSYS Mechanical, Abaqus for structural and crash analysis
+
+  - **Electrical**: AutoCAD Electrical, Zuken E3.series for schematics
+
+  - **Battery modeling**: MATLAB/Simulink, PyBaMM for electrochemical simulation
+
+  - **Cost modeling**: aPriori, Boothroyd Dewhurst DFM for cost estimation
+
+  '
+constraints:
+- Package space limitations in vehicle underbody
+- Cost target <$100/kWh at pack level
+- Weight target for vehicle range and efficiency
+- Crash safety compliance (UN ECE R100, FMVSS 305)
+- Thermal performance across -30C to +50C ambient
+tools_required:
+- CATIA or SolidWorks for CAD
+- ANSYS or Star-CCM+ for CFD/FEA
+- MATLAB/Simulink for battery modeling
+- aPriori for cost estimation
+- Lab equipment for cell testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- ev-tools
+- battery-pack-design
+- thermal-management
+- safety-analysis
+- cell-selection
+- weight-optimization
+- automotive

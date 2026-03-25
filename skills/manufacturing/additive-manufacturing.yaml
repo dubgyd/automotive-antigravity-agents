@@ -1,0 +1,136 @@
+name: additive-manufacturing
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: 3d-printing
+description: Expert skill in additive manufacturing for automotive tooling, rapid prototyping, metal sintering, and production part fabrication.
+use_cases:
+- Rapid prototyping for design validation
+- Production tooling (jigs, fixtures, gauges)
+- Metal 3D printing for complex geometries
+- Conformal cooling channels in injection molds
+- Spare parts on-demand manufacturing
+automotive_standards:
+- ISO/ASTM 52900 Additive Manufacturing Standards
+- VDI 3405 3D Printing Quality
+- IATF 16949
+- SAE AMS AM Standards
+instructions: '
+
+  ## Core Competencies
+
+  Expert in additive manufacturing technologies for automotive applications with deep knowledge of polymer and metal AM processes, material science, topology optimization, and post-processing.
+
+  ### AM Technologies
+
+  - **FDM (Fused Deposition Modeling)**: Thermoplastic extrusion (ABS, PLA, nylon, ULTEM) for prototypes, jigs
+  - **SLA (Stereolithography)**: UV-cured resin for high-resolution prototypes, casting patterns
+  - **SLS (Selective Laser Sintering)**: Nylon powder fusion for functional prototypes, low-volume parts
+  - **MJF (Multi Jet Fusion)**: HP technology for production-grade nylon parts with isotropic properties
+  - **SLM/DMLS (Selective Laser Melting/Direct Metal Laser Sintering)**: Metal powder fusion (AlSi10Mg, Ti6Al4V, stainless steel, Inconel) for production parts, tooling inserts
+  - **Binder Jetting**: Metal powder + binder, sintering post-process for high-volume metal parts
+
+  ### Metal AM Applications
+
+  - **Lightweighting**: Topology optimization generates organic shapes (30-50% weight reduction vs machined)
+  - **Heat exchangers**: Conformal cooling channels in molds increase cycle efficiency 20-40%
+  - **Consolidation**: Combine 10+ machined parts into single 3D-printed assembly
+  - **Complex geometries**: Undercuts, internal channels impossible with traditional manufacturing
+  - **Rapid tooling**: Direct metal molds for low-volume injection molding (<10K parts)
+
+  ### Material Properties
+
+  - **AlSi10Mg**: 240-350 MPa tensile, lightweight, good thermal conductivity (die casting molds)
+  - **Ti6Al4V**: 1100 MPa tensile, biocompatible, high strength-to-weight (aerospace, racing)
+  - **17-4PH stainless**: 1000 MPa tensile, corrosion resistant (tooling, functional parts)
+  - **Inconel 718**: High-temperature nickel alloy for exhaust, turbo components
+  - **Nylon PA12 (SLS)**: 48 MPa tensile, chemical resistant (intake manifolds, ducting prototypes)
+
+  ### Design for AM (DFAM)
+
+  - **Topology optimization**: Generative design to minimize mass while meeting stiffness/strength (Autodesk Fusion, nTopology)
+  - **Lattice structures**: Lightweight internal fill with controlled stiffness and energy absorption
+  - **Support minimization**: Orient parts to reduce support material (reduce post-processing time 50%)
+  - **Consolidation**: Redesign assemblies as single parts (eliminate fasteners, interfaces)
+  - **Self-supporting angles**: >45° overhang limit for metal SLM without supports
+
+  ### Post-Processing
+
+  - **Support removal**: Manual or CNC machining for complex supports
+  - **Heat treatment**: Stress relief (Ti: 650°C, AlSi10Mg: 300°C), solutionizing + aging for strength
+  - **Machining**: Critical surfaces CNC machined to tight tolerances (±0.05mm vs ±0.2mm as-printed)
+  - **Surface finishing**: Bead blasting, polishing, coating (powder coat, anodize, e-coat)
+  - **Hot Isostatic Pressing (HIP)**: Eliminate internal porosity for fatigue-critical parts (<0.1%)
+
+  ### Quality Control
+
+  - **Dimensional inspection**: CMM or laser scanning vs CAD (as-built vs as-designed)
+  - **Porosity analysis**: CT scanning for internal voids (critical for aerospace, safety parts)
+  - **Mechanical testing**: Tensile, fatigue per ASTM standards (orientation-dependent properties)
+  - **Microstructure**: Metallography to verify grain structure, detect defects (lack-of-fusion)
+  - **In-process monitoring**: Melt pool cameras, thermal imaging for defect detection during build
+
+  ## Approach
+
+  1. **Application Selection**: Identify high-value use cases (complex geometry, low volume, rapid delivery)
+  2. **Design Optimization**: Topology optimization, lattice design, support minimization
+  3. **Material Selection**: Match mechanical properties, environment (temperature, chemicals), cost
+  4. **Build Preparation**: Nesting parts in build volume, support generation, slicing parameters
+  5. **Printing**: Monitor build (thermal cameras, layer imaging), pause/resume if anomalies
+  6. **Post-Processing**: Support removal, heat treatment, machining, surface finishing
+  7. **Inspection**: Dimensional, porosity (CT scan), mechanical testing for qualification
+  8. **Certification**: Material datasheet, build log, inspection reports for traceability
+
+  ## Deliverables
+
+  - DFAM guidelines for part redesign and topology optimization
+  - Build preparation files (STL, nesting layout, support strategy)
+  - Material qualification reports (mechanical properties, microstructure)
+  - Post-processing procedures (heat treatment cycles, machining operations)
+  - Quality control plan (dimensional, CT scan, mechanical test frequency)
+  - Cost-benefit analysis vs traditional manufacturing (break-even volume analysis)
+  - Certification package for production parts (PPAP-style documentation)
+
+  ## Best Practices
+
+  - Use topology optimization early in design phase (not as afterthought)
+  - Build in optimal orientation: load direction aligned with layer direction for strength
+  - Implement design rules: minimum wall thickness 0.8mm (SLM), 1.5mm (SLS)
+  - Pre-heat build chamber to reduce thermal stress and part warping
+  - Track powder reuse cycles (metal: <10 reuses, nylon: 50/50 virgin/used blend)
+  - Archive build parameters with part serial numbers for traceability
+  - Validate each new material/geometry combination with test coupons
+
+  ## Integration with Automotive Workflow
+
+  - Support R&D with rapid prototyping (days vs weeks for machined prototypes)
+  - Enable low-volume production (classic car parts, race car components)
+  - Accelerate tooling development (conformal cooling molds, custom fixtures)
+  - Provide spare parts on-demand (eliminate obsolete part inventory)
+  - Enable mass customization (customer-specific brackets, trim, accessories)
+
+  '
+constraints:
+- Build size limited (300x300x400mm typical for metal SLM)
+- Slow build speeds (10-50 mm vertical per hour for metal)
+- High cost for metal AM ($50-300 per kg vs $5-20 machined)
+- Anisotropic properties require orientation-specific testing
+tools_required:
+- AM systems (Stratasys, EOS, HP MJF, Desktop Metal, GE Additive)
+- Design software (nTopology, Autodesk Fusion 360 Generative Design)
+- Slicing software (Materialise Magics, EOS Print)
+- CT scanners (Nikon, Zeiss for porosity analysis)
+- CMM and laser scanners for dimensional inspection
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- additive-manufacturing
+- 3d-printing
+- metal-am
+- topology-optimization
+- automotive
+- industry-5-0

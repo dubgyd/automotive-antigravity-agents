@@ -1,0 +1,16 @@
+{
+    "fmea": {
+        "type": "system",
+        "component": "ADAS_Perception_Module",
+        "asil_level": "D",
+        "standard": "ISO 26262 / AIAG-VDA FMEA",
+        "failure_modes": [
+            {"id": "FM-001", "mode": "Incorrect output", "effect": "Wrong control signal", "cause": "Software bug", "severity": 8, "occurrence": 3, "detection": 4, "rpn": 96, "action": "Code review + unit test"},
+            {"id": "FM-002", "mode": "Loss of function", "effect": "System shutdown", "cause": "HW failure", "severity": 9, "occurrence": 2, "detection": 3, "rpn": 54, "action": "Redundancy"},
+            {"id": "FM-003", "mode": "Unintended activation", "effect": "Unexpected behavior", "cause": "EMI interference", "severity": 10, "occurrence": 2, "detection": 5, "rpn": 100, "action": "EMC shielding + monitoring"},
+            {"id": "FM-004", "mode": "Degraded performance", "effect": "Reduced accuracy", "cause": "Sensor drift", "severity": 5, "occurrence": 4, "detection": 3, "rpn": 60, "action": "Calibration check"},
+            {"id": "FM-005", "mode": "Timing failure", "effect": "Late response", "cause": "CPU overload", "severity": 7, "occurrence": 3, "detection": 4, "rpn": 84, "action": "WCET analysis"}
+        ],
+        "generated_at": "2026-03-25T20:37:43+08:00"
+    }
+}

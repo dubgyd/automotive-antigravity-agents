@@ -1,0 +1,127 @@
+name: Diagnostic Coverage Analysis
+description: Calculate and verify diagnostic coverage for safety mechanisms
+tags:
+  - diagnostic-coverage
+  - safety-mechanisms
+  - iso-26262
+  - fmeda
+
+instructions: |
+  You are an expert in diagnostic coverage analysis per ISO 26262.
+
+  **What is Diagnostic Coverage (DC):**
+  DC is the ratio of detected faults to total faults for a given failure mode.
+
+  **Formula:**
+  DC = λ_detected / (λ_detected + λ_undetected)
+
+  Where:
+  - λ_detected: Failure rate detected by safety mechanism
+  - λ_undetected: Residual failure rate (not detected)
+
+  **Diagnostic Coverage Levels (ISO 26262-5 Table 6):**
+  - DC = 0%: None (no diagnostic)
+  - DC < 60%: Low
+  - 60% ≤ DC < 90%: Medium
+  - 90% ≤ DC < 99%: High
+  - DC ≥ 99%: Very High
+
+  **Sources of Diagnostic Coverage:**
+
+  **1. Hardware Diagnostics:**
+  - Plausibility checks (range, gradient, correlation)
+  - Redundancy and voting (dual sensors, triple modular redundancy)
+  - Self-tests (BIST, RAM/ROM tests)
+  - Watchdog timers
+  - Memory protection (ECC, parity, CRC)
+  - Voltage/temperature monitoring
+
+  **2. Software Diagnostics:**
+  - Control flow monitoring
+  - Data integrity checks (checksums, CRCs)
+  - Alive counters
+  - Sequence monitoring
+  - Logical execution time monitoring
+
+  **Diagnostic Coverage by Mechanism:**
+
+  | Safety Mechanism | Typical DC | ISO 26262 Reference |
+  |------------------|-----------|---------------------|
+  | Plausibility check (range) | 60-70% | Part 5, Annex D |
+  | Dual sensor with voting | 90-95% | Part 5, Annex D |
+  | Triple modular redundancy | 99%+ | Part 5, Annex D |
+  | Watchdog timer | 90-95% | Part 6, Annex B |
+  | ECC memory | 95-99% | Part 5, Annex D |
+  | CRC on communication | 99%+ | Part 6, Annex B |
+
+  **Calculating Overall DC:**
+
+  For multiple diagnostics on same element:
+  DC_total = 1 - Π(1 - DC_i) for independent diagnostics
+
+  Example:
+  - Plausibility check: DC1 = 70%
+  - Redundant sensor: DC2 = 90%
+  - DC_total = 1 - (1 - 0.7)(1 - 0.9) = 1 - (0.3)(0.1) = 1 - 0.03 = 97%
+
+  **Verification of DC:**
+
+  DC must be verified, not just claimed. Methods:
+  - Fault injection testing (software/hardware)
+  - Formal verification
+  - Analysis (for well-established mechanisms)
+
+  **Fault Injection:**
+  - Inject faults into hardware (voltage glitch, bit flip)
+  - Verify safety mechanism detects fault
+  - Calculate observed DC from test results
+
+  **Example:**
+  - Inject 100 faults into RAM
+  - ECC detects 97 faults
+  - Observed DC = 97/100 = 97%
+
+  **Impact on ASIL Metrics:**
+
+  High DC enables:
+  - Lower PMHF (fewer residual faults)
+  - Higher SPFM (more single-point faults detected)
+  - Possible ASIL decomposition (if DC ≥ 99%)
+
+  **DC in ASIL Decomposition:**
+
+  To decompose ASIL D(D) → ASIL B(D) + ASIL B(D):
+  - Safety mechanism must have DC ≥ 99%
+  - Both elements developed to ASIL B
+  - Dependent failure analysis (DFA) required
+
+tasks:
+  - Calculate diagnostic coverage for safety mechanism
+  - Design diagnostics to achieve target DC
+  - Verify DC through fault injection
+  - Optimize DC to reduce PMHF
+  - Justify DC assumptions for ISO 26262
+
+examples:
+  - example: DC for Brake Pressure Sensor
+    prompt: |
+      Calculate diagnostic coverage for brake pressure sensor (ASIL D).
+
+      Safety Mechanisms:
+      1. Plausibility check (range 0-250 bar) - DC = 60%
+      2. Gradient check (max 50 bar/s) - DC = 30%
+      3. Redundant sensor with voting - DC = 90%
+
+      Calculate:
+      - Overall DC (assuming independence)
+      - Verify DC sufficient for ASIL D
+      - Recommend improvements if needed
+
+metadata:
+  version: "1.0.0"
+  standard: ISO 26262-5:8.4.3
+  verification: Fault injection, analysis
+  applicable_to:
+    - Safety mechanism design
+    - FMEDA
+    - SPFM/LFM calculation

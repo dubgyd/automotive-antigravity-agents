@@ -1,0 +1,44 @@
+name: stationary-ess-integration
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in integrating retired EV batteries into grid-scale stationary energy storage for peak shaving, frequency regulation, renewable integration, and containerized ESS design.
+use_cases:
+- Grid-scale second-life battery ESS (1-100 MW)
+- Peak shaving and demand charge reduction
+- Frequency regulation (primary/secondary reserves)
+- Renewable energy firming (solar/wind smoothing)
+- Containerized ESS system design
+automotive_standards:
+- IEC 62933 Electrical Energy Storage Systems
+- IEEE 1547 Grid Interconnection Standard
+- UL 9540 Energy Storage Systems Safety
+- NFPA 855 Installation of Stationary ESS
+- ISO 50001 Energy Management
+instructions: 'Expert in repurposing retired EV battery modules (70-85% SOH) for grid-connected stationary energy storage systems. Applications: (1) Frequency Regulation: Primary (FFR, <2 sec response, ±1-5 MW, high C-rate 1-2C, revenue $50-100/kW-year), Secondary (±0.1-0.5 Hz target, 5-15 min duration, 0.5-1C, revenue $30-60/kW-year). (2) Peak Shaving: Reduce demand charges for C&I customers (4-hour discharge, 0.25C, savings $50-200/kW-year depending on utility tariff). (3) Renewable Firming: Smooth solar/wind output (1-4 hour duration, 0.5C charge/discharge, value $20-80/MWh shifted). (4) Black Start: Grid restart after blackout (10-30 min discharge, high reliability required, premium payment). System architecture: second-life modules (200-500V DC strings, 10-50 kWh per module) connected to DC-AC inverter (500 kW to 5 MW, efficiency 96-98%), containerized (20-foot or 40-foot ISO shipping container, 500-2000 kWh per container), multiple containers paralleled for MW-scale. Electrical design: series strings to match inverter DC bus voltage (800-1500V typical), parallel strings for capacity/power scaling, DC contactor per string (safety isolation), fuses on each string (overcurrent protection). Thermal management: HVAC (air conditioning to maintain 15-25°C, critical for calendar life), active cooling more efficient than passive for >500 kWh (30% CAPEX increase but 20% better lifetime). Fire suppression: NFPA 855 mandates detection (smoke, heat, off-gas sensors) and suppression (water mist, aerosol, FM-200), requires 3-foot spacing between containers, explosion venting. BMS architecture: Master BMS (container-level, aggregates module data, controls DC contactors), Module BMS (from OEM, may need reprogramming for new voltage/SOC limits), Cell BMS (individual cell monitoring for safety). Grid interconnection: inverter must meet IEEE 1547 (anti-islanding, voltage/frequency ride-through, power factor control), utility approval process 6-18 months (interconnection studies, protection settings), metering (revenue-grade for wholesale markets). Performance degradation: second-life batteries degrade 2-5%/year SOH in stationary use (vs 5-10%/year in EV due to lower C-rates), warranty typically 5-10 years or 2000-4000 equivalent full cycles. Economics: CAPEX $150-300/kWh (battery $80-150, inverter $40-80, BMS/controls $15-30, container/installation $15-40), OPEX $5-15/kWh-year (HVAC energy, maintenance, insurance), revenue $50-200/kW-year (stacked value: frequency + capacity + energy arbitrage). Case studies: Nissan/Eaton xStorage (750 kWh Leaf battery ESS, Amsterdam Arena stadium), Daimler/Remondis (13 MWh from Smart/Mercedes EV batteries, Lünen Germany), Renault/Powervault (UK residential/C&I, 10 kW / 20 kWh systems). Key success factors: standardized module interfaces (reduce integration cost), software-defined controls (optimize for grid services), remote monitoring (predictive maintenance, avoid truck rolls), degradation modeling (warranty reserves).
+'
+constraints:
+- Grid interconnection approval slow (6-18 months utility studies)
+- Fire safety compliance expensive (NFPA 855 adds $50-100/kWh)
+- Degradation uncertainty (warranty reserves 20-30% of gross margin)
+- Module voltage/capacity mismatch (string balancing challenges)
+- Insurance requires UL 9540 certification ($100-300k per design)
+tools_required:
+- DC-AC inverters (SMA, SolarEdge, Schneider, ABB)
+- BMS reprogramming tools and CAN adapters
+- SCADA/EMS (energy management system) for grid control
+- Thermal simulation (ANSYS, COMSOL for HVAC sizing)
+- Fire suppression systems (Fike, Kidde, Tyco)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- second-life
+- stationary-ess
+- grid-scale
+- frequency-regulation
+- automotive

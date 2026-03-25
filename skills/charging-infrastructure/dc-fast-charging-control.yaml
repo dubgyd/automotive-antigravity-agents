@@ -1,0 +1,399 @@
+name: dc-fast-charging-control
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive-ev
+description: "Expert skill in DC fast charge controller design, covering CAN/PLC communication, precharge sequencing, current/voltage regulation, and closed-loop power control for 50-350 kW charging."
+use_cases:
+  - "DC fast charger controller firmware development"
+  - "CCS/CHAdeMO communication protocol implementation"
+  - "Closed-loop current and voltage regulation (PI/PID control)"
+  - "Precharge sequence and contactor management"
+  - "Fault detection and recovery algorithms"
+automotive_standards:
+  - "IEC 61851-23 DC EV charging station requirements"
+  - "ISO 15118-2 V2G communication protocol"
+  - "CHAdeMO 2.0/3.0 CAN-based protocol"
+  - "SAE J1772 Control pilot signaling"
+  - "IEC 61000-6-2 Immunity for industrial environments"
+instructions: |
+  ## Core Competencies
+
+  Expert in DC fast charge controller design and firmware development, covering high-level communication (ISO 15118, CHAdeMO), low-level control pilot signaling, closed-loop power regulation (PI/PID), precharge sequencing, and multi-layered fault protection.
+
+  ### Controller Architecture
+
+  - **Hardware platform**:
+    - **Microcontroller**: STM32H7 (400 MHz, FPU for fast control loops), NXP i.MX8 (Linux for ISO 15118)
+    - **Communication**: CAN controller (CHAdeMO), PLC modem (CCS/ISO 15118), Ethernet (OCPP backend)
+    - **Analog inputs**: 16-bit ADC for voltage/current sensing (1 MHz sampling)
+    - **Digital I/O**: Contactor control, pilot signals, emergency stop input
+    - **Power supply**: 12V or 24V from AC input, with backup battery for contactor control
+
+  - **Software architecture**:
+
+    ```
+    Real-time layer (RTOS or bare-metal, 10 kHz):
+      - ADC sampling (voltage, current, temperature)
+      - PI control loop (current/voltage regulation)
+      - Safety monitors (overvoltage, overcurrent, ground fault)
+      - Contactor state machine
+
+    Application layer (Linux or FreeRTOS, 10 Hz):
+      - ISO 15118 or CHAdeMO protocol handler
+      - OCPP client (WebSocket to backend)
+      - User interface (display, RFID reader)
+      - Data logging (session energy, faults)
+    ```
+
+  ### Communication Protocols
+
+  - **CCS (ISO 15118-2/3)**:
+    - Physical: PLC (HomePlug Green PHY) at 85 kHz on Control Pilot line
+    - Data link: IPv6 over PLC, TCP for reliable delivery
+    - Application: EXI-encoded XML messages (SessionSetup, ChargeParameterDiscovery, CurrentDemand)
+    - Message rate: 100 ms to 250 ms (10 Hz to 4 Hz)
+
+  - **CHAdeMO**:
+    - Physical: CAN 2.0B at 250 kbps
+    - Application: Binary CAN messages (EV status, charger status, target V/I)
+    - Message rate: 100 ms (10 Hz)
+
+  - **Control Pilot (CP) low-level signaling**:
+    - PWM at 1 kHz, +/-12V square wave
+    - Duty cycle: 5% = digital communication request, 10-96% = available current encoding
+    - EV changes CP impedance (1kOhm -> 270Ohm) to signal state transitions
+
+  ### Precharge Sequencing
+
+  - **Objective**: Match charger DC bus voltage to EV battery voltage before closing main contactors (avoid inrush current)
+
+  - **Sequence**:
+    1. Charger DC bus at 0V (contactors open)
+    2. Measure EV battery voltage via ISO 15118 or CHAdeMO (e.g., 350V)
+    3. Charger ramps DC-DC converter output to 350V (no load, open circuit)
+    4. Close precharge relay (100Ohm series resistor limits inrush to ~3.5A)
+    5. Wait for voltage to equalize (within 20V), typically 1-2 seconds
+    6. Close main positive contactor
+    7. Open precharge relay (no longer needed)
+    8. Close main negative contactor
+    9. Current can now flow (ramp from 0A to target over 2 seconds)
+
+  - **Precharge control code**:
+
+    ```c
+    typedef enum {
+        PRECHARGE_IDLE,
+        PRECHARGE_RAMP_VOLTAGE,
+        PRECHARGE_WAIT_SETTLE,
+        PRECHARGE_CLOSE_MAIN,
+        PRECHARGE_COMPLETE,
+        PRECHARGE_FAULT
+    } PrechargeState_t;
+
+    void PrechargeStateMachine(void) {
+        static PrechargeState_t state = PRECHARGE_IDLE;
+        static uint32_t settle_timer = 0;
+
+        float v_dc_bus = ADC_ReadVoltage(CH_DC_BUS);
+        float v_battery = GetEVBatteryVoltage();  // From ISO 15118 or CHAdeMO
+
+        switch (state) {
+            case PRECHARGE_IDLE:
+                if (ChargingRequested()) {
+                    SetDCDCVoltage(v_battery);  // Command converter to battery voltage
+                    state = PRECHARGE_RAMP_VOLTAGE;
+                }
+                break;
+
+            case PRECHARGE_RAMP_VOLTAGE:
+                if (fabs(v_dc_bus - v_battery) < 50.0) {  // Within 50V
+                    GPIO_Set(PIN_PRECHARGE_RELAY, HIGH);  // Close precharge relay
+                    settle_timer = GetTickCount();
+                    state = PRECHARGE_WAIT_SETTLE;
+                }
+                break;
+
+            case PRECHARGE_WAIT_SETTLE:
+                if (GetTickCount() - settle_timer > 2000) {  // 2 second settle time
+                    if (fabs(v_dc_bus - v_battery) < 20.0) {  // Within 20V
+                        state = PRECHARGE_CLOSE_MAIN;
+                    } else {
+                        state = PRECHARGE_FAULT;  // Voltage didn't equalize
+                    }
+                }
+                break;
+
+            case PRECHARGE_CLOSE_MAIN:
+                GPIO_Set(PIN_MAIN_CONTACTOR_POS, HIGH);
+                Delay_ms(50);  // Wait for contactor to close
+                GPIO_Set(PIN_PRECHARGE_RELAY, LOW);  // Open precharge relay
+                Delay_ms(50);
+                GPIO_Set(PIN_MAIN_CONTACTOR_NEG, HIGH);
+                state = PRECHARGE_COMPLETE;
+                break;
+
+            case PRECHARGE_COMPLETE:
+                // Ready to start current flow
+                break;
+
+            case PRECHARGE_FAULT:
+                OpenAllContactors();
+                LogFault("Precharge failed: voltage mismatch");
+                break;
+        }
+    }
+    ```
+
+  ### Closed-Loop Current and Voltage Regulation
+
+  - **Control objective**: Track EV requested voltage and current with <2% error
+
+  - **Dual-loop control**:
+    - **Outer loop** (voltage control): PI controller, 100 Hz update rate
+    - **Inner loop** (current control): PI controller, 1 kHz update rate (faster response)
+
+  - **PI controller implementation**:
+
+    ```c
+    typedef struct {
+        float Kp;         // Proportional gain
+        float Ki;         // Integral gain
+        float integral;   // Integral accumulator
+        float setpoint;   // Target value
+        float output_min; // Anti-windup limit
+        float output_max;
+    } PIController_t;
+
+    float PI_Update(PIController_t* pi, float measured_value, float dt) {
+        float error = pi->setpoint - measured_value;
+        pi->integral += error * dt;
+
+        // Anti-windup: Clamp integral term
+        if (pi->integral > pi->output_max) pi->integral = pi->output_max;
+        if (pi->integral < pi->output_min) pi->integral = pi->output_min;
+
+        float output = pi->Kp * error + pi->Ki * pi->integral;
+
+        // Clamp output
+        if (output > pi->output_max) output = pi->output_max;
+        if (output < pi->output_min) output = pi->output_min;
+
+        return output;
+    }
+
+    // Example: Current control loop at 1 kHz
+    void CurrentControlLoop(void) {
+        static PIController_t pi_current = {
+            .Kp = 0.5,
+            .Ki = 50.0,
+            .output_min = 0.0,
+            .output_max = 100.0  // PWM duty cycle percentage
+        };
+
+        float i_measured = ADC_ReadCurrent(CH_OUTPUT);
+        float i_target = GetEVCurrentRequest();  // From ISO 15118
+        pi_current.setpoint = i_target;
+
+        float pwm_duty = PI_Update(&pi_current, i_measured, 0.001);  // dt=1ms
+
+        SetPWM(pwm_duty);  // Update DC-DC converter PWM
+    }
+    ```
+
+  - **Tuning**: Use Ziegler-Nichols method or manual tuning (Kp first, then Ki)
+    - Kp: Proportional response (too high = oscillation, too low = slow)
+    - Ki: Eliminates steady-state error (too high = overshoot)
+
+  ### Cable Voltage Drop Compensation
+
+  - **Problem**: At 500A, 5m cable with 50 mOhm resistance drops 25V (5% error at 500V)
+
+  - **Solution**: Measure voltage at EV inlet (via ISO 15118 feedback), not at charger output
+
+  - **Compensation**:
+
+    ```c
+    float CompensateCableVoltage(float v_target_at_ev, float i_output) {
+        const float CABLE_RESISTANCE = 0.050;  // 50 mOhm
+        float v_drop = i_output * CABLE_RESISTANCE;
+        float v_charger_output = v_target_at_ev + v_drop;
+        return v_charger_output;
+    }
+
+    // In control loop
+    float v_ev_inlet = GetEVInletVoltage();  // From ISO 15118 message
+    float i_output = ADC_ReadCurrent(CH_OUTPUT);
+    float v_target_charger = CompensateCableVoltage(v_ev_inlet, i_output);
+    SetDCDCVoltage(v_target_charger);
+    ```
+
+  ### Fault Detection and Protection
+
+  - **Overvoltage**:
+    - Threshold: EV_target_voltage + 5% (e.g., 525V for 500V target)
+    - Action: Reduce voltage immediately, if persists >100ms -> open contactors
+
+  - **Overcurrent**:
+    - Threshold: min(EV_max_current, cable_rating, charger_rating) + 10%
+    - Action: Reduce current, if exceeds 120% for >1 second -> trip
+
+  - **Ground fault** (DC residual current):
+    - Monitor: I_DC+ + I_DC- (should be zero if no leakage)
+    - Threshold: >20 mA
+    - Action: Open contactors within 100 ms
+
+  - **Insulation fault**:
+    - Test before charging: Measure R_iso (DC+ and DC- to ground)
+    - Threshold: <100 Ohm/V (e.g., <50 kOhm for 500V)
+    - Action: Abort charging, display error
+
+  - **Thermal fault**:
+    - Monitor: Inverter temperature, connector temperature, cable temperature
+    - Derate: Reduce power if temp >80C
+    - Shutdown: If temp >95C
+
+  - **Communication fault**:
+    - Watchdog: If no message from EV for >500 ms (ISO 15118) or >1 second (CHAdeMO)
+    - Action: Ramp current to zero over 5 seconds, open contactors
+
+  - **Fault handling code**:
+
+    ```c
+    typedef enum {
+        FAULT_NONE = 0,
+        FAULT_OVERVOLTAGE = (1 << 0),
+        FAULT_OVERCURRENT = (1 << 1),
+        FAULT_GROUND_FAULT = (1 << 2),
+        FAULT_INSULATION = (1 << 3),
+        FAULT_THERMAL = (1 << 4),
+        FAULT_COMM_TIMEOUT = (1 << 5),
+        FAULT_EMERGENCY_STOP = (1 << 6)
+    } FaultFlags_t;
+
+    uint32_t CheckFaults(void) {
+        uint32_t faults = FAULT_NONE;
+
+        if (v_output > v_target * 1.05) faults |= FAULT_OVERVOLTAGE;
+        if (i_output > i_max * 1.20) faults |= FAULT_OVERCURRENT;
+        if (fabs(i_dcplus + i_dcminus) > 0.020) faults |= FAULT_GROUND_FAULT;
+        if (temp_inverter > 95.0) faults |= FAULT_THERMAL;
+        if (GetTickCount() - last_ev_message_time > 500) faults |= FAULT_COMM_TIMEOUT;
+        if (GPIO_Read(PIN_EMERGENCY_STOP) == LOW) faults |= FAULT_EMERGENCY_STOP;
+
+        if (faults != FAULT_NONE) {
+            HandleFault(faults);
+        }
+
+        return faults;
+    }
+
+    void HandleFault(uint32_t faults) {
+        // Ramp current to zero
+        for (float i = i_output; i > 0; i -= 10.0) {
+            SetCurrent(i);
+            Delay_ms(100);
+        }
+
+        // Open contactors
+        OpenAllContactors();
+
+        // Log fault
+        LogFault(faults);
+
+        // Notify backend
+        OCPP_SendStatusNotification("Faulted", faults);
+    }
+    ```
+
+  ### Dynamic Current Control
+
+  - **Scenario**: EV battery heating up during charging, reduces max current from 150A to 100A
+
+  - **Response**: Charger must follow EV current request dynamically (update every 100-250 ms)
+
+  - **Slew rate limiting**:
+
+    ```c
+    float SlewRateLimiter(float target, float current, float max_slew_rate_per_sec, float dt) {
+        float delta = target - current;
+        float max_change = max_slew_rate_per_sec * dt;
+
+        if (delta > max_change) {
+            return current + max_change;
+        } else if (delta < -max_change) {
+            return current - max_change;
+        } else {
+            return target;
+        }
+    }
+
+    // In control loop (10 Hz update)
+    float i_target_ev = GetEVCurrentRequest();  // From ISO 15118
+    float i_command = SlewRateLimiter(i_target_ev, i_output, 50.0, 0.1);
+    SetCurrentSetpoint(i_command);
+    ```
+
+  ### Charging Profile and Curve
+
+  - **Typical DC fast charging curve**:
+    - 0-10% SOC: Constant current (CC) at 80% of max (e.g., 120A for 150A max) -- battery cold
+    - 10-80% SOC: Constant current at 100% of max (150A) -- optimal charging
+    - 80-100% SOC: Constant voltage (CV) taper -- current drops from 150A to 10A as battery fills
+
+  - **Charger must follow EV current request** (EV BMS controls curve based on battery temp, SOC, cell balance)
+
+  ## Approach
+
+  1. **Hardware design**: Select microcontroller, ADCs, CAN/PLC interface, I/O for contactors
+  2. **Firmware architecture**: RTOS or bare-metal, separate real-time control from application logic
+  3. **Control loops**: Implement PI controllers for current and voltage, tune gains
+  4. **Communication**: Integrate ISO 15118 or CHAdeMO stack, handle message timeouts
+  5. **Safety**: Implement fault detection, slew rate limiting, watchdog timers
+  6. **Testing**: HIL (Hardware-in-Loop) with DC power supply and electronic load, simulate EV
+
+  ## Deliverables
+
+  - Controller firmware (C/C++) with state machines, control loops, fault handlers
+  - PI/PID tuning parameters (Kp, Ki, Kd values)
+  - Communication protocol stack (ISO 15118 or CHAdeMO)
+  - Test reports (step response, steady-state error, fault injection)
+  - Integration guide (ADC calibration, PWM configuration, CAN setup)
+
+  ## Best Practices
+
+  - **Safety first**: Multiple layers of protection (software limits, hardware limits, fuses)
+  - **Calibration**: ADC offset and gain calibration (use precision voltage/current source)
+  - **Anti-windup**: Clamp integral term in PI controller to prevent overshoot
+  - **Watchdog**: Independent watchdog timer (reset if firmware crashes)
+  - **Logging**: Record all faults, voltage, current, temperature for post-mortem analysis
+
+  ## Integration
+
+  - **Power electronics**: PWM signals to IGBT/MOSFET gate drivers (optoisolated)
+  - **Sensors**: Voltage dividers (1:100 ratio), Hall effect current sensors (+/-1% accuracy)
+  - **Backend**: OCPP for session data, fault reporting, remote diagnostics
+  - **User interface**: Display charging power, SOC, estimated time remaining
+constraints:
+  - "Real-time requirements (1 kHz control loop, <1 ms latency)"
+  - "ADC noise and offset (require filtering and calibration)"
+  - "Communication timeout handling (graceful degradation)"
+  - "Safety certification (UL 2202, functional safety analysis)"
+tools_required:
+  - "RTOS (FreeRTOS, Zephyr) or bare-metal firmware"
+  - "Control loop tuning tools (MATLAB Control System Toolbox)"
+  - "Oscilloscope for PWM and signal debugging"
+  - "HIL simulator (dSPACE, Typhoon HIL) for testing"
+  - "CAN analyzer and PLC sniffer for protocol debugging"
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: expert
+tags:
+  - charging-infrastructure
+  - dc-fast-charging
+  - control-systems
+  - pi-controller
+  - firmware
+  - power-electronics
+  - automotive

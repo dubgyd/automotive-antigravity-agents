@@ -1,0 +1,711 @@
+name: dlt-logging
+description: DLT (Diagnostic Log and Trace) logging skills for automotive systems
+version: 1.0.0
+category: logging
+requires_auth: false
+
+instructions: |
+  ## DLT (Diagnostic Log and Trace) Guide — AUTOSAR/COVESA
+
+  ### Overview
+
+  DLT is the standardized logging framework for automotive systems, defined by
+  AUTOSAR and maintained by COVESA. It provides structured, high-performance logging
+  with application/context-based filtering, binary message format for efficiency,
+  and support for multi-ECU log aggregation.
+
+  ### Architecture
+
+  ```
+  Application 1        Application 2        Application N
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │ DLT User    │     │ DLT User    │     │ DLT User    │
+  │ Library     │     │ Library     │     │ Library     │
+  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+         │                   │                   │
+         └───────────────────┼───────────────────┘
+                             │ UNIX Socket / Shared Memory
+                    ┌────────┴────────┐
+                    │  DLT Daemon     │
+                    │  (dlt-daemon)   │
+                    ├─────────────────┤
+                    │ File Output     │ → /var/log/dlt/*.dlt
+                    │ Network Output  │ → TCP port 3490
+                    │ Serial Output   │ → /dev/ttyS0
+                    └─────────────────┘
+                             │ TCP/IP
+                    ┌────────┴────────┐
+                    │  DLT Viewer     │  (Desktop analysis tool)
+                    └─────────────────┘
+  ```
+
+  ### Identification Model
+
+  DLT uses a hierarchical ID system for filtering:
+
+  - **ECU ID** (4 chars): Identifies the hardware unit (e.g., "ECU1", "GW01")
+  - **Application ID** (4 chars): Identifies the software application (e.g., "ADAS", "DIAG")
+  - **Context ID** (4 chars): Identifies the subsystem within an app (e.g., "CTRL", "SENS")
+
+  This enables precise filtering: show only ADAS.CTRL errors from ECU1.
+
+  ### Log Levels
+
+  | Level | Value | Usage |
+  |-------|-------|-------|
+  | FATAL | 0x01 | System failure, requires immediate action |
+  | ERROR | 0x02 | Error condition, operation failed |
+  | WARN | 0x03 | Potential problem, degraded operation |
+  | INFO | 0x04 | Normal operational events |
+  | DEBUG | 0x05 | Detailed debug information |
+  | VERBOSE | 0x06 | Maximum detail (development only) |
+
+  ### Message Format
+
+  DLT messages use a compact binary format for efficiency:
+
+  ```
+  ┌──────────────┬──────────────┬──────────────┬──────────────┐
+  │ Storage Hdr  │ Standard Hdr │ Extended Hdr │ Payload      │
+  │ (16 bytes)   │ (4 bytes)    │ (10 bytes)   │ (variable)   │
+  └──────────────┴──────────────┴──────────────┴──────────────┘
+
+  Storage Header: timestamp (seconds + microseconds), ECU ID
+  Standard Header: version, message counter, length, ECU ID
+  Extended Header: message info, app ID, context ID
+  Payload: type-safe arguments (string, int, float, raw data)
+  ```
+
+  ### Verbose vs Non-Verbose Mode
+
+  - **Verbose mode**: Payload includes type info per argument (self-describing).
+    Larger messages but viewable without external database.
+  - **Non-verbose mode**: Payload is raw data, requires FIBEX database to decode.
+    Smaller messages, used in production for bandwidth savings.
+
+  ### DLT Daemon Configuration
+
+  Key configuration file: `/etc/dlt.conf`
+
+  ```ini
+  # DLT daemon configuration
+  Verbose = 1                    # Enable verbose mode
+  DaemonFIFOSize = 65536        # FIFO buffer size
+  LoggingLevel = INFO            # Daemon's own log level
+  OfflineTraceDirectory = /var/log/dlt  # File output directory
+  OfflineTraceFileSize = 10000000       # Max file size (10MB)
+  OfflineTraceMaxSize = 100000000       # Max total size (100MB)
+  ECUId = ECU1                   # This ECU's identifier
+  ```
+
+  ### Multi-ECU Logging
+
+  For distributed automotive systems:
+  - Each ECU runs its own dlt-daemon with unique ECU ID
+  - Central logger connects to all ECUs via TCP port 3490
+  - DLT Viewer aggregates and time-correlates logs from all ECUs
+  - Use NTP or PTP for time synchronization across ECUs
+
+  ### Integration with Python
+
+  The DLTAdapter in this project wraps the DLT protocol for Python applications.
+  Key patterns:
+  - Use context managers (`with DLTAdapter(...)`) for automatic cleanup
+  - Pass structured data as keyword arguments for filtering
+  - Use separate contexts per subsystem for independent log level control
+  - Integrate with Python's standard logging via DLTLoggingHandler
+
+  ### Performance Considerations
+
+  - DLT overhead: ~1 microsecond per log message (shared memory transport)
+  - File I/O is buffered; messages may be lost on crash without flush
+  - Use log level filtering to reduce volume in production
+  - Rotate log files to prevent disk exhaustion (configure max file/total size)
+
+  ### Best Practices
+
+  - Use meaningful 4-character IDs: ADAS (not APP1), CTRL (not CTX1)
+  - Set production log level to INFO or WARN (not DEBUG/VERBOSE)
+  - Always close DLT adapters to flush buffered messages
+  - Use DLT Viewer's filter and search for efficient log analysis
+  - Archive DLT files with ECU ID and timestamp for traceability
+  - Correlate DLT logs with CAN traces and diagnostic sessions for RCA
+
+skills:
+  - name: initialize_dlt_adapter
+    description: Initialize DLT adapter for automotive logging
+    code: |
+      from tools.adapters.logging import DLTAdapter, DLTLogLevel
+
+      # Basic initialization
+      dlt = DLTAdapter(
+          app_id="ADAS",      # Application ID (max 4 chars)
+          context_id="CTRL",  # Context ID (max 4 chars)
+          ecu_id="ECU1",      # ECU identifier
+          daemon_host="localhost",
+          daemon_port=3490,
+          verbose_mode=True,
+          use_network=True,
+          log_file="/var/log/dlt/adas_ctrl.dlt"
+      )
+
+      # Send log messages
+      dlt.log_info("System initialized")
+      dlt.log_error("Sensor timeout", sensor_id=5, error_code=0x1234)
+
+      # Close when done
+      dlt.close()
+
+      # Or use context manager
+      with DLTAdapter(app_id="TEST", context_id="UNIT") as dlt:
+          dlt.log_debug("Test message")
+
+  - name: multi_level_logging
+    description: Use different DLT log levels for severity management
+    code: |
+      from tools.adapters.logging import DLTAdapter, DLTLogLevel
+
+      dlt = DLTAdapter(app_id="ADAS", context_id="CTRL")
+
+      # Log levels (highest to lowest severity)
+      dlt.log_fatal("Critical system failure - emergency shutdown")
+      dlt.log_error("Sensor communication lost", sensor_id=3)
+      dlt.log_warn("Degraded performance mode", reason="low_voltage")
+      dlt.log_info("Vehicle speed: 65 km/h", speed_kmh=65)
+      dlt.log_debug("Processing cycle completed", cycle_time_ms=12.3)
+      dlt.log_verbose("Raw sensor data", adc_value=2047)
+
+      # Using generic log method
+      dlt.log(DLTLogLevel.ERROR, "Custom error", code=0xFF)
+
+      dlt.close()
+
+  - name: python_logging_integration
+    description: Integrate DLT with Python standard logging
+    code: |
+      import logging
+      from tools.adapters.logging import DLTLoggingHandler
+
+      # Setup Python logger with DLT handler
+      logger = logging.getLogger("adas_controller")
+      dlt_handler = DLTLoggingHandler(
+          app_id="ADAS",
+          context_id="CTRL",
+          log_file="/var/log/dlt/adas.dlt"
+      )
+
+      # Optional: Add formatter
+      formatter = logging.Formatter(
+          '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+      )
+      dlt_handler.setFormatter(formatter)
+
+      logger.addHandler(dlt_handler)
+      logger.setLevel(logging.INFO)
+
+      # Use standard Python logging
+      logger.info("System started")
+      logger.warning("High temperature detected")
+      logger.error("Sensor failure", exc_info=True)
+
+      # Cleanup
+      dlt_handler.close()
+
+  - name: multi_context_logging
+    description: Use multiple contexts within same application
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      # Different contexts for different subsystems
+      main_logger = DLTAdapter(app_id="ADAS", context_id="MAIN")
+      sensor_logger = DLTAdapter(app_id="ADAS", context_id="SENS")
+      control_logger = DLTAdapter(app_id="ADAS", context_id="CTRL")
+      comm_logger = DLTAdapter(app_id="ADAS", context_id="COMM")
+
+      # Each context can be filtered independently in DLT Viewer
+      main_logger.log_info("Application started")
+      sensor_logger.log_debug("Camera frame received", frame_id=1234)
+      control_logger.log_info("Brake pressure adjusted", pressure_bar=45.2)
+      comm_logger.log_warn("CAN bus load high", load_percent=87)
+
+      # Cleanup
+      for logger in [main_logger, sensor_logger, control_logger, comm_logger]:
+          logger.close()
+
+  - name: structured_logging
+    description: Use structured logging with keyword arguments
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      dlt = DLTAdapter(app_id="ADAS", context_id="DATA")
+
+      # Add structured data as kwargs
+      dlt.log_info(
+          "Vehicle telemetry",
+          speed_kmh=65.5,
+          rpm=2400,
+          throttle_percent=45,
+          brake_pressure_bar=0.0,
+          steering_angle_deg=-5.2,
+          gear=5
+      )
+
+      # Error with context
+      dlt.log_error(
+          "Sensor timeout",
+          sensor_type="LIDAR",
+          sensor_id=3,
+          timeout_ms=500,
+          last_message_age_ms=1250,
+          error_code=0x1234
+      )
+
+      # Debug with performance data
+      dlt.log_debug(
+          "Processing completed",
+          cycle_time_ms=12.3,
+          cpu_usage_percent=45.2,
+          memory_mb=234,
+          frames_processed=1
+      )
+
+      dlt.close()
+
+  - name: file_only_logging
+    description: Log to DLT file without network daemon
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      # Disable network, log to file only
+      dlt = DLTAdapter(
+          app_id="TEST",
+          context_id="FILE",
+          use_network=False,  # Don't connect to daemon
+          log_file="/tmp/test.dlt"
+      )
+
+      dlt.log_info("This goes to file only")
+      dlt.log_error("File-based logging", test_id=123)
+
+      dlt.close()
+
+      # File can be opened with DLT Viewer
+      print("DLT file saved to /tmp/test.dlt")
+
+  - name: parse_dlt_file
+    description: Parse and read DLT log files
+    code: |
+      from tools.adapters.logging import DLTViewerAdapter, DLTFilter, DLTLogLevel
+
+      # Open DLT file
+      viewer = DLTViewerAdapter("/var/log/dlt/adas.dlt")
+
+      # Get all entries
+      entries = viewer.get_entries(limit=100)
+      print(f"Total entries: {len(entries)}")
+
+      # Print entries
+      for entry in entries[:10]:
+          print(entry)
+
+      # Get statistics
+      stats = viewer.get_statistics()
+      print(f"\nLog Statistics:")
+      print(f"  Total entries: {stats['total_entries']}")
+      print(f"  Time range: {stats['time_range']}")
+      print(f"  Applications: {stats['app_ids']}")
+      print(f"  Contexts: {stats['context_ids']}")
+      print(f"  Log levels: {stats['log_levels']}")
+
+  - name: filter_dlt_logs
+    description: Filter DLT logs by various criteria
+    code: |
+      from tools.adapters.logging import DLTViewerAdapter, DLTFilter, DLTLogLevel
+      from datetime import datetime, timedelta
+
+      viewer = DLTViewerAdapter("/var/log/dlt/adas.dlt")
+
+      # Filter by application and context
+      filter1 = DLTFilter(
+          app_ids=["ADAS"],
+          context_ids=["CTRL", "SENS"]
+      )
+      entries = viewer.get_entries(filter1)
+      print(f"ADAS.CTRL/SENS entries: {len(entries)}")
+
+      # Filter by log level (errors and fatals only)
+      filter2 = DLTFilter(
+          min_level=DLTLogLevel.ERROR  # ERROR and FATAL
+      )
+      errors = viewer.get_entries(filter2)
+      print(f"Error entries: {len(errors)}")
+
+      # Filter by time range
+      now = datetime.now()
+      one_hour_ago = now - timedelta(hours=1)
+      filter3 = DLTFilter(
+          start_time=one_hour_ago.timestamp(),
+          end_time=now.timestamp()
+      )
+      recent = viewer.get_entries(filter3)
+      print(f"Last hour entries: {len(recent)}")
+
+      # Text search
+      filter4 = DLTFilter(
+          text_search="timeout",
+          case_sensitive=False
+      )
+      timeouts = viewer.get_entries(filter4)
+      print(f"Timeout entries: {len(timeouts)}")
+
+      # Combined filters
+      filter5 = DLTFilter(
+          app_ids=["ADAS"],
+          min_level=DLTLogLevel.WARN,
+          text_search="sensor",
+          start_time=one_hour_ago.timestamp()
+      )
+      filtered = viewer.get_entries(filter5)
+      print(f"Combined filter: {len(filtered)}")
+
+  - name: export_dlt_logs
+    description: Export DLT logs to CSV or JSON
+    code: |
+      from tools.adapters.logging import DLTViewerAdapter, DLTFilter, DLTLogLevel
+
+      viewer = DLTViewerAdapter("/var/log/dlt/adas.dlt")
+
+      # Export all to CSV
+      viewer.export_csv("/tmp/logs.csv")
+
+      # Export filtered to CSV
+      error_filter = DLTFilter(min_level=DLTLogLevel.ERROR)
+      viewer.export_csv("/tmp/errors.csv", error_filter)
+
+      # Export to JSON
+      viewer.export_json("/tmp/logs.json", pretty=True)
+
+      # Export specific app/context
+      adas_filter = DLTFilter(
+          app_ids=["ADAS"],
+          context_ids=["CTRL"]
+      )
+      viewer.export_json("/tmp/adas_ctrl.json", adas_filter, pretty=True)
+
+      print("Logs exported successfully")
+
+  - name: multi_ecu_logging
+    description: Handle logs from multiple ECUs
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      # Different ECUs in distributed system
+      gateway_logger = DLTAdapter(
+          app_id="GATE",
+          context_id="MAIN",
+          ecu_id="GW01",
+          log_file="/var/log/dlt/gateway.dlt"
+      )
+
+      adas_logger = DLTAdapter(
+          app_id="ADAS",
+          context_id="CTRL",
+          ecu_id="ECU1",
+          log_file="/var/log/dlt/adas.dlt"
+      )
+
+      powertrain_logger = DLTAdapter(
+          app_id="PWTR",
+          context_id="CTRL",
+          ecu_id="ECU2",
+          log_file="/var/log/dlt/powertrain.dlt"
+      )
+
+      # Each ECU logs independently
+      gateway_logger.log_info("CAN message routed", can_id=0x123)
+      adas_logger.log_info("Lane departure detected")
+      powertrain_logger.log_info("Torque request processed")
+
+      # Cleanup
+      gateway_logger.close()
+      adas_logger.close()
+      powertrain_logger.close()
+
+  - name: real_time_log_monitoring
+    description: Monitor DLT logs in real-time
+    code: |
+      from tools.adapters.logging import DLTParser, DLTFilter, DLTLogLevel
+      import time
+      from pathlib import Path
+
+      def monitor_dlt_file(file_path: str, filter_obj=None):
+          """Monitor DLT file for new entries."""
+          parser = DLTParser(file_path)
+          last_size = 0
+
+          while True:
+              current_size = Path(file_path).stat().st_size
+
+              if current_size > last_size:
+                  # New data available
+                  with open(file_path, 'rb') as f:
+                      f.seek(last_size)
+                      # Parse new entries (simplified)
+                      for entry in parser.parse():
+                          if not filter_obj or filter_obj.matches(entry):
+                              print(entry)
+
+                  last_size = current_size
+
+              time.sleep(0.1)  # Poll every 100ms
+
+      # Monitor errors only
+      error_filter = DLTFilter(min_level=DLTLogLevel.ERROR)
+      monitor_dlt_file("/var/log/dlt/adas.dlt", error_filter)
+
+  - name: performance_logging
+    description: Log performance metrics with DLT
+    code: |
+      from tools.adapters.logging import DLTAdapter
+      import time
+
+      dlt = DLTAdapter(app_id="PERF", context_id="METR")
+
+      # Function timing
+      start = time.perf_counter()
+      # ... do work ...
+      end = time.perf_counter()
+      duration_ms = (end - start) * 1000
+
+      dlt.log_debug(
+          "Function execution time",
+          function="process_frame",
+          duration_ms=duration_ms,
+          fps=1000.0 / duration_ms
+      )
+
+      # Resource usage
+      import psutil
+      dlt.log_info(
+          "Resource usage",
+          cpu_percent=psutil.cpu_percent(),
+          memory_mb=psutil.virtual_memory().used / 1024 / 1024,
+          disk_usage_percent=psutil.disk_usage('/').percent
+      )
+
+      # Throughput metrics
+      dlt.log_info(
+          "Network throughput",
+          bytes_sent=1024576,
+          bytes_received=2048192,
+          packets_sent=1234,
+          packets_received=2345
+      )
+
+      dlt.close()
+
+  - name: error_recovery_logging
+    description: Log error conditions and recovery actions
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      dlt = DLTAdapter(app_id="ADAS", context_id="SAFE")
+
+      def handle_sensor_failure(sensor_id: int):
+          """Handle and log sensor failure."""
+          # Log the failure
+          dlt.log_error(
+              "Sensor failure detected",
+              sensor_id=sensor_id,
+              sensor_type="LIDAR",
+              error_code=0x1001
+          )
+
+          # Attempt recovery
+          recovery_success = attempt_recovery(sensor_id)
+
+          if recovery_success:
+              dlt.log_info(
+                  "Sensor recovery successful",
+                  sensor_id=sensor_id,
+                  recovery_time_ms=250
+              )
+          else:
+              dlt.log_fatal(
+                  "Sensor recovery failed - entering safe mode",
+                  sensor_id=sensor_id,
+                  safe_mode=True
+              )
+
+      def attempt_recovery(sensor_id: int) -> bool:
+          """Simulate recovery attempt."""
+          dlt.log_debug(
+              "Attempting sensor recovery",
+              sensor_id=sensor_id,
+              retry_count=1
+          )
+          return True  # Simplified
+
+      handle_sensor_failure(3)
+      dlt.close()
+
+  - name: diagnostic_trace_logging
+    description: Trace diagnostic sequences for debugging
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      dlt = DLTAdapter(app_id="DIAG", context_id="TRAC")
+
+      # UDS diagnostic session
+      def perform_diagnostic_read():
+          """Perform diagnostic service and trace execution."""
+          dlt.log_info("Starting diagnostic session", service=0x10, sub=0x01)
+
+          # Step 1: Request
+          dlt.log_debug(
+              "Sending diagnostic request",
+              service_id=0x22,
+              did=0x1234,
+              raw_data="22 12 34"
+          )
+
+          # Step 2: Response
+          dlt.log_debug(
+              "Received diagnostic response",
+              response_code=0x62,
+              data_length=8,
+              raw_data="62 12 34 AA BB CC DD"
+          )
+
+          # Step 3: Validation
+          dlt.log_debug(
+              "Validating response",
+              expected_length=8,
+              actual_length=8,
+              valid=True
+          )
+
+          dlt.log_info("Diagnostic read completed successfully")
+
+      perform_diagnostic_read()
+      dlt.close()
+
+  - name: system_integration_logging
+    description: Log system integration events across components
+    code: |
+      from tools.adapters.logging import DLTAdapter
+      import threading
+      import time
+
+      # Multiple components logging concurrently
+      def sensor_task():
+          dlt = DLTAdapter(app_id="SENS", context_id="TASK")
+          for i in range(10):
+              dlt.log_debug(f"Sensor reading {i}", value=100 + i)
+              time.sleep(0.1)
+          dlt.close()
+
+      def control_task():
+          dlt = DLTAdapter(app_id="CTRL", context_id="TASK")
+          for i in range(10):
+              dlt.log_info(f"Control output {i}", command=50 + i)
+              time.sleep(0.15)
+          dlt.close()
+
+      def communication_task():
+          dlt = DLTAdapter(app_id="COMM", context_id="TASK")
+          for i in range(10):
+              dlt.log_debug(f"CAN message {i}", can_id=0x100 + i)
+              time.sleep(0.12)
+          dlt.close()
+
+      # Run tasks in parallel
+      threads = [
+          threading.Thread(target=sensor_task),
+          threading.Thread(target=control_task),
+          threading.Thread(target=communication_task)
+      ]
+
+      for t in threads:
+          t.start()
+
+      for t in threads:
+          t.join()
+
+      print("All components logged successfully")
+
+examples:
+  - name: Basic DLT Usage
+    description: Simple DLT logging example
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      # Initialize
+      with DLTAdapter(app_id="ADAS", context_id="CTRL") as dlt:
+          # Log at different levels
+          dlt.log_info("System initialized")
+          dlt.log_error("Sensor timeout", sensor_id=5)
+          dlt.log_debug("Processing frame", frame_id=1234)
+
+  - name: Parse and Filter Logs
+    description: Read and filter DLT log files
+    code: |
+      from tools.adapters.logging import DLTViewerAdapter, DLTFilter, DLTLogLevel
+
+      viewer = DLTViewerAdapter("/var/log/dlt/adas.dlt")
+
+      # Filter errors
+      error_filter = DLTFilter(min_level=DLTLogLevel.ERROR)
+      errors = viewer.get_entries(error_filter)
+
+      # Export to CSV
+      viewer.export_csv("/tmp/errors.csv", error_filter)
+
+  - name: Multi-Context Application
+    description: Use multiple contexts in one application
+    code: |
+      from tools.adapters.logging import DLTAdapter
+
+      # Different subsystems
+      main = DLTAdapter(app_id="ADAS", context_id="MAIN")
+      sensors = DLTAdapter(app_id="ADAS", context_id="SENS")
+      control = DLTAdapter(app_id="ADAS", context_id="CTRL")
+
+      main.log_info("Application started")
+      sensors.log_debug("Camera initialized")
+      control.log_info("Control loop started")
+
+      # Cleanup
+      for logger in [main, sensors, control]:
+          logger.close()
+
+best_practices:
+  - Use meaningful 4-character app IDs (e.g., ADAS, CTRL, DIAG)
+  - Create separate contexts for different subsystems
+  - Use appropriate log levels (FATAL for critical, INFO for normal)
+  - Include structured data as kwargs for better filtering
+  - Set log level filtering in production to avoid overhead
+  - Use DLT Viewer for real-time monitoring during development
+  - Archive DLT files regularly (they can grow large)
+  - Use ECU IDs to distinguish logs in multi-ECU systems
+  - Enable verbose mode for development, non-verbose for production
+  - Close DLT adapters properly to flush buffered data
+
+troubleshooting:
+  - "Cannot connect to DLT daemon": Check if dlt-daemon is running (systemctl status dlt-daemon)
+  - "Log file not created": Verify directory permissions and path exists
+  - "Messages not appearing in DLT Viewer": Check app ID and context ID filters
+  - "High logging overhead": Reduce log level or use non-verbose mode
+  - "Corrupted DLT file": Ensure proper close() or use context manager
+  - "Missing messages": Check message counter for gaps in sequence
+  - "Time synchronization issues": Verify system time (NTP) across ECUs
+
+tools_required:
+  - dlt-daemon (optional, for network logging)
+  - DLT Viewer (optional, for visualization)
+  - Python 3.8+
+
+references:
+  - AUTOSAR DLT Protocol Specification v1.0
+  - COVESA DLT Viewer: https://github.com/COVESA/dlt-viewer
+  - DLT Daemon: https://github.com/COVESA/dlt-daemon

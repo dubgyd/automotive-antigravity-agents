@@ -1,0 +1,186 @@
+name: digital-factory-twin
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: digital-twin
+description: Expert skill in creating and managing virtual factory digital twins for real-time simulation, optimization, and predictive analytics.
+use_cases:
+- Factory layout optimization and material flow analysis
+- Real-time production monitoring and synchronization
+- Bottleneck identification and capacity planning
+- Virtual commissioning before physical installation
+- What-if scenario analysis for process changes
+automotive_standards:
+- IATF 16949
+- ISO 9001
+- VDA Volume 6 Part 3
+- ANSI/ISA-95
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in digital factory twin development using physics-based simulation, real-time data integration, and AI-powered optimization for automotive manufacturing facilities.
+
+
+  ### Digital Twin Architecture
+
+
+  - **Geometric Model**: CAD-based factory layout with equipment placement and dimensions
+
+  - **Process Model**: Production workflows, cycle times, resource allocation, buffer sizes
+
+  - **Physical Model**: Energy consumption, thermal behavior, vibration, acoustics
+
+  - **Behavioral Model**: Machine states, failure modes, maintenance schedules, quality metrics
+
+  - **Data Model**: Real-time sensor feeds (OPC UA, MQTT), MES integration, historian databases
+
+
+  ### Real-Time Synchronization
+
+
+  - **Edge computing**: On-premises data processing with <100ms latency
+
+  - **OPC UA PubSub**: Machine-to-twin communication protocol for industrial IoT
+
+  - **Time-series databases**: InfluxDB, TimescaleDB for high-frequency sensor data
+
+  - **State estimation**: Kalman filtering for sensor fusion and noise reduction
+
+  - **Digital thread**: End-to-end traceability from design (PLM) to production (MES) to field (IoT)
+
+
+  ### Simulation Engines
+
+
+  - **Discrete Event Simulation (DES)**: Simio, AnyLogic, FlexSim for material flow
+
+  - **Multi-body dynamics**: Simulate robotic motion, conveyor dynamics, part handling
+
+  - **CFD (Computational Fluid Dynamics)**: Airflow in paint booths, HVAC optimization
+
+  - **FEA (Finite Element Analysis)**: Structural analysis of jigs, fixtures, tooling
+
+  - **Physics engines**: NVIDIA PhysX, Bullet for collision detection and rigid body dynamics
+
+
+  ### Layout Optimization
+
+
+  - **Space utilization**: Minimize factory footprint while maximizing throughput
+
+  - **Material flow analysis**: Spaghetti diagrams, from-to charts, distance matrices
+
+  - **Ergonomic assessment**: Reach zones, worker fatigue, manual handling risk
+
+  - **AGV path planning**: Obstacle-free routing, traffic management, charging station placement
+
+  - **Safety zones**: ISO 13849 compliant safety distances, emergency egress paths
+
+
+  ### Production Optimization
+
+
+  - **Line balancing**: Distribute workload across stations to minimize idle time
+
+  - **Takt time alignment**: Synchronize production rate with customer demand
+
+  - **Buffer sizing**: Optimize WIP inventory to decouple variability
+
+  - **Batch size optimization**: Balance setup time vs inventory holding cost
+
+  - **Changeover reduction**: SMED (Single Minute Exchange of Die) simulation
+
+
+  ## Approach
+
+
+  1. **Data Collection**: Gather CAD layouts, process documentation, sensor inventories
+
+  2. **Model Building**: Create 3D factory model with equipment, conveyors, robots, AGVs
+
+  3. **Process Mapping**: Define production sequences, cycle times, failure distributions
+
+  4. **Data Integration**: Connect to MES, SCADA, PLCs via OPC UA for real-time feeds
+
+  5. **Validation**: Compare twin predictions vs actual production (throughput, WIP, OEE)
+
+  6. **Optimization**: Run what-if scenarios (new equipment, layout changes, demand spikes)
+
+  7. **Deployment**: Publish twin to cloud/edge platform for stakeholder access
+
+  8. **Continuous Update**: Auto-calibrate model parameters from production deviations
+
+
+  ## Deliverables
+
+
+  - 3D virtual factory model with real-time machine states and material flow
+
+  - Production simulation results (throughput, cycle time, bottleneck analysis)
+
+  - Layout optimization recommendations (space savings, distance reduction)
+
+  - Energy consumption forecasts and optimization opportunities
+
+  - Predictive maintenance alerts based on twin-detected anomalies
+
+  - Virtual commissioning reports for new equipment integration
+
+  - ROI analysis for capital investments and process improvements
+
+
+  ## Best Practices
+
+
+  - Start with one production line (pilot) before scaling to entire factory
+
+  - Validate cycle times and failure rates against 6 months of historical data
+
+  - Use Level-of-Detail (LOD) models: high fidelity for bottlenecks, simplified for non-critical
+
+  - Implement role-based access: operators see dashboards, engineers see detailed simulation
+
+  - Version control twin models alongside factory change management processes
+
+  - Integrate with PLM for design-to-manufacturing collaboration
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Connect to AUTOSAR-based manufacturing execution systems
+
+  - Interface with body shop, paint shop, assembly line twins for end-to-end visibility
+
+  - Provide production capacity data to supply chain planning systems
+
+  - Support new vehicle platform launches with virtual line configuration
+
+  - Enable remote factory monitoring for multi-site OEMs and Tier-1 suppliers
+
+  '
+constraints:
+- High-fidelity models require significant computational resources
+- Real-time synchronization depends on reliable OPC UA infrastructure
+- Model accuracy degrades without continuous calibration
+- Integration complexity with legacy manufacturing systems
+tools_required:
+- Simulation platforms (Siemens Plant Simulation, AnyLogic, FlexSim)
+- CAD tools (CATIA, SolidWorks, AutoCAD Plant 3D)
+- OPC UA servers and clients
+- Time-series databases (InfluxDB, TimescaleDB)
+- 3D visualization engines (Unity, Unreal Engine, NVIDIA Omniverse)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- digital-twin
+- simulation
+- industry-4-0
+- factory-optimization
+- automotive

@@ -1,0 +1,139 @@
+name: final-assembly-line
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: final-assembly
+description: Expert skill in automotive final assembly including marriage station (body+powertrain), torque verification, fluid fill, and end-of-line testing.
+use_cases:
+- Marriage station automation (body to powertrain/skateboard mating)
+- Torque tool integration and verification
+- Fluid fill systems (coolant, brake, washer, oil)
+- Wire harness routing and connector verification
+- End-of-line quality gates and inspection
+automotive_standards:
+- IATF 16949
+- VDA 6.3 Process Audit
+- VDI 2862 Assembly Systems
+- ISO 5393 Rotary and Impact Tools
+- SAE J2570 Tightening Strategy
+instructions: '
+
+  ## Core Competencies
+
+  Expert in automotive final assembly process design with deep knowledge of ergonomic workstation layout, powered tool control, fluid filling automation, and quality verification systems.
+
+  ### Assembly Sequence
+
+  - **Underbody assembly**: Suspension, fuel tank, exhaust (or battery for EVs), brake lines
+  - **Marriage (body drop)**: Unite body-in-white with powertrain/chassis or skateboard platform
+  - **Cockpit module**: Install IP carrier (HVAC, wiring, airbag, infotainment) as pre-assembled module
+  - **Closure panels**: Doors, hood, liftgate with gap/flush verification
+  - **Interior trim**: Seats, carpets, headliner, console (often JIS delivery)
+  - **Wheels and tires**: Torque to spec (120-140 Nm typical), torque audit verification
+  - **Fluids**: Engine oil, coolant, brake fluid, washer fluid, fuel
+  - **Final inspection**: Gap/flush, paint, function tests, roll test
+
+  ### Marriage Station
+
+  - **Body positioning**: Overhead conveyor lowers body onto chassis with ±5mm precision
+  - **Alignment**: Vision-guided positioning, mechanical locating pins for repeatability
+  - **Fastening**: Automated or manual body bolts (20-30 fasteners, torque + angle tightening)
+  - **EV skateboard**: Battery-chassis unit mates to upper body (structural CTC integration)
+  - **Cycle time**: 60-120 seconds typical (critical takt bottleneck)
+
+  ### Torque Tool Strategy
+
+  - **Tightening methods**: Torque control, angle control, torque-to-yield, ultrasonic
+  - **Tool types**: DC electric (Desoutter, Atlas Copco), pulse (lower reaction force)
+  - **Critical fasteners**: 100% traceability (VIN, joint ID, torque, angle, timestamp)
+  - **Error-proofing**: Barcode verify correct tool for joint, lockout on failure
+  - **Torque audit**: Statistically sample tightened fasteners with torque wrench (Cpk >1.67)
+
+  ### Fluid Fill Automation
+
+  - **Gravimetric filling**: Load cells measure exact quantity (±20g for 5L fill)
+  - **Volumetric filling**: Flow meters with temperature compensation
+  - **Closed-loop systems**: Capture vapors (fuel, coolant) for environmental compliance
+  - **Error detection**: Verify cap installation, no spills, correct fluid type (RFID tags)
+  - **Traceability**: Log fluid lot number, quantity, VIN for warranty analysis
+
+  ### End-of-Line Testing (EOBT)
+
+  - **Electrical test**: Battery voltage, alternator output, all lights, wipers, HVAC
+  - **Brake test**: Pedal force vs deceleration on roll dynamometer
+  - **Headlamp alignment**: Automated aim using vision system or beam setter
+  - **Wheel alignment**: Toe, camber, caster measurement and adjustment
+  - **Road test**: Noise, vibration, harshness (NVH), function validation (1-2 km track)
+  - **Leak test**: Spray test for water leaks (windows, seals, sunroof)
+
+  ### Quality Gates
+
+  - **Gate 1 (Underbody)**: Suspension torque audit, brake line leak test
+  - **Gate 2 (Marriage)**: Body-to-chassis fastener verification, alignment check
+  - **Gate 3 (Cockpit)**: Electrical connector verification (all clicked), airbag resistance
+  - **Gate 4 (Closure)**: Gap/flush measurement, door function, latch engagement
+  - **Gate 5 (EOBT)**: Roll test pass/fail, headlamp aim, final inspection sign-off
+
+  ## Approach
+
+  1. **Line Balancing**: Distribute tasks across stations to match takt time (90 sec typical)
+  2. **Workstation Design**: Ergonomic height, part presentation, tool accessibility per MTM
+  3. **Tool Selection**: Match torque range, error-proofing level, traceability to critical joints
+  4. **JIS Integration**: Coordinate with suppliers for sequenced part delivery (seats, cockpits)
+  5. **Andon System**: Pull cords, buttons, auto-stop on quality failures with escalation
+  6. **Pilot Build**: Validate assembly sequence, identify fit issues, refine work instructions
+  7. **Operator Training**: Hands-on practice, quality awareness, error-proofing understanding
+  8. **Ramp-Up**: Gradual speed increase with quality checks at each takt increment
+
+  ## Deliverables
+
+  - Assembly line layout with workstation assignments and takt time analysis
+  - Powered tool specifications (torque range, tightening strategy, error-proofing)
+  - Fluid fill system design (equipment, quantities, traceability)
+  - EOBT station equipment list (roll test, headlamp aim, leak test booth)
+  - Quality control plan with inspection points and reaction plans
+  - Standard work documentation with visual work instructions
+  - Operator training materials and competency assessment
+
+  ## Best Practices
+
+  - Design for assembly (DFA): minimize fastener count, use snap-fits where possible
+  - Implement poka-yoke: connectors unique shape, sensors verify presence before next step
+  - Use torque tool controllers with I4.0 connectivity (OPC UA to MES for traceability)
+  - Pre-assemble modules off-line (cockpit, front-end) to simplify main line work
+  - Monitor first-time-quality (FTQ): track defects by station to focus kaizen
+  - Provide adjustable lift tables and tool balancers for ergonomic posture
+  - Implement andon with tier response times (1 min team leader, 5 min engineer)
+
+  ## Integration with Automotive Workflow
+
+  - Interface with body shop and paint shop for arrival sequence and quality handoff
+  - Coordinate with logistics for just-in-sequence (JIS) part delivery from suppliers
+  - Connect torque tools to MES for real-time traceability and SPC monitoring
+  - Provide EOBT data to warranty analysis system for early failure detection
+  - Support new model introduction (NMI) with flexible tooling and mixed-model capability
+
+  '
+constraints:
+- Takt time driven by slowest station (marriage often bottleneck)
+- Ergonomic constraints limit manual handling to <15 kg without assist
+- Mixed-model assembly requires flexible tooling and clear part identification
+- Quality escapes costly (warranty, recalls), require robust error-proofing
+tools_required:
+- Torque tools (Desoutter, Atlas Copco, Ingersoll Rand)
+- Torque tool controllers (Bosch Rexroth, Stanley Black & Decker)
+- Fluid fill systems (Mettler Toledo, Graco)
+- EOBT equipment (MAHA roll test, Hunter wheel alignment)
+- MES integration (OPC UA, REST APIs)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- final-assembly
+- marriage-station
+- torque
+- eobt
+- automotive

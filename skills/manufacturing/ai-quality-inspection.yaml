@@ -1,0 +1,188 @@
+name: ai-quality-inspection
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+description: "Computer vision defect detection using deep learning for automotive quality control"
+use_cases:
+  - "Deploy surface defect detection on painted body panels using deep learning"
+  - "Implement weld quality assessment from resistance welding process signatures"
+  - "Build automated optical inspection for PCB solder joints on automotive ECUs"
+  - "Create anomaly detection models for rare defects without labeled training data"
+  - "Integrate AI inspection results with MES for automated disposition decisions"
+automotive_standards:
+  - "IATF 16949 - Inspection and Test Requirements"
+  - "VDA 6.5 - Product Audit"
+  - "AIAG MSA - Measurement Systems Analysis for AI Systems"
+  - "ISO 2859 - Sampling Procedures Baseline for AI Comparison"
+  - "IPC-A-610 - Acceptability of Electronic Assemblies"
+instructions: |
+  # AI Quality Inspection Systems
+
+  ## Overview
+  AI quality inspection replaces or augments human visual inspection with deep learning
+  models that detect defects with higher sensitivity, greater consistency, and at
+  production line speed. This addresses the fundamental limitations of human inspectors
+  including fatigue, subjectivity, and inability to inspect 100 percent of production
+  within takt time. The skill covers the complete lifecycle from data collection through
+  model training, edge deployment, MES integration, and continuous performance monitoring.
+
+  ## Key Concepts
+
+  ### AI versus Traditional Machine Vision
+  Traditional vision uses rule-based programming with edges, patterns, and templates
+  that are brittle to variation. Deep learning vision learns from examples, handles
+  variation robustly, and can detect novel defect types. AI systems achieve 98-99.5
+  percent accuracy in production versus 95-98 percent for traditional approaches,
+  with lower setup time and reduced lighting dependency.
+
+  ### Deep Learning Model Types
+  - Classification: Pass or fail per image, simplest approach requiring balanced dataset
+  - Object Detection: Locate and classify defects with bounding boxes using YOLO or SSD
+  - Semantic Segmentation: Pixel-level defect delineation using U-Net or DeepLab
+  - Anomaly Detection: Detect deviations from normal without labeled defects
+  - Instance Segmentation: Individual defect instances with pixel masks using Mask R-CNN
+
+  ### Defect Types by Process
+  - Paint shop: Orange peel, runs, sags, craters, dirt inclusions, color mismatch
+  - Body shop: Weld spatter, incomplete welds, surface dents, panel gaps
+  - Casting: Porosity, shrinkage, cold shuts, inclusions, cracks
+  - Assembly: Missing parts, wrong parts, incorrect torque, loose connectors
+
+  ## Implementation Guide
+
+  ### Step 1 - Data Collection Strategy
+  Plan systematic image collection covering all production variation.
+
+  ```python
+  class InspectionDataCollector:
+      def collection_plan(self, defect_types: list) -> dict:
+          """Plan data collection for training AI inspection model."""
+          plan = {
+              "good_samples": {
+                  "count": 3000,
+                  "variation": "all shifts, lighting, material batches",
+                  "purpose": "define normal distribution",
+              },
+              "defect_samples": {},
+          }
+          for defect in defect_types:
+              plan["defect_samples"][defect] = {
+                  "target_count": 200,
+                  "method": "production capture + intentional creation",
+                  "annotation": "bounding_box_and_severity_label",
+              }
+          plan["synthetic_augmentation"] = {
+              "method": "CutPaste_or_Omniverse_Replicator",
+              "target_images": 1000,
+              "purpose": "supplement rare defect classes",
+          }
+          return plan
+  ```
+
+  ### Step 2 - Model Training Pipeline
+  Train defect detection with automotive-specific augmentation and validation.
+
+  ```python
+  class DefectDetectionTrainer:
+      def __init__(self, model_type: str = "yolov8"):
+          self.model_type = model_type
+
+      def train(self, dataset_path: str) -> dict:
+          """Train defect detection model for production deployment."""
+          config = {
+              "architecture": self.model_type,
+              "input_size": [640, 640],
+              "epochs": 200,
+              "augmentation": {
+                  "rotation": 15,
+                  "brightness": 0.3,
+                  "gaussian_noise": 0.01,
+                  "mosaic": True,
+              },
+              "early_stopping_patience": 20,
+          }
+          metrics = self._run_training(config, dataset_path)
+          return {
+              "mAP_50": metrics["mAP_50"],
+              "precision": metrics["precision"],
+              "recall": metrics["recall"],
+              "false_positive_rate": metrics["fpr"],
+              "inference_time_ms": metrics["latency"],
+          }
+
+      def validate_for_production(self, model, test_set) -> dict:
+          """Validate model meets automotive production requirements."""
+          results = model.evaluate(test_set)
+          return {
+              "detection_rate_target": 0.995,
+              "false_call_rate_target": 0.02,
+              "achieved_detection_rate": results["recall"],
+              "achieved_false_call_rate": results["fpr"],
+              "production_ready": results["recall"] >= 0.995,
+          }
+  ```
+
+  ### Step 3 - MES Integration and Disposition
+  Connect AI inspection results to manufacturing execution system for routing.
+
+  ```python
+  class AIDispositionEngine:
+      def __init__(self, disposition_rules: dict):
+          self.rules = disposition_rules
+
+      def process_result(self, result: dict) -> dict:
+          """Make disposition decision based on AI inspection result."""
+          defects = result.get("defects", [])
+          if not defects:
+              return {"disposition": "PASS", "route": "next_station"}
+          max_severity = max(d["severity"] for d in defects)
+          if max_severity >= self.rules["quarantine_severity"]:
+              return {
+                  "disposition": "QUARANTINE",
+                  "route": "quality_hold_area",
+                  "requires": "human_review",
+              }
+          elif max_severity >= self.rules["rework_severity"]:
+              return {"disposition": "REWORK", "route": "rework_station"}
+          return {"disposition": "PASS", "note": "minor_cosmetic_within_spec"}
+  ```
+
+  ### Step 4 - Staged Rollout Strategy
+  Deploy AI inspection through progressive autonomy phases:
+
+  ```
+  Phase 1 (Month 1-3):  Shadow mode with AI running alongside human inspector
+  Phase 2 (Month 4-6):  Assist mode where AI flags defects for human decision
+  Phase 3 (Month 7-12): Autonomous mode with AI disposition and human audit
+  Phase 4 (Month 12+):  Full auto with statistical human audit sampling
+  ```
+
+  ### Step 5 - Continuous Model Monitoring
+  Track model performance by comparing current false positive and false negative
+  rates against baseline metrics. Trigger retraining when either rate exceeds 1.5x
+  the baseline value. Monitor false negative rate as the primary safety indicator
+  since missed defects reach customers.
+
+  ## Best Practices
+  - Collect training data from actual production environments, not lab conditions
+  - Balance defect classes using oversampling, synthetic data, or focal loss functions
+  - Validate AI as measurement system using AIAG MSA methodology with Gage R&R
+  - Always keep human review in the loop for quarantine decisions during initial rollout
+  - Log every inspection image with result for audit trail and future retraining
+  - Monitor false negative rate obsessively as missed defects reach customers
+  - Deploy new model versions in shadow mode before replacing the production model
+  - Retrain quarterly or whenever new defect types emerge from field complaints
+
+  ## Troubleshooting
+  - High false positive rate: Add more good sample variety to training data and verify
+    lighting consistency across all camera positions on the inspection station
+  - Missed defects as false negatives: Verify defect class is adequately represented
+    in training data with minimum 200 labeled examples per defect type
+  - Model works in lab but fails in production: Retrain exclusively with production
+    images captured under actual factory lighting and environmental conditions
+  - Inference too slow for takt time: Quantize model to INT8 precision using TensorRT
+    and reduce input resolution to minimum level that maintains detection accuracy
+  - Operators distrust AI decisions: Display confidence scores on HMI, allow easy
+    override mechanism, and publish weekly AI versus human accuracy comparisons
+  - New defect type not detected: Collect minimum 200 samples of new defect, annotate
+    with bounding boxes, retrain model incrementally, and validate before redeployment

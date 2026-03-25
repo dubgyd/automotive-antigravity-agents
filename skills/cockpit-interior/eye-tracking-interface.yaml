@@ -1,0 +1,162 @@
+name: eye-tracking-interface
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Gaze-based interaction systems for automotive cockpits, covering eye tracking hardware, gaze-contingent UI adaptation, and driver attention monitoring integration."
+use_cases:
+  - "Implementing gaze-based menu selection for reduced driver distraction"
+  - "Designing gaze-contingent displays that show detail only where the driver looks"
+  - "Building combined gaze-and-voice interaction for hands-free cockpit control"
+  - "Integrating eye tracking with driver monitoring for attention and drowsiness detection"
+  - "Creating adaptive AR HUD content that follows driver gaze direction"
+automotive_standards:
+  - "Euro NCAP 2024+ - Driver monitoring system requirements"
+  - "EU Regulation 2019/2144 - Driver drowsiness and attention warning"
+  - "ISO 15007 - Measurement of driver visual behavior"
+  - "SAE J3016 - Levels of driving automation and driver monitoring requirements"
+  - "ISO 16673 - Visual demand measurement using occlusion technique"
+instructions: |
+  # Eye Tracking Interface
+
+  ## Overview
+  Eye tracking transforms the driver's gaze into an input modality for cockpit
+  interaction. Infrared cameras track corneal reflections and pupil position to determine
+  where the driver is looking at any moment. This data serves dual purposes: it enables
+  gaze-based interaction with displays and controls, and it feeds driver monitoring
+  systems that detect inattention, drowsiness, and distraction.
+
+  ## Key Concepts
+
+  ### Eye Tracking Hardware
+  Automotive-grade eye tracking systems use specialized components:
+  - Near-infrared LED illuminators create corneal reflections (glints) on the eye
+  - High-speed IR cameras capture pupil and glint positions at 60 to 120 Hz
+  - On-chip processing extracts gaze vectors with sub-degree angular accuracy
+  - Multi-camera setups handle extreme head positions and sunglasses
+
+  ### Gaze Estimation Pipeline
+  From camera image to gaze point on a target surface:
+  - Face detection locates the driver face in the camera field of view
+  - Eye region extraction crops the periocular area for detailed analysis
+  - Pupil center and corneal reflection detection provide raw eye features
+  - Gaze vector computation maps eye features to a 3D gaze direction
+  - Target surface intersection converts gaze ray to screen coordinates
+
+  ### Gaze Interaction Patterns
+  Several interaction paradigms leverage eye tracking:
+  - Gaze-and-dwell selects an element after the driver looks at it for a threshold time
+  - Gaze-and-confirm uses gaze to aim and a physical button or voice to confirm
+  - Gaze-contingent display shows detail only in the gazed region, simplifying periphery
+  - Gaze-aware priority adjusts which information is most prominent based on attention
+
+  ## Implementation Guide
+
+  ### Step 1 - Mount and Calibrate Cameras
+  Position eye tracking cameras for optimal driver eye coverage:
+  - Mount behind the steering wheel or in the instrument cluster brow
+  - Ensure the field of view covers the full driver head box (SAE J941 eyellipse)
+  - Perform factory calibration relating camera position to vehicle coordinate system
+  - Support user-initiated recalibration for fine-tuning personal gaze accuracy
+
+  ### Step 2 - Build the Gaze Pipeline
+  Implement real-time gaze estimation suitable for automotive compute platforms:
+  - Use a CNN-based model for combined face, eye, and gaze estimation
+  - Run inference on a dedicated NPU or DSP to meet latency requirements
+  - Apply temporal filtering to reduce gaze jitter without adding perceptible lag
+  - Target gaze accuracy of 2 degrees or better for display interaction use cases
+
+  ### Step 3 - Design Gaze-Based UI
+  Create interface elements optimized for gaze interaction:
+  - Make gaze-selectable targets at least 40 mm in diameter on the display surface
+  - Provide clear visual feedback showing which element has gaze focus
+  - Use a 300 to 600 ms dwell time for activation, adjustable per user preference
+  - Implement a gaze cursor that follows smoothly but does not obscure content
+
+  ### Step 4 - Integrate with Driver Monitoring
+  Share eye tracking data with the driver monitoring system:
+  - Feed gaze direction to attention monitoring for distraction detection
+  - Provide eyelid closure metrics (PERCLOS) for drowsiness assessment
+  - Share pupil dilation data for cognitive load estimation
+  - Ensure the interaction system does not conflict with safety monitoring priorities
+
+  ### Step 5 - Handle Edge Cases
+  Design for real-world driving variability:
+  - Support drivers wearing prescription glasses, sunglasses, and contact lenses
+  - Handle direct sunlight flooding the camera with IR light
+  - Maintain tracking during head turns for mirror checks and blind spot looks
+  - Gracefully degrade to non-gaze interaction when tracking confidence drops
+
+  ## Best Practices
+
+  ### Accuracy and Precision
+  - Calibrate with a 9-point procedure on the target display surface
+  - Achieve 1.5 degree accuracy on the instrument cluster for reliable button targeting
+  - Use per-user calibration profiles stored with the driver memory seat position
+  - Revalidate calibration after seat or mirror adjustments
+
+  ### Avoiding the Midas Touch Problem
+  - Never interpret every gaze fixation as an intentional selection
+  - Require explicit confirmation for consequential actions like phone answering
+  - Use spatial hysteresis so gaze must clearly enter a target before activation starts
+  - Provide an easy way to cancel a dwell-in-progress by looking away
+
+  ### Privacy Considerations
+  - Process eye tracking data on-device without cloud transmission
+  - Do not store raw camera images beyond the current processing frame
+  - Provide clear user notification that eye tracking is active
+  - Allow users to disable gaze-based interaction while retaining safety monitoring
+
+  ## Troubleshooting
+
+  ### Gaze Point Drifts Over Time
+  Check for camera mount vibration that shifts the calibration reference. Verify the
+  head pose estimation is compensating correctly for driver position changes. Trigger
+  automatic recalibration when drift exceeds a configurable threshold.
+
+  ### Cannot Track Through Sunglasses
+  Increase IR illuminator power to penetrate tinted lenses. Switch to a wider IR
+  wavelength (940 nm) that has better penetration through dark coatings. Use the
+  fallback model that estimates gaze from head pose when eye features are unavailable.
+
+  ### False Selections on Display
+  Increase the dwell time threshold or switch to gaze-and-confirm interaction. Enlarge
+  the spatial hysteresis dead zone around target boundaries. Review UI layout for targets
+  that are too close together for the current gaze accuracy level.
+
+  ### Driver Monitoring Conflicts with Interaction
+  Ensure the priority hierarchy gives safety monitoring precedence over interaction.
+  Use separate processing threads for monitoring and interaction gaze analysis. Verify
+  that interaction gaze events do not reset the distraction timer in the monitoring
+  system.
+
+  ## Integration Patterns
+
+  ### Display-Aware Gaze Mapping
+  Projecting gaze onto multiple vehicle displays simultaneously:
+  - Maintain a 3D model of all display surfaces in the vehicle coordinate system
+  - Compute gaze ray intersection with each display surface for multi-display targeting
+  - Handle display transitions smoothly when gaze moves from cluster to center display
+  - Update display surface positions when adjustable screens change orientation
+
+  ### ADAS Gaze Fusion
+  Sharing gaze data between interaction and advanced driver assistance:
+  - Feed gaze direction to the lane departure warning to assess intentional lane changes
+  - Provide gaze information to the adaptive cruise control for merge intent detection
+  - Share looking-away duration with the forward collision warning for alert escalation
+  - Implement priority arbitration so ADAS gaze needs always take precedence over UX
+
+  ## Testing and Validation
+
+  ### Accuracy Verification Protocol
+  Standardized procedure for measuring gaze estimation accuracy:
+  - Display a sequence of 20 fixation targets at known positions on each display
+  - Compute angular error between measured gaze point and true target position
+  - Repeat across 30 users to report population-level accuracy statistics
+  - Validate accuracy at extreme head positions within the J941 eyellipse boundary
+
+  ### Sunglasses and Eyewear Compatibility
+  Ensure eye tracking works through common eyewear:
+  - Test with 10 popular sunglass models spanning various tint levels and polarizations
+  - Measure accuracy degradation compared to bare-eye baseline for each model
+  - Verify that photochromic lenses in transition states do not cause tracking loss
+  - Test with progressive and bifocal lenses that create reflections near the pupil

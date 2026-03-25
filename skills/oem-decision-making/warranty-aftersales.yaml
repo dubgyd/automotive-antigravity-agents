@@ -1,0 +1,150 @@
+name: warranty-aftersales
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: warranty_aftersales
+description: "Warranty reserve modeling, recall management, predictive warranty analytics, and NPS improvement for automotive OEMs"
+use_cases:
+  - "Warranty reserve modeling and financial forecasting"
+  - "Recall management and campaign execution planning"
+  - "Predictive warranty analytics using field data"
+  - "Customer satisfaction and NPS improvement programs"
+  - "Aftersales revenue optimization and service strategy"
+automotive_standards:
+  - "ISO 9001"
+  - "IATF 16949"
+  - "APQP"
+  - "PPAP"
+instructions: |
+  ## Overview
+
+  Warranty and aftersales strategy in automotive encompasses the management of warranty obligations,
+  recall programs, service revenue optimization, parts business, and customer satisfaction throughout
+  the vehicle ownership lifecycle. Warranty costs represent 2-4% of revenue for most OEMs, making
+  warranty management a significant profit lever. The transition to EVs changes the warranty landscape:
+  fewer moving parts reduce mechanical failures but battery degradation guarantees and software-related
+  issues create new warranty categories. This skill covers warranty reserve modeling, recall management
+  decision frameworks, predictive warranty analytics, aftersales revenue strategy, and customer
+  satisfaction (NPS) improvement programs for automotive companies.
+
+  ## Key Concepts
+
+  ### Warranty Cost Structure
+  - **Material warranty**: Parts replacement, labor, and logistics for manufacturing defects
+  - **Powertrain warranty**: Engine, transmission, drivetrain coverage (typically longer: 5-10 years)
+  - **Battery warranty**: EV-specific, typically 8 years/160,000 km, covers degradation below 70% SoH
+  - **Software warranty**: Bug fixes, OTA updates, feature restoration after failed updates
+  - **Goodwill/policy adjustments**: Out-of-warranty repairs at OEM cost for customer retention
+  - **Recall costs**: Safety-related mandatory recalls (NHTSA, KBA), voluntary service campaigns
+
+  ### Warranty Financial Management
+  - **Warranty reserve (accrual)**: Provision at time of vehicle sale based on expected lifetime cost
+  - **Warranty spend rate**: Actual warranty cost per vehicle per month (IPTV - incidents per thousand vehicles)
+  - **Warranty reserve adequacy**: Comparing accrual to actual spend, adjusting for emerging field issues
+  - **Supplier recovery**: Chargeback to suppliers for defects attributable to their components
+  - **Extended warranty revenue**: Sale of extended coverage plans as profit center (60-70% gross margin)
+
+  ### Predictive Warranty Analytics
+  - **Early warning systems**: Statistical anomaly detection on warranty claims data (Weibull analysis)
+  - **Connected vehicle diagnostics**: Remote DTC monitoring identifying failures before customer complaint
+  - **Predictive maintenance**: Using telematics data to schedule service before component failure
+  - **Root cause analysis**: Data mining warranty claims to identify systemic design or manufacturing issues
+  - **Warranty cost forecasting**: ML models predicting warranty exposure for new models based on historical
+
+  ## Implementation Guide
+
+  ### Step 1: Warranty Cost Baseline and Benchmarking
+  - Establish warranty cost per vehicle (CPV) by model, model year, market, and component category
+  - Track IPTV (incidents per thousand vehicles) trends by failure mode and time-in-service
+  - Benchmark warranty CPV against industry peers and identify gap-closing opportunities
+  - Decompose warranty cost into root causes: design, manufacturing, supplier, service, customer misuse
+
+  ### Step 2: Warranty Reserve Optimization
+  - Build actuarial warranty reserve model using historical claim patterns and Weibull distributions
+  - Calibrate model for new technology risks (battery degradation, ADAS failures, OTA-related issues)
+  - Implement quarterly reserve adequacy review with finance and actuarial sign-off
+  - Develop early-warning triggers for reserve adjustment when field data deviates from forecast
+
+  ### Step 3: Proactive Warranty Cost Reduction
+  - Implement connected vehicle early warning system detecting emerging issues within 30 days of SOP
+  - Establish rapid response process: field data analysis, root cause, countermeasure, implementation <90 days
+  - Deploy predictive maintenance via OTA to prevent failures (e.g., software recalibration, preemptive alerts)
+  - Negotiate supplier warranty cost-sharing agreements with clear claim validation and recovery processes
+
+  ### Step 4: Aftersales Revenue and Customer Experience
+  - Design extended warranty and service contract products with competitive pricing and strong margins
+  - Build parts and accessories business leveraging OEM brand trust and quality guarantee
+  - Implement customer satisfaction measurement (NPS, CSI) with closed-loop feedback to engineering
+  - Develop digital service channels: remote diagnostics, OTA repairs, mobile service, self-service portal
+
+  ## Decision Frameworks
+
+  ### Recall vs. Service Campaign vs. Monitor Decision
+  | Criteria | Safety Recall | Service Campaign | Field Monitor |
+  |---------|--------------|-----------------|--------------|
+  | Safety risk | Yes (imminent harm) | No (convenience/quality) | Uncertain |
+  | Regulatory mandate | Required (NHTSA/KBA) | Voluntary | Not required |
+  | Fleet affected | Defined population | Selective (high-risk VINs) | Unknown scope |
+  | Cost profile | Very high (all affected) | Moderate (targeted) | Low (monitoring) |
+  | Customer communication | Mandatory notification | Proactive outreach | None until decision |
+  | Urgency | Immediate (stop-drive) | Planned (next visit) | Ongoing analysis |
+
+  ### Battery Warranty Strategy for EVs
+  - **Standard warranty**: 8 years / 160,000 km, covers below 70% State of Health (industry standard)
+  - **Premium warranty**: 10 years / 200,000 km at 75% SoH (competitive differentiator)
+  - **Reserve model**: Battery degradation follows predictable curve; actuarial model based on cell chemistry
+  - **OTA mitigation**: Software updates to BMS can slow degradation, reducing warranty claims
+  - **Second-life value**: End-of-warranty batteries retain value for stationary storage, offsetting replacement
+
+  ### Supplier Warranty Recovery Framework
+  - **Tier 1 (Full recovery)**: Defect clearly attributable to supplier component, >80% recovery rate
+  - **Tier 2 (Shared)**: Defect involves interaction between OEM design and supplier component, 40-60%
+  - **Tier 3 (OEM absorbed)**: Integration or specification issue, minimal supplier recovery
+  - **Contract terms**: Define claim validation process, recovery rates, and dispute resolution upfront
+
+  ## Best Practices
+
+  - Accrue warranty reserves conservatively for new technology (battery, ADAS) until field data validates
+  - Implement warranty claim fraud detection to prevent inflated or fabricated dealer claims (5-15% savings)
+  - Use connected vehicle data to shift from reactive warranty to proactive maintenance (reduce IPTV by 20%)
+  - Treat aftersales as a profit center, not just cost center; parts and service generate 40-50% of OEM profit
+  - Invest in warranty analytics team combining data science with automotive engineering domain expertise
+  - Negotiate annual supplier warranty caps but retain right to full recovery for systemic defects
+  - Design vehicles for serviceability: accessibility, modular replacement, diagnostic ease
+  - Offer OTA-fixable issues as software updates rather than physical recall to reduce cost by 80%
+  - Track warranty performance as a product development KPI: warranty cost targets in vehicle specifications
+  - Build customer loyalty through transparent warranty communication and hassle-free claim experience
+
+  ## Examples
+
+  ### Example 1: Connected Vehicle Early Warning System
+  An OEM deploys fleet-wide DTC monitoring across 2M connected vehicles. System detects abnormal failure
+  rate in HVAC blower motor for specific model within 15 days of launch (3x expected failure rate).
+  Root cause identified in 10 days: supplier manufacturing variation in motor bearing. Countermeasure:
+  supplier corrects process, sorted stock replaces suspect inventory. Proactive service campaign for
+  8,000 early-production vehicles vs. potential 50,000-vehicle recall if caught at 6 months. Savings:
+  12M EUR in reduced warranty costs and avoided customer dissatisfaction.
+
+  ### Example 2: EV Battery Warranty Reserve Calibration
+  An OEM's first-generation BEV shows higher-than-expected battery degradation in hot climates (Middle East,
+  Southern US). Field data at 3 years: 8% of batteries below 75% SoH vs. 2% forecast. Actions: increase
+  warranty reserve by 180M EUR, deploy OTA update with optimized thermal management and charging curve
+  calibration (reduces degradation rate by 15%), proactively replace worst-performing cells at next service.
+  For next generation: specify improved thermal management system and tighter cell selection criteria.
+
+  ### Example 3: Aftersales Digital Transformation
+  An OEM launches digital aftersales platform: remote diagnostics (70% of issues diagnosable remotely),
+  OTA software fixes (reduce physical workshop visits by 25%), predictive maintenance alerts to customer
+  app (increase service retention by 15%), and online parts ordering with same-day delivery. Investment:
+  30M EUR over 3 years. Revenue impact: 8% increase in parts revenue, 12% increase in service plan
+  attachment rate, NPS improvement from 42 to 58 within 2 years.
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: advanced
+tags:
+  - "oem-decision-making"
+  - "warranty-aftersales"
+  - "automotive"
+  - "oem"

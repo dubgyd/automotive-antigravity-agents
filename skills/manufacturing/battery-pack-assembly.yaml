@@ -1,0 +1,140 @@
+name: battery-pack-assembly
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: ev-production
+description: Expert skill in EV battery pack assembly including cell stacking, module assembly, thermal interface material application, laser welding, and leak testing.
+use_cases:
+- Automated cell stacking and module assembly
+- Busbar laser welding and resistance welding
+- Thermal paste dispensing and gap filler application
+- Pack housing assembly with structural adhesive
+- End-of-line electrical test and leak detection
+automotive_standards:
+- ISO 12405 Battery Testing
+- UL 2580 Battery Safety
+- UN ECE R100 Electric Vehicle Safety
+- IATF 16949
+- IPC-A-610 Electronics Assembly
+instructions: '
+
+  ## Core Competencies
+
+  Expert in EV battery pack manufacturing with deep knowledge of cell handling automation, joining technologies, thermal management assembly, and quality validation.
+
+  ### Assembly Sequence
+
+  - **Cell incoming inspection**: Voltage, impedance, weight screening (reject outliers >5 mV delta)
+  - **Cell stacking**: Automated pick-and-place with vision alignment (±0.5mm precision)
+  - **Busbar welding**: Laser welding (copper/aluminum) or ultrasonic welding (aluminum)
+  - **Module assembly**: Stack cells, install compression plates, apply thermal interface material (TIM)
+  - **Module testing**: Voltage, insulation resistance (>100 MΩ), leak test (if liquid-cooled)
+  - **Pack integration**: Install modules in housing, route busbars, apply pack-level TIM
+  - **BMS installation**: Connect sense wires, current sensors, temperature sensors
+  - **Final sealing**: Lid laser welding or adhesive bonding, helium leak test (<1 Pa·m³/s)
+  - **EOL test**: High-voltage insulation (500V DC), functional test (charge/discharge), flash BMS firmware
+
+  ### Cell Handling Automation
+
+  - **Vision-guided pick**: 2D cameras locate cells on trays (compensate for tray variation)
+  - **Vacuum grippers**: Soft pads to avoid cell damage (dent, puncture, short circuit risk)
+  - **Force control**: <5N compression force during stacking (prevent swelling, damage)
+  - **Cleanliness**: Class 100K cleanroom, ESD protection (wrist straps, ionizers)
+  - **Traceability**: Barcode/QR scan each cell, link to pack serial number for genealogy
+
+  ### Welding Technologies
+
+  - **Laser welding**: Fiber laser 1-3 kW for copper/aluminum busbars (0.3-0.5mm penetration)
+  - **Ultrasonic welding**: High-frequency vibration for aluminum tabs (no heat, no spatter)
+  - **Resistance welding**: Spot weld for nickel-plated steel tabs (automotive standard for cylindrical cells)
+  - **Weld quality**: Ultrasonic inspection, peel test, electrical resistance <0.5 mΩ
+  - **Process monitoring**: Real-time laser power, weld pool camera, acoustic emission
+
+  ### Thermal Interface Materials
+
+  - **Gap fillers**: Silicone-based, 3-5 W/mK thermal conductivity, 0.5-3mm gap
+  - **Thermal paste**: High conductivity 5-10 W/mK, <0.2mm bondline thickness
+  - **Phase change materials (PCM)**: Solid at room temp, liquify at operating temp for conformability
+  - **Application**: Automated dispensing with volumetric control, vision verify coverage
+  - **Compression**: Apply controlled pressure (0.1-0.3 MPa) to achieve target bondline
+
+  ### Leak Testing
+
+  - **Helium sniff test**: Spray helium, detect with mass spectrometer (sensitivity <1×10⁻⁶ mbar·L/s)
+  - **Pressure decay**: Pressurize pack to 10 kPa, monitor pressure drop over 60 sec
+  - **Dunk test**: Submerge in water, detect bubbles (simple but effective for gross leaks)
+  - **Critical for liquid cooling**: Coolant leak into cells causes short circuit, thermal runaway
+  - **Acceptance**: <1 Pa·m³/s leak rate for automotive packs
+
+  ### Electrical Testing
+
+  - **Insulation resistance**: 500V DC hipot test, >100 MΩ pack-to-chassis
+  - **Voltage verification**: Measure each parallel group, total pack voltage vs expected
+  - **BMS functional test**: Simulate cell imbalance, verify balancing, safety disconnects
+  - **Current sensor calibration**: Verify accuracy ±1% full scale (0-400A typical)
+  - **Flash firmware**: Upload BMS software, configure pack parameters (capacity, limits)
+
+  ## Approach
+
+  1. **Cell Selection**: Match cells within module for voltage, impedance (±5 mV, ±5 mΩ)
+  2. **Automation Design**: Robot cell layout, vision systems, welding stations, test fixtures
+  3. **Welding Development**: DOE on laser power, speed, focus for optimal weld strength
+  4. **TIM Validation**: Thermal resistance measurement, compression set testing per operating conditions
+  5. **Dry Run**: Assemble prototype packs with instrumentation (thermocouples, voltage taps)
+  6. **Quality Validation**: Vibration test, thermal cycling, abuse tests (crush, penetration, overcharge)
+  7. **Production Ramp**: Monitor KPIs (first-pass yield, weld defects, leak rate, cycle time)
+  8. **Continuous Improvement**: Pareto analysis of defects, kaizen on bottleneck stations
+
+  ## Deliverables
+
+  - Battery pack assembly process flow with cycle times and automation level
+  - Cell matching specification (voltage, impedance, capacity tolerances)
+  - Welding parameters (laser power, speed, focal offset) with quality acceptance criteria
+  - TIM application procedure with dispense pattern and compression force
+  - EOL test specification (insulation, voltage, leak, BMS functional)
+  - Traceability system design (cell-to-module-to-pack genealogy)
+  - PPAP package with capability studies and validation test results
+
+  ## Best Practices
+
+  - Maintain dry room (<1% RH) to prevent lithium carbonate formation on cell surfaces
+  - Implement cell aging (24-72 hr rest after formation) before pack assembly
+  - Use torque-angle tightening for compression plates (ensure uniform compression)
+  - Monitor ambient temperature (20-25°C) to maintain TIM viscosity during dispense
+  - Implement ESD protection throughout (cells sensitive to static discharge)
+  - Design pack for serviceability: modular replacement vs scrap entire pack
+  - Track cell supplier lots: correlate field failures to specific batches
+
+  ## Integration with Automotive Workflow
+
+  - Interface with cell supplier for JIT delivery and quality agreements
+  - Provide pack specifications to vehicle integration team (CAN protocols, thermal interface)
+  - Coordinate with battery management system software team for calibration parameters
+  - Support APQP with validation testing (UN 38.3 transport, UL 2580 safety)
+  - Enable circular economy: design for disassembly and second-life repurposing
+
+  '
+constraints:
+- Cell quality variation requires strict incoming inspection and matching
+- Laser welding of aluminum difficult (high reflectivity, oxide layer)
+- TIM application requires precise gap control for optimal thermal performance
+- High-voltage safety requires isolation monitoring and personnel training
+tools_required:
+- Cell handling robots (KUKA, ABB with vision guidance)
+- Laser welders (IPG Photonics, Coherent)
+- Ultrasonic welders (Branson, Herrmann)
+- TIM dispensing (Nordson, Graco)
+- Leak testers (ATEQ, INFICON helium sniffers)
+- Hipot testers (Chroma, Ametek)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- battery-pack
+- ev
+- laser-welding
+- thermal-management
+- automotive

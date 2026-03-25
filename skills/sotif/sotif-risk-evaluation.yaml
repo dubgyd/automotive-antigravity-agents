@@ -1,0 +1,593 @@
+name: sotif-risk-evaluation
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: risk-assessment
+description: Residual risk calculation, acceptable risk thresholds, societal acceptance, and comparison with human driver performance for SOTIF.
+use_cases:
+- Residual risk quantification for Area 3/4
+- Acceptable risk threshold determination
+- Comparison to human driver baseline
+- Societal risk tolerance analysis
+- SOTIF safety case argumentation
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-3 (Risk Assessment)
+- UN ECE R157 (ALKS)
+- ISO/PAS 21448:2019
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in evaluating residual risk for SOTIF, establishing acceptable risk thresholds based on societal tolerance, and comparing AD system performance to human driver baseline.
+
+
+  ### Residual Risk in SOTIF
+
+
+  **Definition**: Risk remaining after SOTIF process (Areas 3 and 4)
+
+  - Area 3: Unknown unsafe scenarios (undiscovered hazards)
+
+  - Area 4: Unknown safe scenarios (uncertain but acceptable risk)
+
+
+  **Residual Risk Components**:
+
+  - **Frequency**: How often does hazardous scenario occur? (exposure)
+
+  - **Severity**: What is the consequence? (injury, fatality, property damage)
+
+  - **Controllability**: Can driver intervene? (for L2), Can system mitigate? (for L3+)
+
+
+  **Goal**: Demonstrate residual risk is "tolerable" and "as low as reasonably practicable" (ALARP).
+
+
+  ### Human Driver Baseline
+
+
+  **US Statistics (NHTSA 2020)**:
+
+  - Fatal crashes: 1.1 per 100 million vehicle-miles (VMT)
+
+  - Injury crashes: 60 per 100M VMT
+
+  - Property damage only: 100 per 100M VMT
+
+  - Total crashes: ~160 per 100M VMT
+
+
+  **Variation by Context**:
+
+  - Highway vs urban: Highway fatality rate ~50% of urban
+
+  - Weather: Fatal crash rate 2x higher in rain, 3x in snow
+
+  - Time of day: Night fatality rate 3x higher than day
+
+  - Driver age: Young (16-20) and elderly (70+) have higher crash rates
+
+
+  **ODD-Adjusted Baseline**:
+
+  - Compare AD system to human performance in same ODD
+
+  - Example: Highway ADAS compared to human highway performance, not overall
+
+
+  ### Acceptable Risk Thresholds
+
+
+  **Quantitative Approach**:
+
+  - AD system should be "demonstrably safer" than human
+
+  - Common target: 2x to 10x reduction in crash rate
+
+  - Depends on societal risk tolerance and regulatory requirements
+
+
+  **Qualitative Considerations**:
+
+  - Severity distribution: Prefer minor crashes over fatalities
+
+  - Crash preventability: Unavoidable scenarios (e.g., sudden medical emergency of other driver)
+
+  - Equity: Risk should not be disproportionately transferred to vulnerable road users
+
+
+  **ISO 26262 Risk Classification** (for reference):
+
+  - ASIL QM (Quality Management): Lowest risk, no specific safety requirements
+
+  - ASIL A: Low risk (1 fatality per 100M hours exposure)
+
+  - ASIL B: Medium risk (1 fatality per 10M hours)
+
+  - ASIL C: High risk (1 fatality per 1M hours)
+
+  - ASIL D: Very high risk (1 fatality per 100k hours)
+
+
+  Note: ISO 26262 addresses random/systematic failures; SOTIF addresses functional insufficiency. Both contribute to overall risk.
+
+
+  ### Risk Calculation Methods
+
+
+  **Frequentist Approach**:
+
+
+  ```python
+
+  import numpy as np
+
+  import scipy.stats as stats
+
+
+  class ResidualRiskCalculator:
+
+      """Calculate residual risk for SOTIF"""
+
+
+      def __init__(self, validation_mileage_million_km, observed_crashes):
+
+          """
+
+          Parameters:
+
+          - validation_mileage_million_km: Total validation mileage
+
+          - observed_crashes: Number of safety-critical events
+
+          """
+
+          self.mileage = validation_mileage_million_km
+
+          self.crashes = observed_crashes
+
+
+
+      def point_estimate(self):
+
+          """
+
+          Simple point estimate of crash rate
+
+          """
+
+          crash_rate = self.crashes / self.mileage  # per million km
+
+          return crash_rate
+
+
+
+      def confidence_interval(self, confidence_level=0.95):
+
+          """
+
+          Calculate confidence interval on crash rate using Poisson distribution
+
+          """
+
+          # For Poisson process, CI based on chi-squared distribution
+
+          alpha = 1 - confidence_level
+
+
+          # Lower bound
+
+          lower = stats.chi2.ppf(alpha / 2, 2 * self.crashes) / (2 * self.mileage)
+
+
+          # Upper bound
+
+          upper = stats.chi2.ppf(1 - alpha / 2, 2 * (self.crashes + 1)) / (2 * self.mileage)
+
+
+          return lower, upper
+
+
+
+      def compare_to_human(self, human_crash_rate_per_million_km=1.0):
+
+          """
+
+          Compare system crash rate to human baseline
+
+
+          Returns: (is_safer, improvement_factor, p_value)
+
+          """
+
+          system_rate = self.point_estimate()
+
+
+          # Hypothesis test: H0: system_rate >= human_rate, H1: system_rate < human_rate
+
+          # Using Poisson test
+
+          expected_crashes = human_crash_rate_per_million_km * self.mileage
+
+          p_value = stats.poisson.cdf(self.crashes, expected_crashes)
+
+
+          is_safer = system_rate < human_crash_rate_per_million_km
+
+          improvement_factor = human_crash_rate_per_million_km / system_rate if system_rate > 0 else float(''inf'')
+
+
+          return is_safer, improvement_factor, p_value
+
+
+  # Example: 5 million km validation, 2 crashes observed
+
+  calculator = ResidualRiskCalculator(validation_mileage_million_km=5, observed_crashes=2)
+
+
+  point_est = calculator.point_estimate()
+
+  print(f"Point estimate crash rate: {point_est:.3f} per million km")
+
+
+  lower, upper = calculator.confidence_interval(confidence_level=0.95)
+
+  print(f"95% CI: [{lower:.3f}, {upper:.3f}] per million km")
+
+
+  human_baseline = 1.0  # 1 crash per million km (example)
+
+  is_safer, improvement, p_value = calculator.compare_to_human(human_baseline)
+
+  print(f"Safer than human: {is_safer}, Improvement factor: {improvement:.1f}x, p-value: {p_value:.3f}")
+
+  ```
+
+
+  **Bayesian Approach** (incorporate prior knowledge):
+
+
+  ```python
+
+  import scipy.stats as stats
+
+
+  class BayesianRiskEstimator:
+
+      """Estimate crash rate using Bayesian inference"""
+
+
+      def __init__(self, prior_mean=1.0, prior_std=0.5):
+
+          """
+
+          Parameters:
+
+          - prior_mean: Prior belief about crash rate (per million km)
+
+          - prior_std: Uncertainty in prior belief
+
+          """
+
+          # Use Gamma distribution as conjugate prior for Poisson
+
+          self.prior_alpha = (prior_mean / prior_std) ** 2
+
+          self.prior_beta = prior_mean / (prior_std ** 2)
+
+
+
+      def update_posterior(self, validation_mileage_million_km, observed_crashes):
+
+          """
+
+          Update belief after observing validation data
+
+          """
+
+          # Posterior is Gamma(alpha + crashes, beta + mileage)
+
+          posterior_alpha = self.prior_alpha + observed_crashes
+
+          posterior_beta = self.prior_beta + validation_mileage_million_km
+
+
+          # Posterior mean and std
+
+          posterior_mean = posterior_alpha / posterior_beta
+
+          posterior_std = np.sqrt(posterior_alpha) / posterior_beta
+
+
+          return posterior_mean, posterior_std
+
+
+
+      def credible_interval(self, validation_mileage_million_km, observed_crashes,
+
+                             credibility=0.95):
+
+          """
+
+          Bayesian credible interval (analogous to confidence interval)
+
+          """
+
+          posterior_alpha = self.prior_alpha + observed_crashes
+
+          posterior_beta = self.prior_beta + validation_mileage_million_km
+
+
+          # Credible interval from Gamma distribution
+
+          lower = stats.gamma.ppf((1 - credibility) / 2, posterior_alpha, scale=1 / posterior_beta)
+
+          upper = stats.gamma.ppf(1 - (1 - credibility) / 2, posterior_alpha, scale=1 / posterior_beta)
+
+
+          return lower, upper
+
+
+  # Example with optimistic prior (system expected to be safer than human)
+
+  estimator = BayesianRiskEstimator(prior_mean=0.5, prior_std=0.3)  # Expect 0.5 crashes/M km
+
+
+  posterior_mean, posterior_std = estimator.update_posterior(
+
+      validation_mileage_million_km=5, observed_crashes=2
+
+  )
+
+  print(f"Posterior mean crash rate: {posterior_mean:.3f} ± {posterior_std:.3f} per million km")
+
+
+  lower, upper = estimator.credible_interval(
+
+      validation_mileage_million_km=5, observed_crashes=2, credibility=0.95
+
+  )
+
+  print(f"95% credible interval: [{lower:.3f}, {upper:.3f}] per million km")
+
+  ```
+
+
+  ### Severity Analysis
+
+
+  **Crash Severity Distribution**:
+
+  - K (killed): Fatality
+
+  - A (incapacitating injury): Hospitalization required
+
+  - B (non-incapacitating injury): Visible injury, no hospitalization
+
+  - C (possible injury): Complaint of pain, no visible injury
+
+  - O (no injury): Property damage only
+
+
+  **Risk Metric Incorporating Severity**:
+
+
+  ```python
+
+  def calculate_harm_score(crash_severity_distribution):
+
+      """
+
+      Calculate weighted harm score based on severity distribution
+
+
+      Parameters:
+
+      - crash_severity_distribution: Dict with keys K, A, B, C, O and counts
+
+      """
+
+      # Weighting factors (example, can be adjusted)
+
+      weights = {
+
+          ''K'': 100,  # Fatality: highest weight
+
+          ''A'': 10,   # Severe injury
+
+          ''B'': 3,    # Moderate injury
+
+          ''C'': 1,    # Minor injury
+
+          ''O'': 0.1   # Property damage
+
+      }
+
+
+      total_harm = sum(crash_severity_distribution[severity] * weights[severity]
+
+                       for severity in crash_severity_distribution)
+
+
+      return total_harm
+
+
+  # Example: System has fewer total crashes, but higher severity?
+
+  human_severity = {''K'': 1, ''A'': 5, ''B'': 10, ''C'': 30, ''O'': 54}  # per 100 crashes
+
+  system_severity = {''K'': 0, ''A'': 2, ''B'': 5, ''C'': 10, ''O'': 20}   # per 37 crashes (lower total)
+
+
+  human_harm = calculate_harm_score(human_severity)
+
+  system_harm = calculate_harm_score(system_severity)
+
+
+  print(f"Human harm score: {human_harm:.1f}")
+
+  print(f"System harm score: {system_harm:.1f}")
+
+  print(f"Harm reduction: {(1 - system_harm / human_harm) * 100:.1f}%")
+
+  ```
+
+
+  ### Societal Risk Tolerance
+
+
+  **Revealed Preference** (observed societal tolerance):
+
+  - Aviation: ~1 fatality per 10 billion passenger-km (extremely low tolerance)
+
+  - Rail: ~0.1 fatality per billion passenger-km
+
+  - Road (human driver): ~5 fatalities per billion vehicle-km
+
+  - Implication: Society tolerates higher risk for personal mobility vs public transport
+
+
+  **Expressed Preference** (surveys, public consultation):
+
+  - Surveys show public expects AD systems to be "much safer" than human (2-10x)
+
+  - Zero-risk expectation unrealistic (cannot achieve zero)
+
+  - Transparency and trust important (system failures judged more harshly)
+
+
+  **Ethical Considerations**:
+
+  - Risk distribution: Who bears the risk? (occupants vs VRUs)
+
+  - Equity: Does system perform equally for all demographics?
+
+  - Consent: Occupants choose to use system; VRUs do not
+
+
+  ## Deliverables
+
+
+  - Residual risk assessment report with quantitative estimates
+
+  - Comparison to human driver baseline (ODD-adjusted)
+
+  - Acceptable risk threshold justification
+
+  - Severity distribution analysis
+
+  - Societal risk tolerance assessment
+
+  - Safety case argument for risk acceptability
+
+  - Sensitivity analysis (how results change with assumptions)
+
+
+  ## Best Practices
+
+
+  - Use ODD-adjusted human baseline (not overall crash rate)
+
+  - Report confidence/credible intervals (not just point estimates)
+
+  - Analyze severity distribution (not just crash frequency)
+
+  - Consider both frequentist and Bayesian approaches
+
+  - Acknowledge uncertainty (validation is finite, real-world is infinite)
+
+  - Engage stakeholders (public, regulators) on risk tolerance
+
+  - Document all assumptions (prior beliefs, statistical models)
+
+  - Plan for continuous monitoring (validate residual risk assumptions post-deployment)
+
+
+  ## Regulatory Landscape
+
+
+  **UN ECE R157 (ALKS L3)**:
+
+  - No explicit quantitative risk threshold
+
+  - Requires demonstration of safety through testing
+
+  - Emphasizes continuous monitoring and improvement
+
+
+  **ISO 21448**:
+
+  - Does not mandate specific acceptable risk level
+
+  - Leaves to applicable regulations and societal norms
+
+  - Requires demonstration of "sufficient" risk reduction
+
+
+  **Future Trends**:
+
+  - Move toward quantitative performance standards (e.g., NHTSA proposals)
+
+  - Transparency requirements (publish safety performance data)
+
+  - Comparative assessments (AD system vs human in same scenarios)
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **Triggering Condition Analysis** → Identify hazards (Areas 2+3)
+
+  2. **Validation** → Quantify observed crash rate
+
+  3. **Residual Risk Evaluation** → Estimate remaining Area 3/4 risk
+
+  4. **Acceptance Criteria** → Compare to thresholds
+
+  5. **Safety Case** → Argue risk is tolerable and ALARP
+
+  6. **Field Monitoring** → Validate residual risk assumptions
+
+
+  ## Common Pitfalls
+
+
+  - Comparing to overall human crash rate (not ODD-adjusted)
+
+  - Overconfidence from limited validation data (wide confidence intervals ignored)
+
+  - Not accounting for crash severity (frequency alone insufficient)
+
+  - Post-hoc rationalization of acceptable risk (should be defined upfront)
+
+  - Claiming zero risk (impossible to prove)
+
+  - Not planning for continuous monitoring (assumptions may be wrong)
+
+  '
+constraints:
+- Cannot eliminate all residual risk (physics, uncertainty)
+- Societal risk tolerance not universally defined
+- Human baseline varies by context (ODD adjustment challenging)
+- Statistical confidence requires large validation effort
+tools_required:
+- Statistical analysis tools (Python scipy, R)
+- Bayesian inference frameworks (PyMC3, Stan)
+- Risk modeling software
+- Accident database access (NHTSA FARS, GIDAS)
+- Safety case management tools
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- risk-evaluation
+- residual-risk
+- human-baseline
+- acceptable-risk
+- statistical-analysis
+- safety-case

@@ -1,0 +1,496 @@
+name: charging-station-architecture
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: hardware-design
+description: Expert skill in EV charging station (EVSE) hardware architecture design, covering power electronics, contactors, metering, communication modules, and safety systems.
+use_cases:
+- AC Level 2 charging station design (7.4-19.2 kW)
+- DC fast charger architecture (50-350 kW)
+- Power electronics topology selection and sizing
+- Energy meter integration for billing accuracy
+- Safety system design (RCD, insulation monitoring, emergency stop)
+automotive_standards:
+- IEC 61851-1 EV conductive charging systems (general requirements)
+- IEC 61851-21/22/23 Electric vehicle on-board charger and charging station requirements
+- SAE J1772 AC charging connector and control pilot
+- IEC 62052 Electricity metering equipment
+- UL 2202 / UL 2594 EV charging system safety
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in EVSE (Electric Vehicle Supply Equipment) hardware architecture design for both AC Level 2 and DC fast charging stations, covering power electronics topologies, contactors, energy metering, communication systems, and multi-layered safety protection.
+
+
+  ### System Architecture Overview
+
+
+  - **AC Level 2 Charger** (7.4-19.2 kW):
+
+    ```
+    Grid (240V AC) → Circuit Breaker → GFCI → Contactor → Energy Meter → Control Pilot (PWM) → J1772 Connector → EV
+                                                                           ↓
+                                                                    Controller (STM32, ESP32)
+                                                                           ↓
+                                                                    Communication (WiFi, 4G, Ethernet)
+    ```
+
+
+  - **DC Fast Charger** (50-350 kW):
+
+    ```
+    Grid (480V 3-phase) → PFC Rectifier → DC-DC Converter → Isolation → Contactors → Energy Meter → CCS/CHAdeMO Connector → EV
+                                   ↓                                            ↓
+                            DC Bus (750V)                              Controller (ARM, x86)
+                                                                              ↓
+                                                                   PLC Modem (ISO 15118) or CAN
+                                                                              ↓
+                                                                   Backend (OCPP, Cloud)
+    ```
+
+
+  ### Power Electronics Design
+
+
+  - **AC Level 2** (no onboard power electronics):
+
+    - Grid AC passed directly to vehicle onboard charger
+
+    - EVSE provides: Switching (contactor), protection (GFCI), metering, communication
+
+    - Contactor: 40A or 80A rated (single-pole for L1, double-pole for L1+L2)
+
+
+  - **DC Fast Charger Power Stages**:
+
+    - **Three-phase rectifier with PFC**:
+
+      - Input: 480V AC 3-phase (or 400V in Europe)
+
+      - Output: 750V DC bus (or 800V for high-power chargers)
+
+      - Topology: Vienna rectifier or 6-pulse diode bridge with boost PFC
+
+      - Power factor: >0.95 (meet grid code requirements)
+
+      - THD: <5% (IEEE 519 harmonic limits)
+
+
+    - **DC-DC converter**:
+
+      - Input: 750V DC bus
+
+      - Output: 200-1000V DC (variable to match EV battery voltage)
+
+      - Topology: LLC resonant converter, dual-active bridge (DAB), or phase-shifted full bridge
+
+      - Isolation: High-frequency transformer (20 kHz switching, galvanic isolation)
+
+      - Efficiency: 95-98% at rated power
+
+
+    - **Output filter**:
+
+      - LC or LCL filter to reduce voltage ripple (<2% at rated current)
+
+      - Capacitor: 1-5 mF electrolytic or film capacitor bank
+
+      - Inductor: 50-200 µH, rated for 500A+ current
+
+
+  - **Semiconductor selection**:
+
+    - **IGBTs**: Traditional choice, 1200V or 1700V rating (for 750V DC bus)
+
+    - **SiC MOSFETs**: Higher efficiency (lower conduction and switching losses), 1200V or 1700V
+
+    - **Cooling**: Liquid-cooled heatsink for >100 kW (glycol-water loop)
+
+
+  ### Contactor and Switching
+
+
+  - **AC contactors** (Level 2):
+
+    - Rating: 40A or 80A, 240V AC
+
+    - Coil: 24V DC or 120V AC (controlled by microcontroller relay)
+
+    - Auxiliary contacts: For feedback (verify contactor closed)
+
+
+  - **DC contactors** (DC fast charging):
+
+    - Rating: 1000V DC, 500-700A continuous
+
+    - Breaking capacity: >10 kA (interrupt fault current safely)
+
+    - Arc suppression: Magnetic blowout or vacuum contactors
+
+    - Precharge relay: Series resistor (100Ω, 50W) to limit inrush current
+
+
+  - **Contactor control logic**:
+
+    ```c
+    typedef enum {
+        CONTACTOR_OPEN,
+        PRECHARGE,
+        CONTACTOR_CLOSED
+    } ContactorState_t;
+
+    void ContactorStateMachine(void) {
+        static ContactorState_t state = CONTACTOR_OPEN;
+        float v_bus = MeasureDCBusVoltage();
+        float v_battery = MeasureBatteryVoltage();  // From EV via ISO 15118
+
+        switch (state) {
+            case CONTACTOR_OPEN:
+                if (ChargingRequested()) {
+                    ClosePrechargeRelay();
+                    state = PRECHARGE;
+                }
+                break;
+
+            case PRECHARGE:
+                if (fabs(v_bus - v_battery) < 20.0) {  // Within 20V
+                    CloseMainContactor();
+                    OpenPrechargeRelay();
+                    state = CONTACTOR_CLOSED;
+                }
+                break;
+
+            case CONTACTOR_CLOSED:
+                if (ChargingComplete() || FaultDetected()) {
+                    OpenMainContactor();
+                    state = CONTACTOR_OPEN;
+                }
+                break;
+        }
+    }
+    ```
+
+
+  ### Energy Metering
+
+
+  - **Billing accuracy requirements**:
+
+    - MID (Measuring Instruments Directive) certified for EU: ±1% accuracy Class B
+
+    - ANSI C12.20 for North America: ±0.2% accuracy Class 0.2
+
+    - kWh resolution: 0.01 kWh (10 Wh)
+
+
+  - **Meter types**:
+
+    - **Direct metering**: CT (current transformer) on AC input or DC output
+
+    - **Integrated meter**: Dedicated energy meter IC (e.g., ADE7953, ATM90E36)
+
+    - **Smart meter**: Modbus RTU or Ethernet interface for remote reading
+
+
+  - **Meter integration**:
+
+    ```c
+    typedef struct {
+        float voltage;       // V
+        float current;       // A
+        float power;         // kW
+        float energy;        // kWh
+        float power_factor;
+    } EnergyMeter_t;
+
+    EnergyMeter_t ReadEnergyMeter(void) {
+        EnergyMeter_t meter;
+
+        // Read from meter IC via SPI or UART
+        meter.voltage = ReadRegister(VRMS_REG) * V_SCALE;
+        meter.current = ReadRegister(IRMS_REG) * I_SCALE;
+        meter.power = meter.voltage * meter.current * meter.power_factor / 1000.0;  // kW
+        meter.energy = ReadRegister(ENERGY_REG) * E_SCALE / 1000.0;  // kWh
+
+        return meter;
+    }
+    ```
+
+
+  ### Communication and Control
+
+
+  - **Controller options**:
+
+    - **Low-cost (AC Level 2)**: STM32F4, ESP32 (WiFi built-in)
+
+    - **High-performance (DC fast)**: Raspberry Pi 4, NVIDIA Jetson (for ISO 15118 EXI processing)
+
+    - **Industrial**: Siemens PLC, Beckhoff IPC (for multi-charger depot)
+
+
+  - **Communication interfaces**:
+
+    - **Local**: UART, CAN, Modbus RTU (to power modules)
+
+    - **Backend**: WiFi, 4G LTE, Ethernet (OCPP to central system)
+
+    - **PLC**: HomePlug Green PHY modem (ISO 15118 to EV)
+
+    - **User interface**: NFC, RFID, touchscreen LCD
+
+
+  - **Firmware architecture**:
+
+    ```
+    Main Loop (1 kHz):
+      - Read sensors (voltage, current, temperature)
+      - Update state machine (idle, charging, fault)
+      - Control contactors, power modules
+      - Update display, LED indicators
+
+    Communication Tasks:
+      - OCPP handler (100 ms, WebSocket to cloud)
+      - ISO 15118 handler (100 ms, PLC to EV)
+      - Modbus slave (10 ms, for local monitoring)
+
+    Safety Monitor (10 kHz):
+      - Overvoltage, overcurrent, ground fault detection
+      - Emergency stop button input
+      - Watchdog timer refresh
+    ```
+
+
+  ### Safety Systems
+
+
+  - **Ground Fault Circuit Interrupter (GFCI)** for AC:
+
+    - Detects leakage current: I_hot + I_neutral ≠ 0 (>20 mA for EV charging)
+
+    - Trip time: <25 ms
+
+    - Self-test: Monthly automatic test (simulate fault, verify trip)
+
+
+  - **Residual Current Device (RCD)** for DC:
+
+    - Monitors DC leakage: I_DC+ + I_DC- > 20 mA
+
+    - Sensor: Hall effect current sensors on both rails
+
+    - Trip: Open contactors within 100 ms
+
+
+  - **Insulation Monitoring Device (IMD)**:
+
+    - Measures DC+ and DC- to ground before charging
+
+    - Threshold: >100 Ω/V (e.g., >50 kΩ for 500V system)
+
+    - Method: Inject low-frequency AC or DC pulse, measure response
+
+
+  - **Overvoltage/overcurrent protection**:
+
+    - Hardware: Varistor (MOV) for transient overvoltage, fuse for overcurrent
+
+    - Software: Monitor voltage/current, trip contactors if exceed limits
+
+
+  - **Emergency stop (E-stop)**:
+
+    - Hardwired button (NO contact in series with contactor coil)
+
+    - Pressing E-stop immediately de-energizes contactors
+
+    - Reset: Requires manual reset (twisting E-stop button)
+
+
+  - **Thermal protection**:
+
+    - NTC thermistors on power semiconductors, contactors, connectors
+
+    - Derate power if temperature >80°C, shut down if >95°C
+
+
+  ### Mechanical and Thermal Design
+
+
+  - **Enclosure**:
+
+    - IP rating: IP54 (indoor) or IP65 (outdoor, weatherproof)
+
+    - Material: Powder-coated steel or stainless steel
+
+    - Ventilation: Forced air cooling (fans) or natural convection for <10 kW
+
+    - Cable management: Strain relief, cable retractor for DC fast charging
+
+
+  - **Thermal management**:
+
+    - **Air-cooled** (<50 kW): Heatsinks with fans, 40-80 CFM airflow
+
+    - **Liquid-cooled** (>100 kW): Glycol-water loop, plate heat exchanger
+
+    - **Cable cooling** (>200A): Liquid-cooled cable (coolant channels in cable)
+
+
+  - **Connector mounting**:
+
+    - Holster: Wall-mounted or pedestal-mounted for cable storage
+
+    - Cable length: 3-5 meters (reach vehicle inlet from various parking positions)
+
+    - Cable weight: 3-5 kg for AC, 8-15 kg for DC (strain on user)
+
+
+  ### Multi-Charger Depot Architecture
+
+
+  - **Power distribution** (10-charger depot):
+
+    ```
+    Grid (480V 3-phase, 1000A service)
+      ↓
+    Main Distribution Panel
+      ↓
+    ├─ Charger 1 (50 kW) ← Subfeed breaker 125A
+    ├─ Charger 2 (50 kW)
+    ├─ ...
+    └─ Charger 10 (50 kW)
+      ↓
+    Total: 500 kW (but diversity factor: 70% = 350 kW actual demand)
+    ```
+
+
+  - **Load management controller**:
+
+    - Central controller monitors total power draw
+
+    - Sends power limit commands to each charger (via Modbus or OCPP)
+
+    - Example: 400 kW available, 10 chargers → 40 kW each, or prioritize some at 50 kW
+
+
+  - **Communication network**:
+
+    - Ethernet switch: Connect all chargers to central controller and cloud
+
+    - Redundancy: Dual WAN (wired + 4G LTE) for internet connectivity
+
+
+  ### Bill of Materials (BOM) Example for 50 kW DC Charger
+
+
+  | Component | Description | Quantity | Unit Cost | Total |
+  |-----------|-------------|----------|-----------|-------|
+  | PFC Rectifier Module | 60 kW, 3-phase | 1 | $8,000 | $8,000 |
+  | DC-DC Converter | 50 kW, 200-1000V | 1 | $12,000 | $12,000 |
+  | DC Contactors | 1000V, 500A | 2 | $500 | $1,000 |
+  | Energy Meter | MID certified | 1 | $300 | $300 |
+  | CCS Connector | Type 1 or Type 2 | 1 | $1,000 | $1,000 |
+  | PLC Modem | QCA7000 | 1 | $200 | $200 |
+  | Controller | Raspberry Pi 4 + IO board | 1 | $400 | $400 |
+  | Enclosure | IP65, steel | 1 | $2,000 | $2,000 |
+  | Cooling System | Fans, heatsinks | 1 | $500 | $500 |
+  | Display | 7" touchscreen | 1 | $300 | $300 |
+  | Safety Devices | GFCI, RCD, E-stop | 1 | $400 | $400 |
+  | Cable | 5m, liquid-cooled | 1 | $1,500 | $1,500 |
+  | | | **Total BOM** | | **$27,600** |
+
+  - Add 30-50% for assembly, testing, certification → **$35K-40K per 50 kW charger**
+
+
+  ## Approach
+
+
+  1. **Requirements**: Define power level, connector type, communication (OCPP, ISO 15118)
+
+  2. **Power electronics**: Select topology (PFC, DC-DC), semiconductor (IGBT vs SiC), cooling
+
+  3. **Control system**: Choose controller, implement state machine, safety monitors
+
+  4. **Metering**: Integrate MID-certified meter for billing accuracy
+
+  5. **Communication**: Integrate PLC modem (EV), WiFi/4G (backend), touchscreen (user)
+
+  6. **Safety**: GFCI/RCD, insulation monitoring, emergency stop, thermal protection
+
+  7. **Mechanical**: Enclosure design, cable management, cooling system
+
+  8. **Testing**: Power delivery, efficiency, safety compliance (UL 2202), EMC (FCC Part 15)
+
+
+  ## Deliverables
+
+
+  - System architecture diagram (block diagram, single-line electrical)
+
+  - Power electronics design (schematic, PCB layout, thermal analysis)
+
+  - Firmware (state machine, OCPP/ISO 15118 stack, safety monitors)
+
+  - BOM with cost analysis
+
+  - Mechanical drawings (enclosure, cable assembly)
+
+  - Test reports (power quality, efficiency, safety, EMC)
+
+  - Certification documentation (UL, CE, FCC)
+
+
+  ## Best Practices
+
+
+  - **Redundancy**: Dual contactors for fail-safe (if one welds, other can open)
+
+  - **Derating**: Size components for 80% of rating (extend lifetime, reduce failures)
+
+  - **Modularity**: Use standard power modules (easy to replace if failed)
+
+  - **Remote monitoring**: Telemetry for voltage, current, temperature (predictive maintenance)
+
+  - **User feedback**: LEDs, display, audio alerts (clear status indication)
+
+
+  ## Integration
+
+
+  - **Grid**: Utility interconnection (breaker, meter, power quality monitoring)
+
+  - **Backend**: OCPP to central management system (session data, billing, firmware updates)
+
+  - **Payment**: Credit card reader, RFID, mobile app integration
+
+  - **Fleet management**: API for depot operators (schedule charging, monitor SOC)
+
+
+  '
+constraints:
+- High upfront cost (DC fast charger: $30K-150K depending on power level)
+- Power electronics complexity (require specialized design expertise)
+- Cooling requirements for high-power (liquid cooling, maintenance)
+- Safety certification lengthy and expensive (UL, CE, 6-12 months)
+tools_required:
+- Power electronics simulation (PLECS, LTspice, PSIM)
+- PCB design software (Altium, KiCad)
+- Thermal analysis (ANSYS, SolidWorks Flow Simulation)
+- Oscilloscope, power analyzer for testing
+- EMC chamber for compliance testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- charging-infrastructure
+- evse
+- power-electronics
+- hardware-design
+- contactors
+- metering
+- automotive

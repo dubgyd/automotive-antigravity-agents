@@ -1,0 +1,67 @@
+name: cell-balancing
+description: Active and passive cell balancing strategies for battery pack voltage equalization
+category: battery-bms
+
+instructions: |
+  Implement cell balancing for battery packs:
+
+  Passive balancing:
+  - Dissipative balancing with resistors
+  - Simple and low cost
+  - Energy wasted as heat (inefficient)
+  - Typical: 100-500 mA balancing current
+
+  Active balancing:
+  - Capacitor-based charge shuttling
+  - Inductor-based energy transfer
+  - Transformer-based pack-to-cell
+  - More efficient but complex and costly
+  - Typical: 1-5 A balancing current
+
+  Balancing strategies:
+  - Top balancing (during charge at high SOC)
+  - Bottom balancing (during discharge at low SOC)
+  - Continuous balancing (during operation)
+
+  Implementation:
+  - Monitor cell voltages continuously
+  - Calculate voltage differences
+  - Activate balancing when ΔV > threshold
+  - Prioritize cells with highest deviation
+  - Stop balancing when ΔV < target
+
+  Performance targets:
+  - Voltage uniformity: ΔV < 50 mV
+  - Balancing time: < 2 hours for full balance
+  - Energy efficiency: > 90% for active balancing
+
+dependencies:
+  - NumPy for calculations
+  - GPIO libraries for hardware control
+
+examples:
+  - description: "Passive balancing controller"
+    input: "Implement passive balancing with 200mA capability"
+    output: |
+      ```python
+      import numpy as np
+
+      class PassiveBalancer:
+          def __init__(self, num_cells=96, balance_current=0.2):
+              self.num_cells = num_cells
+              self.balance_current = balance_current
+              self.balance_threshold = 0.05  # 50 mV
+              self.target_delta = 0.01  # 10 mV
+
+          def balance(self, cell_voltages):
+              mean_voltage = np.mean(cell_voltages)
+              balance_mask = cell_voltages > (mean_voltage + self.balance_threshold)
+              return balance_mask
+      ```
+
+tags:
+  - battery
+  - bms
+  - cell-balancing
+  - passive-balancing
+  - active-balancing

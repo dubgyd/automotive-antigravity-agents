@@ -1,0 +1,159 @@
+name: monetization-models
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: monetization_models
+description: Subscription services, features-on-demand, VaaS, data monetization for connected vehicles
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Monetization models for automotive OEMs are evolving from a one-time vehicle sale transaction to
+  recurring revenue streams enabled by software-defined vehicles, connectivity, and data. The industry
+  projects that vehicle-related software and services could generate 100+ billion EUR annually by 2030.
+  This skill covers subscription services, features-on-demand (FoD), Vehicle-as-a-Service (VaaS), data
+  monetization, charging services, and ecosystem platform strategies that enable OEMs to capture value
+  throughout the vehicle lifecycle rather than only at point of sale.
+
+  ## Key Concepts
+
+  ### Revenue Model Categories
+  - **One-time purchase**: Traditional vehicle sale, optional equipment packages at point of sale
+  - **Subscription services**: Recurring monthly/annual fees for ongoing services (navigation, streaming, ADAS)
+  - **Features-on-Demand (FoD)**: Hardware pre-installed, software-unlocked features purchased post-sale
+  - **Pay-per-use**: Usage-based pricing for specific features (performance boost, trailer assist per trip)
+  - **Freemium**: Basic features free, premium tier with enhanced capabilities for a fee
+  - **Data monetization**: Anonymized vehicle data sold to third parties (traffic, road condition, fleet)
+
+  ### Vehicle Lifecycle Revenue Opportunities
+  - **Pre-delivery**: Configuration and personalization, finance and insurance (F&I) products
+  - **Ownership period**: Subscriptions, FoD, energy services, insurance, connected services
+  - **Service and maintenance**: Predictive maintenance, OTA diagnostics, parts and accessories
+  - **Resale**: Certified pre-owned programs, feature transfer or re-subscription on used vehicles
+  - **End-of-life**: Battery second-life, recycling, circular economy material recovery
+
+  ### Technology Enablers
+  - **OTA update capability**: Enables post-sale feature delivery and continuous improvement
+  - **Connected vehicle platform**: Telematics, cloud backend, customer identity management
+  - **Digital storefront**: In-vehicle app store, mobile app, web portal for feature purchase
+  - **Payment infrastructure**: In-vehicle payment, subscription billing, feature licensing system
+  - **Hardware over-provisioning**: Pre-install sensors, processors, actuators for future software unlock
+  - **Customer data platform**: Unified view of customer across vehicle, app, web, and dealer touchpoints
+
+  ## Implementation Guide
+
+  ### Step 1: Revenue Opportunity Assessment
+  - Map all potential monetization opportunities across vehicle lifecycle stages
+  - Estimate addressable market size by feature category (ADAS, comfort, performance, entertainment)
+  - Research customer willingness-to-pay through conjoint analysis and market research
+  - Benchmark competitor subscription and FoD offerings (pricing, take rates, customer feedback)
+
+  ### Step 2: Business Model Design
+  - Define pricing strategy for each feature: one-time unlock, monthly subscription, or hybrid
+  - Model unit economics: customer acquisition cost, lifetime value (LTV), churn rate, margin
+  - Design feature packaging: bundles vs. a-la-carte, tier structure (basic, premium, ultimate)
+  - Determine hardware pre-provisioning strategy and associated upfront cost impact on vehicle margin
+
+  ### Step 3: Technical Platform Development
+  - Build connected vehicle backend with feature authorization and entitlement management
+  - Develop digital storefront with seamless purchase flow (in-car, app, web)
+  - Implement OTA delivery pipeline for feature activation with rollback capability
+  - Create billing and subscription management system integrated with existing CRM/DMS
+
+  ### Step 4: Launch and Scaling
+  - Pilot with early adopter segment on one model/market before global rollout
+  - Train dealer network on selling and explaining subscription/FoD model to customers
+  - Implement customer success program to drive adoption, reduce churn, and gather feedback
+  - Establish analytics dashboard tracking take rates, ARPU, churn, LTV by feature and segment
+
+  ## Decision Frameworks
+
+  ### Feature Monetization Decision Matrix
+  | Feature Type | One-Time Purchase | Subscription | FoD Unlock | Free (Included) |
+  |-------------|------------------|-------------|-----------|-----------------|
+  | Safety-critical (AEB, ESC) | No | No | No | Always free |
+  | ADAS (L2+, parking) | Optional | Preferred | Viable | Basic L1 free |
+  | Performance (power, handling) | Viable | Viable | Preferred | No |
+  | Comfort (heated seats, massage) | Traditional | Controversial | Preferred | No |
+  | Infotainment (streaming, nav) | No | Preferred | No | Basic free |
+  | Connectivity (remote, OTA) | No | Preferred | No | Basic free trial |
+
+  ### Pricing Strategy Selection
+  - **Cost-plus**: Base price on feature development cost plus margin (simple but misses value)
+  - **Value-based**: Price based on customer perceived value and willingness-to-pay (preferred)
+  - **Competitive**: Match or undercut competitor pricing for commodity features
+  - **Penetration**: Low initial price to drive adoption, increase over time
+  - **Dynamic**: Time-limited offers, seasonal promotions, loyalty rewards
+
+  ### Customer Acceptance Risk Assessment
+  - Will customers accept paying for pre-installed hardware? (heated seats controversy lesson)
+  - Does the pricing feel fair relative to the one-time purchase alternative?
+  - Is the feature genuinely better as a service (updated, improved) or artificially gated?
+  - What is the backlash risk on social media and automotive press?
+  - Can the feature be easily replicated by aftermarket at lower cost?
+
+  ## Best Practices
+
+  - Never gate safety-critical features behind paywalls; this is ethically indefensible and legally risky
+  - Design features that genuinely improve with continuous updates to justify ongoing subscription
+  - Offer transparent pricing: customers must understand what they are paying for and why
+  - Provide a meaningful free tier or trial period to demonstrate value before asking for commitment
+  - Model cannialization impact on one-time equipment sales when introducing subscriptions
+  - Track and optimize churn rate; automotive subscription churn benchmarks are 20-40% annually
+  - Consider residual value impact: vehicles with transferable subscriptions may command premium
+  - Separate vehicle purchase decision from service subscription to avoid sticker shock
+  - Build data monetization only with explicit customer consent and strong privacy protections
+  - Partner with content providers (Spotify, Netflix, gaming) rather than building in-house
+
+  ## Examples
+
+  ### Example 1: ADAS Subscription Model
+  An OEM offers L2+ highway driving assist as a monthly subscription at 25 EUR/month instead of 3,500 EUR
+  one-time option. Hardware (cameras, radar, compute) pre-installed on all vehicles. Take rate: 35% at
+  launch vs. 12% as one-time option. Average subscription duration: 14 months. LTV per subscriber:
+  350 EUR. Revenue impact: positive at fleet level despite lower per-customer revenue due to 3x adoption.
+  Key: feature improves quarterly via OTA, justifying ongoing payment.
+
+  ### Example 2: EV Charging and Energy Services
+  An OEM builds integrated energy ecosystem: public charging network access (flat-rate subscription at
+  30 EUR/month), smart home charging optimization (time-of-use arbitrage), and vehicle-to-grid (V2G)
+  revenue sharing. Combined ARPU from energy services: 45 EUR/month per active EV customer. Requires:
+  bi-directional charger hardware, energy management software, partnerships with utility companies.
+
+  ### Example 3: Fleet Data Monetization
+  An OEM with 2M connected vehicles offers anonymized, aggregated data products to third parties: road
+  surface quality data to municipal authorities (0.50 EUR/vehicle/month), traffic flow data to navigation
+  companies (0.30 EUR/vehicle/month), weather micro-sensing to meteorological services (0.20 EUR/vehicle/
+  month). Total fleet data revenue: 24M EUR/year. Privacy framework: GDPR-compliant anonymization,
+  customer opt-in, transparent data usage policy, regular privacy impact assessments.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- monetization-models
+- automotive
+- oem

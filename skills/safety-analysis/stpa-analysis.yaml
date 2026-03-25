@@ -1,0 +1,87 @@
+name: STPA - System-Theoretic Process Analysis
+description: Modern hazard analysis method for complex systems (ISO 26262-9 Annex)
+tags:
+  - safety-analysis
+  - stpa
+  - iso-26262
+  - hazard-analysis
+
+instructions: |
+  You are an expert in STPA (System-Theoretic Process Analysis) for automotive safety.
+
+  **What is STPA:**
+  STPA is a hazard analysis technique based on systems theory. Unlike traditional methods
+  (FMEA, FTA), STPA focuses on unsafe control actions and inadequate control algorithms.
+
+  **When to Use STPA:**
+  - Complex software-intensive systems (ADAS, autonomous driving)
+  - Systems with emergent behaviors
+  - Safety analysis per ISO 26262-9 Annex (recommended for ASIL C/D)
+  - Complement to HARA (Hazard Analysis and Risk Assessment)
+
+  **STPA Four-Step Process:**
+
+  **Step 1: Define Purpose**
+  - Identify system-level hazards
+  - Define accidents to prevent
+  - Define system boundary
+
+  **Step 2: Model Control Structure**
+  - Identify controllers and controlled processes
+  - Define control actions
+  - Identify feedback mechanisms
+  - Create control structure diagram
+
+  **Step 3: Identify Unsafe Control Actions (UCAs)**
+  For each control action, identify:
+  - Not providing causes hazard
+  - Providing causes hazard
+  - Providing too early/too late causes hazard
+  - Stopped too soon/applied too long causes hazard
+
+  **Step 4: Identify Causal Scenarios**
+  For each UCA, determine:
+  - Why would controller issue UCA?
+  - Inadequate control algorithm
+  - Incorrect process model
+  - Inadequate feedback
+  - Component failures
+
+  **STPA vs Traditional Methods:**
+  - FMEA: Bottom-up, component failures
+  - FTA: Top-down, deductive
+  - STPA: System-level, includes software logic errors, human factors
+
+  **Automotive Examples:**
+  - Adaptive Cruise Control (ACC): "Vehicle applies brakes too late"
+  - Lane Keeping Assist: "System provides steering torque when driver intends to change lanes"
+
+tasks:
+  - Perform STPA analysis for ADAS feature
+  - Identify unsafe control actions for ACC system
+  - Create control structure diagram for automated parking
+  - Generate causal scenarios for LKA system
+  - Combine STPA with HARA per ISO 26262
+
+examples:
+  - example: STPA for Emergency Braking
+    prompt: |
+      Perform STPA analysis for Automatic Emergency Braking (AEB) system.
+
+      System: AEB activates brakes when collision imminent
+      Hazard: Vehicle does not brake when collision imminent
+      Control Action: "Apply Emergency Braking"
+
+      Generate:
+      1. Control structure diagram
+      2. Unsafe control actions (4 types)
+      3. Causal scenarios
+
+metadata:
+  version: "1.0.0"
+  standard: ISO 26262-9 Annex
+  applicable_to:
+    - ADAS systems
+    - Autonomous driving
+    - Software-intensive systems
+    - ASIL C/D development

@@ -1,0 +1,160 @@
+name: smart-textiles
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Heated, cooled, and pressure-sensing fabric technologies for automotive seating and interior surfaces, covering conductive yarn integration, thermal regulation, and occupant detection."
+use_cases:
+  - "Designing seat covers with embedded heating and ventilation zones"
+  - "Implementing pressure-sensing fabrics for occupant classification and posture detection"
+  - "Building capacitive touch surfaces into armrests and door panels using conductive textiles"
+  - "Creating shape-memory fabric that adapts seat contour to passenger body shape"
+  - "Integrating LED-emitting fibers for ambient illumination in headliners and door cards"
+automotive_standards:
+  - "FMVSS 302 - Flammability of interior materials"
+  - "ISO 3795 - Burning behavior of interior materials"
+  - "SAE J1939 - Vehicle bus integration for seat sensors"
+  - "ECE R17 - Seat strength and head restraint requirements"
+  - "ISO 11452 - EMC requirements for electronic textiles in vehicles"
+instructions: |
+  # Smart Textiles
+
+  ## Overview
+  Smart textiles embed electronic functionality directly into the fabric of vehicle
+  interiors. Conductive yarns, piezoelectric fibers, thermochromic threads, and flexible
+  sensors transform passive upholstery into active surfaces that heat, cool, sense
+  pressure, detect touch, and even emit light. These technologies enable more comfortable,
+  personalized, and intelligent cabin environments.
+
+  ## Key Concepts
+
+  ### Conductive Yarn Technologies
+  Several approaches embed electrical conductivity into textile fibers:
+  - Silver-coated nylon provides excellent conductivity for sensing and heating circuits
+  - Stainless steel fiber blends offer durability for high-wear seat surfaces
+  - Carbon nanotube-infused yarns enable stretchable conductors for flexible surfaces
+  - Printed conductive traces on fabric substrates using silver nanoparticle inks
+
+  ### Thermal Regulation Fabrics
+  Heating and cooling integrated directly into seat and surface textiles:
+  - Resistive heating elements woven as parallel conductive traces across seat zones
+  - Peltier-effect cooling modules embedded beneath fabric with air distribution layers
+  - Phase-change material microcapsules in yarn coatings buffer temperature swings
+  - Typical heating power density of 200 to 400 W/m2 for rapid warm-up
+
+  ### Pressure Sensing Arrays
+  Fabric-based pressure sensors create dense sensing grids:
+  - Piezoresistive yarn crossings detect pressure at each intersection point
+  - Capacitive textile layers measure compression between conductive fabric sheets
+  - Typical resolution of 10 mm to 20 mm pitch for occupant classification
+  - Pressure range from 0.1 kPa (light touch) to 100 kPa (seated occupant)
+
+  ## Implementation Guide
+
+  ### Step 1 - Define Functional Requirements
+  Specify the smart textile capabilities needed per interior zone:
+  - Seat cushion and backrest require heating, cooling, and pressure sensing
+  - Armrest surfaces need capacitive touch detection and optional heating
+  - Headliner may incorporate ambient lighting fibers and microphone arrays
+  - Door panels benefit from touch-sensitive surfaces and accent lighting
+
+  ### Step 2 - Select Materials and Construction
+  Choose textile construction methods compatible with automotive requirements:
+  - Woven construction for heating elements ensures even heat distribution
+  - Knitted construction for pressure sensors allows stretch and conformability
+  - Laminated multi-layer construction separates sensing, heating, and wear layers
+  - All materials must pass FMVSS 302 flammability testing before integration
+
+  ### Step 3 - Design the Electrical Architecture
+  Plan power distribution and signal routing through the textile:
+  - Use bus bars along seat frame edges to distribute power to heating zones
+  - Route sensor signals through shielded conductive traces to avoid EMI pickup
+  - Implement multiplexing to reduce wire count from pressure sensing arrays
+  - Design for 12V automotive power with appropriate fusing per zone
+
+  ### Step 4 - Integrate with Vehicle Systems
+  Connect smart textile functions to the vehicle network:
+  - Heating and cooling zones controlled via climate ECU over LIN or CAN
+  - Pressure data fed to occupant classification module for airbag deployment decisions
+  - Touch inputs routed to body controller for seat adjustment and comfort features
+  - Temperature feedback from textile thermistors enables closed-loop thermal regulation
+
+  ### Step 5 - Validate Durability
+  Test smart textiles under automotive lifecycle conditions:
+  - 100000 ingress-egress cycles for seat cushion wear simulation
+  - Thermal cycling from -40 C to 85 C for 1000 cycles without degradation
+  - Wash and clean resistance using approved automotive interior cleaners
+  - UV exposure testing equivalent to 10 years of sunlight through side windows
+
+  ## Best Practices
+
+  ### Comfort and Feel
+  - Smart textile surface must be indistinguishable from conventional upholstery by touch
+  - Keep total textile stack thickness below 4 mm to avoid changing seat comfort feel
+  - Use breathable layers above heating elements to prevent moisture buildup
+  - Ensure conductive elements are not perceptible through the wear surface
+
+  ### Safety Integration
+  - Pressure sensing for occupant classification must meet FMVSS 208 requirements
+  - Heating elements require over-temperature protection with redundant thermal cutoffs
+  - Conductive textiles must not create short circuit risks when exposed to spilled liquids
+  - Test electromagnetic emissions to ensure compliance with CISPR 25 limits
+
+  ### Serviceability
+  - Design smart textile seat covers as replaceable modules with quick-connect harnesses
+  - Include built-in self-test capability for heating zones and sensor arrays
+  - Store calibration data in a seat module EEPROM that travels with the replacement part
+  - Provide diagnostic trouble codes for each functional zone independently
+
+  ## Troubleshooting
+
+  ### Uneven Heating Across Seat Surface
+  Check for broken conductive traces by measuring resistance across each heating zone.
+  Verify power distribution bus bar connections at the seat frame. Inspect for physical
+  damage from occupant entry and exit wear patterns.
+
+  ### Pressure Sensor Gives False Occupant Detection
+  Calibrate the pressure threshold accounting for seat foam aging and compression set.
+  Check for moisture ingress that could create parasitic capacitance readings. Verify
+  the sensor array is not picking up vibration from the vehicle as pressure events.
+
+  ### Capacitive Touch Not Responding on Armrest
+  Verify the drive signal amplitude is sufficient to penetrate the wear layer thickness.
+  Check for grounding issues in the conductive textile reference plane. Ensure the touch
+  controller firmware accounts for temperature-related capacitance drift.
+
+  ### Fabric Feels Stiff After Installation
+  Review the lamination process to ensure adhesive has not saturated the wear surface.
+  Check that conductive traces are routed along natural flex lines of the fabric. Verify
+  the multi-layer stack thickness matches the design specification.
+
+  ## Integration Patterns
+
+  ### Multi-Layer Data Fusion
+  Combining data from multiple textile sensor types for richer understanding:
+  - Fuse pressure map data with temperature readings for thermal comfort assessment
+  - Combine capacitive touch on armrest with seat pressure for gesture disambiguation
+  - Use heating zone feedback with pressure data to detect which body areas need warmth
+  - Aggregate data across all textile sensors into a unified occupant comfort model
+
+  ### Production Integration
+  Incorporating smart textiles into automotive manufacturing processes:
+  - Design textile electronics to survive the seat foam injection molding process
+  - Specify conductive yarn that withstands automated sewing and cutting operations
+  - Implement end-of-line testing that validates every sensor and heater zone
+  - Use a test connector that interfaces with the production test fixture for rapid validation
+
+  ## Testing and Validation
+
+  ### Abrasion and Wear Testing
+  Verify smart textile durability under realistic usage conditions:
+  - Run Martindale abrasion testing to 50000 cycles minimum on wear surfaces
+  - Perform seated-weight cyclic loading at 100 kg for 100000 cycles on seat cushion
+  - Verify all sensing and heating functions remain operational after wear testing
+  - Measure change in resistance of conductive traces as a function of abrasion cycles
+
+  ### Washability and Cleaning
+  Ensure smart textiles survive automotive interior cleaning procedures:
+  - Test with approved automotive leather and fabric cleaners per OEM specification
+  - Verify sensor calibration stability after 100 cleaning cycles
+  - Confirm no delamination of conductive layers after solvent exposure testing
+  - Validate that heating element resistance does not change after cleaning exposure

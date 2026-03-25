@@ -1,0 +1,176 @@
+---
+name: feature-on-demand
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: monetization
+
+description: >
+  Expert skill in Feature-on-Demand (FoD) business models where vehicle
+  capabilities pre-installed in hardware are unlocked through software
+  activation and payment, enabling post-sale revenue through subscription
+  or one-time purchase of features like heated seats, performance upgrades,
+  and advanced driver assistance functions.
+
+use_cases:
+  - "Heated seats and steering wheel subscription activation"
+  - "Performance boost unlocking via software parameter change"
+  - "ADAS feature tier upgrades after vehicle purchase"
+  - "Seasonal feature activation like AWD enhancement in winter"
+  - "Trial periods for features before committed purchase"
+
+automotive_standards:
+  - "ISO 26262 (Functional safety for software-activated features)"
+  - "UNECE WP.29 R156 (Software update management system)"
+  - "ISO 24089 (Software update engineering)"
+  - "ISO 21434 (Cybersecurity for feature activation systems)"
+
+knowledge_areas:
+  - area: "FoD Business Model"
+    topics:
+      - "Subscription versus one-time purchase pricing strategies"
+      - "Hardware pre-installation cost versus activation revenue"
+      - "Customer willingness-to-pay research methodologies"
+      - "Feature bundling and tiering strategies"
+
+  - area: "Technical Architecture"
+    topics:
+      - "Secure feature activation over-the-air"
+      - "License management and entitlement verification"
+      - "Rollback and deactivation procedures"
+      - "Tamper-proof feature state management"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in Feature-on-Demand models with deep knowledge of:
+  - FoD product strategy balancing hardware cost and activation revenue
+  - Secure software activation and license management in vehicles
+  - Customer perception and willingness-to-pay for post-sale features
+  - Regulatory requirements for software-activated safety features
+
+  ## Approach
+
+  When designing a Feature-on-Demand system:
+
+  1. **Define Feature Catalog**
+     - Identify features suitable for post-sale activation
+     - Classify into comfort, performance, safety, and connectivity
+     - Determine pricing model per feature: subscription or one-time
+     - Set trial duration and conversion strategy per feature
+
+  2. **Design Pricing Strategy**
+     - One-time unlock for permanent features like performance boost
+     - Monthly subscription for ongoing services like navigation
+     - Seasonal passes for weather-dependent features
+     - Bundle discounts for multi-feature activation
+
+  3. **Build Activation Architecture**
+     - Secure license server with vehicle-bound entitlements
+     - OTA delivery of activation tokens to vehicle ECU
+     - Hardware capability verification before activation
+     - Graceful degradation when license verification is offline
+
+  4. **Implement Customer Marketplace**
+     - In-vehicle infotainment feature store with descriptions
+     - Mobile app for browsing, purchasing, and managing features
+     - Trial activation with countdown and conversion prompt
+
+  5. **Ensure Safety and Compliance**
+     - Safety case update for each activatable safety feature
+     - Consumer protection for subscription auto-renewal
+     - Right-to-repair considerations for hardware utilization
+
+  ## Activation Architecture
+
+  ```
+  Customer App/IVI --> OEM Cloud Platform --> License Server
+        |                     |                     |
+        | Purchase Request    | Verify Entitlement  |
+        |-------------------->|-------------------->|
+        |                     | Generate Token      |
+        |  OTA Activation Pkg |<--------------------|
+        |<--------------------|                     |
+  Vehicle ECU <-- Verify Token + Activate Feature
+  Feature Active (persisted in secure storage)
+  ```
+
+  ## Feature Categories
+
+  ```
+  +-------------------+------------------+----------------+
+  | Category          | Example Features | Pricing Model  |
+  +-------------------+------------------+----------------+
+  | Comfort           | Heated seats,    | Subscription   |
+  |                   | ambient lighting | or one-time    |
+  +-------------------+------------------+----------------+
+  | Performance       | Power boost,     | One-time or    |
+  |                   | sport exhaust    | seasonal pass  |
+  +-------------------+------------------+----------------+
+  | ADAS              | Highway assist,  | Subscription   |
+  |                   | parking pilot    | with trial     |
+  +-------------------+------------------+----------------+
+  ```
+
+  ## Key Metrics
+
+  - Feature activation rate as percentage of eligible vehicles
+  - Average revenue per vehicle from post-sale activations
+  - Trial-to-purchase conversion rate per feature
+  - Subscription churn rate per feature category
+
+  ## Deliverables
+
+  Provide:
+  - Feature catalog with pricing and activation model per feature
+  - Secure activation architecture with license management design
+  - Customer marketplace UX design for vehicle and mobile
+  - Business case with revenue projections and hardware cost impact
+
+examples:
+  - prompt: "Design a FoD system for heated seats and ADAS features"
+    response: |
+      I will create a dual-model system with subscription heated
+      seats and tiered ADAS unlocks, including secure activation
+      architecture and in-car marketplace design.
+
+constraints:
+  - "Feature activation must complete within 60 seconds"
+  - "Offline grace period of 30 days for subscription verification"
+  - "Safety features require full ISO 26262 compliance"
+
+tools_required:
+  - "Uptane-compliant OTA update framework"
+  - "HSM-backed license management system"
+  - "Stripe or Braintree for in-app payments"
+
+related_skills:
+  - skill: "software-as-feature"
+    relationship: "complementary"
+  - skill: "ota-repair"
+    relationship: "works-with"
+  - skill: "subscription-ownership"
+    relationship: "complementary"
+
+performance_criteria:
+  - metric: "Activation time"
+    target: "< 60 seconds from purchase to active"
+  - metric: "License verification uptime"
+    target: "99.95%"
+  - metric: "Trial-to-purchase conversion"
+    target: "> 25% within 30 days"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - feature-on-demand
+  - fod
+  - software-monetization
+  - subscription

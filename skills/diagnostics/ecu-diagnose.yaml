@@ -1,0 +1,551 @@
+---
+name: ecu-diagnose
+category: diagnostics
+description: Comprehensive ECU diagnostic skills for fault detection and analysis
+
+instructions: |
+  ## ECU Diagnostics Guide — UDS (ISO 14229)
+
+  ### Overview
+
+  Unified Diagnostic Services (UDS) is the standard protocol for communicating with
+  automotive ECUs for fault detection, data reading, parameter writing, and software
+  maintenance. UDS operates over CAN (ISO 15765), Ethernet (DoIP/ISO 13400), FlexRay,
+  and LIN transport layers.
+
+  ### Diagnostic Session Types
+
+  | Session | ID | Purpose | Services Available |
+  |---------|----|---------|--------------------|
+  | Default | 0x01 | Normal operation | Read DTCs, Read DIDs |
+  | Programming | 0x02 | Flash programming | Download, Transfer |
+  | Extended | 0x03 | Full diagnostics | All services including IO control |
+  | Safety System | 0x04 | Safety diagnostics | OEM-specific |
+
+  ### UDS Service Overview
+
+  ```
+  Request:  [Service ID] [Sub-function] [Parameters...]
+  Response: [Service ID + 0x40] [Sub-function] [Response data...]
+  Negative: [0x7F] [Service ID] [NRC]
+  ```
+
+  ### Core Diagnostic Services
+
+  - **0x10 DiagnosticSessionControl**: Switch between session types
+  - **0x11 ECUReset**: Hard/soft/key-off-on reset
+  - **0x14 ClearDiagnosticInformation**: Clear DTCs
+  - **0x19 ReadDTCInformation**: Read fault codes with status, snapshots, extended data
+  - **0x22 ReadDataByIdentifier**: Read ECU data (VIN, SW version, sensor values)
+  - **0x27 SecurityAccess**: Seed-key authentication for protected operations
+  - **0x28 CommunicationControl**: Enable/disable ECU communication
+  - **0x2E WriteDataByIdentifier**: Write configuration data
+  - **0x2F InputOutputControlByIdentifier**: Actuator testing
+  - **0x31 RoutineControl**: Execute diagnostic routines (self-tests, calibration)
+  - **0x34/0x36/0x37 Download/Transfer/Exit**: Flash programming sequence
+  - **0x3E TesterPresent**: Session keep-alive
+  - **0x85 ControlDTCSettings**: Suppress DTC recording during testing
+
+  ### DTC Format and Status
+
+  DTCs are 3 bytes (e.g., 0x012345) plus a status byte with these bits:
+
+  | Bit | Name | Meaning |
+  |-----|------|---------|
+  | 0 | testFailed | DTC currently failing |
+  | 1 | testFailedThisOperationCycle | Failed this drive cycle |
+  | 2 | pendingDTC | Failed once, not yet confirmed |
+  | 3 | confirmedDTC | Fault confirmed (MIL on) |
+  | 4 | testNotCompletedSinceLastClear | Monitor not run since clear |
+  | 5 | testFailedSinceLastClear | Failed at least once since clear |
+  | 6 | testNotCompletedThisOperationCycle | Monitor not run this cycle |
+  | 7 | warningIndicatorRequested | Warning lamp requested |
+
+  ### Negative Response Codes (NRC)
+
+  | NRC | Name | Action |
+  |-----|------|--------|
+  | 0x10 | generalReject | Check request format |
+  | 0x11 | serviceNotSupported | Wrong session or ECU |
+  | 0x12 | subFunctionNotSupported | Check sub-function ID |
+  | 0x13 | incorrectMessageLengthOrInvalidFormat | Fix message length |
+  | 0x14 | responseTooLong | Request smaller data set |
+  | 0x21 | busyRepeatRequest | Retry after delay |
+  | 0x22 | conditionsNotCorrect | Check preconditions |
+  | 0x24 | requestSequenceError | Follow correct sequence |
+  | 0x31 | requestOutOfRange | Check parameter values |
+  | 0x33 | securityAccessDenied | Perform security access first |
+  | 0x35 | invalidKey | Wrong seed-key algorithm |
+  | 0x36 | exceededNumberOfAttempts | Wait before retry |
+  | 0x72 | generalProgrammingFailure | Flash hardware issue |
+  | 0x78 | requestCorrectlyReceivedResponsePending | Wait for final response |
+
+  ### Timing Parameters
+
+  - **P2Server**: ECU response time (typically 50ms, from 0x10 response)
+  - **P2*Server**: Extended response time after NRC 0x78 (typically 5000ms)
+  - **S3Server**: Session timeout without TesterPresent (typically 5s)
+
+  ### Security Access Pattern
+
+  ```
+  Tester                          ECU
+  ──────                          ───
+  SecurityAccess(0x01) ─────────► Request Seed
+                       ◄───────── Seed Value (e.g., 4 bytes)
+  Apply seed-key algorithm
+  SecurityAccess(0x02, key) ────► Send Key
+                       ◄───────── Positive Response (access granted)
+  ```
+
+  ### Multi-ECU Diagnostic Strategy
+
+  - Use gateway routing to access ECUs behind domain controllers
+  - Enumerate ECUs via DoIP vehicle discovery or known address table
+  - Run diagnostics in parallel where transport allows (Ethernet)
+  - Aggregate DTC results across all ECUs for root cause correlation
+
+  ### Best Practices
+
+  - Always start with DiagnosticSessionControl before extended operations
+  - Send TesterPresent every 2s to maintain non-default sessions
+  - Disable DTC setting (0x85) before intrusive tests, re-enable after
+  - Use ODX database for proper DID scaling and DTC descriptions
+  - Log all request/response pairs with timestamps for audit trails
+  - Handle NRC 0x78 with extended wait, not immediate retry
+  - Return communication control to normal after diagnostic session ends
+
+skills:
+  - name: read_dtc_information
+    description: Read diagnostic trouble codes from ECU
+    task: |
+      Execute ReadDTCInformation (0x19) service:
+      1. Request DTCs by status mask (0x02 - reportDTCByStatusMask)
+      2. Parse response: DTC (3 bytes) + Status Byte
+      3. Decode status bits (testFailed, testFailedThisOperationCycle, etc.)
+      4. Map DTC hex codes to descriptions using ODX database
+      5. Categorize by severity (A-U ratings per ISO 14229)
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - DTCs parsed correctly
+      - Status bytes decoded
+      - Descriptions mapped from ODX
+
+  - name: clear_diagnostic_information
+    description: Clear DTCs and diagnostic data
+    task: |
+      Execute ClearDiagnosticInformation (0x14):
+      1. Send service with DTC group (0xFFFFFF for all DTCs)
+      2. Verify positive response (0x54)
+      3. Read DTCs again to confirm cleared
+      4. Log clearing event with timestamp and user
+      5. Check for permanent DTCs that cannot be cleared
+    tools:
+      - python_uds_adapter
+    validation:
+      - Positive response received
+      - DTCs cleared (re-read shows empty)
+      - Permanent DTCs remain if applicable
+
+  - name: read_data_by_identifier
+    description: Read ECU data using data identifiers
+    task: |
+      Execute ReadDataByIdentifier (0x22):
+      1. Send request with DID (e.g., 0xF190 for VIN)
+      2. Parse response based on DID data type from ODX
+      3. Apply scaling and offset per ODX specification
+      4. Convert raw bytes to engineering units
+      5. Format output as structured JSON
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - DID data read successfully
+      - Scaling applied correctly
+      - Output format valid JSON
+
+  - name: write_data_by_identifier
+    description: Write data to ECU using data identifiers
+    task: |
+      Execute WriteDataByIdentifier (0x2E):
+      1. Validate write access (may require security access)
+      2. Encode data per ODX specification (scaling, byte order)
+      3. Send WriteDataByIdentifier with DID and data
+      4. Verify positive response (0x6E)
+      5. Read back value to confirm write succeeded
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Security access granted if required
+      - Positive response received
+      - Read-back matches written value
+
+  - name: routine_control
+    description: Execute diagnostic routines
+    task: |
+      Execute RoutineControl (0x31):
+      1. Start routine (sub-function 0x01) with routine identifier
+      2. Monitor routine status (sub-function 0x03 - requestRoutineResults)
+      3. Parse routine results from response
+      4. Handle long-running routines with polling
+      5. Stop routine if needed (sub-function 0x02)
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Routine started successfully
+      - Results parsed correctly
+      - Routine completed or stopped cleanly
+
+  - name: input_output_control
+    description: Control ECU inputs/outputs for testing
+    task: |
+      Execute InputOutputControlByIdentifier (0x2F):
+      1. Specify control parameter identifier
+      2. Set control option (returnControlToECU, resetToDefault, etc.)
+      3. Provide control state data
+      4. Monitor actual output vs. commanded
+      5. Return control to ECU after test
+    tools:
+      - python_uds_adapter
+    validation:
+      - Control command accepted
+      - Output responds to control
+      - Control returned to ECU
+
+  - name: read_memory_by_address
+    description: Read ECU memory at specific address
+    task: |
+      Execute ReadMemoryByAddress (0x23):
+      1. Specify memory address and size
+      2. Include addressAndLengthFormatIdentifier
+      3. Receive memory content in response
+      4. Parse based on expected data structure
+      5. Respect memory access restrictions per security level
+    tools:
+      - python_uds_adapter
+    validation:
+      - Memory read successfully
+      - Data length matches request
+      - No security access violations
+
+  - name: write_memory_by_address
+    description: Write data to ECU memory at specific address
+    task: |
+      Execute WriteMemoryByAddress (0x3D):
+      1. Obtain security access (typically required)
+      2. Specify memory address, size, and data
+      3. Verify positive response
+      4. Read back to confirm write
+      5. Log memory write event for audit trail
+    tools:
+      - python_uds_adapter
+    validation:
+      - Security access obtained
+      - Write successful
+      - Read-back confirms data
+
+  - name: diagnostic_session_control
+    description: Control diagnostic session types
+    task: |
+      Execute DiagnosticSessionControl (0x10):
+      1. Request session type (default, extended, programming, etc.)
+      2. Parse response for P2 and P2* timing parameters
+      3. Maintain session with TesterPresent (0x3E) if needed
+      4. Handle session timeout (return to default session)
+      5. Log session transitions
+    tools:
+      - python_uds_adapter
+    validation:
+      - Session established successfully
+      - Timing parameters parsed
+      - Session maintained via TesterPresent
+
+  - name: tester_present
+    description: Maintain diagnostic session with keep-alive
+    task: |
+      Execute TesterPresent (0x3E):
+      1. Send periodically (typically every 2 seconds)
+      2. Use sub-function 0x00 (zeroSubFunction)
+      3. Set suppressPosRspMsgIndicationBit (0x80) to reduce bus load
+      4. Handle missed responses (session may have timed out)
+      5. Implement as background task or thread
+    tools:
+      - python_uds_adapter
+    validation:
+      - TesterPresent sent periodically
+      - Session does not timeout
+      - Minimal bus impact
+
+  - name: communication_control
+    description: Control ECU communication modes
+    task: |
+      Execute CommunicationControl (0x28):
+      1. Specify control type (enableRxAndTx, disableRxAndTx, etc.)
+      2. Set communication type (normal, network management, etc.)
+      3. Use for bus quieting during diagnostics
+      4. Re-enable communication after operations
+      5. Monitor for unintended side effects
+    tools:
+      - python_uds_adapter
+    validation:
+      - Communication mode set successfully
+      - Diagnostic operations unaffected
+      - Communication restored
+
+  - name: control_dtc_setting
+    description: Enable or disable DTC setting in ECU
+    task: |
+      Execute ControlDTCSettings (0x85):
+      1. Disable DTC setting (0x02) before intrusive tests
+      2. Verify positive response (0xC5)
+      3. Perform test operations without generating DTCs
+      4. Re-enable DTC setting (0x01) after tests
+      5. Verify no spurious DTCs were set
+    tools:
+      - python_uds_adapter
+    validation:
+      - DTC setting disabled successfully
+      - Re-enabled after tests
+      - No unwanted DTCs
+
+  - name: link_control
+    description: Control data link layer for diagnostics
+    task: |
+      Execute LinkControl (0x87):
+      1. Set link baudrate for faster diagnostics
+      2. Execute verifyBaudrateTransitionWithFixedBaudrate
+      3. Transition to new baudrate
+      4. Verify communication at new rate
+      5. Revert to original baudrate if needed
+    tools:
+      - python_uds_adapter
+    validation:
+      - Baudrate transition successful
+      - Communication maintained
+      - Reversion works if needed
+
+  - name: read_scaling_by_identifier
+    description: Read DID scaling information
+    task: |
+      Execute ReadScalingDataByIdentifier (0x24):
+      1. Request scaling data for specific DID
+      2. Parse scaling formula (linear, polynomial)
+      3. Extract offset, gain, min, max values
+      4. Apply to raw data from ReadDataByIdentifier
+      5. Cache scaling data for performance
+    tools:
+      - python_uds_adapter
+    validation:
+      - Scaling data retrieved
+      - Formula parsed correctly
+      - Applied to raw data successfully
+
+  - name: dynamically_define_did
+    description: Create custom data identifiers
+    task: |
+      Execute DynamicallyDefineDataIdentifier (0x2C):
+      1. Define new DID by combining source DIDs
+      2. Specify memory addresses to include
+      3. Use for creating custom telemetry streams
+      4. Read dynamically defined DID with 0x22
+      5. Clear definition when no longer needed
+    tools:
+      - python_uds_adapter
+    validation:
+      - Custom DID defined successfully
+      - Readable via ReadDataByIdentifier
+      - Definition cleared cleanly
+
+  - name: read_dtc_snapshot
+    description: Read freeze frame data for DTCs
+    task: |
+      Execute ReadDTCInformation (0x19) sub-function 0x04:
+      1. Request snapshot data for specific DTC
+      2. Parse snapshot DIDs and values
+      3. Apply scaling from ODX for each DID
+      4. Reconstruct ECU state at time of fault
+      5. Format as diagnostic report
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Snapshot data retrieved
+      - DIDs parsed and scaled
+      - State reconstruction accurate
+
+  - name: read_dtc_extended_data
+    description: Read extended data records for DTCs
+    task: |
+      Execute ReadDTCInformation (0x19) sub-function 0x06:
+      1. Request extended data for specific DTC
+      2. Parse extended data records (occurrence counter, aging counter, etc.)
+      3. Decode per ODX specification
+      4. Analyze patterns (intermittent vs. permanent faults)
+      5. Generate extended diagnostic report
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Extended data retrieved
+      - Records parsed correctly
+      - Fault patterns identified
+
+  - name: access_timing_parameters
+    description: Read and set diagnostic timing parameters
+    task: |
+      Execute AccessTimingParameter (0x83):
+      1. Read current timing parameters (sub-function 0x01)
+      2. Parse P2, P2*, S3 server timings
+      3. Set custom timing if needed (sub-function 0x02)
+      4. Verify new timing with readCurrentTimingParameters
+      5. Reset to default if required (sub-function 0x03)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Timing parameters read successfully
+      - Custom timing applied if set
+      - Reset to default works
+
+  - name: secured_data_transmission
+    description: Transmit data with security/encryption
+    task: |
+      Execute SecuredDataTransmission (0x84):
+      1. Encrypt data payload using session key
+      2. Add security header (algorithm identifier)
+      3. Send secured data to ECU
+      4. Receive and decrypt ECU response
+      5. Verify data integrity with MAC/signature
+    tools:
+      - python_uds_adapter
+    validation:
+      - Data encrypted correctly
+      - ECU processes secured data
+      - Response decrypted successfully
+
+  - name: response_on_event
+    description: Configure ECU to respond on specific events
+    task: |
+      Execute ResponseOnEvent (0x86):
+      1. Set up event trigger (DTC status change, DID threshold)
+      2. Configure event window (start/stop conditions)
+      3. Specify response to send when event occurs
+      4. Monitor for event responses
+      5. Clear event configuration when done
+    tools:
+      - python_uds_adapter
+    validation:
+      - Event configured successfully
+      - ECU responds on event occurrence
+      - Configuration cleared properly
+
+  - name: read_periodic_data
+    description: Request periodic transmission of data
+    task: |
+      Execute ReadDataByPeriodicIdentifier (0x2A):
+      1. Request periodic transmission (sub-function 0x01)
+      2. Specify transmission rate (slow, medium, fast)
+      3. List DIDs to transmit periodically
+      4. Receive periodic responses
+      5. Stop periodic transmission (sub-function 0x04)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Periodic transmission started
+      - Data received at requested rate
+      - Transmission stopped cleanly
+
+  - name: diagnostic_session_timeout
+    description: Handle diagnostic session timeouts
+    task: |
+      Monitor and manage session timeouts:
+      1. Track time since last diagnostic message (S3 timeout)
+      2. Send TesterPresent before timeout expires
+      3. Detect session timeout (ECU returns to default session)
+      4. Re-establish session if needed
+      5. Log timeout events for diagnostics
+    tools:
+      - python_uds_adapter
+    validation:
+      - Timeouts detected correctly
+      - TesterPresent prevents timeout
+      - Session re-established on timeout
+
+  - name: multi_ecu_diagnostic
+    description: Perform diagnostics on multiple ECUs
+    task: |
+      Multi-ECU diagnostic workflow:
+      1. Enumerate ECUs on network (via gateway routing)
+      2. For each ECU: establish session, read DTCs, read DIDs
+      3. Aggregate results into comprehensive report
+      4. Identify inter-ECU fault correlations
+      5. Generate network-wide diagnostic summary
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - All ECUs diagnosed
+      - Results aggregated correctly
+      - Correlations identified
+
+  - name: diagnostic_log_export
+    description: Export diagnostic session logs
+    task: |
+      Generate comprehensive diagnostic logs:
+      1. Log all UDS messages (request/response) with timestamps
+      2. Include DTC snapshots and extended data
+      3. Export to standard formats (CSV, JSON, ASAM MDF4)
+      4. Add metadata (tester ID, ECU ID, session info)
+      5. Compress and archive for long-term storage
+    tools:
+      - python_uds_adapter
+    validation:
+      - All messages logged
+      - Export format valid
+      - Archive created successfully
+
+  - name: compare_diagnostic_sessions
+    description: Compare diagnostic results across sessions
+    task: |
+      Session comparison analysis:
+      1. Load diagnostic logs from multiple sessions
+      2. Compare DTC lists (new, cleared, persistent)
+      3. Analyze DID value trends over time
+      4. Identify degradation patterns
+      5. Generate delta report highlighting changes
+    tools:
+      - python_uds_adapter
+    validation:
+      - Sessions loaded correctly
+      - Differences identified accurately
+      - Delta report comprehensive
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 25
+  standard: ISO 14229-1 (UDS)
+  services_covered:
+    - 0x10: DiagnosticSessionControl
+    - 0x14: ClearDiagnosticInformation
+    - 0x19: ReadDTCInformation
+    - 0x22: ReadDataByIdentifier
+    - 0x23: ReadMemoryByAddress
+    - 0x27: SecurityAccess
+    - 0x28: CommunicationControl
+    - 0x2A: ReadDataByPeriodicIdentifier
+    - 0x2C: DynamicallyDefineDataIdentifier
+    - 0x2E: WriteDataByIdentifier
+    - 0x2F: InputOutputControlByIdentifier
+    - 0x31: RoutineControl
+    - 0x3D: WriteMemoryByAddress
+    - 0x3E: TesterPresent
+    - 0x83: AccessTimingParameter
+    - 0x84: SecuredDataTransmission
+    - 0x85: ControlDTCSettings
+    - 0x86: ResponseOnEvent
+    - 0x87: LinkControl

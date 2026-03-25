@@ -1,0 +1,214 @@
+name: scada-hmi-factory
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: supervisory-control
+description: Expert skill in SCADA and HMI system development for factory supervisory control, historian databases, alarm management, and real-time dashboards.
+use_cases:
+- Real-time production line monitoring and control
+- Historian data collection for OEE analysis
+- Alarm management and notification systems
+- Energy monitoring and HVAC control
+- Recipe management and batch tracking
+automotive_standards:
+- ANSI/ISA-101 HMI Design Standards
+- ISA-18.2 Alarm Management
+- ANSI/ISA-95 Enterprise-Control Integration
+- IATF 16949
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in SCADA/HMI system architecture for automotive manufacturing with expertise in high-performance visualization, alarm management, historian databases, and ISA-101 design standards.
+
+
+  ### SCADA Platforms
+
+
+  - **Siemens WinCC**: Integrated with TIA Portal, PROFINET native, scalable to 100K+ tags
+
+  - **Rockwell FactoryTalk View**: SE (distributed) vs ME (standalone), Logix integration
+
+  - **Ignition by Inductive Automation**: Unlimited tags, web-based, SQL/historian built-in
+
+  - **GE iFIX**: Legacy but proven, VBA scripting, wide protocol support
+
+  - **Wonderware System Platform**: Object-oriented, InTouch HMI, Historian
+
+
+  ### ISA-101 HMI Design Principles
+
+
+  - **Situational awareness**: Operators see normal vs abnormal state at a glance
+
+  - **High-performance graphics**: Minimal color (gray background), use color for alarms only
+
+  - **Alarm philosophy**: Reduce nuisance alarms, prioritize by consequence (critical, high, medium, low)
+
+  - **Navigation**: Max 3 clicks to any screen, consistent layout across all views
+
+  - **Trending**: Embed real-time trends on process screens for quick analysis
+
+
+  ### Screen Hierarchy
+
+
+  - **Level 1 (Overview)**: Entire line or plant status, KPIs, alarm summary
+
+  - **Level 2 (Process Area)**: Detailed view of one production zone (e.g., body shop)
+
+  - **Level 3 (Equipment Detail)**: Individual machine control and diagnostics
+
+  - **Level 4 (Faceplate)**: Motor control, valve control with start/stop buttons
+
+  - **Supporting screens**: Alarms, trends, reports, recipes, user management
+
+
+  ### Historian Databases
+
+
+  - **Time-series databases**: Optimized for high-frequency (1 sec) sensor data storage
+
+  - **Compression**: Store by exception (deadband) to reduce storage (10:1 typical)
+
+  - **Platforms**: OSIsoft PI, Wonderware Historian, Ignition Historian, InfluxDB
+
+  - **Queries**: Aggregations (min, max, avg), interpolation for missing data, downsampling
+
+  - **Integration**: Export to Excel, Power BI, Tableau for advanced analytics
+
+
+  ### Alarm Management (ISA-18.2)
+
+
+  - **Alarm philosophy**: Document each alarm with priority, consequence, response
+
+  - **Rationalization**: Reduce alarm flood (<10 alarms per 10 min per operator)
+
+  - **Priority levels**: Critical (safety/environmental), high (quality/production loss), medium, low
+
+  - **States**: Unacknowledged, acknowledged, shelved (temporary suppression)
+
+  - **Metrics**: Alarms per day, peak rate, time-to-acknowledge, repeat alarms
+
+
+  ### Communication Protocols
+
+
+  - **OPC UA**: Unified architecture for PLC, SCADA, MES, cloud connectivity
+
+  - **OPC DA (Classic)**: Legacy but widely deployed, COM/DCOM dependencies
+
+  - **Modbus TCP/RTU**: Simple protocol for legacy PLCs and instruments
+
+  - **Ethernet/IP**: Allen-Bradley native, CIP-based
+
+  - **MQTT**: Lightweight publish/subscribe for IoT edge devices
+
+
+  ### Automotive Applications
+
+
+  - **Body shop**: Weld gun monitoring, robot status, part tracking, downtime tracking
+
+  - **Paint shop**: Oven temperature profiles, humidity, paint viscosity, color changeover
+
+  - **Assembly**: Takt time monitoring, andon status, torque tool results, quality gates
+
+  - **Utilities**: Compressed air pressure, HVAC, energy consumption, water treatment
+
+
+  ## Approach
+
+
+  1. **Requirements**: Define tags, screens, alarms, reports, user roles with stakeholders
+
+  2. **Tag Database Design**: Structure tags hierarchically (area.line.equipment.parameter)
+
+  3. **Graphics Development**: Create reusable objects (motors, valves, tanks) per ISA-101
+
+  4. **Alarm Configuration**: Rationalize alarms, set priorities, define responses
+
+  5. **Historian Setup**: Configure trending, storage policies, aggregations
+
+  6. **Network Architecture**: Separate control network from IT network (DMZ for OPC)
+
+  7. **Testing**: FAT (Factory Acceptance Test) with simulated I/O, SAT (Site Acceptance Test)
+
+  8. **Training**: Operator training on navigation, alarm response, trend interpretation
+
+
+  ## Deliverables
+
+
+  - SCADA system architecture diagram (servers, clients, PLCs, network topology)
+
+  - Tag database with structured naming convention and documentation
+
+  - HMI graphics library with reusable objects and templates
+
+  - Alarm database with philosophy document and prioritization
+
+  - Historian configuration with retention policies and trending templates
+
+  - User manual with screen navigation, alarm response procedures
+
+  - Cybersecurity hardening (firewall rules, user authentication, audit logging)
+
+
+  ## Best Practices
+
+
+  - Use gray backgrounds and limit colors (green=run, red=fault, yellow=warning)
+
+  - Avoid animation (blinking, rotating) except for critical alarms
+
+  - Display KPIs prominently (OEE, takt time, units per hour) on overview screens
+
+  - Implement role-based access control (operator view-only, engineer edit)
+
+  - Log all operator actions (setpoint changes, manual overrides) for traceability
+
+  - Test alarm floods (simulate multiple failures) to validate operator response capability
+
+  - Implement redundant SCADA servers for high-availability critical systems
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Provide real-time production data to MES for scheduling and material planning
+
+  - Interface with energy management systems for demand response and cost reduction
+
+  - Export historian data to data lake (Azure, AWS) for advanced analytics and ML
+
+  - Support remote troubleshooting with secure VPN access for engineering
+
+  - Enable digital twin synchronization with real-time equipment state updates
+
+  '
+constraints:
+- Network latency can delay screen updates (target <500ms refresh)
+- Licensing costs scale with tag count and concurrent users
+- Legacy OPC DA has security vulnerabilities (use OPC UA for new systems)
+- Alarm floods can overwhelm operators during major faults
+tools_required:
+- SCADA/HMI software (WinCC, FactoryTalk, Ignition, Wonderware)
+- Historian databases (OSIsoft PI, Wonderware Historian, InfluxDB)
+- OPC servers (Kepware, Matrikon)
+- Network monitoring tools (Wireshark, PRTG)
+- Virtualization (VMware, Hyper-V for server redundancy)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- scada
+- hmi
+- isa-101
+- historian
+- automotive

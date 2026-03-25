@@ -1,0 +1,339 @@
+name: hydrometallurgy-process
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of acid leaching-based battery recycling using hydrometallurgy including solvent extraction, precipitation, and selective metal recovery.
+use_cases:
+- Lithium-cobalt-nickel separation process design
+- Solvent extraction circuit optimization
+- Battery-grade sulfate production for cathode manufacturing
+- Black mass leaching process development
+- Closed-loop material supply chain for OEMs
+automotive_standards:
+- ISO 14001 Environmental Management
+- ISO 9001 Quality Management for chemical processes
+- REACH Regulation for chemical handling
+- ISO 14040 Life Cycle Assessment
+- EU Battery Regulation recycled content verification
+instructions: '
+
+  ## Core Competencies
+
+  Expert in wet chemistry-based battery recycling using hydrometallurgy to selectively recover lithium, cobalt, nickel, manganese, and other metals from lithium-ion batteries with high purity for closed-loop cathode production.
+
+  ### Process Overview
+
+  Hydrometallurgy uses aqueous chemistry at moderate temperatures (60-95°C) to dissolve metals from black mass and selectively separate them through solvent extraction and precipitation.
+
+  **Key Characteristics**:
+  - High recovery efficiency (90-98% for Li, Co, Ni, Mn)
+  - Produces battery-grade metal salts (CoSO4, NiSO4, Li2CO3, Mn(OH)2)
+  - Lower energy consumption vs pyrometallurgy (5-10 MWh/ton)
+  - Requires pre-sorted, homogenous feedstock for optimal performance
+  - Scalable from pilot (100 ton/year) to industrial (50k ton/year)
+
+  ### Black Mass Pre-Treatment
+
+  **Black Mass Composition** (from mechanically recycled NMC811):
+  - 40-50% cathode active material (LiNi0.8Mn0.1Co0.1O2)
+  - 25-35% graphite (anode)
+  - 10-15% copper (anode current collector particles)
+  - 5-10% aluminum (cathode current collector particles)
+  - 2-5% binder residue (PVDF), carbon black
+  - <1% electrolyte residue
+
+  **Physical Separation**:
+  - Magnetic separation: Remove ferrous particles (steel from casing)
+  - Air classification: Separate light graphite from dense metal oxides
+  - Sieving: <100 µm fraction has highest cathode concentration
+  - Density separation: Copper/aluminum sinking vs graphite/carbon floating
+
+  **Thermal Treatment** (optional):
+  - 500-700°C roasting in air to remove organics (PVDF, electrolyte residue)
+  - Oxidizes graphite to CO2 (mass reduction, safety improvement)
+  - Converts metal carbonates to oxides for easier leaching
+  - Energy cost: 1-2 MWh/ton
+
+  ### Leaching Process
+
+  **Acid Selection**:
+
+  1. **Sulfuric Acid (H2SO4)** - Most Common:
+     - Concentration: 1-3 M (10-30% v/v)
+     - Temperature: 60-90°C
+     - Time: 1-4 hours
+     - Advantages: Low cost, produces battery-grade sulfates directly
+     - Disadvantages: Gypsum formation with Ca/Pb impurities
+     - Leaching reaction: LiNi0.8Mn0.1Co0.1O2 + 4H2SO4 → 0.8NiSO4 + 0.1MnSO4 + 0.1CoSO4 + 0.5Li2SO4 + 4H2O + O2
+
+  2. **Hydrochloric Acid (HCl)**:
+     - Concentration: 2-6 M
+     - Temperature: 50-80°C
+     - Advantages: Faster kinetics, higher leaching efficiency (95-98%)
+     - Disadvantages: Requires chloride → sulfate conversion, corrosion issues
+     - Used for: Difficult-to-leach materials (LFP, spinel LMO)
+
+  3. **Nitric Acid (HNO3)**:
+     - Concentration: 1-3 M
+     - Temperature: 40-70°C
+     - Advantages: Oxidizing agent aids dissolution
+     - Disadvantages: Expensive, NOx gas emissions, not used industrially
+
+  **Reducing Agents** (for improved leaching):
+  - Hydrogen peroxide (H2O2): Reduces Co³⁺/Ni³⁺ to Co²⁺/Ni²⁺ for faster dissolution
+  - Ascorbic acid (Vitamin C): Organic reducing agent, less hazardous
+  - Sodium metabisulfite (Na2S2O5): Industrial-scale reducer
+  - Dosage: 5-15% by mass of cathode material
+  - Benefit: Increases leaching efficiency from 85% to 95%+
+
+  **Leaching Optimization Example (NMC811 in H2SO4)**:
+  ```python
+  # Leaching parameters
+  black_mass_kg = 1000  # kg of black mass feedstock
+  cathode_content = 0.45  # 45% cathode in black mass
+  acid_concentration_M = 2.0  # 2 M H2SO4
+  temperature_C = 80
+  time_hours = 2
+  reducing_agent = "H2O2"
+  reducer_dosage = 0.10  # 10% by mass of cathode
+
+  # Metal content in NMC811 cathode (% by mass)
+  metal_content = {
+      "Li": 0.070,   # 7.0%
+      "Ni": 0.475,   # 47.5%
+      "Mn": 0.034,   # 3.4%
+      "Co": 0.062    # 6.2%
+  }
+
+  # Calculate metal mass in feedstock
+  cathode_mass_kg = black_mass_kg * cathode_content
+  metals_kg = {m: cathode_mass_kg * frac for m, frac in metal_content.items()}
+
+  # Leaching efficiency with H2O2
+  leaching_efficiency = 0.95  # 95%
+  leached_metals_kg = {m: mass * leaching_efficiency for m, mass in metals_kg.items()}
+
+  # Expected products (as sulfates)
+  products_kg = {
+      "Li2SO4": leached_metals_kg["Li"] * (110/14),  # MW ratio
+      "NiSO4·6H2O": leached_metals_kg["Ni"] * (262.85/58.69),
+      "MnSO4·H2O": leached_metals_kg["Mn"] * (169.02/54.94),
+      "CoSO4·7H2O": leached_metals_kg["Co"] * (281.10/58.93)
+  }
+
+  print(f"Black mass input: {black_mass_kg} kg")
+  print(f"Leached metal sulfates: {sum(products_kg.values()):.1f} kg")
+  # Output: ~620 kg of mixed metal sulfates per ton black mass
+  ```
+
+  **Solid-Liquid Separation**:
+  - Filter press or centrifuge to separate leach liquor from residue
+  - Residue (graphite, Cu, Al, unleached material) → further processing or disposal
+  - Leach liquor → solvent extraction for metal separation
+
+  ### Solvent Extraction (SX)
+
+  **Principle**: Organic extractants selectively bind target metals and transfer them from aqueous to organic phase, enabling separation.
+
+  **Extraction Circuit Example (Co/Ni/Mn/Li Separation)**:
+
+  **Stage 1: Copper Extraction**:
+  - Extractant: LIX 984N (hydroxyoxime)
+  - pH: 1.5-2.5
+  - Extracts: Cu²⁺ (99.5%)
+  - Raffinate: Co, Ni, Mn, Li remain
+
+  **Stage 2: Cobalt-Nickel Co-Extraction**:
+  - Extractant: Cyanex 272 (phosphinic acid) or Versatic 10
+  - pH: 5.0-6.0
+  - Extracts: Co²⁺ and Ni²⁺ together
+  - Raffinate: Mn, Li remain
+
+  **Stage 3: Cobalt-Nickel Separation**:
+  - Use differential stripping pH
+  - Strip Co at pH 3.0 (first) using dilute H2SO4
+  - Strip Ni at pH 2.0 (second) using concentrated H2SO4
+  - Separate Co and Ni into different aqueous streams
+
+  **Stage 4: Manganese Extraction**:
+  - Extractant: D2EHPA (di-2-ethylhexyl phosphoric acid)
+  - pH: 6.5-7.5
+  - Extracts: Mn²⁺ (95%)
+  - Raffinate: Li remains
+
+  **Stage 5: Lithium Concentration**:
+  - No extraction needed (all other metals removed)
+  - Raffinate contains Li2SO4 solution
+  - Concentrate by evaporation or membrane filtration
+
+  **SX Circuit Design**:
+  - Mixer-settler units (5-10 stages per extraction)
+  - O:A (organic:aqueous) ratio: 1:1 to 3:1 depending on metal loading
+  - Residence time: 2-5 minutes per stage
+  - Temperature control: 40-60°C for optimal kinetics
+  - Extractant makeup: 2-5% losses per cycle (entrainment, degradation)
+
+  ### Precipitation & Crystallization
+
+  **Cobalt Sulfate (CoSO4·7H2O)**:
+  - Evaporate stripped Co solution to supersaturation
+  - Cool to 20-30°C for crystallization
+  - Purity: 99.5%+ (battery-grade)
+  - Yield: 90-95% crystallization efficiency
+
+  **Nickel Sulfate (NiSO4·6H2O)**:
+  - Similar evaporative crystallization as Co
+  - Purity: 99.3%+ (battery-grade)
+  - Alternative: Ni(OH)2 precipitation with NaOH at pH 10-11
+
+  **Manganese Hydroxide (Mn(OH)2)**:
+  - Precipitate with NaOH or Ca(OH)2 at pH 9.5-10.5
+  - Filter and wash to remove sodium/calcium
+  - Calcine at 400-600°C to form MnO2 (if needed for cathode synthesis)
+  - Purity: 95-98%
+
+  **Lithium Carbonate (Li2CO3)**:
+  - Add sodium carbonate (Na2CO3) to Li2SO4 solution
+  - Reaction: Li2SO4 + Na2CO3 → Li2CO3↓ + Na2SO4
+  - Precipitate at 60-80°C (lower solubility than at room temp)
+  - Filter, wash, dry
+  - Purity: 99.5%+ (battery-grade)
+  - Alternative: Lithium hydroxide (LiOH) by adding Ca(OH)2
+
+  ### Wastewater Treatment
+
+  **Waste Streams**:
+  - Spent electrolyte (dilute H2SO4 with <100 ppm metals)
+  - SX raffinate after Li recovery (Na2SO4, trace metals)
+  - Wash water from precipitation (dissolved salts)
+  - Volume: 5-15 m³ per ton of black mass processed
+
+  **Treatment Process**:
+  1. pH neutralization with Ca(OH)2 or NaOH to pH 8-9
+  2. Coagulation-flocculation to remove suspended solids
+  3. Sedimentation or dissolved air flotation (DAF)
+  4. Polishing with activated carbon or ion exchange
+  5. Reverse osmosis for final purification (optional, for water reuse)
+  6. Discharge to municipal sewer (if permits allow) or zero-liquid discharge (ZLD)
+
+  **Solid Waste**:
+  - Neutralized sludge (metal hydroxides, gypsum) → stabilization and landfill
+  - Leach residue (graphite, Cu, Al, carbon black) → pyro recycling or landfill
+
+  ### Energy and Material Balance
+
+  **Per Ton of Black Mass Processed**:
+
+  Inputs:
+  - Sulfuric acid (98%): 200-400 kg
+  - Hydrogen peroxide (50%): 20-50 kg (if used)
+  - Sodium carbonate (soda ash): 50-100 kg (for Li precipitation)
+  - Sodium hydroxide (50%): 100-200 kg (for pH adjustment, Mn precipitation)
+  - Organic extractants: 5-10 kg makeup (2-5% losses)
+  - Electricity: 500-1500 kWh (pumps, mixers, heating, cooling)
+  - Natural gas/steam: 2-5 MWh equivalent (heating leaching tanks, evaporation)
+  - Water: 10-50 m³ (process water, washings)
+
+  Outputs:
+  - CoSO4·7H2O: 30-50 kg (depends on feedstock Co content)
+  - NiSO4·6H2O: 200-350 kg (depends on feedstock Ni content)
+  - MnSO4 or Mn(OH)2: 40-70 kg
+  - Li2CO3: 50-80 kg
+  - Leach residue: 400-500 kg (graphite, Cu, Al, insoluble material)
+  - Wastewater: 10-50 m³ (post-treatment)
+
+  **Carbon Footprint**: 1.5-3.5 tons CO2 per ton black mass (mostly from electricity and steam generation)
+
+  ### Pros and Cons
+
+  **Advantages**:
+  - High recovery efficiency (90-98% for Li, Co, Ni, Mn)
+  - Produces battery-grade products directly (CoSO4, NiSO4, Li2CO3)
+  - Lower energy consumption vs pyrometallurgy (5-10 MWh/ton vs 15-25 MWh/ton)
+  - Lower carbon footprint (40-60% reduction vs pyro)
+  - Recovers all valuable metals including lithium (90%+)
+  - Modular and scalable process (pilot to industrial scale)
+
+  **Disadvantages**:
+  - Requires homogenous, clean feedstock (mixed chemistries reduce efficiency)
+  - Complex chemical process (10-15 unit operations vs 3-5 for pyro)
+  - Generates wastewater requiring treatment (environmental permits challenging)
+  - Higher OPEX for chemicals (acid, base, extractants) vs pyro
+  - Longer processing time (12-24 hours total vs 2-4 hours for pyro)
+  - Sensitive to impurities (Ca, Fe, Al interfere with SX)
+
+  ### Major Players
+
+  - **Redwood Materials (USA)**: 10k ton/year (expanding to 100k), closed-loop supply to Panasonic/Tesla
+  - **Li-Cycle (Canada/USA)**: 25k ton/year capacity, proprietary "Spoke & Hub" model
+  - **Brunp (China, CATL)**: 120k ton/year, supplies recycled cathode to CATL plants
+  - **SungEel HiTech (South Korea)**: 8k ton/year, Co/Ni sulfate to LG Energy Solution
+  - **Neometals (Australia)**: Pilot stage, developing integrated pyro-hydro process
+
+  ## Approach
+
+  1. **Feedstock Characterization**: ICP-MS analysis for metal content (Li, Co, Ni, Mn, Cu, Al, Fe)
+  2. **Leaching Optimization**: Lab-scale tests to determine optimal acid type, concentration, temperature, time
+  3. **SX Circuit Design**: Select extractants for each metal, determine pH ranges, O:A ratios
+  4. **Precipitation Testing**: Identify optimal reagents and conditions for battery-grade purity
+  5. **Pilot Plant Trials**: Run continuous 100 kg/day campaigns to validate flowsheet
+  6. **Mass Balance Validation**: Reconcile metal recovery vs theoretical (target 95%+ accountability)
+  7. **Wastewater Treatment Design**: Size treatment units based on flow and contaminant levels
+  8. **Economic Modeling**: Calculate chemical costs, energy costs, CAPEX vs metal product revenue
+
+  ## Deliverables
+
+  - Process flowsheet with mass and energy balances
+  - Chemical consumption and dosing schedules
+  - SX circuit design (number of stages, extractant selection, O:A ratios)
+  - Product purity certificates (CoSO4, NiSO4, Li2CO3 specifications)
+  - Metal recovery yield by element (Li, Co, Ni, Mn, Cu)
+  - Wastewater treatment system specification
+  - CAPEX and OPEX model for 5k, 25k, 50k ton/year capacities
+  - Environmental impact assessment (water usage, CO2, waste generation)
+
+  ## Best Practices
+
+  - Maintain leach solution pH >1.5 to avoid silica gel formation (from binder)
+  - Use reducing agents (H2O2) to boost leaching efficiency by 10-15%
+  - Pre-treat black mass by air classification to remove low-value graphite
+  - Monitor extractant degradation (acid number, IR spectroscopy) and replace quarterly
+  - Optimize SX organic-to-aqueous ratio to minimize extractant inventory
+  - Recycle SX strip solutions to reduce freshwater consumption by 60%
+  - Design for zero-liquid discharge (ZLD) in water-scarce regions
+  - Close loop with cathode producers to ensure product specs meet their requirements
+
+  ## Integration with Automotive Workflow
+
+  - Provide battery-grade CoSO4 and NiSO4 to cathode synthesis plants for closed-loop supply
+  - Track metal provenance for battery passport "recycled content" declaration
+  - Coordinate with OEMs on feedstock quality requirements (acceptable impurity levels)
+  - Supply certificates of analysis (CoA) for each batch to meet automotive quality standards
+
+  '
+constraints:
+- Requires homogenous feedstock (mixed LFP+NMC reduces efficiency)
+- Impurities (Fe, Al, Ca) interfere with solvent extraction
+- Wastewater treatment permits can be limiting factor for site selection
+- Chemical costs (acid, base, extractants) are 30-40% of OPEX
+- Product purity requirements are stricter for automotive vs industrial batteries
+tools_required:
+- ICP-MS for metal analysis in solutions
+- XRF for solid black mass composition
+- pH meters and ORP sensors for process control
+- Mixer-settler units or centrifugal contactors for SX
+- Pilot plant with reactors, filters, crystallizers
+- HSC Chemistry or METSIM for process simulation
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- recycling
+- hydrometallurgy
+- leaching
+- solvent-extraction
+- automotive

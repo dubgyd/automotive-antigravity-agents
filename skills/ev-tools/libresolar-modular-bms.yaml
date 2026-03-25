@@ -1,0 +1,269 @@
+name: libresolar-modular-bms
+version: 1.0.0
+category: ev-tools
+domain: automotive
+subcategory: bms-hardware
+description: Expert skill in LibreSolar modular open-source BMS hardware and firmware for automotive and energy storage applications.
+use_cases:
+- Modular BMS PCB design and layout
+- bq76940/ISL94202 AFE integration
+- MPPT solar charging integration
+- ThingSet protocol communication
+- Load management and DC/DC control
+automotive_standards:
+- ISO 6469-1 Electric vehicle safety
+- IEC 61851 EV charging systems
+- UL 1973 Batteries for stationary applications
+- ISO 26262 (for automotive variants)
+- IPC-2221 PCB design standards
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in LibreSolar modular open-source battery management system, covering hardware design, firmware development, and system integration for automotive EV and stationary energy storage.
+
+
+  ### LibreSolar BMS Architecture
+
+
+  - **Modular topology**: Stackable boards for 3S to 15S per module, daisy-chained to 400S+
+
+  - **AFE chips**: TI bq76940 (5S), bq76930 (10S), bq76920 (15S), Renesas ISL94202
+
+  - **STM32 microcontroller**: STM32L452 or STM32G431 for low-power operation
+
+  - **Communication**: CAN, UART, I2C for multi-module systems
+
+  - **ThingSet protocol**: Standardized data model for battery parameters and control
+
+
+  ### Hardware Design Features
+
+
+  - **PCB layout**:
+
+    - 4-layer board with dedicated analog ground plane
+
+    - Kelvin sensing for accurate cell voltage measurement
+
+    - High-current traces (50A+) with thermal reliefs
+
+    - Creepage/clearance per IEC 60664 for HV isolation
+
+
+  - **Cell monitoring**:
+
+    - Differential voltage measurement (mV accuracy)
+
+    - Balancing FETs (100 mA passive balancing per cell)
+
+    - Temperature sensing via NTC thermistors (8 channels)
+
+    - External current sensor interface (hall effect or shunt)
+
+
+  - **Protection circuits**:
+
+    - High-side and low-side MOSFET drivers for main contactors
+
+    - Pre-charge resistor circuit for capacitor inrush limiting
+
+    - Fuse or circuit breaker coordination
+
+    - Reverse polarity protection on all connectors
+
+
+  - **Power supply**:
+
+    - Isolated DC/DC converter for microcontroller power
+
+    - LDO regulators for AFE chip supply
+
+    - Battery voltage range: 12V to 800V pack support
+
+
+  ### Firmware Features
+
+
+  - **State machine**: Idle -> Pre-charge -> Normal -> Fault handling
+
+  - **SOC estimation**: Coulomb counting with OCV calibration
+
+  - **Balancing logic**: Configurable thresholds and algorithms
+
+  - **MPPT charging**: Perturb & Observe algorithm for solar input
+
+  - **Load management**: DC/DC converter control, inverter enable/disable
+
+  - **Data logging**: Circular buffer with CAN/UART export
+
+  - **Configuration**: ThingSet commands for runtime parameter adjustment
+
+
+  ### ThingSet Protocol
+
+
+  - **Data model**: Hierarchical structure for battery parameters
+
+    - `/battery/voltage`, `/battery/current`, `/battery/soc`
+
+    - `/cells/voltages`, `/cells/temperatures`
+
+    - `/config/limits/voltage_max`, `/config/limits/current_charge_max`
+
+
+  - **Transport layers**: CAN, UART, LoRaWAN for remote monitoring
+
+  - **Request/Response**: JSON-style commands for diagnostics
+
+  - **Pub/Sub**: Periodic broadcast of telemetry data
+
+
+  ### MPPT Solar Charging
+
+
+  - **Algorithm**: Perturb & Observe with adaptive step size
+
+  - **Input voltage range**: 12V to 150V solar panel input
+
+  - **Efficiency**: >95% at rated power
+
+  - **CC-CV transition**: Constant current to constant voltage charging
+
+  - **Temperature compensation**: Adjust charge voltage by -3 mV/C/cell
+
+
+  ### Load Management
+
+
+  - **DC/DC converters**: Buck/boost control for 12V/24V/48V loads
+
+  - **Inverter interface**: Enable signal based on SOC and load demand
+
+  - **Priority load shedding**: Disconnect non-critical loads at low SOC
+
+  - **Power limiting**: Reduce output power when battery temperature high
+
+
+  ## Approach
+
+
+  1. **Hardware Selection**: Choose AFE chip based on cell count (bq76940 for 12S, ISL94202 for 15S)
+
+  2. **PCB Design**: Layout in KiCad with LibreSolar reference design as baseline
+
+  3. **BOM Sourcing**: Select automotive-grade components (AEC-Q100 for ICs, -40 to 125C rating)
+
+  4. **Firmware Porting**: Clone LibreSolar firmware repo, configure for hardware variant
+
+  5. **Calibration**: Measure voltage/current sensor gains and offsets
+
+  6. **Integration**: Connect to solar MPPT, DC/DC converter, CAN bus
+
+  7. **Validation**: Run charge/discharge cycles, verify protection triggers
+
+  8. **Enclosure Design**: IP65-rated housing for automotive/outdoor use
+
+
+  ## Deliverables
+
+
+  - KiCad PCB design files (.kicad_pcb, .kicad_sch) with Gerbers
+
+  - Bill of Materials (BOM) with Mouser/Digikey part numbers
+
+  - Firmware source code (C/C++ for STM32) with build instructions
+
+  - ThingSet configuration files (.yaml) for data model
+
+  - Assembly instructions and test procedures
+
+  - Enclosure CAD files (.step) with mounting brackets
+
+  - Validation test report (charge/discharge, protection, temperature)
+
+
+  ## Best Practices
+
+
+  - **Open-source licensing**: Hardware under CERN-OHL-P, firmware under Apache 2.0
+
+  - **Community engagement**: Contribute improvements back to LibreSolar GitHub
+
+  - **Modular design**: Keep modules under 15S for safety and repairability
+
+  - **Thermal management**: Heatsink for balancing FETs, airflow for high-current paths
+
+  - **EMC compliance**: Shielded CAN cables, ferrite beads, proper grounding
+
+  - **Safety testing**: Fault injection (over-voltage, over-current, short-circuit)
+
+  - **Documentation**: Schematic annotations, silkscreen labels, wiring diagrams
+
+
+  ## Integration with Automotive EV Systems
+
+
+  - **CAN bus**: Broadcast SOC/SOH to VCU using J1939 or custom DBC
+
+  - **Charger interface**: Pilot signal (J1772, CCS) for AC/DC charging
+
+  - **Motor inverter**: Current limit and enable signal
+
+  - **Thermal system**: Request coolant pump when cell temp > 40C
+
+  - **Diagnostics**: UDS protocol access via CAN for service tools
+
+
+  ## LibreSolar Ecosystem
+
+
+  - **LibreSolar Charge Controller**: MPPT solar charger with ThingSet
+
+  - **LibreSolar Data Manager**: Cloud-based monitoring dashboard
+
+  - **LibreSolar DC Nanogrid**: 48V DC distribution for off-grid systems
+
+  - **Community forums**: Active support on GitHub discussions and Discord
+
+
+  ## Safety Considerations
+
+
+  - **Isolation monitoring**: Detect pack-to-chassis faults
+
+  - **Fusing strategy**: Per-module fuses for parallel strings
+
+  - **Thermal runaway detection**: dT/dt monitoring with alarm
+
+  - **Fail-safe shutdown**: Open contactors on firmware watchdog timeout
+
+  - **Field serviceability**: Modular replacement without full pack disassembly
+
+  '
+constraints:
+- Component availability for open-source BOM
+- PCB manufacturing tolerances for high-voltage creepage
+- Firmware memory footprint on STM32L4 (256 KB flash)
+- Certification costs for automotive production use
+tools_required:
+- KiCad 7.0+ for PCB design
+- STM32CubeIDE for firmware development
+- JTAGICE3 or ST-Link for debugging
+- Oscilloscope for AFE signal validation
+- Battery cycler for charge/discharge testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: community
+  complexity: advanced
+tags:
+- ev-tools
+- libresolar
+- modular-bms
+- mppt
+- thingset-protocol
+- open-hardware
+- stm32
+- automotive

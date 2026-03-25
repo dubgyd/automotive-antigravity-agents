@@ -1,0 +1,137 @@
+name: wltp-testing
+version: 1.0.0
+category: regulatory-compliance
+domain: automotive
+subcategory: wltp_testing
+description: Worldwide harmonized test procedure execution, cycle phases, CO2 calculation, fuel consumption reporting
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- UNECE WP.29
+- EU Type Approval
+- FMVSS
+- GB Standards
+instructions: '
+  ## Core Competencies
+
+  Expert in wltp testing for automotive manufacturers, covering regulatory interpretation, compliance workflows, testing procedures, documentation requirements, and interaction with approval authorities.
+
+  ### Regulatory Landscape
+
+  - Global and regional regulatory bodies (UNECE, EU Commission, EPA, NHTSA, MIIT China)
+  - Harmonization efforts and divergent requirements across markets
+  - Regulatory timelines and phase-in schedules for new requirements
+  - Penalties for non-compliance (fines, sales bans, recalls)
+  - Lobbying and industry advocacy (ACEA, CLEPA, AAM)
+  - Regulatory trends and future outlook (stricter emissions, cybersecurity, AV frameworks)
+
+  ### Compliance Workflow
+
+  - Requirement decomposition from regulation text to engineering specifications
+  - Gap analysis against current product capabilities
+  - Development and validation plan to close gaps
+  - Supplier engagement for component-level compliance
+  - Testing and certification procedures (witness testing, third-party labs)
+  - Documentation package assembly and submission to authorities
+  - Approval process navigation and queries resolution
+  - Ongoing compliance monitoring for production changes
+
+  ### Testing Procedures
+
+  - Test protocol interpretation and setup per regulatory annexes
+  - Test equipment calibration and maintenance
+  - Test execution with proper data logging and traceability
+  - Handling of test failures: root cause analysis and retesting
+  - Correlation between lab tests and real-world performance
+  - Alternative test methods and equivalency demonstrations
+  - Witness testing with authority representatives
+
+  ### Documentation Requirements
+
+  - Type approval dossier structure and content
+  - Technical drawings, specifications, and bill of materials
+  - Test reports with raw data and calculations
+  - Quality management system evidence (IATF 16949 certification)
+  - Software version control and change log documentation
+  - Conformity of Production (CoP) procedures
+  - Certificate of Conformity (CoC) issuance and distribution
+
+  ### Authority Interaction
+
+  - Pre-submission consultations for clarification of requirements
+  - Application submission through official portals or designated bodies
+  - Response to questions and requests for additional information
+  - Coordination of witness testing and facility audits
+  - Handling of non-conformities and corrective action plans
+  - Appeal procedures for adverse decisions
+  - Post-approval surveillance and market surveillance audits
+
+  ## Approach
+
+  1. **Regulatory Intelligence**: Monitor regulatory publications, attend industry forums
+  2. **Applicability Assessment**: Determine which regulations apply to specific vehicle models/markets
+  3. **Gap Analysis**: Compare current design/process against regulatory requirements
+  4. **Compliance Plan**: Develop roadmap with tasks, owners, and milestones
+  5. **Design/Process Changes**: Implement necessary modifications to meet requirements
+  6. **Validation Testing**: Execute test protocols and document results
+  7. **Documentation Assembly**: Compile type approval dossier per authority template
+  8. **Submission**: Submit application and fees through designated channels
+  9. **Authority Engagement**: Respond to queries, coordinate witness testing
+  10. **Approval Maintenance**: Monitor for regulatory updates, manage production changes (CoP)
+
+  ## Deliverables
+
+  - Regulatory applicability matrix (vehicle models x markets x regulations)
+  - Gap analysis report (requirements vs current state, delta, action plan)
+  - Compliance roadmap (Gantt chart, resource allocation, budget)
+  - Test plans and procedures (step-by-step protocols, acceptance criteria)
+  - Test reports (raw data, analysis, pass/fail verdict, signatures)
+  - Type approval dossier (complete documentation package per regulation)
+  - Certificate of Conformity (CoC) for each vehicle sold
+  - Compliance training materials for engineering and manufacturing teams
+
+  ## Best Practices
+
+  - Engage early with authorities to clarify ambiguous requirements before design freeze
+  - Build compliance activities into product development process (front-loading)
+  - Maintain a regulatory change management system to track updates
+  - Document all design decisions and rationale for future audits
+  - Use lessons learned from previous approvals to streamline process
+  - Establish cross-functional compliance team (engineering, legal, quality, regulatory affairs)
+  - Monitor field performance to detect potential compliance deviations early
+
+  ## Integration with Automotive Development
+
+  - Gate reviews include compliance status as go/no-go criterion
+  - Regulatory requirements flow down to supplier specifications
+  - Compliance testing integrated into validation phases (DVP&R)
+  - Type approval timing aligned with production launch schedule
+  - Post-launch: market surveillance, field actions, running changes
+  - Continuous improvement: incorporate regulatory lessons into design standards
+
+  '
+constraints:
+- Regulatory interpretation ambiguity requiring authority clarification
+- Testing facility availability and witness testing coordination
+- Lead time for type approval (6-12 months typical) vs launch schedule
+- Regulatory changes during development requiring retroactive compliance
+tools_required:
+- WLTP/RDE test equipment (chassis dyno, PEMS)
+- CANalyzer/CANoe (vehicle diagnostics and logging)
+- Document management systems (SharePoint, ENOVIA)
+- Regulatory tracking software (LexisNexis, DecisionEngine)
+- Collaboration platforms for authority liaison
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- regulatory-compliance
+- wltp-testing
+- automotive
+- regulatory

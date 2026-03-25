@@ -1,0 +1,344 @@
+name: magneto-rheological-fluids
+version: 1.0.0
+category: advanced-materials
+domain: automotive
+subcategory: adaptive-systems
+description: Expert skill in magneto-rheological (MR) fluid damper design and control for semi-active suspension and vibration isolation systems.
+use_cases:
+- Adaptive suspension dampers (CDC Continuous Damping Control)
+- Engine/transmission mount vibration isolation
+- Seat suspension for commercial vehicles
+- Steering damper for motorcycles and heavy trucks
+- Crash energy absorbing structures
+automotive_standards:
+- ISO 2416 (suspension testing)
+- SAE J1490 (ride and vibration data)
+- ISO 8608 (road profile classification)
+- LV 124 (electrical loads and operating conditions)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in magneto-rheological fluid technology for automotive semi-active damping systems, including MR fluid formulation, damper mechanical design, electromagnetic circuit optimization, and real-time control algorithms.
+
+
+  ### MR Fluid Properties
+
+
+  - **Composition**: Carbonyl iron particles (20-40 vol%) in carrier fluid (hydrocarbon, silicone, PAO)
+
+  - **Particle size**: 1-10 μm for fast response, larger for higher yield stress
+
+  - **Off-state viscosity**: 0.1-1 Pa·s at room temperature
+
+  - **On-state yield stress**: 30-100 kPa at 200-300 kA/m magnetic field
+
+  - **Response time**: 1-10 ms (field-on to max yield stress)
+
+  - **Operating temperature**: -40°C to +150°C with additives (anti-oxidants, dispersants)
+
+  - **Sedimentation**: Require thixotropic agents or continuous recirculation to prevent settling
+
+
+  ### MR Damper Operating Modes
+
+
+  - **Flow mode**: Fluid pumped through magnetic field gap, most common for dampers
+
+  - **Shear mode**: Fluid sheared between moving surfaces, used in clutches/brakes
+
+  - **Squeeze mode**: Fluid compressed between approaching surfaces, high force density
+
+  - **Mixed mode**: Combination of flow and shear for enhanced dynamic range
+
+
+  ### Electromagnetic Design
+
+
+  - **Magnetic circuit**: Solenoid coil generating field perpendicular to fluid flow
+
+  - **Flux density target**: 0.4-0.8 Tesla in active gap for saturation
+
+  - **Coil design**: Copper wire (AWG 20-24), 200-500 turns, inductance 50-200 mH
+
+  - **Core material**: Low-carbon steel (SAE 1018) for high permeability, avoid saturation
+
+  - **Gap geometry**: 0.5-2 mm fluid gap, length 10-50 mm for adequate force
+
+  - **Flux return path**: Minimize reluctance in piston and cylinder walls
+
+
+  ### Damper Force Model (Bingham Plastic)
+
+
+  - **Yield stress contribution**: F_yield = (12·μ·L·A·v)/h³ + (A·L·τ_y)/h
+
+  - **Viscous contribution**: F_viscous = η_0 · (velocity dependent term)
+
+  - **Post-yield behavior**: Newtonian fluid after yield stress overcome
+
+  - **Dynamic range**: Ratio of max to min force, typically 5-20x
+
+  - **Force-velocity curve**: Nearly force-invariant at low velocity, transitions to viscous at high v
+
+
+  ### Control Strategies
+
+
+  - **Skyhook control**: Virtual damper between sprung mass and inertial reference
+
+  - **Groundhook control**: Virtual damper between unsprung mass and road
+
+  - **Hybrid skyhook-groundhook**: Balance ride comfort and road-holding
+
+  - **Acceleration-driven damping (ADD)**: Minimize body acceleration via adaptive damping
+
+  - **Model Predictive Control (MPC)**: Optimize multi-objective cost function (comfort + handling)
+
+  - **Semi-active Kalman filter**: State estimation for unmeasured variables (road input)
+
+
+  ## Approach
+
+
+  1. **Requirements Definition**: Damping force range, stroke, frequency bandwidth, power budget
+
+  2. **MR Fluid Selection**: Choose commercial fluid (Lord, BWI) or custom formulation
+
+  3. **Electromagnetic FEA**: COMSOL/Maxwell to optimize coil geometry for flux density
+
+  4. **Mechanical Design**: Piston geometry, seals (low-friction), accumulator for volume compensation
+
+  5. **Thermal Analysis**: Coil heating, fluid temperature rise, heat dissipation path
+
+  6. **Prototype Fabrication**: CNC machining, coil winding, fluid filling under vacuum
+
+  7. **Damper Characterization**: Force-velocity curves at various currents, frequency response
+
+  8. **Vehicle Integration**: Mount stiffness, electrical interface (PWM driver), CAN communication
+
+  9. **Control Tuning**: Implement skyhook, tune gains on 7-post rig or proving ground
+
+  10. **Durability Testing**: 1M+ cycles per FMVSS 126, thermal cycling, seal leakage check
+
+
+  ## Design Example: MR Damper Force Prediction
+
+
+  ```python
+
+  import numpy as np
+
+  import matplotlib.pyplot as plt
+
+
+  class MRDamper:
+
+      def __init__(self, piston_diam=40e-3, gap=1e-3, active_length=30e-3,
+
+                   coil_turns=300, wire_diam_awg24=0.511e-3):
+
+          self.D_p = piston_diam
+
+          self.h = gap
+
+          self.L = active_length
+
+          self.N = coil_turns
+
+          self.d_wire = wire_diam_awg24
+
+          self.R_coil = self._calculate_coil_resistance()
+
+
+
+      def _calculate_coil_resistance(self):
+
+          """Estimate coil resistance from geometry"""
+
+          rho_cu = 1.68e-8  # Copper resistivity Ω·m
+
+          mean_turn_length = np.pi * (self.D_p + 20e-3)  # Approximate
+
+          total_length = self.N * mean_turn_length
+
+          A_wire = np.pi * (self.d_wire/2)**2
+
+          return rho_cu * total_length / A_wire
+
+
+      def yield_stress(self, current_A):
+
+          """MR fluid yield stress vs current (empirical model for Lord MRF-132DG)"""
+
+          # Simplified polynomial fit: τ_y(I) in kPa
+
+          return 15 * current_A + 8 * current_A**2  # Max ~50 kPa at 1.5A
+
+
+      def damping_force(self, velocity_m_s, current_A):
+
+          """Bingham plastic model for damper force"""
+
+          eta_0 = 0.28  # Off-state viscosity Pa·s (Lord MRF-132DG)
+
+          A_p = np.pi * (self.D_p/2)**2
+
+          tau_y = self.yield_stress(current_A) * 1000  # Convert kPa to Pa
+
+
+
+          # Flow mode force components
+
+          F_viscous = (12 * eta_0 * self.L * A_p * velocity_m_s) / self.h**3
+
+          F_yield = (A_p * self.L * tau_y) / self.h
+
+
+
+          # Sign-preserving force
+
+          F_total = F_viscous + F_yield * np.sign(velocity_m_s)
+
+          return F_total
+
+
+      def plot_force_velocity(self, current_range=[0, 0.5, 1.0, 1.5]):
+
+          """Generate F-v curves for different currents"""
+
+          velocity = np.linspace(-1.5, 1.5, 100)  # m/s
+
+          plt.figure(figsize=(10, 6))
+
+
+
+          for I in current_range:
+
+              force = [self.damping_force(v, I) for v in velocity]
+
+              plt.plot(velocity, np.array(force)/1000, label=f"{I:.1f} A")
+
+
+
+          plt.xlabel("Velocity (m/s)")
+
+          plt.ylabel("Damping Force (kN)")
+
+          plt.title("MR Damper Force-Velocity Characteristics")
+
+          plt.legend()
+
+          plt.grid(True, alpha=0.3)
+
+          plt.axhline(0, color="k", linewidth=0.5)
+
+          plt.axvline(0, color="k", linewidth=0.5)
+
+          plt.show()
+
+
+  # Example usage
+
+  damper = MRDamper(piston_diam=40e-3, gap=1e-3, active_length=30e-3)
+
+  print(f"Coil resistance: {damper.R_coil:.2f} Ω")
+
+  print(f"Power at 1.5A: {1.5**2 * damper.R_coil:.2f} W")
+
+  damper.plot_force_velocity()
+
+  ```
+
+
+  ## Deliverables
+
+
+  - MR fluid specification sheet (viscosity, yield stress vs field, temperature range)
+
+  - Electromagnetic FEA report (flux density distribution, coil current vs field)
+
+  - Mechanical design drawings (piston, cylinder, seals, accumulator)
+
+  - Damping force maps (F vs velocity vs current, for LUT-based control)
+
+  - Electrical interface schematic (H-bridge driver, current sensing, thermal protection)
+
+  - Control algorithm implementation (Skyhook in C for automotive MCU)
+
+  - Durability test results (1M cycles, seal integrity, fluid degradation)
+
+  - Vehicle-level validation (ride comfort metrics, handling performance)
+
+
+  ## Best Practices
+
+
+  - Design for magnetic saturation: 0.6-0.8 T in gap, avoid saturation in steel core (>1.8 T)
+
+  - Minimize off-state force: Use thin gap (0.5-1 mm) and low-viscosity carrier fluid
+
+  - Thermal management: Limit continuous current to <1A to avoid coil overheating (>150°C)
+
+  - Seal selection: Low-friction polyurethane seals to minimize hysteresis and heat
+
+  - Fluid filling: Under vacuum to eliminate air bubbles, top-up after break-in cycles
+
+  - Sedimentation mitigation: Add thixotropic agents (fumed silica) or design for easy re-dispersion
+
+  - Safety: Fail-soft mode with passive damping if electrical system fails (open circuit = min damping)
+
+
+  ## Commercial MR Fluids
+
+
+  - **Lord MRF-132DG**: Hydrocarbon-based, -40 to +130°C, 50 kPa yield stress
+
+  - **Lord MRF-140CG**: Silicone-based, -40 to +150°C, improved stability
+
+  - **BWI MagneRide Fluid**: Proprietary formulation for GM/Ferrari/Audi adaptive dampers
+
+  - **BASF Basonetic**: Custom-formulated MR fluids for automotive dampers
+
+
+  ## Integration with Vehicle Dynamics
+
+
+  - **Sensor inputs**: Body accelerometers (vertical, pitch, roll), wheel speed, steering angle
+
+  - **Control frequency**: 100-500 Hz update rate for semi-active control
+
+  - **Communication**: CAN message with damper state (current, temperature, fault codes)
+
+  - **Diagnostic**: Monitor coil resistance for short/open circuit, temperature for thermal runaway
+
+  - **Adaptive learning**: Adjust skyhook gains based on load estimation (passenger weight)
+
+  - **Driving mode integration**: Sport/Comfort/Eco modes adjust damping target (stiff vs soft)
+
+  '
+constraints:
+- Sedimentation of iron particles over time (requires periodic agitation)
+- Coil heating limits continuous high-current operation (thermal management)
+- Seal friction contributes to off-state damping force (cannot go to zero)
+- Abrasive wear from particles can degrade seals (>1M cycles)
+tools_required:
+- COMSOL Multiphysics (AC/DC module) for electromagnetic FEA
+- MATLAB/Simulink for damper model and skyhook control
+- MTS 831 damper dyno for force-velocity characterization
+- Thermal camera for coil temperature monitoring
+- CAN interface for ECU integration and diagnostics
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- advanced-materials
+- magneto-rheological
+- mr-fluids
+- adaptive-suspension
+- vibration-damping
+- semi-active-control
+- automotive

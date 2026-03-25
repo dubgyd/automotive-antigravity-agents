@@ -1,0 +1,45 @@
+name: soh-grading-classification
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in SOH (State of Health) assessment methods for retired EV batteries including EIS, pulse tests, capacity tests, and automated grading for second-life vs recycling decisions.
+use_cases:
+- SOH assessment protocol design for retired EV batteries
+- Electrochemical Impedance Spectroscopy (EIS) analysis
+- Pulse test and HPPC (Hybrid Pulse Power Characterization)
+- Automated grading and sorting (Grade A/B/C classification)
+- Pass/fail thresholds for second-life applications
+automotive_standards:
+- IEC 62660 Lithium-ion Cells for EVs (test methods)
+- ISO 12405 Test Procedures for Electric Vehicles
+- SAE J2464 EV Battery Abuse Testing
+- UL 1974 Evaluation for Repurposing Batteries
+- IEEE 1188 Battery Maintenance and Testing
+instructions: 'Expert in non-destructive SOH assessment of retired EV batteries to determine suitability for second-life vs recycling. SOH definition: Percentage of usable capacity remaining vs new (80% SOH = 80% of original 60 kWh = 48 kWh usable). Test methods: (1) Electrochemical Impedance Spectroscopy (EIS): AC impedance at 0.01 Hz to 10 kHz, extract R0 (ohmic resistance) and Rct (charge-transfer resistance), SOH correlation via R0 increase (new: 5-10 mΩ, 80% SOH: 8-15 mΩ, <60% SOH: >20 mΩ), test time: 15-30 min per module, accuracy: ±5% SOH. (2) Hybrid Pulse Power Characterization (HPPC): 10-second 1C discharge pulse followed by 10-second rest, measure voltage drop (correlates to impedance), repeat at multiple SOC levels (10%, 30%, 50%, 70%, 90%), test time: 2-4 hours, accuracy: ±8% SOH. (3) Full Capacity Test: C/3 discharge from 100% to 0% SOC at 25°C, measure Ah delivered, compare to nameplate, test time: 3-5 hours, accuracy: ±2% SOH (most accurate but slowest). (4) Incremental Capacity Analysis (ICA): dQ/dV vs V curve during slow charge/discharge, peak position shifts indicate degradation mechanisms (LLI, LAM-PE, LAM-NE), test time: 6-10 hours, provides degradation diagnosis. (5) Machine Learning: Train model on historical data (voltage, current, temperature time-series) to predict SOH, features: voltage plateau slope, charge time, rest voltage recovery, accuracy: ±10% SOH (fast but requires training data). Grading criteria: Grade A (80-90% SOH): Premium applications (grid frequency regulation, high duty cycle, warranty 5+ years, value $100-150/kWh). Grade B (65-80% SOH): Standard applications (C&I peak shaving, residential ESS, warranty 3-5 years, value $60-100/kWh). Grade C (50-65% SOH): Low duty cycle only (backup power, <50 cycles/year, warranty 2-3 years, value $30-60/kWh). Grade F (<50% SOH): Recycle (uneconomical to repack, material recovery value). Automated testing: robot handling (module placement on test rig), CAN communication (read voltage/temperature from BMS), automated cycling (Digatron/Arbin battery cyclers with 100+ channels), data logging (InfluxDB time-series, Python analysis scripts), pass/fail decision (algorithm-based, <1% false positive target). Cost-accuracy tradeoff: EIS ($20/module, 30 min, ±5% SOH) preferred for high-throughput, full capacity test ($50/module, 4 hours, ±2% SOH) for high-value or warranty-critical packs. Safety: discharge to <50V before testing (prevent arc flash), thermal monitoring (>45°C abort test), fire suppression (FM-200 or water mist in test chamber). Data integration: link SOH result to battery passport (update digital record with second-life SOH), traceability to module serial number (RFID or barcode scan).
+'
+constraints:
+- SOH accuracy tradeoff with test duration (EIS fast ±5%, capacity test slow ±2%)
+- Module-to-module variance within pack (10-15% SOH spread typical)
+- Temperature dependence (SOH estimate at 25°C may not reflect 45°C performance)
+- Requires BMS communication (older packs may have proprietary protocols)
+- Automation ROI requires >5k modules/year throughput
+tools_required:
+- EIS equipment (Gamry, Solartron, BioLogic potentiostats)
+- Battery cyclers (Digatron, Arbin, Maccor, 0-1000V, 0-500A)
+- Thermal chambers for temperature control
+- CAN/OBD adapters for BMS communication
+- Data analysis software (Python, MATLAB, LabVIEW)
+- Automated material handling (robots, conveyors)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- battery-lifecycle
+- second-life
+- soh
+- testing
+- eis
+- automotive

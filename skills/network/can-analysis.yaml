@@ -1,0 +1,348 @@
+name: "CAN Network Analysis Skills"
+version: "1.0.0"
+description: "Comprehensive CAN bus analysis, simulation, and testing skills"
+category: "network"
+
+instructions: |
+  ## CAN Network Analysis Guide
+
+  ### Overview
+
+  Controller Area Network (CAN) is the dominant serial bus in automotive systems,
+  connecting ECUs for powertrain, chassis, body, and infotainment. CAN analysis
+  involves capturing, decoding, filtering, and simulating CAN traffic to validate
+  communication, diagnose faults, and verify timing requirements.
+
+  ### CAN Protocol Fundamentals
+
+  ```
+  CAN 2.0A Frame (Standard 11-bit ID):
+  ┌─────┬────────┬─────┬─────┬──────────┬─────┬─────┬─────┬─────┐
+  │ SOF │ 11-bit │ RTR │ IDE │ DLC(4b)  │Data │ CRC │ ACK │ EOF │
+  │     │   ID   │     │     │          │0-8B │ 15b │     │ 7b  │
+  └─────┴────────┴─────┴─────┴──────────┴─────┴─────┴─────┴─────┘
+
+  CAN 2.0B Frame (Extended 29-bit ID):
+  ┌─────┬────────┬─────┬─────┬──────────┬────────┬─────┬──────────┬─────┬─────┬─────┐
+  │ SOF │ 11-bit │ SRR │ IDE │ 18-bit   │  RTR   │ DLC │  Data    │ CRC │ ACK │ EOF │
+  │     │ Base   │     │     │ Extended │        │     │  0-8B    │     │     │     │
+  └─────┴────────┴─────┴─────┴──────────┴────────┴─────┴──────────┴─────┴─────┴─────┘
+
+  CAN FD Frame (up to 64 bytes):
+  ┌─────┬────────┬─────┬─────┬──────────┬─────┬─────┬──────────┬─────┬─────┬─────┐
+  │ SOF │  ID    │ FDF │ BRS │ DLC(4b)  │ ESI │     │  Data    │ CRC │ ACK │ EOF │
+  │     │ 11/29b │     │     │          │     │     │  0-64B   │     │     │     │
+  └─────┴────────┴─────┴─────┴──────────┴─────┴─────┴──────────┴─────┴─────┴─────┘
+  ```
+
+  ### DBC File Format
+
+  DBC (DataBase CAN) files define message and signal definitions:
+
+  ```dbc
+  VERSION ""
+
+  NS_ :
+
+  BS_:
+
+  BU_: ECM TCM BCM ABS
+
+  BO_ 256 EngineData: 8 ECM
+   SG_ EngineRPM : 0|16@1+ (0.25,0) [0|16383.75] "rpm" TCM,BCM
+   SG_ CoolantTemp : 16|8@1+ (1,-40) [-40|215] "degC" BCM
+   SG_ ThrottlePos : 24|8@1+ (0.392157,0) [0|100] "%" TCM
+
+  BO_ 512 TransmissionData: 4 TCM
+   SG_ GearPosition : 0|4@1+ (1,0) [0|15] "" ECM,BCM
+   SG_ TorqueRequest : 4|12@1+ (0.5,0) [0|2047.5] "Nm" ECM
+  ```
+
+  Key DBC elements:
+  - **BO_**: Message definition (ID, name, DLC, sender)
+  - **SG_**: Signal definition (name, bit_position|bit_length@byte_order value_type)
+  - Byte order: `1` = little-endian (Intel), `0` = big-endian (Motorola)
+  - Value type: `+` = unsigned, `-` = signed
+  - Scaling: `(factor, offset)` where `physical = raw * factor + offset`
+  - Range: `[min|max]`
+
+  ### Signal Encoding and Decoding
+
+  ```
+  Decoding: physical_value = raw_value * factor + offset
+  Encoding: raw_value = (physical_value - offset) / factor
+
+  Example: EngineRPM signal
+    Raw bytes: 0x1A 0x0B (little-endian) = 0x0B1A = 2842
+    Physical: 2842 * 0.25 + 0 = 710.5 RPM
+  ```
+
+  Bit extraction for Motorola (big-endian) byte order requires careful bit
+  numbering. The start bit refers to the MSB position in Motorola format,
+  unlike Intel format where it refers to the LSB position.
+
+  ### Bus Load Calculation
+
+  ```
+  Bus load (%) = (total_bits_per_second / baudrate) * 100
+
+  Bits per CAN frame (worst case, with bit stuffing):
+    Standard: 44 + 8*DLC + stuff bits (~5 per 4 data bits)
+    Extended: 64 + 8*DLC + stuff bits
+
+  Example at 500 kbit/s:
+    Message 0x100 (8 bytes) at 100 Hz:
+    Bits per frame ≈ 44 + 64 + ~25 stuffing = ~133 bits
+    Load contribution = (133 * 100) / 500000 = 2.66%
+  ```
+
+  A CAN bus should not exceed 70-80% load for reliable operation; above this
+  threshold, lower-priority messages experience significant latency.
+
+  ### CAN FD Differences
+
+  | Feature | CAN 2.0 | CAN FD |
+  |---------|---------|--------|
+  | Max data | 8 bytes | 64 bytes |
+  | Arbitration rate | Up to 1 Mbit/s | Up to 1 Mbit/s |
+  | Data phase rate | Same as arbitration | Up to 8 Mbit/s |
+  | DLC encoding | Linear (0-8) | Non-linear (0,1,..,8,12,16,20,24,32,48,64) |
+  | CRC | 15-bit | 17-bit (<=16B) or 21-bit (>16B) |
+  | Error detection | Standard | Improved (ISO CRC) |
+
+  ### Error Frame Types
+
+  | Error Type | Description | Cause |
+  |-----------|-------------|-------|
+  | Bit Error | Transmitted bit differs from monitored | Bus contention, driver fault |
+  | Stuff Error | 6+ consecutive same-polarity bits | Noise, clock drift |
+  | CRC Error | Received CRC does not match calculated | Data corruption |
+  | Form Error | Fixed-form bit field has wrong value | Protocol violation |
+  | ACK Error | No receiver acknowledges the frame | No listener, bus disconnected |
+
+  ### Trace File Formats
+
+  - **ASC**: Vector ASCII trace (human-readable, timestamps + frames)
+  - **BLF**: Vector Binary Logging Format (compressed, efficient for large captures)
+  - **CSV**: Comma-separated (portable but large)
+  - **MDF/MF4**: ASAM Measurement Data Format (signal-level, not frame-level)
+  - **PCAP**: Wireshark capture (for SocketCAN on Linux)
+
+  ### Linux SocketCAN Setup
+
+  ```bash
+  # Load CAN kernel modules
+  modprobe can
+  modprobe can_raw
+  modprobe vcan          # Virtual CAN for testing
+
+  # Create virtual CAN interface
+  ip link add dev vcan0 type vcan
+  ip link set up vcan0
+
+  # Configure real CAN interface
+  ip link set can0 type can bitrate 500000
+  ip link set up can0
+
+  # CAN FD configuration
+  ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
+
+  # Send/receive with cansend/candump
+  cansend vcan0 123#DEADBEEF
+  candump vcan0
+  ```
+
+  ### Best Practices
+
+  - Always validate DBC files before use (check for duplicate IDs, overlapping signals)
+  - Monitor bus load continuously during integration testing
+  - Use CAN FD for ECUs that need to transfer large payloads (e.g., diagnostics, calibration)
+  - Log error frames alongside data frames for complete analysis
+  - Verify message timing (cycle time, jitter) against the network design specification
+  - Use virtual CAN (vcan) for unit testing CAN application logic without hardware
+  - Filter captures early to reduce trace file sizes in long-duration tests
+
+skills:
+  - id: "can-dbc-parse"
+    name: "Parse DBC Database"
+    description: "Load and parse CAN database file"
+    tags: ["can", "dbc", "database"]
+    implementation: |
+      Parse DBC database:
+      1. Read DBC file format
+      2. Extract message definitions (BO_)
+      3. Parse signal definitions (SG_)
+      4. Extract value tables (VAL_)
+      5. Parse signal comments (CM_)
+      6. Build message/signal lookup tables
+      7. Validate database consistency
+
+      Example:
+      ```python
+      from tools.adapters.network.savvycan_adapter import SavvyCANAdapter
+
+      adapter = SavvyCANAdapter()
+      messages = adapter.parse_dbc("vehicle_can.dbc")
+      ```
+
+  - id: "can-message-decode"
+    name: "Decode CAN Message"
+    description: "Decode raw CAN frame using DBC"
+    tags: ["can", "decode", "signals"]
+    implementation: |
+      Decode CAN message:
+      1. Match CAN ID to message definition
+      2. Extract signal bits from data bytes
+      3. Handle byte order (little/big endian)
+      4. Apply scaling factor and offset
+      5. Convert to physical value
+      6. Validate against min/max ranges
+      7. Return decoded signal dictionary
+
+  - id: "can-message-encode"
+    name: "Encode CAN Message"
+    description: "Encode signals into CAN frame"
+    tags: ["can", "encode", "transmission"]
+    implementation: |
+      Encode CAN message:
+      1. Lookup message definition by name
+      2. Initialize data bytes to zero
+      3. For each signal:
+         - Convert physical to raw value
+         - Apply factor and offset
+         - Insert bits at correct position
+         - Handle byte order
+      4. Set DLC to message length
+      5. Return encoded CAN frame
+
+  - id: "can-bus-load-analysis"
+    name: "Analyze CAN Bus Load"
+    description: "Calculate bus utilization from trace"
+    tags: ["can", "analysis", "performance"]
+    implementation: |
+      Analyze CAN bus load:
+      1. Parse CAN trace file (ASC/BLF/CSV)
+      2. Calculate message inter-arrival times
+      3. Compute bits per message (including overhead)
+      4. Calculate instantaneous bus load
+      5. Determine peak and average utilization
+      6. Identify periodic vs. event-driven messages
+      7. Generate bus load report
+
+  - id: "can-error-frame-detection"
+    name: "Detect CAN Error Frames"
+    description: "Identify and analyze error conditions"
+    tags: ["can", "errors", "diagnostics"]
+    implementation: |
+      Detect CAN error frames:
+      1. Parse CAN trace for error flags
+      2. Identify error types (bit, stuff, CRC, form, ACK)
+      3. Correlate errors with message IDs
+      4. Detect bus-off conditions
+      5. Identify error passive nodes
+      6. Calculate error frame rate
+      7. Generate error analysis report
+
+  - id: "can-message-filtering"
+    name: "Filter CAN Messages"
+    description: "Apply filters to CAN trace data"
+    tags: ["can", "filtering", "analysis"]
+    implementation: |
+      Filter CAN messages:
+      1. Define filter criteria (IDs, time range)
+      2. Apply ID whitelist/blacklist
+      3. Filter by time window
+      4. Filter by signal value conditions
+      5. Remove duplicate messages
+      6. Downsample high-frequency messages
+      7. Export filtered trace
+
+  - id: "can-replay-simulation"
+    name: "Replay CAN Trace"
+    description: "Replay recorded CAN traffic for testing"
+    tags: ["can", "replay", "simulation"]
+    implementation: |
+      Replay CAN trace:
+      1. Load trace file (ASC/BLF)
+      2. Configure playback speed
+      3. Setup CAN interface for transmission
+      4. Preserve original timing or accelerate
+      5. Handle frame transmission errors
+      6. Support loop playback mode
+      7. Monitor playback progress
+
+  - id: "can-signal-monitoring"
+    name: "Monitor CAN Signal"
+    description: "Real-time signal value monitoring"
+    tags: ["can", "monitoring", "realtime"]
+    implementation: |
+      Monitor CAN signal in real-time:
+      1. Connect to CAN interface
+      2. Load DBC for signal definition
+      3. Setup message receive filter
+      4. Decode incoming messages
+      5. Extract target signal value
+      6. Update signal value display
+      7. Log signal history
+
+  - id: "can-gateway-routing"
+    name: "Configure CAN Gateway"
+    description: "Setup message routing between CAN buses"
+    tags: ["can", "gateway", "routing"]
+    implementation: |
+      Configure CAN gateway routing:
+      1. Define source and destination buses
+      2. Create routing table for message IDs
+      3. Configure ID translation if needed
+      4. Setup signal mapping and conversion
+      5. Define routing conditions (mode-dependent)
+      6. Configure frame rate limiting
+      7. Validate routing consistency
+
+  - id: "can-diagnostic-session"
+    name: "Perform UDS Diagnostic Session"
+    description: "Execute UDS diagnostic services over CAN"
+    tags: ["can", "uds", "diagnostics"]
+    implementation: |
+      UDS diagnostic session:
+      1. Send diagnostic session control (0x10)
+      2. Perform security access (0x27)
+      3. Read data by identifier (0x22)
+      4. Write data by identifier (0x2E)
+      5. Read diagnostic trouble codes (0x19)
+      6. Clear diagnostic information (0x14)
+      7. Handle negative responses (NRC)
+
+  - id: "canfd-support"
+    name: "Handle CAN FD Frames"
+    description: "Process CAN FD with flexible data rate"
+    tags: ["canfd", "fdcan", "protocol"]
+    implementation: |
+      Handle CAN FD:
+      1. Detect FD format flag (FDF)
+      2. Parse BRS (bit rate switch) flag
+      3. Handle extended DLC (up to 64 bytes)
+      4. Support variable bitrate in data phase
+      5. Process CAN FD specific errors
+      6. Convert between CAN and CAN FD
+      7. Validate CRC with FD algorithm
+
+  - id: "can-network-topology-analysis"
+    name: "Analyze Network Topology"
+    description: "Identify active nodes and traffic patterns"
+    tags: ["can", "topology", "analysis"]
+    implementation: |
+      Analyze CAN network topology:
+      1. Capture traffic from all nodes
+      2. Extract source node IDs
+      3. Build node communication matrix
+      4. Identify master/slave relationships
+      5. Detect isolated or silent nodes
+      6. Map message flow patterns
+      7. Visualize network graph
+
+metadata:
+  protocols: ["CAN 2.0A", "CAN 2.0B", "CAN FD"]
+  tools: ["CANoe", "SavvyCAN", "Wireshark"]
+  file_formats: ["DBC", "ASC", "BLF", "CSV"]
+  baudrates: [125, 250, 500, 1000]

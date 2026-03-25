@@ -1,0 +1,150 @@
+name: talent-workforce
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: talent_workforce
+description: "Upskilling programs for EV and software transition, talent acquisition, and retention strategies for automotive tech domains"
+use_cases:
+  - "Workforce transformation planning for ICE to EV transition"
+  - "Software engineering talent acquisition for SDV development"
+  - "Upskilling and reskilling program design for existing workforce"
+  - "Retention strategy development for competitive tech domains"
+  - "Organizational design for software-defined vehicle teams"
+automotive_standards:
+  - "ISO 9001"
+  - "IATF 16949"
+  - "APQP"
+  - "PPAP"
+instructions: |
+  ## Overview
+
+  Talent and workforce strategy in automotive addresses the massive human capital transformation required
+  as the industry shifts from mechanical engineering and ICE powertrain dominance to software engineering,
+  battery technology, AI/ML, and digital services. OEMs that employed 80% hardware engineers now need 50%+
+  software engineers within a decade, creating the largest workforce transformation in automotive history.
+  This skill covers strategic workforce planning, upskilling and reskilling programs, talent acquisition
+  in competitive tech labor markets, retention strategies, organizational design for software-defined
+  vehicle development, and the social dimension of managing workforce transitions.
+
+  ## Key Concepts
+
+  ### Workforce Transformation Drivers
+  - **Electrification**: Need for battery engineers, power electronics experts, HV safety specialists
+  - **Software-defined vehicles**: Embedded SW, cloud/backend, AI/ML, cybersecurity, DevOps engineers
+  - **Autonomous driving**: Perception, planning, simulation, safety validation, data engineering
+  - **Connected services**: Full-stack developers, UX designers, data scientists, product managers
+  - **Industry 4.0**: Robotics, automation, data analytics, digital twin engineers for manufacturing
+  - **Declining demand**: ICE powertrain engineers, transmission specialists, exhaust system designers
+
+  ### Skills Gap Analysis Framework
+  - **Current state inventory**: Map existing workforce by skill domain, proficiency level, and location
+  - **Future state requirements**: Project headcount needs by skill domain for next 5-10 years
+  - **Gap identification**: Quantify shortfall by domain (typically 5,000-20,000 SW engineers for large OEM)
+  - **Closure strategy**: Build (upskill), buy (hire), borrow (contractors/partners), bridge (automation)
+  - **Timeline modeling**: Match skill acquisition pace with product development milestones
+
+  ### Talent Market Competitive Dynamics
+  - **Tech company competition**: Google, Apple, Amazon, and startups compete for same SW talent pool
+  - **Compensation gap**: Automotive SW salaries typically 20-40% below equivalent tech company roles
+  - **Work model expectations**: Tech talent expects remote/hybrid work, rapid career growth, modern tools
+  - **Geographic constraints**: Automotive R&D centers often in lower-attractiveness locations vs. tech hubs
+  - **Brand perception**: Automotive seen as less innovative and slower-paced than tech sector
+
+  ## Implementation Guide
+
+  ### Step 1: Strategic Workforce Planning
+  - Build 10-year workforce model aligned with technology roadmap and product portfolio plan
+  - Quantify headcount needs by skill domain, level, and location for each planning year
+  - Model attrition scenarios: natural turnover, retirement wave, voluntary departure to competitors
+  - Calculate total workforce transformation cost: hiring, upskilling, severance, relocation
+
+  ### Step 2: Upskilling and Reskilling Programs
+  - Identify employees with transferable skills for reskilling (e.g., controls engineers to SW engineers)
+  - Design learning pathways: 6-12 month programs combining formal training, mentoring, and project work
+  - Partner with universities and bootcamps for accredited training programs
+  - Create internal academy or software university for continuous learning
+  - Target reskilling 30-50% of new SW capability from existing workforce to manage social impact
+
+  ### Step 3: Talent Acquisition Strategy
+  - Establish employer brand specifically targeting software and tech talent (separate from consumer brand)
+  - Open software development centers in tech talent hubs (Berlin, Tel Aviv, Shanghai, Bangalore, Bay Area)
+  - Create competitive compensation packages: base salary, equity/phantom stock, signing bonuses, benefits
+  - Build university partnerships and internship pipeline for early career talent
+  - Leverage acqui-hires through targeted M&A of small tech companies for team acquisition
+
+  ### Step 4: Retention and Culture Transformation
+  - Implement career paths for technical individual contributors (principal engineer, fellow, distinguished)
+  - Adopt modern engineering practices: open source contribution, hackathons, tech talks, conference attendance
+  - Create autonomous team structures with flat hierarchies and direct product ownership
+  - Provide state-of-the-art development tools, infrastructure, and computing resources
+  - Establish mentoring programs pairing automotive domain experts with software newcomers
+
+  ## Decision Frameworks
+
+  ### Build vs. Buy vs. Borrow for Capability Gaps
+  | Strategy | Best For | Timeline | Cost | Risk |
+  |----------|---------|----------|------|------|
+  | Build (upskill) | Adjacent skills, large numbers | 12-24 months | Medium | Medium (completion rate) |
+  | Buy (hire) | Scarce expertise, immediate need | 3-6 months | High (market premiums) | High (retention) |
+  | Borrow (contract) | Peak demand, non-core skills | Immediate | Highest per hour | Low (flexibility) |
+  | Bridge (automate) | Routine tasks, scale needs | 6-18 months | Variable | Medium (implementation) |
+  | Acqui-hire (M&A) | Team acquisition, IP bundle | 6-12 months | Very high | High (integration) |
+
+  ### Location Strategy for Software Centers
+  - **Tier 1 (Full-stack hub)**: 500+ engineers, complete product ownership (e.g., Berlin, Shanghai)
+  - **Tier 2 (Domain center)**: 100-300 engineers, specific domain expertise (e.g., Tel Aviv for cyber)
+  - **Tier 3 (Extended team)**: 50-100 engineers, supporting global teams (e.g., Bangalore, Bucharest)
+  - **Selection criteria**: Talent pool depth, university ecosystem, cost, time zone, IP protection
+
+  ### Compensation Benchmarking Strategy
+  - Benchmark against automotive peers AND tech companies in same labor market
+  - Target P50-P60 of tech market for base salary (cannot match FAANG at P75-P90)
+  - Differentiate through purpose (mobility impact), automotive domain excitement, and stability
+  - Use long-term incentives (phantom stock, deferred bonus) to improve retention economics
+
+  ## Best Practices
+
+  - Treat workforce transformation as a strategic program with executive sponsorship and dedicated budget
+  - Communicate the transformation vision honestly: which roles are growing, declining, and transforming
+  - Involve works councils and unions early in reskilling plans; social partnership reduces resistance
+  - Create dual career tracks (management and technical) with equal prestige and compensation ceiling
+  - Measure transformation progress with workforce analytics: skill mix ratio, hiring velocity, attrition
+  - Provide severance and outplacement support for roles that cannot be reskilled (ethical obligation)
+  - Allow remote and hybrid work for software roles; insisting on 100% office attendance loses candidates
+  - Invest in onboarding: new SW hires need automotive domain knowledge (safety, regulations, systems)
+  - Build diverse and inclusive teams: gender, culture, and background diversity drives innovation
+  - Maintain institutional automotive knowledge while integrating tech culture and practices
+
+  ## Examples
+
+  ### Example 1: Large-Scale Software Reskilling Program
+  A European OEM needs 5,000 additional software engineers over 5 years. Strategy: hire 3,000 externally,
+  reskill 2,000 from existing workforce. Reskilling program: 12-month "Software Academy" for mechanical,
+  electrical, and controls engineers transitioning to embedded SW, cloud, or data roles. Program includes
+  6 months of formal training and 6 months of supervised project work. Completion rate: 75%. Total
+  program cost: 120M EUR. Alternative external hiring would cost 200M EUR in recruiting fees and signing
+  bonuses with higher first-year attrition.
+
+  ### Example 2: Software Center Establishment in Tech Hub
+  An OEM opens 400-person software center in Berlin for vehicle OS development. Investment: 60M EUR over
+  3 years. Compensation: 15% above Munich automotive rates to compete with local tech startups. Culture:
+  agile teams, open-plan office, flexible hours, 2 days remote. Hiring results: 300 of 400 positions
+  filled in 18 months, 35% from tech sector (non-automotive background), 20% attrition in year 1 (above
+  target, addressed through improved onboarding and career path clarity).
+
+  ### Example 3: ICE Workforce Transition Management
+  An OEM plans to close ICE engine plant (2,500 jobs) and open battery module plant (1,500 jobs) at same
+  site over 4 years. Social plan: 600 early retirement, 500 reskilled for battery production (6-month
+  program), 400 transferred to other plants, 500 voluntary severance. Works council agreement: no
+  forced layoffs, reskilling guarantee for all willing employees under 55, severance of 1.5 months per
+  year of service. Total social cost: 350M EUR, partially offset by government transition subsidies.
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: advanced
+tags:
+  - "oem-decision-making"
+  - "talent-workforce"
+  - "automotive"
+  - "oem"

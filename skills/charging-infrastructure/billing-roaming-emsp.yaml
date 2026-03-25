@@ -1,0 +1,605 @@
+name: billing-roaming-emsp
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: business-operations
+description: Expert skill in EV charging billing, roaming, and eMSP (e-Mobility Service Provider) operations, covering OCPI protocol, CPO/eMSP roles, tariff management, Hubject interoperability, and payment processing.
+use_cases:
+- eMSP platform development (mobile app, billing backend)
+- CPO (Charge Point Operator) network management
+- OCPI roaming implementation for cross-network charging
+- Tariff and pricing strategy design
+- Payment gateway integration (Stripe, PayPal, credit cards)
+automotive_standards:
+- OCPI 2.2.1 (Open Charge Point Interface) for roaming
+- ISO 15118 Plug & Charge for certificate-based billing
+- OCPP 2.0.1 for EVSE to central system communication
+- PCI DSS for payment card data security
+- GDPR for user data privacy (EU)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in electric vehicle charging billing, roaming network operation, and e-Mobility Service Provider (eMSP) platform development, covering OCPI protocol for interoperability, tariff management, payment processing, Hubject integration, and business models for charging networks.
+
+
+  ### EV Charging Ecosystem Roles
+
+
+  - **CPO (Charge Point Operator)**:
+
+    - Owns and operates charging stations
+
+    - Manages hardware, electricity costs, site leases
+
+    - Provides charging services to end users (directly or via eMSPs)
+
+    - Examples: Electrify America, EVgo, ChargePoint
+
+
+  - **eMSP (e-Mobility Service Provider)**:
+
+    - Provides user-facing app/card for charging access
+
+    - Contracts with multiple CPOs for roaming (user can charge anywhere)
+
+    - Handles billing, customer support, payment processing
+
+    - Examples: Shell Recharge, PlugSurfing, Chargemap
+
+
+  - **Roaming Hub**:
+
+    - Intermediary connecting CPOs and eMSPs
+
+    - Enables interoperability (one app to charge at any network)
+
+    - Examples: Hubject (Intercharge), Gireve (France), e-clearing.net
+
+
+  - **NSP (Navigation Service Provider)**:
+
+    - Provides route planning with charging stops
+
+    - Integrates with eMSPs for real-time availability, pricing
+
+    - Examples: Google Maps, Tesla navigation, ABRP
+
+
+  ### OCPI (Open Charge Point Interface) Protocol
+
+
+  - **Purpose**: Enable roaming between CPO and eMSP (cross-network charging)
+
+
+  - **Key entities**:
+
+    - **Locations**: Charging station sites (address, coordinates)
+
+    - **EVSEs**: Electric Vehicle Supply Equipment (physical chargers)
+
+    - **Connectors**: Charging outlets (CCS, CHAdeMO, Type 2)
+
+    - **Sessions**: Charging sessions (start time, energy, duration, cost)
+
+    - **CDRs (Charge Detail Records)**: Final billing records for completed sessions
+
+    - **Tariffs**: Pricing structures (per kWh, per minute, flat fee)
+
+    - **Tokens**: User authentication (RFID card ID, mobile app token)
+
+
+  - **OCPI message flow** (roaming scenario):
+
+    1. User (with eMSP A card) arrives at CPO B charging station
+
+    2. User taps RFID card → CPO B sends authorization request to eMSP A (via OCPI or roaming hub)
+
+    3. eMSP A validates user, responds "Accepted" → CPO B starts charging
+
+    4. During charging: CPO B sends periodic session updates to eMSP A (energy, duration)
+
+    5. Charging ends: CPO B sends CDR (Charge Detail Record) to eMSP A
+
+    6. eMSP A bills user, pays CPO B (minus roaming fee)
+
+
+  - **OCPI API example** (CPO pushes session update to eMSP):
+
+    ```python
+    import requests
+
+    # CPO → eMSP: Send session update
+    def send_session_update(emsp_url, session_data, auth_token):
+        headers = {
+            "Authorization": f"Token {auth_token}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "id": session_data["session_id"],
+            "start_date_time": "2026-03-19T08:30:00Z",
+            "kwh": session_data["energy_kwh"],
+            "auth_id": session_data["rfid_token"],
+            "location_id": session_data["location_id"],
+            "evse_uid": session_data["evse_uid"],
+            "connector_id": session_data["connector_id"],
+            "currency": "USD",
+            "total_cost": session_data["total_cost"],
+            "status": "ACTIVE",  # ACTIVE, COMPLETED, INVALID
+            "last_updated": "2026-03-19T09:00:00Z"
+        }
+
+        response = requests.put(
+            f"{emsp_url}/ocpi/cpo/2.2.1/sessions/{session_data[''session_id'']}",
+            headers=headers,
+            json=payload
+        )
+
+        return response.status_code  # 200 OK = eMSP acknowledged
+
+    # Example
+    session = {
+        "session_id": "123456789",
+        "energy_kwh": 25.5,
+        "rfid_token": "AABBCCDD",
+        "location_id": "LOC001",
+        "evse_uid": "EVSE001",
+        "connector_id": "1",
+        "total_cost": 12.75
+    }
+
+    status = send_session_update("https://emsp-api.example.com", session, "secret_token")
+    ```
+
+
+  ### Tariff Management
+
+
+  - **Tariff components**:
+
+    - **Energy-based**: $/kWh (e.g., $0.40/kWh)
+
+    - **Time-based**: $/minute (e.g., $0.25/min, encourages fast charging)
+
+    - **Session-based**: Flat fee per session (e.g., $2 connection fee)
+
+    - **Parking-based**: Idle fee after charging complete (e.g., $0.50/min idle)
+
+    - **Time-of-use**: Variable pricing by time of day (peak/off-peak)
+
+
+  - **Tariff example** (OCPI format):
+
+    ```json
+    {
+      "id": "TARIFF001",
+      "currency": "USD",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.40,
+              "step_size": 1  // 1 kWh increments
+            },
+            {
+              "type": "TIME",
+              "price": 0.05,
+              "step_size": 60  // 1-minute increments
+            }
+          ],
+          "restrictions": {
+            "start_time": "16:00",
+            "end_time": "21:00",
+            "day_of_week": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+          }
+        },
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.25,
+              "step_size": 1
+            }
+          ],
+          "restrictions": {
+            "start_time": "21:00",
+            "end_time": "16:00"  // Off-peak pricing (lower rate)
+          }
+        }
+      ]
+    }
+    ```
+
+
+  - **Tariff calculation**:
+
+    ```python
+    def calculate_cost(tariff, energy_kwh, duration_minutes, start_time):
+        total_cost = 0
+
+        # Find applicable tariff element based on time restrictions
+        for element in tariff["elements"]:
+            if time_matches_restriction(start_time, element.get("restrictions")):
+                for component in element["price_components"]:
+                    if component["type"] == "ENERGY":
+                        total_cost += energy_kwh * component["price"]
+                    elif component["type"] == "TIME":
+                        total_cost += (duration_minutes / component["step_size"]) * component["price"]
+                break  # Use first matching element
+
+        return round(total_cost, 2)
+
+    # Example
+    cost = calculate_cost(
+        tariff=tariff_data,
+        energy_kwh=25.5,
+        duration_minutes=45,
+        start_time="2026-03-19T17:30:00Z"
+    )
+    # Result: Peak pricing (17:30): 25.5 kWh × $0.40 + 45 min × $0.05 = $10.20 + $2.25 = $12.45
+    ```
+
+
+  ### Payment Processing
+
+
+  - **Payment methods**:
+
+    - **Credit/debit card**: Stripe, Braintree, Adyen
+
+    - **Mobile wallet**: Apple Pay, Google Pay, PayPal
+
+    - **Direct carrier billing**: Charge to phone bill (for eMSP apps)
+
+    - **Fleet accounts**: Invoicing for corporate fleets
+
+    - **Ad-hoc payment**: Credit card at charger (touchscreen or NFC)
+
+
+  - **PCI DSS compliance**:
+
+    - Never store credit card numbers in plain text
+
+    - Use tokenization (Stripe token, PayPal token)
+
+    - Encrypt cardholder data in transit (TLS 1.2+)
+
+    - Annual security audit (PCI DSS Level 1 for >6M transactions/year)
+
+
+  - **Stripe integration example**:
+
+    ```python
+    import stripe
+
+    stripe.api_key = "sk_live_..."
+
+    def charge_user(user_id, amount_usd, session_id):
+        # Retrieve user''s saved payment method (Stripe token)
+        user = get_user(user_id)
+        payment_method = user.stripe_payment_method
+
+        try:
+            # Create payment intent
+            payment_intent = stripe.PaymentIntent.create(
+                amount=int(amount_usd * 100),  # Stripe uses cents
+                currency="usd",
+                payment_method=payment_method,
+                confirm=True,
+                description=f"Charging session {session_id}",
+                metadata={"session_id": session_id, "user_id": user_id}
+            )
+
+            if payment_intent.status == "succeeded":
+                log_payment(user_id, session_id, amount_usd, "success")
+                return True
+            else:
+                log_payment(user_id, session_id, amount_usd, "failed")
+                return False
+
+        except stripe.error.CardError as e:
+            log_error(f"Card error: {e.user_message}")
+            notify_user(user_id, f"Payment failed: {e.user_message}")
+            return False
+
+    # Example
+    success = charge_user(user_id=12345, amount_usd=12.45, session_id="123456789")
+    ```
+
+
+  ### Roaming and Interoperability
+
+
+  - **Hubject (Intercharge)**:
+
+    - Largest roaming platform in Europe
+
+    - Connects 800+ CPOs, 1000+ eMSPs
+
+    - Uses OICP (Open InterCharge Protocol) or OCPI 2.2
+
+
+  - **Hubject integration**:
+
+    1. CPO registers stations with Hubject (location, EVSE, connectors, tariffs)
+
+    2. eMSP registers users with Hubject (RFID tokens, mobile app tokens)
+
+    3. User charges at any Hubject-connected station
+
+    4. Hubject routes authorization, CDRs, and settlement
+
+
+  - **Settlement process**:
+
+    - CPO sends CDR to Hubject: 25.5 kWh @ $12.45
+
+    - Hubject takes roaming fee: 10% = $1.25
+
+    - Hubject pays CPO: $11.20
+
+    - Hubject bills eMSP: $12.45
+
+    - eMSP bills user: $12.45 (or adds markup, e.g., $13.45)
+
+
+  ### CDR (Charge Detail Record) Generation
+
+
+  - **CDR fields**:
+
+    - Session ID, user token, location, EVSE, connector
+
+    - Start/end timestamp, total energy (kWh), total duration (minutes)
+
+    - Tariff applied, total cost (currency)
+
+    - Meter readings (start/end kWh for billing accuracy)
+
+
+  - **CDR example** (OCPI format):
+
+    ```json
+    {
+      "id": "CDR123456789",
+      "start_date_time": "2026-03-19T08:30:00Z",
+      "end_date_time": "2026-03-19T09:15:00Z",
+      "auth_id": "AABBCCDD",
+      "location_id": "LOC001",
+      "evse_uid": "EVSE001",
+      "connector_id": "1",
+      "currency": "USD",
+      "total_cost": 12.45,
+      "total_energy": 25.5,
+      "total_time": 0.75,  // hours
+      "charging_periods": [
+        {
+          "start_date_time": "2026-03-19T08:30:00Z",
+          "dimensions": [
+            {"type": "ENERGY", "volume": 25.5},
+            {"type": "TIME", "volume": 45}  // minutes
+          ]
+        }
+      ],
+      "remark": "Session completed successfully",
+      "last_updated": "2026-03-19T09:16:00Z"
+    }
+    ```
+
+
+  - **CDR validation**:
+
+    ```python
+    def validate_cdr(cdr):
+        errors = []
+
+        # Check required fields
+        if not cdr.get("id"):
+            errors.append("Missing CDR ID")
+        if not cdr.get("total_energy") or cdr["total_energy"] <= 0:
+            errors.append("Invalid total energy")
+        if not cdr.get("total_cost") or cdr["total_cost"] < 0:
+            errors.append("Invalid total cost")
+
+        # Check energy vs cost consistency
+        estimated_cost = cdr["total_energy"] * AVERAGE_RATE
+        if abs(cdr["total_cost"] - estimated_cost) > estimated_cost * 0.5:
+            errors.append(f"Cost mismatch: expected ~${estimated_cost}, got ${cdr[''total_cost'']}")
+
+        return errors
+
+    # Example
+    errors = validate_cdr(cdr_data)
+    if errors:
+        log_warning(f"CDR validation failed: {errors}")
+    ```
+
+
+  ### eMSP Mobile App Features
+
+
+  - **User registration**: Email, password, payment method (credit card)
+
+  - **Map view**: Display nearby charging stations (location, availability, price)
+
+  - **Start/stop charging**: Remote start via app (ISO 15118 or OCPP)
+
+  - **Session monitoring**: Real-time energy delivered, cost, estimated time remaining
+
+  - **Payment history**: View past sessions, download receipts
+
+  - **RFID card management**: Associate physical RFID cards with account
+
+
+  - **App backend API example**:
+
+    ```python
+    from flask import Flask, request, jsonify
+
+    app = Flask(__name__)
+
+    @app.route("/api/v1/start_session", methods=["POST"])
+    def start_session():
+        data = request.json
+        user_id = data["user_id"]
+        evse_id = data["evse_id"]
+
+        # Check user balance / payment method valid
+        user = get_user(user_id)
+        if not user.has_valid_payment_method():
+            return jsonify({"error": "No valid payment method"}), 400
+
+        # Send start command to EVSE (via OCPP)
+        session_id = ocpp_remote_start(evse_id, user.rfid_token)
+
+        # Log session
+        create_session_record(session_id, user_id, evse_id)
+
+        return jsonify({"session_id": session_id, "status": "started"}), 200
+
+    @app.route("/api/v1/session_status/<session_id>", methods=["GET"])
+    def get_session_status(session_id):
+        session = get_session(session_id)
+
+        return jsonify({
+            "session_id": session_id,
+            "status": session.status,  # ACTIVE, COMPLETED
+            "energy_kwh": session.energy_kwh,
+            "duration_minutes": session.duration_minutes,
+            "cost_usd": session.cost_usd
+        })
+    ```
+
+
+  ### Business Models
+
+
+  - **CPO revenue**:
+
+    - Energy sales: $0.40/kWh (buy from grid at $0.10/kWh, margin $0.30/kWh)
+
+    - Parking fees: $2/hour for premium locations (airports, hotels)
+
+    - Advertising: Display ads on charger screen
+
+    - Data sales: Anonymized usage data to urban planners, automakers
+
+
+  - **eMSP revenue**:
+
+    - Markup on charging: Add $0.05-0.10/kWh above CPO rate
+
+    - Subscription: $5-10/month for unlimited charging or reduced rates
+
+    - Fleet contracts: Corporate accounts for delivery fleets
+
+
+  - **Break-even analysis** (50 kW DC fast charger):
+
+    - Installation cost: $50,000 (charger + electrical + site work)
+
+    - Electricity cost: $0.10/kWh
+
+    - Selling price: $0.40/kWh
+
+    - Margin: $0.30/kWh
+
+    - Utilization: 20% (4.8 hours/day @ 50 kW = 240 kWh/day)
+
+    - Daily revenue: 240 kWh × $0.30 = $72/day
+
+    - Annual revenue: $72 × 365 = $26,280
+
+    - Payback period: $50,000 / $26,280 = 1.9 years
+
+
+  ## Approach
+
+
+  1. **Business model**: Define CPO, eMSP, or both (vertically integrated)
+
+  2. **OCPI integration**: Implement OCPI 2.2.1 for roaming (if eMSP)
+
+  3. **Tariff design**: Define pricing strategy (energy, time, session, TOU)
+
+  4. **Payment gateway**: Integrate Stripe, PayPal, or other PSP (Payment Service Provider)
+
+  5. **Mobile app**: Develop user-facing app (React Native, Flutter)
+
+  6. **Backend**: Build billing engine, session management, CDR generation
+
+  7. **Roaming hub**: Connect to Hubject, Gireve, or e-clearing.net
+
+
+  ## Deliverables
+
+
+  - OCPI integration (API endpoints for locations, sessions, CDRs, tariffs)
+
+  - Billing engine (tariff calculation, CDR generation, payment processing)
+
+  - Mobile app (iOS/Android) with map, session control, payment history
+
+  - Roaming hub integration (Hubject/Gireve connection)
+
+  - Dashboard (CPO/eMSP admin panel for revenue, sessions, users)
+
+  - API documentation (REST API for third-party integrations)
+
+
+  ## Best Practices
+
+
+  - **Data accuracy**: Ensure energy metering accurate (MID-certified meters)
+
+  - **CDR reconciliation**: Match CPO and eMSP CDRs (detect discrepancies)
+
+  - **User support**: 24/7 customer service (chat, phone, email)
+
+  - **Fraud detection**: Monitor for abnormal usage patterns (stolen RFID cards)
+
+  - **GDPR compliance**: Anonymize user data, provide data export/deletion
+
+
+  ## Integration
+
+
+  - **OCPP backend**: EVSE management, remote start/stop, session data
+
+  - **Payment gateway**: Stripe, Braintree, PayPal for user billing
+
+  - **Roaming hub**: Hubject, Gireve for cross-network access
+
+  - **Navigation**: Google Maps API for station location, route planning
+
+  - **Analytics**: Google Analytics, Mixpanel for user behavior tracking
+
+
+  '
+constraints:
+- OCPI complexity (many edge cases, error handling)
+- Roaming fees reduce margin (10-20% of transaction value)
+- Payment processing fees (2-3% of transaction)
+- Regulatory differences across regions (tariff structures, taxation)
+tools_required:
+- OCPI library (Python ocpi, Java/Spring Boot custom)
+- Payment gateway SDK (Stripe, Braintree)
+- Mobile app framework (React Native, Flutter)
+- API gateway (Kong, AWS API Gateway)
+- Database (PostgreSQL for transactional, MongoDB for sessions)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- billing
+- roaming
+- emsp
+- ocpi
+- payment-processing
+- automotive

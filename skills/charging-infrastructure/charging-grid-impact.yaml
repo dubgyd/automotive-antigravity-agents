@@ -1,0 +1,453 @@
+name: charging-grid-impact
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: grid-integration
+description: Expert skill in analyzing electric vehicle charging impact on electrical distribution grids, covering transformer loading analysis, power quality assessment, harmonic distortion mitigation, and grid upgrade planning.
+use_cases:
+- Distribution transformer loading analysis for EV adoption scenarios
+- Power quality assessment (voltage drop, flicker, harmonics)
+- Grid impact study for multi-charger depot installations
+- Utility interconnection application and impact fee calculation
+- Grid upgrade planning (transformer, feeder, substation capacity)
+automotive_standards:
+- IEEE 519 Harmonic limits for electrical power systems
+- IEEE 1547 Distributed energy resources interconnection
+- IEC 61000-3-2 Harmonic current emission limits
+- ANSI C84.1 Voltage ratings for electric power systems
+- IEEE 2030 Smart grid interoperability
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in assessing electric vehicle charging impact on electrical distribution grids, covering transformer loading analysis, voltage drop calculations, harmonic distortion mitigation, power quality assessment, and planning grid upgrades to accommodate high EV penetration.
+
+
+  ### Grid Impact Overview
+
+
+  - **Key concerns**:
+
+    - **Transformer overload**: Residential transformers designed for 5-10 homes, not 5-10 EVs charging simultaneously
+
+    - **Voltage drop**: Long feeders experience voltage sag during high EV charging load
+
+    - **Harmonic distortion**: Charger power electronics inject harmonics (3rd, 5th, 7th), degrade power quality
+
+    - **Peak demand**: Uncontrolled charging coincides with evening peak (5-9 PM), exacerbates grid stress
+
+
+  - **EV penetration scenarios**:
+
+    - **Low (5-10%)**: Minimal grid impact, existing infrastructure sufficient
+
+    - **Medium (20-30%)**: Localized transformer upgrades, voltage regulation needed
+
+    - **High (50%+)**: Widespread feeder upgrades, substation capacity expansion
+
+
+  ### Transformer Loading Analysis
+
+
+  - **Residential transformer sizing**:
+
+    - Typical: 25-50 kVA transformer serves 5-10 homes (diversified load ~5 kW/home)
+
+    - Without EVs: Peak load = 10 homes × 5 kW × 0.7 diversity factor = 35 kW → 35 kVA
+
+    - With EVs (50% adoption): Peak load = 35 kW + 5 EVs × 7.4 kW × 0.5 diversity = 35 + 18.5 = 53.5 kVA → Overload!
+
+
+  - **Transformer thermal model**:
+
+    ```python
+    def transformer_loading_analysis(num_homes, num_evs, home_load_kw, ev_load_kw, xfmr_rating_kva):
+        # Diversity factors
+        home_diversity = 0.7  # Not all homes at peak simultaneously
+        ev_diversity = 0.5    # Not all EVs charging simultaneously
+
+        # Peak load
+        total_home_load = num_homes * home_load_kw * home_diversity
+        total_ev_load = num_evs * ev_load_kw * ev_diversity
+        total_load_kva = total_home_load + total_ev_load
+
+        # Loading percentage
+        loading_pct = (total_load_kva / xfmr_rating_kva) * 100
+
+        # Overload assessment
+        if loading_pct > 100:
+            overload_kva = total_load_kva - xfmr_rating_kva
+            status = "OVERLOAD"
+        elif loading_pct > 80:
+            overload_kva = 0
+            status = "WARNING (>80%)"
+        else:
+            overload_kva = 0
+            status = "OK"
+
+        return {
+            "total_load_kva": total_load_kva,
+            "loading_pct": loading_pct,
+            "overload_kva": overload_kva,
+            "status": status
+        }
+
+    # Example: 10 homes, 5 EVs, 50 kVA transformer
+    result = transformer_loading_analysis(
+        num_homes=10,
+        num_evs=5,
+        home_load_kw=5,
+        ev_load_kw=7.4,
+        xfmr_rating_kva=50
+    )
+    # Result: {"total_load_kva": 53.5, "loading_pct": 107%, "status": "OVERLOAD"}
+    # Recommendation: Upgrade to 75 kVA transformer or implement smart charging
+    ```
+
+
+  - **Thermal aging**:
+
+    - Transformer insulation life halves for every 8°C rise in hotspot temperature
+
+    - Prolonged overload (>110%) accelerates aging → premature failure
+
+    - Solution: Upgrade transformer or manage EV charging (time-shift to off-peak)
+
+
+  ### Voltage Drop and Regulation
+
+
+  - **Voltage drop in distribution feeder**:
+
+    - Ohm''s law: V_drop = I × R + I × X (resistive + reactive drop)
+
+    - ANSI C84.1: Voltage at customer must be 114-126V (120V ± 5%)
+
+    - Long rural feeders: Significant voltage drop (e.g., 5V drop at end of 2-mile feeder)
+
+
+  - **Voltage drop calculation**:
+
+    ```python
+    def voltage_drop_analysis(feeder_length_miles, feeder_impedance_ohm_per_mile, load_kw, voltage_nominal):
+        # Convert miles to total impedance
+        r_total = feeder_length_miles * feeder_impedance_ohm_per_mile  # Ω (simplified, R only)
+
+        # Current
+        i_amps = (load_kw * 1000) / voltage_nominal  # A (single-phase approximation)
+
+        # Voltage drop
+        v_drop = i_amps * r_total  # V
+
+        # Voltage at load
+        v_load = voltage_nominal - v_drop
+
+        # Compliance check
+        v_min = voltage_nominal * 0.95  # 114V for 120V system
+        if v_load < v_min:
+            status = "VIOLATION"
+        else:
+            status = "OK"
+
+        return {
+            "v_drop": v_drop,
+            "v_load": v_load,
+            "status": status
+        }
+
+    # Example: 2-mile feeder, 0.5 Ω/mile, 50 kW load (7 EVs), 120V
+    result = voltage_drop_analysis(
+        feeder_length_miles=2,
+        feeder_impedance_ohm_per_mile=0.5,
+        load_kw=50,
+        voltage_nominal=120
+    )
+    # Result: v_drop = (50,000 / 120) × (2 × 0.5) = 417A × 1Ω = 417V (unrealistic, need three-phase model)
+    # Realistic (three-phase): v_drop ~10-15V → v_load = 105-110V (VIOLATION)
+    # Solution: Voltage regulator at mid-feeder, or reduce load via smart charging
+    ```
+
+
+  - **Voltage regulation solutions**:
+
+    - **Line voltage regulator (LVR)**: Step-up transformer at mid-feeder (boost voltage by 5-10V)
+
+    - **Capacitor banks**: Provide reactive power support, reduce voltage drop (inductive loads)
+
+    - **Smart inverters (EVs)**: Inject reactive power (Volt-VAR mode) to support voltage
+
+
+  ### Harmonic Distortion
+
+
+  - **Harmonics from EV chargers**:
+
+    - Charger AC-DC rectifier (PFC stage) generates harmonics: 3rd (180 Hz), 5th (300 Hz), 7th (420 Hz)
+
+    - Total Harmonic Distortion (THD): Ratio of harmonic content to fundamental (60 Hz)
+
+    - IEEE 519 limits: THD_I < 5% for current, THD_V < 3% for voltage (at PCC, Point of Common Coupling)
+
+
+  - **THD calculation**:
+
+    ```python
+    import numpy as np
+
+    def calculate_thd(waveform, sample_rate, fundamental_freq):
+        # FFT of current waveform
+        fft = np.fft.fft(waveform)
+        freqs = np.fft.fftfreq(len(waveform), 1/sample_rate)
+
+        # Fundamental magnitude (60 Hz)
+        idx_fundamental = np.argmin(np.abs(freqs - fundamental_freq))
+        i_fundamental = np.abs(fft[idx_fundamental])
+
+        # Harmonic magnitudes (3rd, 5th, 7th, ..., 40th)
+        harmonic_sum = 0
+        for n in range(3, 41, 2):  # Odd harmonics dominate
+            idx_harmonic = np.argmin(np.abs(freqs - n * fundamental_freq))
+            i_harmonic = np.abs(fft[idx_harmonic])
+            harmonic_sum += i_harmonic**2
+
+        # THD
+        thd = np.sqrt(harmonic_sum) / i_fundamental
+        return thd * 100  # Percentage
+
+    # Example: Measure current waveform from EV charger
+    waveform = measure_current_waveform()  # From oscilloscope or power analyzer
+    thd = calculate_thd(waveform, sample_rate=10000, fundamental_freq=60)
+    # Result: THD = 8% (exceeds IEEE 519 limit of 5%)
+    # Solution: Add harmonic filter or use charger with better PFC
+    ```
+
+
+  - **Harmonic mitigation**:
+
+    - **Passive filter**: LC filter tuned to attenuate specific harmonics (5th, 7th)
+
+    - **Active filter**: Inject counter-harmonics to cancel distortion
+
+    - **Better PFC chargers**: High-quality boost PFC (THD <3%), totem-pole PFC (THD <2%)
+
+
+  ### Power Quality Metrics
+
+
+  - **Voltage flicker**: Rapid voltage fluctuations (e.g., EV charger ramping up/down)
+
+    - Metric: P_st (short-term flicker severity), P_lt (long-term)
+
+    - Limit: P_st < 1.0 (IEC 61000-4-15)
+
+    - Mitigation: Slow ramp rates (1 kW/s instead of instantaneous), energy storage buffer
+
+
+  - **Power factor**: Ratio of real power to apparent power
+
+    - Poor PF: Higher current for same real power → increased losses, voltage drop
+
+    - Target: PF > 0.95 (utility requirement)
+
+    - EV chargers: PFC stage maintains PF >0.95
+
+
+  ### Grid Upgrade Planning
+
+
+  - **Capacity planning for EV depots**:
+
+    - Scenario: 50-bus electric depot, 200 kWh per bus, 50 kW chargers
+
+    - Total energy: 50 buses × 200 kWh = 10,000 kWh/night
+
+    - Charging window: 8 hours (10 PM - 6 AM)
+
+    - Power required: 10,000 kWh / 8 hours = 1,250 kW average
+
+    - Peak demand (all chargers on): 50 buses × 50 kW = 2,500 kW
+
+    - Smart charging: Spread load → 1,500 kW peak (avoid demand charge spike)
+
+
+  - **Grid upgrade cost analysis**:
+
+    ```python
+    def grid_upgrade_cost(current_capacity_kw, required_capacity_kw):
+        upgrade_needed_kw = max(0, required_capacity_kw - current_capacity_kw)
+
+        if upgrade_needed_kw == 0:
+            return {"upgrade_needed": False, "cost": 0}
+
+        # Cost factors
+        transformer_cost_per_kw = 150  # $/kW (new transformer)
+        feeder_cost_per_kw = 50        # $/kW (upgrade conductor)
+        substation_cost_per_kw = 300   # $/kW (substation expansion, if needed)
+
+        # Check if substation upgrade needed
+        if required_capacity_kw > 5000:  # >5 MW → substation upgrade
+            total_cost = upgrade_needed_kw * substation_cost_per_kw
+            upgrade_type = "Substation expansion"
+        elif upgrade_needed_kw > 500:  # >500 kW → feeder upgrade
+            total_cost = upgrade_needed_kw * feeder_cost_per_kw
+            upgrade_type = "Feeder upgrade"
+        else:  # <500 kW → transformer upgrade
+            total_cost = upgrade_needed_kw * transformer_cost_per_kw
+            upgrade_type = "Transformer upgrade"
+
+        return {
+            "upgrade_needed": True,
+            "upgrade_kw": upgrade_needed_kw,
+            "upgrade_type": upgrade_type,
+            "cost_usd": total_cost
+        }
+
+    # Example: Depot needs 1,500 kW, current capacity 500 kW
+    result = grid_upgrade_cost(current_capacity_kw=500, required_capacity_kw=1500)
+    # Result: {"upgrade_needed": True, "upgrade_kw": 1000, "upgrade_type": "Feeder upgrade", "cost_usd": $50,000}
+    ```
+
+
+  - **Utility interconnection process**:
+
+    1. Submit interconnection application (utility form, site plan, load estimate)
+
+    2. Utility conducts impact study (transformer loading, voltage drop, protection coordination)
+
+    3. Utility determines upgrade requirements (transformer, feeder, substation)
+
+    4. Developer pays impact fee (proportional to load added, e.g., $100-500/kW)
+
+    5. Utility performs upgrades (3-12 months timeline)
+
+    6. Interconnection approved, charger installation proceeds
+
+
+  ### Load Diversity and Coincidence
+
+
+  - **Coincidence factor**: Probability of multiple EVs charging simultaneously
+
+    - Residential: Low (0.3-0.5) — people arrive home at different times
+
+    - Workplace: Medium (0.5-0.7) — arrive in morning, plug in
+
+    - Depot: High (0.8-1.0) — all vehicles return at same time, charge overnight
+
+
+  - **Diversity factor**: Inverse of coincidence (1 / coincidence_factor)
+
+    - Used to reduce oversizing of transformers
+
+
+  ### Grid Simulation and Modeling
+
+
+  - **Software tools**:
+
+    - **OpenDSS**: Open-source distribution system simulator (EPRI)
+
+    - **GridLAB-D**: Agent-based grid simulation (PNNL)
+
+    - **PowerWorld**: Commercial power flow analysis
+
+    - **MATLAB/Simulink**: Custom grid models
+
+
+  - **Simulation workflow**:
+
+    1. Model distribution feeder (transformers, lines, loads)
+
+    2. Add EV charging loads (time-series data, charging profiles)
+
+    3. Run power flow analysis (voltage, current, losses at each node)
+
+    4. Identify violations (overvoltage, undervoltage, overload)
+
+    5. Test mitigation strategies (smart charging, voltage regulators, energy storage)
+
+
+  ## Approach
+
+
+  1. **Data collection**: Gather feeder data (conductor size, transformer ratings, historical load)
+
+  2. **EV adoption forecast**: Estimate EV penetration over time (5%, 20%, 50%)
+
+  3. **Load modeling**: Create EV charging profiles (uncontrolled vs smart charging)
+
+  4. **Power flow simulation**: Run grid simulation with EV loads (OpenDSS, GridLAB-D)
+
+  5. **Impact assessment**: Identify overloaded transformers, voltage violations, harmonic issues
+
+  6. **Mitigation planning**: Design upgrades (transformer, feeder, voltage regulators)
+
+  7. **Cost-benefit analysis**: Compare grid upgrade cost vs smart charging benefits
+
+
+  ## Deliverables
+
+
+  - Grid impact study report (transformer loading, voltage drop, harmonics)
+
+  - Load flow simulation results (voltage profiles, equipment loading)
+
+  - Upgrade recommendations (transformer sizing, feeder conductor, voltage regulators)
+
+  - Cost estimate for grid upgrades (equipment, installation, utility fees)
+
+  - Smart charging strategy (time-shift charging to off-peak, reduce peak demand)
+
+
+  ## Best Practices
+
+
+  - **Conservative assumptions**: Use 1.0 coincidence factor for worst-case analysis
+
+  - **Validation**: Compare simulation results to field measurements (voltage, current)
+
+  - **Utility coordination**: Engage utility early (avoid delays, surprises)
+
+  - **Phased approach**: Start with pilot (10-20% EVs), monitor, expand gradually
+
+  - **Data-driven**: Use actual charging data (not assumptions) for load profiles
+
+
+  ## Integration
+
+
+  - **SCADA**: Real-time monitoring of transformer loading, feeder voltage
+
+  - **Smart meters**: AMI data for EV charging detection, load profiling
+
+  - **OpenADR**: Demand response signals to reduce charging during peak
+
+  - **DER management**: Coordinate with solar, battery storage for grid support
+
+
+  '
+constraints:
+- Limited visibility into distribution grid (utilities have data, not always shared)
+- Uncertainty in EV adoption rates and charging behavior
+- Long lead time for grid upgrades (6-24 months)
+- High cost of upgrades (utilities may pass cost to customers)
+tools_required:
+- OpenDSS or GridLAB-D for distribution system simulation
+- Power quality analyzer (Fluke 435, Yokogawa CW500) for harmonic measurement
+- MATLAB/Python for load flow analysis and optimization
+- Utility feeder maps and transformer data
+- Smart meter data (if available) for load profiling
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- charging-infrastructure
+- grid-impact
+- transformer-loading
+- voltage-drop
+- harmonics
+- power-quality
+- automotive

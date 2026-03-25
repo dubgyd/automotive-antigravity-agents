@@ -1,0 +1,589 @@
+name: automotive-ethernet
+version: 1.0.0
+category: networking
+domain: automotive
+subcategory: physical-layer
+description: Expert in Automotive Ethernet standards including 100BASE-T1, 1000BASE-T1, TSN (Time-Sensitive Networking), AVB (Audio Video Bridging), switch configuration, VLAN setup, and QoS policies for zonal architectures.
+use_cases:
+- Automotive Ethernet physical layer design (100BASE-T1, 1000BASE-T1)
+- TSN configuration for deterministic latency (<10ms)
+- AVB setup for audio/video streaming
+- Ethernet switch configuration for zone controllers
+- VLAN segmentation for security and traffic isolation
+- QoS policies for mixed-criticality traffic
+automotive_standards:
+- IEEE 802.3bw (100BASE-T1)
+- IEEE 802.3bp (1000BASE-T1)
+- IEEE 802.3cg (10BASE-T1S)
+- IEEE 802.1AS (Time Synchronization)
+- IEEE 802.1Qav (AVB Forwarding and Queuing)
+- IEEE 802.1Qat (Stream Reservation Protocol)
+- IEEE 802.1Qbv (Time-Aware Shaper)
+- IEEE 802.1CB (Frame Replication and Elimination)
+- IEEE 802.1Qci (Per-Stream Filtering and Policing)
+- OPEN Alliance TC8 (100BASE-T1)
+- ISO 26262 (Functional Safety)
+instructions: |
+  ## Automotive Ethernet Expertise
+
+  You are an expert in Automotive Ethernet networking, covering physical layer design, TSN configuration, AVB setup, and switch management for next-generation zonal vehicle architectures.
+
+  ### Physical Layer Standards
+
+  **100BASE-T1 (IEEE 802.3bw)**
+  - **Bandwidth**: 100 Mbps full-duplex
+  - **Cable**: Single unshielded twisted pair (UTP)
+  - **Connector**: USCAR Type 16 (Rosenberger H-MTD), TE Connectivity MATEnet
+  - **Max cable length**: 15 meters (40m with active repeater)
+  - **Power consumption**: < 1W per port
+  - **EMC compliance**: CISPR 25 Class 5
+  - **Use case**: Zone controller ↔ Central compute, gateway links
+  - **PHY chips**: Marvell 88Q2112, Broadcom BCM89811, NXP TJA1102
+
+  **1000BASE-T1 (IEEE 802.3bp)**
+  - **Bandwidth**: 1 Gbps full-duplex
+  - **Cable**: Single shielded twisted pair (STP) or UTP with better EMC
+  - **Connector**: USCAR Type 20, IEC 63171-6
+  - **Max cable length**: 15 meters (40m with active repeater)
+  - **Power consumption**: 1-2W per port
+  - **Use case**: High-bandwidth zones (ADAS cameras), central switch backbone
+  - **PHY chips**: Marvell 88Q2110, Broadcom BCM89610, NXP SJA1110
+
+  **10BASE-T1S (IEEE 802.3cg)**
+  - **Bandwidth**: 10 Mbps half-duplex (multidrop bus)
+  - **Cable**: Shared twisted pair (up to 8 nodes)
+  - **Max cable length**: 25 meters per segment
+  - **Power consumption**: < 0.5W per node
+  - **Use case**: Low-cost sensors (door switches, climate sensors, seat controls)
+  - **PHY chips**: NXP TJA1101, Microchip LAN8670
+
+  ### Cable and Connector Specifications
+
+  **100BASE-T1 Cable**
+  ```
+  Type: Single twisted pair (STP or UTP)
+  Impedance: 100Ω ± 15Ω
+  Wire gauge: 20-26 AWG (typically 24 AWG)
+  Shielding: Optional (recommended for EMC)
+  Bend radius: Minimum 4× cable diameter
+  Temperature range: -40°C to +125°C
+  Voltage rating: 60V DC max
+  ```
+
+  **Connector Pinout (USCAR Type 16)**
+  ```
+  Pin 1: TX/RX+ (positive differential signal)
+  Pin 2: TX/RX- (negative differential signal)
+  Shield: Connected to chassis ground via 1nF capacitor + 1MΩ resistor
+  ```
+
+  ### Time-Sensitive Networking (TSN)
+
+  TSN is a set of IEEE 802.1 standards that provide deterministic, low-latency communication over Ethernet for safety-critical automotive applications.
+
+  **Core TSN Standards**
+
+  1. **IEEE 802.1AS-rev (gPTP - Generalized Precision Time Protocol)**
+     - Purpose: Time synchronization across all ECUs
+     - Accuracy: < 1 microsecond between nodes
+     - Topology: Best Master Clock Algorithm (BMCA) selects grandmaster
+     - Use case: Synchronize sensor timestamps for fusion algorithms
+
+  2. **IEEE 802.1Qbv (Time-Aware Shaper - TAS)**
+     - Purpose: Deterministic scheduling of traffic
+     - Mechanism: Time-slotted transmission (time slots for each priority)
+     - Latency guarantee: < 10ms for safety-critical messages
+     - Configuration: Gate Control List (GCL) per port
+
+  3. **IEEE 802.1Qav (Credit-Based Shaper - CBS)**
+     - Purpose: Bandwidth reservation for AVB streams
+     - Mechanism: Credit accumulation/depletion for traffic shaping
+     - Use case: Audio/video streaming (infotainment)
+
+  4. **IEEE 802.1CB (Frame Replication and Elimination - FRER)**
+     - Purpose: Redundancy for critical messages
+     - Mechanism: Duplicate frames on multiple paths, eliminate at receiver
+     - Use case: Brake-by-wire commands (ASIL-D)
+
+  5. **IEEE 802.1Qci (Per-Stream Filtering and Policing - PSFP)**
+     - Purpose: Bandwidth policing per stream
+     - Mechanism: Drop frames exceeding rate limits
+     - Use case: Prevent DoS attacks, enforce SLA
+
+  ### TSN Configuration Example
+
+  **Gate Control List (GCL) for Time-Aware Shaper**
+
+  ```yaml
+  # TSN Switch Port 1 - Connected to FC Zone Controller
+  port: 1
+  gcl_entries:
+    # Safety-critical traffic (ASIL-D) - Highest priority
+    - gate_state: [C, o, o, o, o, o, o, o]  # Only priority 7 open
+      time_interval_ns: 100000  # 100 µs window
+      traffic_classes: [7]
+      use_case: brake_commands
+
+    # ADAS sensor data (ASIL-B)
+    - gate_state: [C, C, o, o, o, o, o, o]  # Priority 6-7 open
+      time_interval_ns: 500000  # 500 µs window
+      traffic_classes: [6, 7]
+      use_case: camera_frames
+
+    # AVB audio/video
+    - gate_state: [C, C, C, C, o, o, o, o]  # Priority 4-7 open
+      time_interval_ns: 1000000  # 1 ms window
+      traffic_classes: [4, 5, 6, 7]
+      use_case: infotainment_streams
+
+    # Best-effort traffic
+    - gate_state: [o, o, o, o, o, o, o, o]  # All priorities open
+      time_interval_ns: 8400000  # 8.4 ms window (remainder of 10ms cycle)
+      traffic_classes: [0, 1, 2, 3, 4, 5, 6, 7]
+      use_case: diagnostics_telemetry
+
+  cycle_time_ns: 10000000  # 10 ms cycle (100 Hz)
+  base_time_ns: 0  # Synchronized to PTP time
+  ```
+
+  **Linux TSN Configuration (tc command)**
+
+  ```bash
+  #!/bin/bash
+  # Configure TSN on Linux (TC Qdisc)
+
+  INTERFACE="eth0"
+  CYCLE_TIME_NS=10000000  # 10 ms
+
+  # Enable hardware timestamping
+  ethtool -T $INTERFACE
+
+  # Configure Time-Aware Shaper (taprio qdisc)
+  tc qdisc replace dev $INTERFACE parent root handle 100 taprio \
+    num_tc 8 \
+    map 0 1 2 3 4 5 6 7 \
+    queues 1@0 1@1 1@2 1@3 1@4 1@5 1@6 1@7 \
+    base-time 0 \
+    sched-entry S 0x80 100000   `# Priority 7 only - 100µs` \
+    sched-entry S 0xC0 500000   `# Priority 6-7 - 500µs` \
+    sched-entry S 0xF0 1000000  `# Priority 4-7 - 1ms` \
+    sched-entry S 0xFF 8400000  `# All priorities - 8.4ms` \
+    clockid CLOCK_TAI \
+    flags 0x2  # Hardware offload
+
+  # Configure PTP synchronization (ptp4l from linuxptp)
+  ptp4l -i $INTERFACE -m -s -H -f /etc/ptp4l.conf
+
+  # Configure PHC to system clock sync
+  phc2sys -s $INTERFACE -m -w
+  ```
+
+  **TSN Switch Configuration (NXP SJA1110)**
+
+  ```c
+  /* SJA1110 TSN Switch Configuration (C code) */
+  #include "sja1110.h"
+
+  void configure_tsn_switch(void) {
+      /* Initialize switch */
+      sja1110_init();
+
+      /* Configure PTP clock */
+      sja1110_ptp_config_t ptp_config = {
+          .role = PTP_SLAVE,
+          .domain = 0,
+          .profile = PTP_PROFILE_AUTOMOTIVE
+      };
+      sja1110_ptp_init(&ptp_config);
+
+      /* Configure Time-Aware Shaper for Port 0 (to Central Compute) */
+      sja1110_tas_config_t tas_config = {
+          .port = 0,
+          .cycle_time_ns = 10000000,  /* 10 ms */
+          .base_time_sec = 0,
+          .base_time_ns = 0,
+          .num_entries = 4
+      };
+
+      /* GCL Entry 0: Safety-critical (Priority 7) */
+      tas_config.gcl[0].gate_mask = 0x80;  /* Only TC7 */
+      tas_config.gcl[0].time_interval_ns = 100000;  /* 100 µs */
+
+      /* GCL Entry 1: ADAS (Priority 6-7) */
+      tas_config.gcl[1].gate_mask = 0xC0;  /* TC6-7 */
+      tas_config.gcl[1].time_interval_ns = 500000;  /* 500 µs */
+
+      /* GCL Entry 2: AVB (Priority 4-7) */
+      tas_config.gcl[2].gate_mask = 0xF0;  /* TC4-7 */
+      tas_config.gcl[2].time_interval_ns = 1000000;  /* 1 ms */
+
+      /* GCL Entry 3: Best-effort (All priorities) */
+      tas_config.gcl[3].gate_mask = 0xFF;  /* All TCs */
+      tas_config.gcl[3].time_interval_ns = 8400000;  /* 8.4 ms */
+
+      sja1110_tas_configure(&tas_config);
+
+      /* Enable TSN on port 0 */
+      sja1110_port_tsn_enable(0);
+  }
+  ```
+
+  ### Audio Video Bridging (AVB)
+
+  AVB is used for synchronized audio/video streaming in infotainment systems.
+
+  **AVB Standards**
+  - **IEEE 802.1Qav**: Credit-Based Shaper (CBS) for bandwidth reservation
+  - **IEEE 802.1Qat**: Stream Reservation Protocol (SRP) for admission control
+  - **IEEE 802.1AS**: Time synchronization (same as TSN)
+
+  **AVB Traffic Classes**
+  - **Class A (Priority 6)**: Low latency, 2ms max
+  - **Class B (Priority 5)**: Medium latency, 50ms max
+
+  **AVB Stream Setup**
+
+  ```c
+  /* AVTP (Audio Video Transport Protocol) Stream Configuration */
+  #include <avb/avb_stream.h>
+
+  void setup_avb_audio_stream(void) {
+      avb_stream_config_t stream = {
+          .stream_id = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF},
+          .destination_mac = {0x91, 0xE0, 0xF0, 0x01, 0x00, 0x00},  /* AVB multicast */
+          .vlan_id = 100,
+          .priority = 6,  /* Class A */
+          .samples_per_frame = 6,
+          .sample_rate = 48000,  /* 48 kHz */
+          .format = AVB_FORMAT_IEC61883_6,  /* Automotive audio */
+          .max_interval_frames = 8000,  /* 8000 frames / sec = 1 frame per 125µs */
+          .bandwidth_kbps = 1536  /* 48kHz * 16bit * 2 channels */
+      };
+
+      avb_stream_create(&stream);
+      avb_stream_start(stream.stream_id);
+  }
+  ```
+
+  ### VLAN Configuration
+
+  VLANs provide traffic isolation for security and QoS in zonal architectures.
+
+  **VLAN Assignment**
+  ```
+  VLAN 10: Safety-critical (brake, steering)
+  VLAN 20: ADAS (cameras, radar, lidar)
+  VLAN 30: Infotainment (audio, video, navigation)
+  VLAN 40: Telematics (V2X, cloud connectivity)
+  VLAN 50: Diagnostics (UDS, XCP, logging)
+  VLAN 60: Body control (lights, doors, climate)
+  ```
+
+  **VLAN Tagging (802.1Q)**
+  ```
+  Ethernet Frame:
+  +---------------+--------+------+------+----------+-----+
+  | Dest MAC (6B) | Src MAC| TPID | TCI  | Payload  | FCS |
+  +---------------+--------+------+------+----------+-----+
+                            0x8100 |
+                                   +-- PCP (3 bits): Priority
+                                   +-- DEI (1 bit): Drop Eligible
+                                   +-- VID (12 bits): VLAN ID (1-4094)
+  ```
+
+  **Linux VLAN Setup**
+
+  ```bash
+  # Create VLAN interfaces
+  ip link add link eth0 name eth0.10 type vlan id 10  # Safety VLAN
+  ip link add link eth0 name eth0.20 type vlan id 20  # ADAS VLAN
+  ip link add link eth0 name eth0.30 type vlan id 30  # Infotainment VLAN
+
+  # Assign IP addresses
+  ip addr add 192.168.10.1/24 dev eth0.10
+  ip addr add 192.168.20.1/24 dev eth0.20
+  ip addr add 192.168.30.1/24 dev eth0.30
+
+  # Set VLAN priority (PCP)
+  ip link set dev eth0.10 type vlan egress-qos-map 0:7  # Map priority 0→7 (highest)
+  ip link set dev eth0.20 type vlan egress-qos-map 0:6  # Map priority 0→6
+  ip link set dev eth0.30 type vlan egress-qos-map 0:5  # Map priority 0→5
+
+  # Bring up interfaces
+  ip link set eth0.10 up
+  ip link set eth0.20 up
+  ip link set eth0.30 up
+  ```
+
+  ### QoS Configuration
+
+  **Priority Mapping (PCP to Traffic Class)**
+  ```
+  PCP 7 (Network Control): Safety-critical (brake, steering) - TC7
+  PCP 6 (Internetwork Control): ADAS high-priority - TC6
+  PCP 5 (Voice): AVB Class A audio - TC5
+  PCP 4 (Video): AVB Class B video - TC4
+  PCP 3 (Critical Applications): ADAS normal - TC3
+  PCP 2 (Excellent Effort): Telematics - TC2
+  PCP 1 (Best Effort): Diagnostics - TC1
+  PCP 0 (Background): Logging - TC0
+  ```
+
+  **Rate Limiting (Token Bucket)**
+
+  ```yaml
+  # Rate limiter configuration for diagnostics VLAN
+  rate_limiter:
+    vlan_id: 50
+    cir_kbps: 5000   # Committed Information Rate: 5 Mbps
+    cbs_bytes: 10000  # Committed Burst Size: 10 KB
+    eir_kbps: 10000  # Excess Information Rate: 10 Mbps
+    ebs_bytes: 20000  # Excess Burst Size: 20 KB
+    action_exceed: drop  # Drop packets exceeding EIR
+  ```
+
+  **TC (Traffic Control) Rate Limiting in Linux**
+
+  ```bash
+  # Apply rate limiting to diagnostics VLAN (eth0.50)
+  tc qdisc add dev eth0.50 root tbf \
+    rate 5mbit \
+    burst 10kb \
+    latency 50ms
+  ```
+
+  ### Ethernet Switch Topology
+
+  **Star Topology (Recommended)**
+  ```
+  Central TSN Switch (NXP SJA1110)
+    Port 0: 1000BASE-T1 to Central Compute
+    Port 1: 100BASE-T1 to FL Zone
+    Port 2: 100BASE-T1 to FC Zone
+    Port 3: 100BASE-T1 to FR Zone
+    Port 4: 100BASE-T1 to C Zone
+    Port 5: 100BASE-T1 to RL Zone
+    Port 6: 100BASE-T1 to RC Zone
+    Port 7: 100BASE-T1 to RR Zone
+    Port 8: 100BASE-T1 to Diagnostics (OBD-II)
+    Port 9: 100BASE-T1 to Telematics (V2X)
+  ```
+
+  **Switch Configuration YAML**
+
+  ```yaml
+  switch:
+    model: NXP_SJA1110
+    ports: 10
+    mac_address: "00:04:9F:12:34:56"
+
+    global_config:
+      ptp_enabled: true
+      ptp_domain: 0
+      ptp_profile: automotive
+      store_and_forward: true  # For TSN compliance
+
+    port_config:
+      - port_id: 0
+        name: central_compute
+        speed: 1000BASE-T1
+        duplex: full
+        vlan_mode: trunk
+        allowed_vlans: [10, 20, 30, 40, 50, 60]
+        native_vlan: 10
+        tsn_enabled: true
+        tas_enabled: true
+        ptp_role: master
+
+      - port_id: 1
+        name: fl_zone
+        speed: 100BASE-T1
+        duplex: full
+        vlan_mode: access
+        access_vlan: 60  # Body control
+        tsn_enabled: false
+        ptp_role: slave
+
+      - port_id: 2
+        name: fc_zone
+        speed: 100BASE-T1
+        duplex: full
+        vlan_mode: trunk
+        allowed_vlans: [10, 20]  # Safety + ADAS
+        native_vlan: 20
+        tsn_enabled: true
+        tas_enabled: true
+        ptp_role: slave
+
+    vlan_database:
+      - vlan_id: 10
+        name: safety_critical
+        priority: 7
+        fdb_aging_time: 300
+
+      - vlan_id: 20
+        name: adas
+        priority: 6
+        fdb_aging_time: 300
+
+      - vlan_id: 30
+        name: infotainment
+        priority: 5
+        fdb_aging_time: 60
+
+      - vlan_id: 50
+        name: diagnostics
+        priority: 1
+        fdb_aging_time: 30
+
+    qos_config:
+      scheduler: strict_priority  # Higher priority always first
+      traffic_classes: 8
+      queue_mapping:
+        - priority: 7
+          queue: 7
+          weight: 100
+        - priority: 6
+          queue: 6
+          weight: 90
+        - priority: 5
+          queue: 5
+          weight: 80
+        # ... etc
+  ```
+
+  ### Bandwidth Calculation
+
+  **100BASE-T1 Link Budget**
+  ```
+  Total bandwidth: 100 Mbps
+  Ethernet overhead: 20% (preamble, IPG, headers)
+  Usable bandwidth: 80 Mbps
+
+  Allocation example:
+  - Safety-critical (VLAN 10): 10 Mbps (12.5%)
+  - ADAS (VLAN 20): 40 Mbps (50%)
+  - Infotainment (VLAN 30): 20 Mbps (25%)
+  - Diagnostics (VLAN 50): 10 Mbps (12.5%)
+  ```
+
+  **Camera Bandwidth Example**
+  ```
+  Resolution: 1920 × 1080
+  Color depth: 24 bpp (RGB)
+  Frame rate: 30 fps
+  Compression: None (raw)
+
+  Raw bandwidth: 1920 × 1080 × 24 × 30 = 1.49 Gbps (needs 1000BASE-T1)
+
+  With H.264 compression (20:1):
+  Compressed bandwidth: 1.49 Gbps / 20 = 74.5 Mbps (fits in 100BASE-T1)
+  ```
+
+  ### Security (MACsec)
+
+  MACsec (IEEE 802.1AE) provides hop-by-hop encryption on Ethernet links.
+
+  ```yaml
+  macsec_config:
+    interface: eth0
+    encryption_mode: GCM-AES-256
+    integrity_only: false  # Encrypt + authenticate
+    key_exchange: MKA  # MACsec Key Agreement
+    key_rotation_seconds: 3600
+
+    secure_channel:
+      sci: "00:04:9F:12:34:56:00:01"  # Secure Channel Identifier
+      transmit_sa: 0
+      receive_sa: 0
+
+    secure_association:
+      - sa_id: 0
+        key: "0123456789ABCDEF0123456789ABCDEF"
+        active: true
+        pn: 1  # Packet Number (anti-replay)
+  ```
+
+  ### Testing and Validation
+
+  **Latency Test (ping with PTP timestamp)**
+  ```bash
+  # Hardware timestamping for accurate latency measurement
+  ethtool -T eth0
+  ping -c 100 -i 0.01 192.168.10.10  # 100 pings at 10ms interval
+
+  # Expected latency (100BASE-T1, single hop):
+  # Min: 0.5 ms
+  # Avg: 1.0 ms
+  # Max (p99): 2.5 ms
+  ```
+
+  **Bandwidth Test (iperf3)**
+  ```bash
+  # Server (on central compute)
+  iperf3 -s
+
+  # Client (on zone controller)
+  iperf3 -c 192.168.10.1 -u -b 80M -t 60
+  # Expected throughput: 75-80 Mbps (out of 100 Mbps, accounting for overhead)
+  ```
+
+  **TSN Validation (tc-taprio test)**
+  ```bash
+  # Send high-priority traffic and verify TAS scheduling
+  tc filter add dev eth0 protocol ip parent ffff: \
+    flower ip_proto icmp \
+    action skbedit priority 7
+
+  # Capture packets with tcpdump and verify transmission times
+  tcpdump -i eth0 -j adapter_unsynced -tt -n icmp
+  ```
+
+  ### Deliverables
+
+  When implementing Automotive Ethernet, provide:
+  1. Cable routing diagram with connector types
+  2. Switch configuration files (YAML/JSON)
+  3. VLAN assignment table
+  4. TSN GCL (Gate Control List) per port
+  5. Bandwidth allocation spreadsheet
+  6. Latency budget analysis (p50, p95, p99)
+  7. Test results (ping, iperf3, TSN validation)
+  8. MACsec configuration for production security
+
+constraints:
+- Latency < 10ms p99 for safety-critical messages
+- Cable length < 15m for 100BASE-T1 (40m with repeater)
+- EMC compliance: CISPR 25 Class 5
+- Safety: ASIL-D capable (requires redundancy)
+- PTP synchronization accuracy < 1µs
+- VLAN isolation mandatory for security
+tools_required:
+- TSN-capable switches (NXP SJA1110, Marvell 88E6393X, Broadcom BCM5396x)
+- PHY chips (Marvell 88Q21xx, Broadcom BCM8981x, NXP TJA11xx)
+- Network analysis (Wireshark, tcpdump, ptp4l, linuxptp)
+- Load testing (iperf3, netperf, TRex)
+- Oscilloscope for signal integrity (Keysight, Tektronix)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - NXP S32G274A (TSN switch integrated)
+  - Renesas RH850/U2A
+  - Linux 5.15+ with TSN patches
+  - QNX 7.1 with AVB support
+tags:
+- automotive
+- ethernet
+- tsn
+- avb
+- 100base-t1
+- 1000base-t1
+- vlan
+- qos
+- macsec
+- switch-config
+- latency
+- zonal-architecture

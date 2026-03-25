@@ -1,0 +1,288 @@
+name: cyber-physical-production
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: industry-4-0
+description: Expert skill in designing and operating cyber-physical production systems (CPPS) for automotive manufacturing, integrating IoT sensors, edge computing, digital twins, and autonomous control loops that enable self-optimizing production lines with real-time adaptation to changing conditions.
+use_cases:
+- Self-optimizing welding parameters through real-time sensor feedback and ML models
+- Autonomous production scheduling adapting to equipment availability and demand changes
+- Edge computing nodes processing sensor data locally for sub-millisecond control loops
+- OPC UA information models standardizing machine-to-machine communication
+- Digital twin synchronization between physical equipment and virtual counterpart
+- Predictive maintenance integrated with production scheduling for minimal downtime
+- Energy-aware production optimization reducing consumption during peak tariff periods
+- Autonomous quality adjustment closing the loop between inspection and process control
+automotive_standards:
+- IEC 62264 Enterprise-Control System Integration (ISA-95)
+- IEC 61131-3 Programmable Controllers
+- OPC UA (IEC 62541) Information Models
+- RAMI 4.0 Reference Architecture Model
+- ISO 23247 Digital Twin Framework for Manufacturing
+- IEC 62443 Industrial Cybersecurity
+- VDI/VDE 2193 I4.0 Language for Communication
+- IATF 16949 (Process Monitoring and Control)
+instructions: |
+
+  ## Overview
+
+  Cyber-physical production systems (CPPS) merge physical manufacturing equipment with
+  computational intelligence, creating systems where sensors, actuators, and software form
+  tight feedback loops that optimize production autonomously. Unlike traditional automation
+  where PLCs follow fixed programs, CPPS systems sense their environment, reason about
+  optimal actions, and adapt in real time.
+
+  In automotive manufacturing, CPPS enables welding robots that adjust parameters based on
+  material batch variation, paint booths that optimize atomization based on humidity,
+  and assembly stations that reconfigure tooling based on the next vehicle variant --
+  all without human intervention for routine optimization decisions.
+
+
+  ## Key Concepts
+
+  ### CPPS Architecture Layers (RAMI 4.0 aligned)
+
+  ```
+  Layer 6: Business      (ERP, demand planning, cost optimization)
+  Layer 5: Functional    (MES, production scheduling, quality management)
+  Layer 4: Information   (Data lake, analytics, ML model serving)
+  Layer 3: Communication (OPC UA, MQTT, TSN Ethernet)
+  Layer 2: Integration   (Edge computing, protocol conversion, data aggregation)
+  Layer 1: Asset         (Sensors, actuators, PLCs, robots, machines)
+  ```
+
+  ### Control Loop Types
+
+  - **Real-time control** (<1ms): PLC-level, safety functions, servo drives
+  - **Near-real-time** (1-100ms): Edge computing, adaptive process parameters
+  - **Operational** (seconds-minutes): MES decisions, scheduling, quality routing
+  - **Tactical** (hours-days): Production planning, maintenance scheduling
+  - **Strategic** (weeks-months): Capacity planning, investment decisions
+
+  ### Asset Administration Shell (AAS)
+
+  The Industry 4.0 digital nameplate for every physical asset:
+
+  ```yaml
+  asset_administration_shell:
+    identification:
+      asset_id: "urn:factory01:robot:kuka:kr240:001"
+      serial_number: "KR240-2024-001234"
+    submodels:
+      - nameplate: {manufacturer: "KUKA", model: "KR240 R2900"}
+      - technical_data: {payload_kg: 240, reach_mm: 2900}
+      - operational_data: {cycle_count: 1245000, uptime_pct: 96.3}
+      - maintenance: {next_service: "2026-04-15", remaining_life_hours: 8500}
+      - energy: {avg_consumption_kw: 12.5, standby_kw: 0.8}
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: Sensor Layer Deployment
+
+  ```python
+  # IoT sensor integration for CPPS
+  class CPPSSensorLayer:
+      def __init__(self, edge_gateway_url: str):
+          self.gateway = edge_gateway_url
+          self.sensors = {}
+
+      def register_sensor(self, sensor_config: dict):
+          """Register sensor with edge gateway and configure data pipeline."""
+          self.sensors[sensor_config["id"]] = {
+              "type": sensor_config["type"],
+              "protocol": sensor_config["protocol"],  # Modbus, IO-Link, EtherCAT
+              "sample_rate_hz": sensor_config["sample_rate"],
+              "edge_processing": sensor_config.get("edge_algo", "none"),
+              "publish_topic": f"cpps/{sensor_config['equipment']}/{sensor_config['id']}",
+          }
+
+      def create_weld_monitoring_setup(self, robot_id: str) -> list:
+          """Configure sensor suite for adaptive welding CPPS."""
+          return [
+              {"id": f"{robot_id}_current", "type": "weld_current_sensor", "sample_rate": 10000, "protocol": "EtherCAT"},
+              {"id": f"{robot_id}_voltage", "type": "weld_voltage_sensor", "sample_rate": 10000, "protocol": "EtherCAT"},
+              {"id": f"{robot_id}_force", "type": "electrode_force", "sample_rate": 1000, "protocol": "IO-Link"},
+              {"id": f"{robot_id}_thermal", "type": "IR_pyrometer", "sample_rate": 100, "protocol": "Modbus"},
+              {"id": f"{robot_id}_acoustic", "type": "acoustic_emission", "sample_rate": 50000, "protocol": "EtherCAT"},
+          ]
+  ```
+
+  ### Step 2: Edge Computing Layer
+
+  ```python
+  # Edge node for real-time process optimization
+  class EdgeProcessingNode:
+      def __init__(self, node_id: str, ml_model_path: str):
+          self.id = node_id
+          self.model = self.load_model(ml_model_path)
+          self.buffer = []
+
+      def process_weld_data(self, sensor_data: dict) -> dict:
+          """Real-time weld quality prediction and parameter adjustment."""
+          features = self.extract_features(sensor_data)
+          prediction = self.model.predict(features)
+          if prediction["quality_score"] < 0.90:
+              adjustment = self.calculate_adjustment(features, prediction)
+              return {
+                  "action": "adjust_parameters",
+                  "current_offset_a": adjustment["current"],
+                  "time_offset_ms": adjustment["time"],
+                  "force_offset_n": adjustment["force"],
+                  "confidence": prediction["confidence"],
+              }
+          return {"action": "continue", "quality_score": prediction["quality_score"]}
+
+      def extract_features(self, data: dict) -> list:
+          """Extract ML features from raw sensor streams."""
+          return [
+              data["current_rms"],
+              data["voltage_rms"],
+              data["dynamic_resistance_slope"],
+              data["electrode_force_avg"],
+              data["thermal_peak_c"],
+              data["acoustic_energy"],
+          ]
+  ```
+
+  ### Step 3: OPC UA Information Model
+
+  ```yaml
+  opcua_information_model:
+    server: "opc.tcp://edge-node-01:4840"
+    namespace: "urn:factory01:cpps:welding"
+    nodes:
+      welding_cell_01:
+        type: WeldingCellType
+        children:
+          robot:
+            type: RobotType
+            variables:
+              - joint_positions: {type: Float[], access: ReadOnly}
+              - program_name: {type: String, access: ReadOnly}
+              - cycle_count: {type: UInt64, access: ReadOnly}
+          weld_controller:
+            type: WeldControllerType
+            variables:
+              - current_setpoint_a: {type: Float, access: ReadWrite}
+              - time_setpoint_ms: {type: Float, access: ReadWrite}
+              - force_setpoint_n: {type: Float, access: ReadWrite}
+              - quality_score: {type: Float, access: ReadOnly}
+          methods:
+            - optimize_parameters: {input: [material_batch], output: [recommended_params]}
+            - start_cycle: {input: [program_id], output: [status]}
+  ```
+
+  ### Step 4: Autonomous Optimization Loop
+
+  ```
+  Cyber-Physical Control Loop:
+  ============================
+  Physical World:  Sensors measure process (current, force, temperature)
+       |
+  Edge Layer:      ML model predicts quality from features (<10ms)
+       |
+  Decision:        Compare prediction to target quality threshold
+       |
+  Actuation:       Adjust process parameters for next cycle
+       |
+  Validation:      Post-process measurement confirms improvement
+       |
+  Learning:        Update ML model with new labeled data point
+  ```
+
+  ### Step 5: Production System Self-Configuration
+
+  ```python
+  # Self-configuring production cell
+  class SelfConfiguringCell:
+      def __init__(self, cell_id: str, capability_registry):
+          self.id = cell_id
+          self.registry = capability_registry
+
+      def reconfigure_for_variant(self, vehicle_variant: str) -> dict:
+          """Autonomously reconfigure cell for next vehicle variant."""
+          required_capabilities = self.registry.get_requirements(vehicle_variant)
+          current_capabilities = self.get_current_setup()
+          changes_needed = self.diff_capabilities(required_capabilities, current_capabilities)
+          actions = []
+          for change in changes_needed:
+              if change["type"] == "tool_change":
+                  actions.append(self.execute_tool_change(change["tool_id"]))
+              elif change["type"] == "parameter_set":
+                  actions.append(self.load_parameter_set(change["param_id"]))
+              elif change["type"] == "fixture_adjust":
+                  actions.append(self.adjust_fixture(change["position"]))
+          return {"variant": vehicle_variant, "changes": len(actions), "time_s": sum(a["time_s"] for a in actions)}
+  ```
+
+
+  ## Best Practices
+
+  - Start with one control loop (e.g., weld quality) and prove value before scaling
+  - Use OPC UA as the standard communication layer -- avoid proprietary protocols
+  - Deploy edge computing for latency-critical loops, cloud for analytics and training
+  - Implement IEC 62443 security zones and conduits for CPPS network architecture
+  - Version ML models deployed at edge and enable rollback if performance degrades
+  - Maintain deterministic PLC control for safety functions -- ML advises, PLC decides
+  - Log all autonomous parameter changes for traceability and audit
+  - Design for graceful degradation: system must produce safely if CPPS layer fails
+
+
+  ## Common Patterns
+
+  ### CPPS Maturity Levels
+
+  ```
+  Level 1: Connectivity    (sensors connected, data collected)
+  Level 2: Visibility      (dashboards showing real-time status)
+  Level 3: Transparency    (analytics explaining why events occur)
+  Level 4: Predictability  (ML models forecasting future states)
+  Level 5: Adaptability    (autonomous optimization closed-loop)
+  ```
+
+  ### Edge-Cloud Hierarchy
+
+  ```
+  Sensor        Edge Node       Plant Server      Cloud
+  (microsec)    (millisec)      (seconds)         (minutes)
+  Raw data  --> Feature     --> Aggregation   --> Model training
+                extraction      dashboards        fleet analytics
+                ML inference    MES integration   long-term storage
+                safety logic    quality records   benchmarking
+  ```
+
+
+  ## Troubleshooting
+
+  - **ML model makes poor adjustments**: Check for data drift, retrain with recent production data
+  - **OPC UA communication timeout**: Verify network bandwidth, reduce subscription interval
+  - **Edge node CPU overload**: Optimize model inference, reduce sensor sample rate
+  - **Cybersecurity alert from CPPS network**: Isolate affected zone, check IEC 62443 conduits
+  - **Autonomous parameter change causes quality issue**: Implement tighter change bounds, add human approval for large adjustments
+  - **Digital twin desynchronization**: Check OPC UA connection, verify sensor calibration
+
+constraints:
+- Safety-critical control must remain in deterministic PLC, not in ML inference
+- Network latency and reliability affect closed-loop control performance
+- Cybersecurity risks increase with more connected devices and data flows
+- Legacy equipment may lack sensors and connectivity for CPPS integration
+tools_required:
+- Edge computing platforms (Siemens Industrial Edge, AWS IoT Greengrass, Azure IoT Edge)
+- OPC UA servers (Unified Automation, Prosys, open62541)
+- PLC platforms (Siemens S7-1500, Beckhoff TwinCAT, Rockwell ControlLogix)
+- ML deployment (NVIDIA Triton, TensorFlow Serving, ONNX Runtime)
+- SCADA/MES (Siemens Opcenter, AVEVA, Ignition by Inductive Automation)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- cyber-physical
+- industry-4-0
+- edge-computing
+- opc-ua
+- automotive

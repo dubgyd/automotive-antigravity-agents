@@ -1,0 +1,158 @@
+name: sales-operations-planning
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: sales_operations_planning
+description: S&OP process, demand forecasting, production throughput optimization
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Sales and Operations Planning (S&OP) in automotive is the cross-functional process that aligns demand
+  forecasting, production planning, supply chain management, and financial targets into a unified operating
+  plan. The automotive S&OP challenge is amplified by long production lead times (6-12 months for order-to-
+  delivery), complex variant structures (thousands of possible configurations), multi-plant allocation
+  decisions, and the growing complexity of managing parallel ICE and EV production lines. This skill covers
+  the S&OP process design, demand forecasting methodologies, production throughput optimization, inventory
+  management, and executive S&OP governance for automotive OEMs.
+
+  ## Key Concepts
+
+  ### S&OP Process Stages
+  - **Data gathering**: Collect actual sales, order bank, dealer stock, production actuals, supply status
+  - **Demand planning**: Statistical forecast plus market intelligence, new model launches, competitive actions
+  - **Supply planning**: Production capacity assessment, supplier constraints, logistics capacity
+  - **Pre-S&OP**: Cross-functional review reconciling demand and supply, identifying gaps and options
+  - **Executive S&OP**: Leadership decision meeting resolving trade-offs, approving plan, allocating resources
+  - **Plan execution**: Translate approved plan into production schedules, purchase orders, logistics plans
+
+  ### Demand Forecasting for Automotive
+  - **Statistical models**: Time series (ARIMA, exponential smoothing), ML models for pattern recognition
+  - **Judgmental inputs**: Market intelligence, competitive actions, incentive programs, regulatory changes
+  - **Order bank analysis**: Firm orders vs. speculative builds, order-to-delivery conversion rates
+  - **Segment-level forecasting**: By model, powertrain (ICE/PHEV/BEV), market, and trim level
+  - **Lifecycle effects**: Launch ramp-up curves, mid-cycle refresh impact, run-out management
+  - **External drivers**: GDP growth, interest rates, fuel prices, EV subsidies, fleet replacement cycles
+
+  ### Production Planning Complexity
+  - **Multi-plant allocation**: Which plant builds which model/variant given capacity and cost
+  - **Mixed-line production**: ICE and EV on same assembly line with different takt times and stations
+  - **Sequencing optimization**: Minimize changeover costs while meeting color, option, and destination mix
+  - **Supplier synchronization**: JIT/JIS deliveries coordinated with production sequence
+  - **Seasonal patterns**: Summer/winter tire production, holiday shutdowns, model year changeover
+
+  ## Implementation Guide
+
+  ### Step 1: S&OP Process Design
+  - Define monthly S&OP calendar with clear milestones, deliverables, and decision points
+  - Establish planning horizons: tactical (0-3 months), operational (3-12 months), strategic (12-36 months)
+  - Assign process ownership: typically VP-level position bridging sales, operations, and finance
+  - Define data requirements, system interfaces, and reporting templates for each process stage
+
+  ### Step 2: Demand Planning Excellence
+  - Implement statistical demand forecasting with automated model selection and accuracy tracking
+  - Establish demand sensing capability using leading indicators (web traffic, configurator data, dealer orders)
+  - Create consensus forecast process combining statistical baseline with market intelligence overlay
+  - Track forecast accuracy by model, market, and time horizon; target MAPE <10% at 3-month horizon
+
+  ### Step 3: Supply-Demand Balancing
+  - Build capacity model reflecting actual plant capabilities, shift patterns, and maintenance windows
+  - Map critical supplier constraints (semiconductors, battery cells, specialty materials) into planning
+  - Develop scenario planning capability: what-if analysis for demand upside/downside, supply disruptions
+  - Establish allocation rules for constrained supply: margin-based, strategic market priority, fairness
+
+  ### Step 4: Executive S&OP Meeting
+  - Present demand-supply gap analysis with options and trade-off recommendations to executive team
+  - Facilitate decisions on production volume, plant allocation, inventory targets, and financial plan
+  - Document decisions with clear accountability and follow-up actions
+  - Track plan adherence and root-cause analysis for deviations in subsequent cycles
+
+  ## Decision Frameworks
+
+  ### Demand-Supply Gap Resolution Options
+  | Gap Situation | Short-term Options | Medium-term Options |
+  |-------------|-------------------|-------------------|
+  | Demand > Supply | Overtime, weekend shifts, allocation priority | Capacity expansion, supplier ramp-up |
+  | Supply > Demand | Production bank holiday, short-time work | Model mix shift, market push, incentives |
+  | Mix mismatch | Resequencing, market reallocation | Feature unbundling, variant reduction |
+  | Component shortage | Partial builds, alternative suppliers | Dual sourcing, design change |
+
+  ### Inventory Strategy Decision
+  - **Build-to-order (BTO)**: Minimize inventory, longer delivery time (European premium OEMs)
+  - **Build-to-stock (BTS)**: Pre-build popular configurations, immediate availability (US, volume brands)
+  - **Hybrid**: BTO for high-value options, BTS for standard configurations
+  - **Pipeline inventory**: Optimal days-supply target by market (typically 45-90 days for dealer stock)
+
+  ### S&OP Maturity Model
+  - **Level 1 - Reactive**: Disconnected planning, firefighting, no formal S&OP process
+  - **Level 2 - Standard**: Monthly S&OP meeting, basic demand-supply balancing, spreadsheet-driven
+  - **Level 3 - Advanced**: Integrated planning system, scenario analysis, KPI-driven management
+  - **Level 4 - Proactive**: Real-time demand sensing, AI-driven forecasting, automated plan adjustment
+  - **Level 5 - Orchestrated**: End-to-end digital supply chain, autonomous planning with human oversight
+
+  ## Best Practices
+
+  - Run S&OP on a strict monthly cadence; never skip or compress the process under time pressure
+  - Measure and publicly report forecast accuracy by function to create accountability
+  - Include financial plan reconciliation in every S&OP cycle; volume plan must tie to P&L
+  - Plan for the BEV transition explicitly: separate demand signals, different seasonality, new constraints
+  - Maintain safety stock strategy for critical components learned from semiconductor crisis
+  - Use digital twin of production system for what-if scenario analysis in supply planning
+  - Align S&OP planning horizon with product launch cadence (ramp-up plans 18 months ahead)
+  - Engage dealer/retail network in demand planning; dealer sentiment is a leading indicator
+  - Track S&OP plan adherence as a KPI for each function (sales, operations, purchasing)
+  - Invest in integrated planning systems (SAP IBP, Kinaxis, o9 Solutions) to replace spreadsheets
+
+  ## Examples
+
+  ### Example 1: BEV Demand Uncertainty Management
+  An OEM launches its first BEV in a segment where demand is highly uncertain (forecast range: 30K-80K
+  units/year). S&OP approach: build flexible production plan with base volume of 40K, pre-approved
+  overtime budget for demand upside to 55K, and agreement with JV partner for additional battery cell
+  supply above 55K. Demand sensing via online configurator traffic and pre-order data triggers monthly
+  plan adjustments. Actual year-1 demand: 52K units, successfully fulfilled within flex corridor.
+
+  ### Example 2: Semiconductor Shortage Allocation
+  During chip shortage, an OEM must allocate 80% of normal semiconductor supply across 8 models and
+  4 markets. S&OP allocation framework: prioritize by contribution margin per vehicle, strategic market
+  importance (China growth vs. mature EU), and dealer stock levels. Decision: pause lowest-margin model
+  temporarily, ship partial-feature vehicles with OTA retrofit commitment, prioritize China and US where
+  competitive threat is highest. Monthly S&OP reviews adjust allocation as supply gradually recovers.
+
+  ### Example 3: Model Year Transition Planning
+  An OEM plans transition from current model to facelift with 3-month production gap for retooling.
+  S&OP challenge: build sufficient outgoing model stock to cover gap, manage dealer inventory to avoid
+  excess aging stock, and ramp new model production quickly. Plan: build 15% extra outgoing units in
+  final 3 months, cap dealer orders at 60-day supply, pre-produce 2,000 launch-specification new model
+  units for launch events and first deliveries. S&OP tracks weekly aging stock metrics during transition.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- sales-operations-planning
+- automotive
+- oem

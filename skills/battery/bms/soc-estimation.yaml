@@ -1,0 +1,273 @@
+name: soc-estimation
+description: State of Charge (SOC) estimation using Coulomb counting, Kalman filtering, and machine learning approaches
+category: battery-bms
+
+instructions: |
+  Implement SOC estimation algorithms for battery management systems:
+
+  Coulomb counting:
+  - Integrate current over time
+  - Account for charge/discharge efficiency
+  - Compensate for self-discharge
+  - Accumulate errors over time (drift)
+
+  Kalman Filter-based:
+  - Extended Kalman Filter (EKF) with battery model
+  - Unscented Kalman Filter (UKF) for nonlinear dynamics
+  - Fuse voltage, current, temperature measurements
+  - More accurate than pure coulomb counting
+
+  Machine Learning:
+  - Neural networks trained on cycling data
+  - LSTM for temporal patterns
+  - Feature engineering (voltage, current, temp, internal resistance)
+  - Requires extensive training data
+
+  Battery models:
+  - Equivalent Circuit Models (ECM): Thevenin, PNGV
+  - Electrochemical models: Single Particle Model (SPM)
+  - Empirical models: polynomial voltage-SOC curves
+
+  Performance requirements:
+  - Accuracy: ±2% for EKF, ±5% for coulomb counting
+  - Update rate: 1-10 Hz
+  - Temperature range: -20°C to 60°C
+  - Converge within 5 minutes of operation
+
+dependencies:
+  - NumPy for numerical computations
+  - SciPy for filtering
+  - PyTorch/TensorFlow for ML approaches
+  - pandas for data handling
+
+examples:
+  - description: "EKF-based SOC estimation with Thevenin model"
+    input: "Implement SOC estimator using EKF with 2RC equivalent circuit model"
+    output: |
+      ```python
+      import numpy as np
+      from dataclasses import dataclass
+      from typing import Tuple
+
+      @dataclass
+      class BatteryParams:
+          nominal_capacity_ah: float = 50.0
+          ocv_soc_lut: np.ndarray = None  # Open Circuit Voltage lookup table
+          r0_lut: np.ndarray = None  # Ohmic resistance vs SOC
+          r1_lut: np.ndarray = None  # Polarization resistance 1
+          c1_lut: np.ndarray = None  # Capacitance 1
+          r2_lut: np.ndarray = None  # Polarization resistance 2
+          c2_lut: np.ndarray = None  # Capacitance 2
+
+          def __post_init__(self):
+              if self.ocv_soc_lut is None:
+                  # Default OCV-SOC curve (simplified lithium-ion)
+                  soc_points = np.linspace(0, 1, 11)
+                  ocv_points = np.array([3.0, 3.3, 3.5, 3.6, 3.65, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2])
+                  self.ocv_soc_lut = np.column_stack([soc_points, ocv_points])
+
+              if self.r0_lut is None:
+                  # Ohmic resistance (constant for simplicity)
+                  self.r0_lut = np.array([[0.0, 0.01], [1.0, 0.01]])
+
+              if self.r1_lut is None:
+                  self.r1_lut = np.array([[0.0, 0.015], [1.0, 0.015]])
+
+              if self.c1_lut is None:
+                  self.c1_lut = np.array([[0.0, 1000], [1.0, 1000]])
+
+              if self.r2_lut is None:
+                  self.r2_lut = np.array([[0.0, 0.02], [1.0, 0.02]])
+
+              if self.c2_lut is None:
+                  self.c2_lut = np.array([[0.0, 5000], [1.0, 5000]])
+
+      class SOC_EKF:
+          def __init__(self, params: BatteryParams, initial_soc: float = 0.5):
+              self.params = params
+
+              # State vector: [SOC, V1, V2]
+              # V1, V2 are RC voltages
+              self.x = np.array([initial_soc, 0.0, 0.0])
+
+              # State covariance
+              self.P = np.diag([0.01, 0.01, 0.01])
+
+              # Process noise covariance
+              self.Q = np.diag([1e-6, 1e-4, 1e-4])
+
+              # Measurement noise covariance
+              self.R = np.array([[1e-4]])  # Voltage measurement noise
+
+              # Sampling time
+              self.dt = 1.0  # seconds
+
+          def predict(self, current_a: float, dt: float = None):
+              """Prediction step with current measurement"""
+              if dt is not None:
+                  self.dt = dt
+
+              soc, v1, v2 = self.x
+
+              # Get battery parameters at current SOC
+              r1 = np.interp(soc, self.params.r1_lut[:, 0], self.params.r1_lut[:, 1])
+              c1 = np.interp(soc, self.params.c1_lut[:, 0], self.params.c1_lut[:, 1])
+              r2 = np.interp(soc, self.params.r2_lut[:, 0], self.params.r2_lut[:, 1])
+              c2 = np.interp(soc, self.params.c2_lut[:, 0], self.params.c2_lut[:, 1])
+
+              # Time constants
+              tau1 = r1 * c1
+              tau2 = r2 * c2
+
+              # State transition (discrete time)
+              # SOC dynamics: d(SOC)/dt = -I / (3600 * Q_nom)
+              soc_new = soc - (current_a * self.dt) / (3600 * self.params.nominal_capacity_ah)
+              soc_new = np.clip(soc_new, 0.0, 1.0)
+
+              # RC dynamics: dV/dt = -V/tau + I*R/tau
+              exp1 = np.exp(-self.dt / tau1)
+              exp2 = np.exp(-self.dt / tau2)
+
+              v1_new = exp1 * v1 + (1 - exp1) * r1 * current_a
+              v2_new = exp2 * v2 + (1 - exp2) * r2 * current_a
+
+              # Update state
+              self.x = np.array([soc_new, v1_new, v2_new])
+
+              # Jacobian of state transition
+              F = np.array([
+                  [1, 0, 0],
+                  [0, exp1, 0],
+                  [0, 0, exp2]
+              ])
+
+              # Update covariance
+              self.P = F @ self.P @ F.T + self.Q
+
+          def update(self, voltage_measured: float, current_a: float):
+              """Update step with voltage measurement"""
+              soc, v1, v2 = self.x
+
+              # Get parameters
+              r0 = np.interp(soc, self.params.r0_lut[:, 0], self.params.r0_lut[:, 1])
+              ocv = np.interp(soc, self.params.ocv_soc_lut[:, 0], self.params.ocv_soc_lut[:, 1])
+
+              # Measurement model: V_terminal = OCV - I*R0 - V1 - V2
+              v_predicted = ocv - current_a * r0 - v1 - v2
+
+              # Innovation (measurement residual)
+              y = voltage_measured - v_predicted
+
+              # Jacobian of measurement model w.r.t. state
+              docv_dsoc = self._docv_dsoc(soc)
+              H = np.array([[docv_dsoc, -1, -1]])
+
+              # Innovation covariance
+              S = H @ self.P @ H.T + self.R
+
+              # Kalman gain
+              K = self.P @ H.T / S
+
+              # Update state
+              self.x = self.x + K.flatten() * y
+
+              # Clamp SOC
+              self.x[0] = np.clip(self.x[0], 0.0, 1.0)
+
+              # Update covariance
+              self.P = (np.eye(3) - K @ H) @ self.P
+
+          def _docv_dsoc(self, soc: float) -> float:
+              """Numerical derivative of OCV w.r.t. SOC"""
+              delta = 0.01
+              soc_plus = min(soc + delta, 1.0)
+              soc_minus = max(soc - delta, 0.0)
+
+              ocv_plus = np.interp(soc_plus, self.params.ocv_soc_lut[:, 0], self.params.ocv_soc_lut[:, 1])
+              ocv_minus = np.interp(soc_minus, self.params.ocv_soc_lut[:, 0], self.params.ocv_soc_lut[:, 1])
+
+              return (ocv_plus - ocv_minus) / (soc_plus - soc_minus + 1e-10)
+
+          def get_soc(self) -> float:
+              """Get current SOC estimate"""
+              return self.x[0]
+
+          def get_uncertainty(self) -> float:
+              """Get SOC estimation uncertainty (standard deviation)"""
+              return np.sqrt(self.P[0, 0])
+
+
+      class CoulombCounting:
+          """Simple coulomb counting for comparison"""
+          def __init__(self, nominal_capacity_ah: float, initial_soc: float = 0.5):
+              self.nominal_capacity_ah = nominal_capacity_ah
+              self.soc = initial_soc
+              self.charge_efficiency = 0.98
+              self.discharge_efficiency = 1.0
+
+          def update(self, current_a: float, dt: float):
+              """Update SOC with current measurement"""
+              # Positive current = discharge, negative = charge
+              if current_a > 0:
+                  efficiency = self.discharge_efficiency
+              else:
+                  efficiency = self.charge_efficiency
+
+              delta_soc = -(current_a * dt * efficiency) / (3600 * self.nominal_capacity_ah)
+              self.soc += delta_soc
+              self.soc = np.clip(self.soc, 0.0, 1.0)
+
+          def get_soc(self) -> float:
+              return self.soc
+
+
+      # Usage and comparison
+      if __name__ == "__main__":
+          params = BatteryParams(nominal_capacity_ah=50.0)
+
+          # Initialize estimators
+          ekf_estimator = SOC_EKF(params, initial_soc=0.6)
+          cc_estimator = CoulombCounting(50.0, initial_soc=0.6)
+
+          # Simulate discharge cycle
+          dt = 1.0  # 1 second
+          discharge_current = 25.0  # Amperes (C/2 rate)
+
+          print("Time(s) | Current(A) | Voltage(V) | SOC_EKF | Unc_EKF | SOC_CC")
+          print("-" * 70)
+
+          for t in range(0, 3600, 10):  # 1 hour simulation
+              # Predict
+              ekf_estimator.predict(discharge_current, dt)
+              cc_estimator.update(discharge_current, dt)
+
+              # Simulate terminal voltage (with noise)
+              soc_true = 0.6 - (discharge_current * t) / (3600 * 50.0)
+              ocv = np.interp(soc_true, params.ocv_soc_lut[:, 0], params.ocv_soc_lut[:, 1])
+              r0 = np.interp(soc_true, params.r0_lut[:, 0], params.r0_lut[:, 1])
+              voltage_measured = ocv - discharge_current * r0 + np.random.normal(0, 0.01)
+
+              # Update EKF
+              ekf_estimator.update(voltage_measured, discharge_current)
+
+              # Print every 10 seconds
+              if t % 100 == 0:
+                  print(f"{t:7d} | {discharge_current:10.2f} | {voltage_measured:10.4f} | "
+                        f"{ekf_estimator.get_soc():7.4f} | {ekf_estimator.get_uncertainty():7.5f} | "
+                        f"{cc_estimator.get_soc():7.4f}")
+
+          print(f"\nFinal SOC - EKF: {ekf_estimator.get_soc():.4f}, CC: {cc_estimator.get_soc():.4f}")
+          print(f"True SOC: {soc_true:.4f}")
+          print(f"EKF Error: {abs(ekf_estimator.get_soc() - soc_true) * 100:.2f}%")
+          print(f"CC Error: {abs(cc_estimator.get_soc() - soc_true) * 100:.2f}%")
+      ```
+
+tags:
+  - battery
+  - bms
+  - soc-estimation
+  - kalman-filter
+  - ekf
+  - coulomb-counting
+  - state-estimation
+  - lithium-ion

@@ -1,0 +1,259 @@
+name: eu-battery-regulation
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: regulatory
+description: Expert knowledge of EU Battery Regulation 2023/1542 including battery passport, recycled content targets, carbon footprint declaration, and Extended Producer Responsibility.
+use_cases:
+- EU Battery Regulation compliance strategy
+- Battery passport implementation planning
+- Recycled content target achievement roadmap
+- Carbon footprint calculation and declaration
+- EPR (Extended Producer Responsibility) compliance
+automotive_standards:
+- EU Battery Regulation 2023/1542
+- ISO 14067 Carbon Footprint of Products
+- GBA (Global Battery Alliance) Battery Passport standard
+- ISO 14040/14044 Life Cycle Assessment
+- REACH Regulation for substance restrictions
+instructions: '
+
+  ## Core Competencies
+
+  Expert in navigating EU Battery Regulation 2023/1542, the most comprehensive battery legislation globally, covering full lifecycle from design through end-of-life including mandatory battery passport, recycled content, carbon footprint, and collection/recycling targets.
+
+  ### Regulation Overview
+
+  **EU Regulation 2023/1542** (entered into force July 2023):
+  - Replaces Battery Directive 2006/66/EC
+  - Applies to: All batteries placed on EU market (portable, EV, industrial, stationary)
+  - Scope: Design, manufacturing, end-of-life, labeling, traceability
+  - Enforcement: Member state penalties for non-compliance (product recalls, market bans, fines)
+
+  **Key Requirements Timeline**:
+  ```
+  2024: Carbon footprint declaration mandatory (>2kWh)
+  2025: Due diligence on supply chain (cobalt, nickel sourcing)
+  2027: Battery passport mandatory (>2kWh), recycled content mandates start
+  2028: Carbon footprint performance classes (limits on high-carbon batteries)
+  2030: Collection target 63%, recycling efficiency 90% Co/Ni/Cu, 50% Li
+  2031: Recycled content Phase 2: 16% Co, 6% Li, 6% Ni
+  2035: Recycled content Phase 3: 26% Co, 12% Li, 15% Ni
+  ```
+
+  ### Article 7: Carbon Footprint Declaration
+
+  **Requirements (from 2024 for EV batteries >2kWh)**:
+  - Calculate total carbon footprint per kWh (cradle-to-gate scope)
+  - Include: Raw material extraction, precursor manufacturing, cathode/anode/electrolyte/separator production, cell assembly, pack assembly, transport
+  - Exclude: Use phase, end-of-life (unless claiming recycling credits)
+  - Method: ISO 14067 or equivalent LCA standard
+  - Verification: Third-party audit required
+  - Label: QR code or data matrix on battery linking to declaration
+
+  **Carbon Footprint Calculation Components**:
+  ```python
+  # Example CO2 footprint breakdown (kg CO2e per kWh)
+  footprint_components = {
+      "Mining & refining": 25-40,  # Li, Co, Ni, graphite extraction
+      "Cathode precursor": 15-30,  # pCAM synthesis
+      "Anode material": 8-15,      # Graphite processing
+      "Electrolyte & separator": 5-10,
+      "Cell manufacturing": 20-45, # Energy-intensive (dry room, formation)
+      "Pack assembly": 5-12,
+      "Transport": 3-8
+  }
+  total_footprint_kgCO2_kWh = sum(footprint_components.values())
+  # Total: 80-160 kg CO2e/kWh (varies by chemistry, manufacturing location)
+
+  # EU targets (Article 7.4):
+  max_footprint_class_A = 40  # kg CO2e/kWh (very low carbon)
+  max_footprint_class_B = 60
+  max_footprint_class_C = 80
+  # Batteries exceeding Class C limits may face market restrictions post-2028
+  ```
+
+  **Data Sources**:
+  - Primary data: Supplier-specific energy usage, transport distances
+  - Secondary data: Ecoinvent, GaBi databases for generic processes
+  - Grid mix: Critical variable (China grid ~600 gCO2/kWh, EU ~300, Norway ~20)
+
+  ### Article 8: Recycled Content Targets
+
+  **Mandatory Minimum Recycled Content**:
+  | Material | 2027 | 2031 | 2035 |
+  |----------|------|------|------|
+  | Cobalt | 12% | 16% | 26% |
+  | Lithium | 4% | 6% | 12% |
+  | Nickel | - | 6% | 15% |
+  | Lead | 85% | 85% | 85% |
+
+  **Definition**: Recycled content = mass of recycled material / total mass of that element in battery
+  - Must come from post-consumer or manufacturing scrap
+  - Virgin material from mining does not count
+  - Verification: Third-party audit of supply chain, mass balance accounting
+
+  **Compliance Strategies**:
+  1. **Closed-loop partnerships**: OEM contracts with recyclers for take-back and supply (e.g., Northvolt, Tesla, CATL)
+  2. **Recycled material procurement**: Purchase battery-grade CoSO4, NiSO4, Li2CO3 from recyclers
+  3. **Credit system**: EU exploring tradeable credits for excess recycled content (not yet finalized)
+
+  **Challenge**: Supply gap in 2027-2030
+  - EV battery EOL volumes in 2027: ~200k tons (insufficient for 12% Co target)
+  - Requires: Consumer electronics recycling, production scrap recycling to fill gap
+
+  ### Article 13: Battery Passport (Digital Product Passport - DPP)
+
+  **Mandatory from February 2027 for EV batteries >2kWh**:
+
+  **Data Categories**:
+  1. **General Information**: Manufacturer, model, serial number, manufacturing date, weight, chemistry
+  2. **Carbon Footprint**: Total kg CO2e/kWh, breakdown by lifecycle stage, grid mix
+  3. **Recycled Content**: % Co, Ni, Li from recycled sources, supplier chain
+  4. **Supply Chain Due Diligence**: Cobalt/nickel sourcing (countries, mines), conflict minerals compliance
+  5. **Performance & Durability**: Initial capacity, power, cycle life, C-rate limits, SOH over time
+  6. **Dismantling Information**: Disassembly instructions, hazardous materials, fastener torques
+  7. **End-of-Life**: Collection point locations, recycling process, material recovery rates
+
+  **Technical Implementation**:
+  - **QR code or data matrix** on battery (laser-etched or label)
+  - Scan links to **web-based interface** (unique URL per battery)
+  - Data hosted by manufacturer or third-party DPP platform
+  - **Blockchain or distributed ledger** for tamper-proof provenance (optional, GBA recommendation)
+  - **API access** for authorized parties (recyclers, regulators, OEMs)
+
+  **GBA Battery Passport Standard**:
+  - Global Battery Alliance (GBA) published reference data model
+  - JSON schema with 70+ data fields
+  - Interoperability focus: Multiple manufacturers can use common format
+  - Pilot projects: BMW, Volvo, Circulor (2024-2025)
+
+  **Data Security & Privacy**:
+  - Owner consent required for performance data sharing (GDPR compliance)
+  - Encrypted storage of sensitive supply chain data
+  - Multi-level access: Public (chemistry, weight), OEM (performance), recycler (disassembly)
+
+  ### Article 59: Extended Producer Responsibility (EPR)
+
+  **Requirements**:
+  - Manufacturers financially responsible for end-of-life collection and recycling
+  - Must establish or join Producer Responsibility Organization (PRO)
+  - Fund collection network: Dealer take-back, municipal drop-off points
+
+  **Collection Targets**:
+  | Year | Portable Batteries | EV Batteries | Industrial |
+  |------|-------------------|--------------|------------|
+  | 2023 | 45% | N/A (voluntary) | N/A |
+  | 2027 | 63% | 63% | 74% |
+  | 2030 | 73% | 73% | 81% |
+
+  **Recycling Efficiency Targets (% of material recovered from collected batteries)**:
+  | Material | 2025 | 2027 | 2030 |
+  |----------|------|------|------|
+  | Lithium | - | - | 50% |
+  | Cobalt | 90% | 90% | 95% |
+  | Nickel | 90% | 90% | 95% |
+  | Copper | 90% | 90% | 95% |
+  | Lead | 65% | 65% | 65% |
+
+  **EPR Fees**:
+  - Manufacturers pay fee per battery sold (eco-modulation)
+  - Fee varies by: Battery chemistry (LFP lower fee than NMC), recyclability design score
+  - Typical: €5-15 per EV battery pack
+
+  ### Article 6: Labeling & Information
+
+  **Label Requirements (physical label or QR code)**:
+  - Separate collection symbol (crossed-out wheeled bin)
+  - Chemical symbols (Pb, Cd, Hg if present >0.002%)
+  - Capacity in Ah or Wh
+  - QR code linking to battery passport (from 2027)
+
+  ### Article 10: Substance Restrictions
+
+  - Mercury: <0.0005% by weight
+  - Cadmium: <0.002% (exemptions for emergency systems)
+  - Lead: <0.01% (exemptions for lead-acid batteries)
+
+  ### Compliance Costs & Organizational Impact
+
+  **One-time Implementation (per OEM)**:
+  - LCA carbon footprint study: €200k-500k (audit, data collection)
+  - Battery passport IT system: €500k-2M (software, blockchain integration)
+  - Supply chain due diligence audit: €100k-300k/year
+  - Recycled content procurement contracts: Negotiation time, higher material costs (10-20% premium initially)
+  - Total: €1-3M one-time, €300k-1M/year ongoing
+
+  **Per-Battery Costs**:
+  - Carbon footprint verification: €2-5 per battery (third-party audit amortized)
+  - Battery passport data entry: €1-3 (automated from MES systems)
+  - EPR fee: €5-15 per battery
+  - Recycled content premium: €50-150 per battery (will decrease as supply grows)
+  - Total: €60-175 per battery
+
+  ## Approach
+
+  1. **Gap Analysis**: Compare current practices vs regulation requirements (carbon footprint, passport, recycled content)
+  2. **Carbon Footprint Baseline**: Conduct LCA study per ISO 14067 for representative battery models
+  3. **Battery Passport Design**: Select DPP platform (Circulor, Minespider, SAP, custom), define data flows from MES/PLM
+  4. **Recycled Content Roadmap**: Contract with recyclers for 2027 target (12% Co, 4% Li), plan for 2031/2035
+  5. **EPR Compliance**: Join PRO or establish collection network, calculate fee structure
+  6. **Supply Chain Audit**: Due diligence on Co/Ni sources per OECD guidelines
+  7. **IT Integration**: Connect battery passport to manufacturing execution system (MES), PLM, traceability systems
+  8. **Training**: Educate R&D, procurement, manufacturing on regulation impacts
+
+  ## Deliverables
+
+  - EU Battery Regulation compliance roadmap (2024-2035 timeline)
+  - Carbon footprint calculation report per ISO 14067 (kg CO2e/kWh)
+  - Battery passport data model and IT architecture
+  - Recycled content procurement strategy and supplier contracts
+  - EPR cost model and collection network design
+  - Supply chain due diligence report (cobalt/nickel sourcing)
+  - Labeling design (QR code, required symbols, information)
+  - Gap analysis vs regulation requirements (red/yellow/green status)
+
+  ## Best Practices
+
+  - Start carbon footprint LCA early: Data collection from suppliers takes 6-12 months
+  - Use GBA Battery Passport standard for interoperability (avoid vendor lock-in)
+  - Negotiate recycled content off-take agreements 3-5 years in advance (supply constrained)
+  - Implement digital twin of battery in MES: Auto-populate passport data (reduce manual entry errors)
+  - Eco-modulate EPR fees to incentivize recyclable designs (lower fees for bolted vs glued packs)
+  - Perform annual carbon footprint updates: Grid mix changes, supplier energy efficiency improvements
+  - Pilot battery passport on 1-2 models before full rollout (learn IT integration challenges)
+  - Engage with PROs early: Understand fee structures, collection network coverage gaps
+
+  ## Integration with Automotive Workflow
+
+  - Embed carbon footprint calculation into product development (gate review at cell/pack design)
+  - Integrate battery passport data entry into manufacturing execution system (MES)
+  - Track recycled content % in ERP procurement module (ensure target compliance)
+  - Provide disassembly instructions from battery passport to service centers
+  - Report collection and recycling data to PRO for EPR compliance (quarterly)
+
+  '
+constraints:
+- Recycled content targets ambitious (supply gap until 2030)
+- Carbon footprint verification requires extensive supplier data (transparency challenges)
+- Battery passport IT infrastructure complex (integration with MES, PLM, blockchain)
+- EPR collection network build-out costs significant (€10-50M for EU-wide network)
+- Regulation evolving (delegated acts still being finalized for some articles)
+tools_required:
+- LCA software (GaBi, SimaPro, Umberto) for carbon footprint
+- Battery passport platform (Circulor, Minespider, custom)
+- Blockchain or DLT for provenance tracking (optional)
+- ERP/MES integration for data collection
+- Third-party auditors for verification (TUV, SGS, DNV)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- regulatory
+- eu-regulation
+- battery-passport
+- compliance
+- automotive

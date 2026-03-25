@@ -1,0 +1,163 @@
+name: hyper-personalization
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "AI-based individual preference learning and adaptation covering driver profiles, behavioral prediction, cross-vehicle synchronization, and context-aware cabin personalization."
+use_cases:
+  - "Designing AI-driven driver profiles that learn and predict preferences over time"
+  - "Implementing context-aware cabin adaptation based on time, weather, and trip purpose"
+  - "Building cross-vehicle profile synchronization for fleet and rental scenarios"
+  - "Creating predictive comfort preconditioning before the driver enters the vehicle"
+  - "Integrating personalization with smartphone digital key for seamless identification"
+automotive_standards:
+  - "GDPR - Data protection for personal preference and behavioral data"
+  - "ISO 20078 - Extended vehicle web services for profile synchronization"
+  - "CCC Digital Key 3.0 - Car Connectivity Consortium user identification"
+  - "ISO 15118 - Vehicle-to-grid personalization for charging preferences"
+  - "W3C Vehicle Information Service Specification for preference APIs"
+instructions: |
+  # Hyper-Personalization
+
+  ## Overview
+  Hyper-personalization uses AI to learn each occupant's preferences and automatically
+  configure the vehicle cabin for maximum individual comfort. Beyond static user profiles
+  that store seat positions and mirror angles, hyper-personalization predicts needs based
+  on time of day, weather, calendar events, driving patterns, and physiological state.
+  The vehicle becomes an intelligent companion that preemptively adjusts climate, lighting,
+  music, navigation, and seating before the occupant even asks.
+
+  ## Key Concepts
+
+  ### Preference Learning Architecture
+  The system that captures and models individual preferences:
+  - Explicit preferences entered directly by the user through settings menus
+  - Implicit preferences inferred from repeated behaviors and adjustments
+  - Contextual preferences that vary based on time, weather, trip type, and mood
+  - A preference model per occupant stored locally with encrypted cloud backup option
+
+  ### Context Signals
+  Data inputs that drive personalization decisions:
+  - Time of day and day of week for routine-based predictions
+  - Weather data from connected services for climate preconditioning
+  - Calendar integration for trip purpose inference (commute vs road trip)
+  - Biometric indicators from vital sign monitoring for wellness-aware adjustment
+  - Vehicle state including fuel or charge level affecting route and range suggestions
+
+  ### Digital Identity
+  How the vehicle recognizes each individual occupant:
+  - Smartphone-based digital key (CCC 3.0, Apple CarKey, Google Digital Car Key)
+  - Facial recognition via the driver monitoring camera for seamless identification
+  - Biometric voice print for voice-first identification without device
+  - NFC key card with stored profile identifier as fallback
+
+  ## Implementation Guide
+
+  ### Step 1 - Build the Identity Framework
+  Create the system that recognizes who is using the vehicle:
+  - Implement digital key pairing that associates a smartphone with a driver profile
+  - Add facial recognition as a secondary identification confirming the digital key
+  - Support up to 10 distinct user profiles per vehicle
+  - Handle guest mode with sensible defaults when no profile is identified
+
+  ### Step 2 - Design the Preference Data Model
+  Structure the preference storage for comprehensive personalization:
+  - Seat position, mirror angles, steering wheel position (geometric preferences)
+  - Climate temperature, fan speed, seat heating level (thermal preferences)
+  - Ambient lighting color, brightness, scene selection (visual preferences)
+  - Audio equalizer, volume, favorite stations, spatial audio settings (audio preferences)
+  - Navigation preferences including favorite routes, avoidances, and charging stops
+
+  ### Step 3 - Implement the Learning Engine
+  Build the AI that discovers preferences from user behavior:
+  - Track every manual adjustment as an implicit preference signal
+  - Weight recent adjustments higher than older ones for evolving preferences
+  - Detect contextual patterns like higher seat heating on cold mornings
+  - Use collaborative filtering across anonymized fleet data for new user cold-start
+
+  ### Step 4 - Create Predictive Preconditioning
+  Anticipate needs before the occupant enters the vehicle:
+  - Learn departure time patterns and begin cabin preparation 10 minutes before
+  - Precool or preheat the cabin based on weather forecast and learned preference
+  - Set ambient lighting for the predicted time of day and trip type
+  - Pre-load navigation with the predicted destination from calendar and history
+
+  ### Step 5 - Enable Cross-Vehicle Sync
+  Allow profiles to roam between vehicles:
+  - Synchronize preference data through an encrypted cloud service
+  - Adapt geometric preferences (seat position) to different vehicle models
+  - Support profile sharing in fleet and rental scenarios with user consent
+  - Implement profile versioning to handle conflicts from simultaneous multi-vehicle use
+
+  ## Best Practices
+
+  ### Privacy and Consent
+  - Require explicit opt-in for each personalization data category
+  - Provide granular controls to enable or disable specific preference learning
+  - Allow full profile data export and deletion per GDPR requirements
+  - Process preference learning on-device by default with optional cloud sync
+
+  ### Graceful Defaults
+  - New users should experience a well-tuned default configuration, not blank settings
+  - When context signals are unavailable, fall back to the most frequent preference
+  - Never make dramatic changes without giving the occupant a chance to accept or reject
+  - Provide a quick-reset option to return all settings to factory defaults
+
+  ### Learning Rate Management
+  - New profiles should learn aggressively from the first 10 to 20 adjustments
+  - Mature profiles should require consistent pattern changes before updating
+  - Seasonal patterns (winter vs summer climate preferences) need long-term memory
+  - Allow users to explicitly lock preferences they do not want the AI to modify
+
+  ## Troubleshooting
+
+  ### Vehicle Does Not Recognize the Driver
+  Check digital key pairing status on both the smartphone and vehicle. Verify Bluetooth
+  or UWB connectivity between phone and vehicle. Test facial recognition in the current
+  lighting conditions and recalibrate if the camera cannot identify the user.
+
+  ### Preferences Keep Reverting to Previous Settings
+  Check if another driver profile is being activated by a secondary digital key. Review
+  the learning rate settings and verify the new preference has enough data points.
+  Inspect for a profile synchronization conflict overwriting local changes with cloud data.
+
+  ### Predictive Preconditioning Activates at Wrong Times
+  Review the departure time learning data for incorrect patterns. Check calendar
+  integration for stale or recurring events that no longer apply. Provide direct feedback
+  through the HMI to correct the prediction for the current day.
+
+  ### Guest Mode Applies Uncomfortable Settings
+  Review the default profile values and update them to broadly comfortable midpoints.
+  Implement a quick-adjustment wizard that configures essential preferences in 30 seconds.
+  Consider using the most recent non-primary-driver profile as the guest baseline.
+
+  ## Integration Patterns
+
+  ### Ecosystem Connectivity
+  Extending personalization beyond the vehicle to connected services:
+  - Sync preferred charging locations and times with the energy management system
+  - Share navigation preferences with smart home for arrival-based automation
+  - Coordinate music preferences between vehicle, home speaker, and mobile devices
+  - Pre-order favorite coffee at the regular stop based on predicted route and timing
+
+  ### Machine Learning Pipeline
+  Building and maintaining the preference learning models:
+  - Train initial models on anonymized fleet-wide behavior data for cold-start capability
+  - Fine-tune per-driver models using federated learning without sharing raw data
+  - Implement A/B testing for new personalization features with controlled rollouts
+  - Monitor prediction accuracy metrics and retrain models when performance degrades
+
+  ## Testing and Validation
+
+  ### Preference Prediction Accuracy
+  Measure how well the system predicts occupant needs:
+  - Track prediction acceptance rate where the user keeps the predicted setting unchanged
+  - Target 80% acceptance rate within the first 30 days of profile learning
+  - Measure time-to-first-manual-adjustment as an indicator of prediction quality
+  - Report per-domain accuracy for climate, audio, navigation, and seating independently
+
+  ### Privacy Compliance Verification
+  Validate data protection measures meet regulatory requirements:
+  - Conduct a GDPR data protection impact assessment for all personalization data flows
+  - Verify data deletion completes within 30 days of user request across all storage
+  - Test profile data encryption at rest and in transit using current best practices
+  - Audit third-party data sharing connections to confirm explicit user consent exists

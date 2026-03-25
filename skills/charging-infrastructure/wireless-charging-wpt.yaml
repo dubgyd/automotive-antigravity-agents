@@ -1,0 +1,433 @@
+name: wireless-charging-wpt
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: wireless-power-transfer
+description: Expert skill in wireless EV charging (WPT) implementation using inductive power transfer, covering SAE J2954 standard, coil design, alignment systems, and efficiency optimization.
+use_cases:
+- Residential wireless charging pad installation
+- Public wireless charging infrastructure (parking lots, bus stops)
+- Dynamic wireless charging (in-road charging while driving)
+- Autonomous vehicle charging (no human intervention)
+- Fleet depot wireless charging for consistent parking positions
+automotive_standards:
+- SAE J2954 Wireless Power Transfer for Light-Duty EVs
+- IEC 61980-1 Wireless Power Transfer (WPT) systems for EVs
+- ISO 19363 Magnetic field wireless power transfer (safety)
+- CISPR 11 EMC limits for wireless charging systems
+- UL 2750 Wireless charging equipment safety
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in wireless power transfer (WPT) systems for electric vehicles using inductive coupling, covering ground assembly (GA) pad installation, vehicle assembly (VA) coil integration, alignment systems, foreign object detection (FOD), and living object protection (LOP).
+
+
+  ### WPT Technology Overview
+
+
+  - **Inductive power transfer**:
+
+    - Primary coil (GA): Installed in ground or pavement, generates AC magnetic field
+
+    - Secondary coil (VA): Mounted under vehicle, couples with GA field to induce current
+
+    - Air gap: Typically 100-250 mm (ground clearance of vehicle)
+
+    - Frequency: 85 kHz (SAE J2954 standard frequency)
+
+    - Efficiency: 85-93% (system level, including coil coupling and power electronics losses)
+
+
+  - **Power levels** (SAE J2954 classification):
+
+    - WPT1: Up to 3.7 kW (Level 1 equivalent, overnight home charging)
+
+    - WPT2: Up to 7.7 kW (Level 2 equivalent, typical home/workplace)
+
+    - WPT3: Up to 11 kW (three-phase equivalent, faster charging)
+
+    - WPT4: 11-22 kW (high-power wireless, commercial/fleet applications)
+
+
+  - **Coupling types**:
+
+    - Circular coils: Traditional design, good for centered alignment
+
+    - DD (Double-D) coils: Rectangular, better lateral tolerance
+
+    - DDQ (Double-D Quadrature): DD + Q coil for improved misalignment tolerance
+
+    - Bipolar coils: Two coils with opposite polarity for cancellation of stray fields
+
+
+  ### SAE J2954 System Architecture
+
+
+  - **Ground assembly (GA)**:
+
+    - Primary coil: Litz wire (copper strands for reduced skin effect at 85 kHz)
+
+    - Ferrite core: Increase flux concentration, reduce stray fields
+
+    - Shielding: Aluminum plate below ferrite to block downward flux (protect underground utilities)
+
+    - Enclosure: IP67 rated, vehicle-rollover resistant (40 kN load)
+
+    - Power electronics: Inverter to convert DC to 85 kHz AC
+
+
+  - **Vehicle assembly (VA)**:
+
+    - Secondary coil: Litz wire, similar size to GA coil (200-300 mm diameter)
+
+    - Ferrite core: Improves coupling coefficient (k = 0.1 to 0.3 typical)
+
+    - Shielding: Aluminum plate above ferrite to protect vehicle components from EMF
+
+    - Rectifier: AC to DC converter, outputs to vehicle battery
+
+    - Mounting: Integrated into vehicle underbody, clearance ~150 mm from ground
+
+
+  - **Communication**:
+
+    - Low-power Bluetooth or Zigbee for initial pairing
+
+    - In-band communication: Modulate 85 kHz signal for real-time data (power level, alignment)
+
+
+  ### Coil Design and Coupling
+
+
+  - **Coupling coefficient** (k):
+
+    - Perfect alignment, 150 mm gap: k ≈ 0.25
+
+    - 100 mm lateral offset: k ≈ 0.15 (significant power drop)
+
+    - Formula: k = M / sqrt(L1 × L2), where M is mutual inductance, L1/L2 are self-inductances
+
+
+  - **Compensation topology**:
+
+    - Series-series (SS): Both GA and VA coils in series with capacitors (resonant at 85 kHz)
+
+    - LCC: Inductor-capacitor-capacitor network, better tolerance to load variation
+
+    - Resonance: Tune to 85 kHz ± 1 kHz (tight tolerance for max efficiency)
+
+
+  - **Power transfer equation**:
+
+    ```
+    P_out = k² × Q × P_in
+
+    where:
+    k = coupling coefficient (0.1 to 0.3)
+    Q = quality factor of coils (typically 100-300)
+    P_in = input power to GA
+
+    Example: k=0.2, Q=200, P_in=10kW → P_out = 0.04 × 200 × 10 = 8 kW (80% coupling efficiency)
+    ```
+
+
+  - **Efficiency optimization**:
+
+    - Maximize k: Precise alignment (use visual or sensor feedback)
+
+    - Maximize Q: Low-resistance Litz wire, minimize capacitor ESR
+
+    - Tune resonance: Temperature-stable capacitors, adaptive tuning if needed
+
+
+  ### Alignment Systems
+
+
+  - **Visual guidance**:
+
+    - LED strips on GA pad (green = good alignment, yellow = acceptable, red = poor)
+
+    - In-vehicle display: Camera view with overlay showing target position
+
+    - Ultrasonic sensors: Measure distance from VA to GA, guide driver
+
+
+  - **Automated alignment** (for autonomous vehicles or robotic systems):
+
+    - Stepper motors in GA to move pad ±200 mm in X/Y directions
+
+    - Vehicle assembly fixed; ground assembly adjusts position
+
+    - Alignment time: 5-10 seconds (detect VA position via induced current sensing)
+
+
+  - **Positioning tolerance**:
+
+    - Optimal alignment: ±25 mm (maintains >90% efficiency)
+
+    - Acceptable: ±50 mm (80-90% efficiency, charges slower)
+
+    - Unacceptable: >75 mm (power transfer drops to <70%, may abort)
+
+
+  - **Alignment algorithm**:
+
+    ```python
+    def align_coils():
+        # Energize GA with low power (100W) to sense VA position
+        ga_energize_low_power()
+
+        # Measure induced voltage in VA, estimate position
+        va_voltage = measure_va_voltage()
+        offset_x, offset_y = estimate_offset(va_voltage)
+
+        if abs(offset_x) > 25 or abs(offset_y) > 25:
+            # Move GA or provide driver feedback
+            move_ga(offset_x, offset_y)
+
+        # Verify alignment improved
+        if coupling_coefficient() > 0.2:
+            return ALIGNED
+        else:
+            return MISALIGNED
+    ```
+
+
+  ### Foreign Object Detection (FOD)
+
+
+  - **Objective**: Detect metal objects (coins, tools, cans) in air gap before energizing
+
+  - **Detection method**:
+
+    - Q-factor measurement: Metal object reduces coil Q (increases losses)
+
+    - Baseline Q (no object): 250, with object: <200 → FOD triggered
+
+    - Sweep frequency: Measure impedance from 80-90 kHz, detect anomalies
+
+
+  - **FOD threshold**:
+
+    - Small objects (<10 g metal): May not trigger (acceptable risk)
+
+    - Medium objects (10-100 g): Detected, abort charging
+
+    - Large objects (>100 g): Easily detected, alert user to remove
+
+
+  - **FOD sequence**:
+
+    1. Before charging: Perform Q measurement sweep (takes ~1 second)
+
+    2. If FOD detected: Display warning, do not energize GA
+
+    3. User removes object, retry FOD check
+
+    4. During charging: Continuously monitor Q, abort if sudden drop (object fell into gap)
+
+
+  ### Living Object Protection (LOP)
+
+
+  - **Objective**: Detect animals (cats, rodents) or humans (hands, feet) in magnetic field
+
+  - **Detection method**:
+
+    - Proximity sensors: Capacitive or infrared sensors around GA perimeter
+
+    - Motion detection: PIR (passive infrared) sensor to detect movement
+
+    - Temperature sensing: Thermal camera to detect warm-blooded creatures
+
+
+  - **Action on detection**:
+
+    - Reduce power to minimum (100W) for sensing only
+
+    - Alert user (horn, app notification) to check area
+
+    - Do not energize at full power until area clear for 10 seconds
+
+
+  ### Power Control and Regulation
+
+
+  - **Constant current (CC) to constant voltage (CV)**:
+
+    - Initial: Charge at max current (e.g., 32A at 240V DC = 7.7 kW)
+
+    - As battery reaches 80% SOC: Transition to constant voltage (battery voltage setpoint)
+
+    - Taper: Current gradually reduces to <2A at full charge (100% SOC)
+
+
+  - **Feedback loop**:
+
+    - VA sends battery voltage and current to GA via in-band communication
+
+    - GA adjusts inverter duty cycle to maintain target power
+
+    - Update rate: 10 Hz (100 ms loop time)
+
+
+  - **Detuning compensation**:
+
+    - Temperature changes → capacitor value drift → resonance shift
+
+    - Adaptive tuning: Measure phase between voltage and current, adjust freq slightly (85 ± 0.5 kHz)
+
+
+  ### EMC and Safety
+
+
+  - **Magnetic field limits** (ISO 19363):
+
+    - At 300 mm from GA edge: <27 µT (microtesla) at 85 kHz
+
+    - Shielding effectiveness: >40 dB (aluminum + ferrite)
+
+    - Exposure limits: ICNIRP guidelines for general public (0.2 µT continuous exposure)
+
+
+  - **EMI (electromagnetic interference)**:
+
+    - Frequency stability: 85 kHz ± 1 kHz (avoid ISM band interference)
+
+    - Harmonic suppression: <1% THD (total harmonic distortion) at AC input
+
+    - Conducted emissions: Meet CISPR 11 Class B limits
+
+
+  - **Electrical safety**:
+
+    - Isolation: >10 MΩ between coil and chassis
+
+    - Ground fault: Monitor leakage current, trip if >30 mA AC
+
+    - Arc flash: Low voltage DC (400V max) reduces risk vs high-voltage DC fast charging
+
+
+  ### Dynamic Wireless Charging (In-Road)
+
+
+  - **Concept**: Coils embedded in road surface, charge while vehicle drives
+
+  - **Implementation**:
+
+    - Segmented coils: Every 2-3 meters, energize only when vehicle overhead
+
+    - Vehicle detection: Inductive loop sensors or cameras detect approaching EV
+
+    - Handoff: Seamlessly transfer power from coil N to coil N+1 as vehicle moves
+
+    - Efficiency: ~70-80% (lower than static due to speed, shorter dwell time)
+
+
+  - **Power delivery**:
+
+    - Speed: 60 km/h (16.7 m/s)
+
+    - Coil length: 3 m → dwell time = 180 ms per coil
+
+    - Power per coil: 20 kW × 0.18 s = 1 Wh per coil
+
+    - 1 km of road = 333 coils = 333 Wh delivered per pass (range extension: ~1.5 km)
+
+
+  - **Challenges**:
+
+    - Cost: $1-2 million per lane-km for installation
+
+    - Maintenance: Road work requires excavation to access coils
+
+    - Efficiency: Lower than static charging, high losses in pavement
+
+
+  ## Approach
+
+
+  1. **Site survey**: Measure ground clearance of target vehicles, parking surface (concrete/asphalt)
+
+  2. **GA installation**: Embed coil in pavement or use surface-mount pad (for retrofit)
+
+  3. **VA integration**: Mount secondary coil to vehicle underbody (aftermarket or OEM)
+
+  4. **Power electronics**: Install inverter (GA side) and rectifier (VA side)
+
+  5. **Alignment system**: Camera + LED guidance for manual parking, or automated XY table
+
+  6. **FOD/LOP**: Integrate sensors, calibrate detection thresholds
+
+  7. **Testing**: Efficiency measurement, EMC testing, safety compliance (UL 2750)
+
+
+  ## Deliverables
+
+
+  - WPT system design (coil dimensions, power level, efficiency target)
+
+  - GA installation drawings (civil work, electrical conduit, waterproofing)
+
+  - VA mounting bracket design (vehicle-specific)
+
+  - Alignment system (visual or automated)
+
+  - FOD/LOP sensor integration
+
+  - Test reports (efficiency, EMC, safety, interoperability)
+
+
+  ## Best Practices
+
+
+  - **Weatherproofing**: GA must withstand rain, snow, vehicle traffic (IP67 minimum)
+
+  - **Thermal management**: Ferrite core can heat up; add cooling fins or airflow if >10 kW
+
+  - **User experience**: Alignment must be intuitive (frustration if too finicky)
+
+  - **Compatibility**: Follow SAE J2954 for interoperability across OEMs
+
+  - **Cost**: Wireless charging typically 2-3× cost of wired Level 2 charger
+
+
+  ## Integration
+
+
+  - **Smart home**: Integrate with home energy management (charge during cheap electricity hours)
+
+  - **Fleet**: Wireless charging ideal for buses (fixed parking, automated alignment)
+
+  - **Autonomous**: Essential for robotaxis (no human to plug in cable)
+
+  - **Grid services**: V2G via wireless (bidirectional WPT, discharge to grid during peak)
+
+
+  '
+constraints:
+- Efficiency lower than wired charging (85-93% vs 95-98% for wired)
+- High cost (2-3× wired Level 2 charger)
+- Alignment sensitivity (user frustration if hard to position)
+- EMC compliance requires careful shielding and filtering
+tools_required:
+- Network analyzer for coil impedance measurement
+- Magnetic field probe (H-field sensor) for EMC testing
+- Thermal camera for coil hotspot detection
+- FOD test objects (standardized metal pieces per SAE J2954)
+- Power analyzer for efficiency measurement
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- charging-infrastructure
+- wireless-charging
+- wpt
+- inductive-coupling
+- sae-j2954
+- emc
+- automotive

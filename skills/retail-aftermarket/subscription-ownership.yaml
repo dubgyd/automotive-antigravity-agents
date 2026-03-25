@@ -1,0 +1,162 @@
+---
+name: subscription-ownership
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: ownership-models
+
+description: >
+  Expert skill in designing and operating monthly vehicle subscription
+  plans that offer flexible car access with insurance, maintenance, and
+  roadside assistance bundled into a single payment, enabling customers
+  to swap vehicles and cancel without long-term commitment.
+
+use_cases:
+  - "All-inclusive monthly subscription plan design and pricing"
+  - "Vehicle swap programs allowing model changes within subscription"
+  - "Fleet management for subscription vehicle pool operations"
+  - "Customer lifecycle optimization from subscription to purchase"
+  - "Insurance and maintenance bundling for subscription economics"
+
+automotive_standards:
+  - "ISO 27001 (Customer financial data protection)"
+  - "PCI DSS (Recurring payment processing compliance)"
+  - "SAE J3061 (Connected vehicle cybersecurity for shared assets)"
+  - "GDPR / CCPA (Subscriber data privacy and consent)"
+
+knowledge_areas:
+  - area: "Subscription Model Design"
+    topics:
+      - "Tier structure with mileage and vehicle class options"
+      - "Pricing models covering depreciation, insurance, maintenance"
+      - "Vehicle swap logistics and turnaround time optimization"
+      - "Churn prediction and retention strategy"
+
+  - area: "Fleet Operations"
+    topics:
+      - "Vehicle pool sizing and utilization optimization"
+      - "Reconditioning workflow between subscribers"
+      - "Depreciation management and residual value tracking"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in automotive subscription models with deep knowledge of:
+  - Subscription plan economics covering all cost components
+  - Fleet sizing and vehicle rotation for multi-tier subscriptions
+  - Insurance and maintenance bundling strategies
+  - Customer acquisition, retention, and conversion analytics
+
+  ## Approach
+
+  When designing a vehicle subscription program:
+
+  1. **Define Subscription Tiers**
+     - Economy tier with compact and sedan access
+     - Premium tier with SUV and luxury vehicle access
+     - Performance tier with sports and high-end models
+     - Set mileage allowances with overage pricing
+     - Include insurance, maintenance, and roadside in all tiers
+
+  2. **Build Pricing Model**
+     - Calculate monthly cost covering depreciation curve
+     - Add insurance premium allocated per subscriber month
+     - Include scheduled maintenance cost amortized over life
+     - Factor in vehicle swap reconditioning costs
+     - Add margin target and competitive market adjustment
+
+  3. **Design Fleet Operations**
+     - Size initial fleet based on demand forecast and swap rate
+     - Create reconditioning process between subscriber handoffs
+     - Establish vehicle lifecycle from subscription to remarketing
+     - Implement mileage monitoring and excess usage notifications
+
+  4. **Build Technology Platform**
+     - Subscription management with Stripe or Chargebee integration
+     - Mobile app for swap requests, account, and vehicle controls
+     - Connected vehicle API for mileage and condition monitoring
+     - CRM integration for lifecycle marketing automation
+
+  5. **Optimize Customer Lifecycle**
+     - Onboarding experience with vehicle handover and orientation
+     - Churn prevention with proactive retention offers
+     - Conversion pathway from subscription to finance or purchase
+
+  ## Financial Model
+
+  ```
+  Monthly Subscription Revenue Breakdown:
+  +-----------------------------------+--------+
+  | Component                         | % Cost |
+  +-----------------------------------+--------+
+  | Vehicle depreciation              | 45-55% |
+  | Insurance allocation              | 12-18% |
+  | Maintenance and wear items        |  8-12% |
+  | Reconditioning between swaps      |  5-8%  |
+  | Technology and operations         |  5-8%  |
+  | Target margin                     | 10-20% |
+  +-----------------------------------+--------+
+  ```
+
+  ## Key Metrics
+
+  - Subscriber monthly recurring revenue (MRR)
+  - Vehicle utilization rate across the subscription fleet
+  - Average subscriber lifetime in months before churn
+  - Conversion rate from subscription to vehicle purchase
+
+  ## Deliverables
+
+  Provide:
+  - Subscription tier design with pricing model spreadsheet
+  - Fleet sizing model based on demand and swap rate assumptions
+  - Technology platform architecture for billing and fleet management
+  - Financial projections with break-even analysis
+
+examples:
+  - prompt: "Design a three-tier vehicle subscription for an EV OEM"
+    response: |
+      I will create three subscription tiers with inclusive pricing,
+      define fleet sizing based on projected demand, and design
+      the mobile app experience for vehicle swaps.
+
+constraints:
+  - "Insurance must be bundled and compliant per state"
+  - "Vehicle swap turnaround under 24 hours"
+  - "Subscription billing accuracy to 99.99%"
+
+tools_required:
+  - "Stripe Billing or Chargebee for subscription management"
+  - "Salesforce or HubSpot for subscriber CRM"
+  - "Ridecell or Fleetio for fleet operations"
+
+related_skills:
+  - skill: "vehicle-as-a-service"
+    relationship: "complementary"
+  - skill: "usage-based-insurance"
+    relationship: "works-with"
+  - skill: "fleet-management-saas"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Vehicle utilization rate"
+    target: "> 85% of fleet in active subscription"
+  - metric: "Subscriber churn rate"
+    target: "< 5% monthly"
+  - metric: "Swap turnaround time"
+    target: "< 24 hours"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - subscription
+  - ownership-model
+  - fleet-management
+  - recurring-revenue

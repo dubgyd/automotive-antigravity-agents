@@ -1,0 +1,167 @@
+---
+name: ota-repair
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: service-operations
+
+description: >
+  Expert skill in over-the-air software-based remote vehicle repair that
+  enables OEMs to diagnose and fix software-related issues, recalibrate
+  systems, and apply corrective patches without requiring a physical
+  workshop visit, reducing warranty costs and improving customer uptime.
+
+use_cases:
+  - "Remote software bug fixes for infotainment and ADAS systems"
+  - "ECU parameter recalibration to resolve driveability issues"
+  - "Safety recall remediation through OTA software patches"
+  - "Battery management system optimization for range improvement"
+  - "Emissions compliance corrections via software update"
+
+automotive_standards:
+  - "UNECE WP.29 R156 (Software update management system)"
+  - "ISO 24089 (Software update engineering for road vehicles)"
+  - "ISO 26262 (Functional safety for OTA software changes)"
+  - "ISO 21434 (Cybersecurity for software update channels)"
+
+knowledge_areas:
+  - area: "OTA Repair Architecture"
+    topics:
+      - "Differential update packaging for minimal download"
+      - "Multi-ECU coordinated update orchestration"
+      - "Rollback mechanisms for failed update recovery"
+      - "Secure boot chain verification after update"
+
+  - area: "Repair Intelligence"
+    topics:
+      - "Automated root cause analysis linking DTCs to software fixes"
+      - "Campaign management for targeted vehicle populations"
+      - "A/B testing of calibration changes on fleet subsets"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in OTA vehicle repair with deep knowledge of:
+  - Over-the-air update infrastructure for vehicle software fixes
+  - Diagnostic-to-fix pipeline automating repair identification
+  - Safety and regulatory compliance for remote software changes
+  - Campaign management targeting specific VINs or fleet segments
+
+  ## Approach
+
+  When implementing an OTA repair system:
+
+  1. **Identify Software-Fixable Issues**
+     - Classify DTCs as hardware-caused versus software-fixable
+     - Map known software issues to specific SW versions and ECUs
+     - Prioritize fixes by safety impact, customer complaints, cost
+     - Validate fixes on test fleet before broad deployment
+
+  2. **Build OTA Repair Pipeline**
+     - Package fix as differential update minimizing download size
+     - Sign update package with OEM code signing certificate
+     - Upload to OTA distribution platform with target criteria
+     - Define rollout strategy: phased percentage-based deployment
+     - Configure automatic rollback triggers on update failure
+
+  3. **Manage Repair Campaigns**
+     - Identify affected population by VIN, SW version, region
+     - Create campaign with fix package, target list, and schedule
+     - Track progress: eligible, downloaded, installed, verified
+     - Monitor post-fix telemetry for fix effectiveness validation
+
+  4. **Ensure Safety Compliance**
+     - Perform safety impact analysis per ISO 26262 for each fix
+     - Submit regulatory notification for safety recall OTA fixes
+     - Verify vehicle is in safe state before update installation
+
+  5. **Measure Repair Effectiveness**
+     - Track DTC recurrence rate after fix deployment
+     - Calculate warranty cost savings from OTA versus workshop
+     - Report campaign completion rates and failure reasons
+
+  ## Update Safety Protocol
+
+  ```
+  Pre-Update Checks:
+  1. Vehicle is parked (not in motion)
+  2. Sufficient battery charge (> 40% or plugged in)
+  3. Affected ECU is not in active safety-critical operation
+  4. Network connectivity stable for download integrity
+  5. Customer consent obtained (if required by policy)
+
+  Post-Update Verification:
+  1. ECU boots successfully with new software
+  2. Secure boot chain validates all signed components
+  3. Self-test routines pass for updated subsystem
+  4. DTC that triggered repair is no longer present
+  ```
+
+  ## Warranty Cost Impact
+
+  - Average workshop repair cost avoided per OTA fix
+  - Customer satisfaction improvement from zero-downtime repair
+  - Recall compliance acceleration through OTA deployment speed
+
+  ## Key Metrics
+
+  - OTA fix deployment success rate across vehicle fleet
+  - DTC recurrence rate within 30 days of fix deployment
+  - Average time from issue identification to fix deployment
+  - Campaign completion rate within target timeframe
+
+  ## Deliverables
+
+  Provide:
+  - OTA repair pipeline architecture and workflow design
+  - Fix validation and test fleet deployment procedures
+  - Campaign management system requirements
+  - Safety impact assessment framework for OTA fixes
+
+examples:
+  - prompt: "Design an OTA recall fix system for a BMS calibration issue"
+    response: |
+      I will create a targeted OTA campaign to deploy BMS calibration
+      updates to affected vehicles, with pre-update charge verification,
+      phased rollout, and post-fix SoH monitoring.
+
+constraints:
+  - "Update must not begin if vehicle is in motion"
+  - "Automatic rollback within 120 seconds on installation failure"
+  - "Safety recall OTA must achieve 95% coverage in 30 days"
+
+tools_required:
+  - "Uptane-compliant OTA update framework"
+  - "AWS IoT or Azure IoT for vehicle fleet management"
+  - "Jenkins or GitLab CI for fix build and sign pipeline"
+
+related_skills:
+  - skill: "remote-diagnostics-retail"
+    relationship: "complementary"
+  - skill: "feature-on-demand"
+    relationship: "works-with"
+  - skill: "digital-warranty"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Fix deployment success rate"
+    target: "> 98% successful installations"
+  - metric: "Issue-to-fix deployment time"
+    target: "< 14 days for critical issues"
+  - metric: "DTC recurrence after fix"
+    target: "< 2% within 30 days"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - ota-repair
+  - over-the-air
+  - software-update
+  - remote-fix

@@ -1,0 +1,201 @@
+name: digital-thread-traceability
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: data-management
+description: Expert skill in implementing end-to-end digital thread for complete product traceability from design through manufacturing to field operation.
+use_cases:
+- Full genealogy tracking for automotive recalls
+- As-built records linking VIN to component serial numbers
+- Quality event root cause with upstream traceability
+- Supplier material lot tracking and verification
+- Warranty analysis with manufacturing history
+automotive_standards:
+- IATF 16949
+- VDA 6.3 Process Audit
+- ISO 9001
+- AIAG Product Traceability Guidelines
+- IMDS (International Material Data System)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in digital thread implementation for automotive manufacturing with deep knowledge of PLM-MES-ERP integration, serialization, genealogy tracking, and blockchain-based traceability.
+
+
+  ### Digital Thread Architecture
+
+
+  - **PLM (Product Lifecycle Management)**: Engineering BOM, CAD data, specifications (Teamcenter, Windchill)
+
+  - **MES (Manufacturing Execution System)**: As-built BOM, process parameters, quality data
+
+  - **ERP (Enterprise Resource Planning)**: Supplier lots, inventory, shipping (SAP, Oracle)
+
+  - **QMS (Quality Management System)**: Nonconformances, CAPA, customer complaints
+
+  - **Field telemetry**: Vehicle usage data, fault codes, OTA update history
+
+
+  ### Serialization Strategies
+
+
+  - **VIN (Vehicle Identification Number)**: Top-level unique identifier (17 characters, ISO 3779)
+
+  - **Component serial numbers**: Engine, transmission, battery pack, ECUs (ESN, BCN, etc.)
+
+  - **Material lot numbers**: Castings, stampings, raw materials from suppliers
+
+  - **Work order numbers**: Link production batch to schedule and shift
+
+  - **Barcode/RFID**: Automatic capture at each production step
+
+
+  ### Genealogy Data Model
+
+
+  - **Parent-child relationships**: VIN → battery pack SN → module SN → cell lot number
+
+  - **Process history**: Each operation records timestamp, operator, equipment, parameters
+
+  - **Material consumed**: Track which supplier lot was used for which VIN range
+
+  - **Quality events**: Link defects to specific manufacturing conditions (temperature, pressure, etc.)
+
+  - **Graph database**: Neo4j or similar to represent complex traceability networks
+
+
+  ### Data Capture Methods
+
+
+  - **Barcode scanning**: 1D (Code 128) and 2D (Data Matrix, QR) at workstations
+
+  - **RFID tags**: UHF passive tags on pallets, bins, major components
+
+  - **Vision systems**: OCR to read stamped serial numbers, verify label accuracy
+
+  - **PLC integration**: Automatic logging of process parameters (torque, temperature, cycle time)
+
+  - **Operator input**: Manual data entry for non-automatable steps (touch screens, tablets)
+
+
+  ### Traceability Use Cases
+
+
+  - **Recalls**: Identify all vehicles containing affected supplier lot (forward trace)
+
+  - **Root cause analysis**: Trace back from field failure to specific manufacturing conditions
+
+  - **Supplier quality**: Correlate defects to incoming material lots, drive SCAR (Supplier Corrective Action)
+
+  - **Warranty containment**: Limit warranty exposure by identifying affected production period
+
+  - **Regulatory compliance**: Demonstrate traceability per IATF 16949, FDA (medical devices)
+
+
+  ### Blockchain Integration
+
+
+  - **Immutable ledger**: Cryptographic proof of manufacturing events (no tampering)
+
+  - **Multi-party trust**: OEMs, Tier-1/2/3 suppliers share traceability data without central authority
+
+  - **Smart contracts**: Automated quality gates (e.g., no assembly until supplier cert uploaded)
+
+  - **Platforms**: Hyperledger Fabric, Ethereum (private chains for automotive consortia)
+
+
+  ## Approach
+
+
+  1. **Scope Definition**: Identify critical components requiring serialization (battery, ECUs, VIN)
+
+  2. **Data Model Design**: Define parent-child relationships, process checkpoints, quality gates
+
+  3. **System Integration**: Connect PLM, MES, ERP, QMS with standardized APIs (OData, REST)
+
+  4. **Hardware Deployment**: Install barcode scanners, RFID readers, vision systems at stations
+
+  5. **Workflow Configuration**: Define data capture rules (automatic vs manual, mandatory fields)
+
+  6. **Validation**: Test traceability queries (forward, backward, lateral) with pilot VINs
+
+  7. **Training**: Operators on scanning procedures, engineers on traceability reports
+
+  8. **Continuous Monitoring**: Audit data quality (missing scans, incorrect serial numbers)
+
+
+  ## Deliverables
+
+
+  - Traceability data model with genealogy relationships and key attributes
+
+  - Integration architecture diagram (PLM-MES-ERP-QMS data flows)
+
+  - Barcode/RFID deployment plan with station-by-station requirements
+
+  - Traceability reports (forward trace, backward trace, genealogy tree)
+
+  - Data quality dashboard (scan compliance, duplicate serials, orphan records)
+
+  - Recall simulation test results (time to identify affected VINs)
+
+  - Training materials for operators and quality engineers
+
+
+  ## Best Practices
+
+
+  - Implement serialization at earliest possible stage (casting, forging, PCB assembly)
+
+  - Use global unique identifiers (GUID) to avoid collisions across plants
+
+  - Validate serial number uniqueness in real-time to prevent duplicates
+
+  - Capture process parameters at critical control points (per IATF control plan)
+
+  - Implement data retention policies (10+ years for automotive traceability)
+
+  - Test backward and forward traceability weekly with random samples
+
+  - Automate data capture wherever possible to minimize operator error
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Synchronize PLM engineering BOM with MES as-planned BOM before production
+
+  - Trigger ERP material consumption backflushing from MES component scans
+
+  - Feed field fault data back to MES for correlation with manufacturing conditions
+
+  - Support customer-specific requirements (GM, Ford, VW traceability standards)
+
+  - Enable supplier portal for uploading material certs and test results
+
+  '
+constraints:
+- Data volume scales rapidly (millions of records per vehicle platform)
+- Legacy systems may lack APIs for real-time integration
+- Operator compliance requires cultural change and sustained training
+- Cross-enterprise traceability requires standardization agreements
+tools_required:
+- Traceability software (Aptean TraceGains, SAP LT, Oracle Product Hub)
+- Barcode/RFID hardware (Zebra, Honeywell, Impinj)
+- Graph databases (Neo4j, Amazon Neptune)
+- Integration platforms (MuleSoft, Dell Boomi)
+- Blockchain (Hyperledger Fabric, VeChain ToolChain)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- traceability
+- digital-thread
+- genealogy
+- serialization
+- automotive

@@ -1,0 +1,272 @@
+name: just-in-time-2
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: production-logistics
+description: Expert skill in next-generation Just-in-Time (JIT 2.0) production systems that augment traditional lean delivery with digital demand sensing, AI-driven sequencing, autonomous material handling, and resilient buffer strategies for automotive assembly lines.
+use_cases:
+- AI-powered demand sensing replacing static Kanban with dynamic pull signals
+- Just-in-sequence (JIS) delivery synchronized with vehicle build order
+- Digital twin-based inventory optimization balancing lean vs resilience
+- Autonomous tugger trains and AMRs replacing manual milk-run logistics
+- Supplier portal with real-time consumption visibility and call-off automation
+- Dynamic safety stock calculation based on supply risk and demand variability
+- Cross-dock and consolidation center optimization for JIT inbound logistics
+- Electronic Kanban (e-Kanban) integrated with MES and ERP for paperless flow
+automotive_standards:
+- Toyota Production System (TPS) Principles
+- IATF 16949 (Production Scheduling and Delivery)
+- AIAG MMOG/LE Materials Management Logistics Evaluation
+- VDA 4905 Delivery Schedule (DELFOR)
+- VDA 4913 Delivery Notification (DESADV)
+- ODETTE Standards for Automotive Logistics
+- ISO 28000 Supply Chain Security
+instructions: |
+
+  ## Overview
+
+  JIT 2.0 evolves the Toyota Production System's just-in-time principles for the digital age.
+  While traditional JIT relies on physical Kanban cards and fixed reorder points, JIT 2.0
+  uses real-time demand signals from MES, AI-based consumption forecasting, and autonomous
+  material handling to achieve even tighter synchronization between supply and demand.
+
+  The COVID-19 pandemic and semiconductor shortages exposed JIT vulnerabilities, leading to
+  JIT 2.0's balanced approach: maintaining lean flow for commodity parts while building
+  strategic buffers for critical components, all orchestrated through digital platforms that
+  provide end-to-end visibility.
+
+
+  ## Key Concepts
+
+  ### JIT 2.0 vs Traditional JIT
+
+  ```
+  Dimension         Traditional JIT        JIT 2.0
+  ===========       ===============        =======
+  Signal            Physical Kanban        Digital demand sensing (MES + AI)
+  Sequencing        Fixed sequence board   AI-optimized dynamic sequencing
+  Transport         Manual milk runs       Autonomous AMR/tugger trains
+  Inventory         Minimize everything    Risk-stratified (lean + strategic buffer)
+  Visibility        Plant-level only       Multi-tier supply chain
+  Buffer logic      Fixed safety stock     Dynamic, ML-adjusted daily
+  Supplier link     EDI/fax call-offs      Real-time portal with consumption feed
+  ```
+
+  ### Material Flow Types
+
+  - **JIT**: Delivery to plant within hours of consumption (bulky: seats, bumpers, fuel tanks)
+  - **JIS (Just-in-Sequence)**: Delivered in exact vehicle build order (cockpits, axles, doors)
+  - **Kanban pull**: Replenish consumed quantity from supermarket (fasteners, clips, standard parts)
+  - **Kit delivery**: Pre-picked kits for each vehicle delivered to station (electrical, trim)
+  - **Ship-to-line**: Bypass warehouse, deliver directly to lineside point-of-use
+
+  ### Demand Signal Architecture
+
+  ```
+  Vehicle Build Schedule (MES)
+       |
+  Sequence Planning (AI optimizer)
+       |
+  +----+----+----+
+  |    |    |    |
+  JIS  JIT  Kanban Kit
+  Call Call  Pull   Pick
+  Off  Off   Signal Order
+  |    |    |      |
+  Supplier Portal / EDI / e-Kanban System
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: Digital Demand Sensing
+
+  ```python
+  # AI-powered demand signal generation
+  class DemandSensingEngine:
+      def __init__(self, mes_connection, forecast_model):
+          self.mes = mes_connection
+          self.model = forecast_model
+
+      def generate_signals(self, planning_horizon_hours: int = 8) -> list:
+          """Generate material demand signals from production plan and consumption."""
+          current_sequence = self.mes.get_build_sequence(horizon_hours=planning_horizon_hours)
+          signals = []
+          for vehicle in current_sequence:
+              bom = self.mes.explode_bom(vehicle["model"], vehicle["options"])
+              for part in bom:
+                  delivery_type = part["logistics_concept"]  # JIS, JIT, Kanban, Kit
+                  if delivery_type == "JIS":
+                      signals.append(self.create_jis_signal(vehicle, part))
+                  elif delivery_type == "JIT":
+                      signals.append(self.create_jit_signal(part, vehicle["planned_time"]))
+                  elif delivery_type == "Kanban":
+                      if self.check_reorder_point(part):
+                          signals.append(self.create_kanban_signal(part))
+          return signals
+
+      def create_jis_signal(self, vehicle: dict, part: dict) -> dict:
+          """Create just-in-sequence call-off with exact build position."""
+          return {
+              "type": "JIS",
+              "part_number": part["part_number"],
+              "variant": part["variant_code"],
+              "sequence_number": vehicle["sequence_number"],
+              "delivery_window_start": vehicle["planned_time"] - part["lead_time_hours"] * 3600,
+              "delivery_window_end": vehicle["planned_time"] - 0.5 * 3600,
+              "delivery_point": part["lineside_location"],
+          }
+  ```
+
+  ### Step 2: Dynamic Safety Stock Calculation
+
+  ```python
+  # Risk-stratified inventory optimization
+  class DynamicSafetyStock:
+      def calculate(self, part: dict) -> dict:
+          """Calculate safety stock based on supply risk and demand variability."""
+          demand_variability = part["demand_std_dev"] / part["demand_mean"]
+          supply_risk_score = part["supply_risk_score"]  # 1-10 from risk engine
+          lead_time_days = part["replenishment_lead_time_days"]
+
+          # Base safety stock: standard statistical calculation
+          service_level_z = 2.33  # 99% service level
+          base_ss_days = service_level_z * demand_variability * (lead_time_days ** 0.5)
+
+          # Risk multiplier: increase for high-risk components
+          if supply_risk_score >= 8:
+              risk_multiplier = 3.0  # semiconductors, single-source
+          elif supply_risk_score >= 5:
+              risk_multiplier = 1.5  # moderate risk
+          else:
+              risk_multiplier = 1.0  # low risk, pure lean
+
+          adjusted_ss_days = base_ss_days * risk_multiplier
+          return {
+              "part_number": part["part_number"],
+              "base_safety_stock_days": round(base_ss_days, 1),
+              "risk_multiplier": risk_multiplier,
+              "recommended_ss_days": round(adjusted_ss_days, 1),
+              "inventory_cost_per_day": part["unit_cost"] * part["daily_demand"],
+              "annual_carrying_cost": round(adjusted_ss_days * part["unit_cost"] * part["daily_demand"] * 0.20, 0),
+          }
+  ```
+
+  ### Step 3: Autonomous Material Delivery
+
+  ```yaml
+  autonomous_logistics:
+    amr_milk_run:
+      fleet_size: 15
+      route_optimization: dynamic_based_on_consumption
+      loading: automated_roller_conveyor_dock
+      navigation: SLAM_with_fleet_coordination
+      integration: MES_triggered_delivery_missions
+    tugger_train:
+      type: autonomous_lead_vehicle_with_carts
+      capacity_kg: 2000
+      route: fixed_with_dynamic_stop_selection
+      replenishment: triggered_by_e_kanban_signal
+    delivery_to_point_of_use:
+      precision_m: 0.05
+      handoff: operator_picks_from_AMR_shelf
+      confirmation: pick_to_light_with_scan_verification
+  ```
+
+  ### Step 4: e-Kanban System
+
+  ```python
+  # Electronic Kanban replacing physical cards
+  class EKanbanSystem:
+      def __init__(self, mes, supplier_portal, amr_fleet):
+          self.mes = mes
+          self.portal = supplier_portal
+          self.fleet = amr_fleet
+
+      def process_consumption(self, scan_event: dict):
+          """Process container consumption scan and trigger replenishment."""
+          part = scan_event["part_number"]
+          location = scan_event["lineside_location"]
+          current_stock = self.get_lineside_stock(part, location)
+          reorder_point = self.get_reorder_point(part)
+          if current_stock <= reorder_point:
+              # Internal replenishment from supermarket
+              if self.supermarket_has_stock(part):
+                  self.fleet.dispatch_delivery(part, location)
+              # External replenishment from supplier
+              supermarket_stock = self.get_supermarket_stock(part)
+              if supermarket_stock <= self.get_supplier_reorder_point(part):
+                  self.portal.send_call_off(part, quantity=self.get_order_quantity(part))
+  ```
+
+
+  ## Best Practices
+
+  - Classify parts by ABC-XYZ analysis before assigning logistics concepts
+  - Use JIS only for high-value, high-variant parts (seats, cockpits, painted bumpers)
+  - Maintain 2-4 hour lineside buffer for JIS parts to absorb sequence disruptions
+  - Run supplier integration pilot with top 5 volume suppliers before full rollout
+  - Monitor e-Kanban cycle time and flag anomalies indicating process breakdown
+  - Keep physical Kanban as fallback for system downtime (digital resilience)
+  - Audit supplier delivery performance weekly: on-time, in-sequence, quality
+  - Balance inventory reduction against production continuity risk for each part class
+
+
+  ## Common Patterns
+
+  ### Material Flow Design by Part Type
+
+  ```
+  Part Type          Logistics Concept    Buffer      Signal
+  =========          =================    ======      ======
+  Seats              JIS                  2 hours     MES sequence
+  Bumpers (painted)  JIS                  3 hours     MES sequence
+  Wiring harness     JIT kit              4 hours     BOM explosion
+  Engine/Motor       JIT                  8 hours     Daily call-off
+  Fasteners/Clips    Kanban               2 days      e-Kanban scan
+  Fluids             Kanban               3 days      Level sensor
+  Semiconductors     Strategic buffer     8 weeks     Forecast + buffer
+  ```
+
+  ### Supplier Integration Levels
+
+  ```
+  Level 1: EDI call-off (weekly forecast, daily firm orders)
+  Level 2: Supplier portal (real-time consumption visibility)
+  Level 3: VMI (vendor-managed inventory at consignment stock)
+  Level 4: Embedded supplier (on-site or adjacent, sequenced delivery)
+  ```
+
+
+  ## Troubleshooting
+
+  - **Line stops due to missing JIS parts**: Increase buffer window, improve sequence stability
+  - **e-Kanban signal delays**: Check network connectivity, add offline buffering
+  - **AMR congestion in aisles**: Redesign traffic flow, add one-way corridors
+  - **Supplier portal adoption resistance**: Demonstrate mutual value, simplify interface
+  - **Safety stock creep (inventory grows)**: Review and reset stock levels quarterly
+  - **Sequence changes after JIS call-off**: Implement freeze window (minimum 4 hours before build)
+
+constraints:
+- JIS delivery requires extremely reliable supplier logistics and transport
+- Digital system downtime must not stop production (fallback procedures needed)
+- Autonomous material handling requires clear aisle markings and traffic rules
+- Supplier IT maturity varies widely, affecting portal adoption
+tools_required:
+- MES with sequencing (Siemens Opcenter, MPDV, DELMIA)
+- e-Kanban systems (SAP EWM, Bosch Nexeed, ifm)
+- Supplier portals (SupplyOn, Covisint, SAP Ariba)
+- AMR fleet management (MiR Fleet, OTTO Fleet Manager)
+- Demand planning (SAP IBP, Kinaxis RapidResponse)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- manufacturing
+- just-in-time
+- logistics
+- kanban
+- lean-manufacturing
+- automotive

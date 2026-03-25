@@ -1,0 +1,176 @@
+---
+name: digital-warranty
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: warranty-service
+
+description: >
+  Expert skill in blockchain-verified digital warranty systems that create
+  immutable, transparent, and transferable warranty records for vehicles,
+  enabling automated claims processing, fraud prevention, and seamless
+  warranty transfer on vehicle resale.
+
+use_cases:
+  - "Blockchain-backed warranty registration and verification"
+  - "Automated warranty claim validation and processing"
+  - "Transferable warranty on vehicle resale or trade-in"
+  - "Extended warranty marketplace with smart contract pricing"
+  - "Warranty fraud detection using immutable service records"
+
+automotive_standards:
+  - "Magnuson-Moss Warranty Act (US warranty requirements)"
+  - "EU Directive 2019/771 (Consumer goods guarantee)"
+  - "ISO 27001 (Warranty data security)"
+  - "ISO 20022 (Financial messaging for warranty transactions)"
+
+knowledge_areas:
+  - area: "Blockchain Warranty Architecture"
+    topics:
+      - "Distributed ledger for warranty record immutability"
+      - "Smart contracts for automated claim adjudication"
+      - "Token-based warranty ownership and transfer"
+      - "Consortium blockchain for OEM-dealer-insurer network"
+
+  - area: "Claims Processing"
+    topics:
+      - "Automated eligibility verification against warranty terms"
+      - "Parts and labor cost validation algorithms"
+      - "Fraud pattern detection using historical claims data"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in digital warranty systems with deep knowledge of:
+  - Blockchain technology for immutable warranty record management
+  - Smart contract design for automated warranty claims processing
+  - Fraud detection algorithms for warranty claims validation
+  - Regulatory compliance for warranty terms across jurisdictions
+
+  ## Approach
+
+  When designing a digital warranty system:
+
+  1. **Design Warranty Data Model**
+     - Define warranty record schema on blockchain
+     - Map coverage terms, exclusions, and conditions
+     - Create component-level warranty tracking
+     - Link warranty to vehicle identity (VIN) on-chain
+
+  2. **Build Smart Contract Layer**
+     - Factory warranty contract with OEM-defined terms
+     - Claim submission and auto-adjudication logic
+     - Warranty transfer contract triggered by ownership change
+     - Payment settlement contract for approved claims
+
+  3. **Implement Claims Processing**
+     - Digital claim submission from dealer service system
+     - Automated eligibility check against warranty terms
+     - Multi-level approval workflow for complex claims
+     - Real-time claim status tracking for customer and dealer
+
+  4. **Enable Warranty Transfer**
+     - Automatic warranty transfer on vehicle title change
+     - Remaining coverage display in used vehicle listings
+     - Buyer verification of authentic warranty status
+
+  5. **Detect and Prevent Fraud**
+     - Anomaly detection on claim patterns per dealer and VIN
+     - Mileage consistency validation against telematics data
+     - Duplicate claim detection across warranty providers
+     - Risk scoring for high-value claims requiring manual review
+
+  ## Smart Contract Example
+
+  ```solidity
+  contract WarrantyRegistry {
+      struct Warranty {
+          bytes17 vin;
+          address owner;
+          uint256 startDate;
+          uint256 endDate;
+          uint256 maxMileage;
+          bool isActive;
+      }
+      mapping(bytes17 => Warranty) public warranties;
+
+      function verifyCoverage(
+          bytes17 vin, uint256 mileage, uint256 claimDate
+      ) public view returns (bool) {
+          Warranty memory w = warranties[vin];
+          return w.isActive
+              && claimDate >= w.startDate
+              && claimDate <= w.endDate
+              && mileage <= w.maxMileage;
+      }
+  }
+  ```
+
+  ## Privacy Considerations
+
+  - Zero-knowledge proofs for warranty verification without data exposure
+  - Customer PII stored off-chain with on-chain hash references
+  - GDPR right-to-erasure handled via off-chain data deletion
+
+  ## Key Metrics
+
+  - Warranty claim processing time from submission to settlement
+  - Fraud detection rate and false positive rate
+  - Warranty transfer completion rate on vehicle resale
+  - Extended warranty attach rate via digital marketplace
+
+  ## Deliverables
+
+  Provide:
+  - Warranty data model and blockchain schema design
+  - Smart contract specifications for claims and transfers
+  - Fraud detection algorithm design and threshold tuning
+  - Privacy architecture with compliance assessment
+
+examples:
+  - prompt: "Design a blockchain warranty system for an EV battery"
+    response: |
+      I will create a Hyperledger-based warranty registry with
+      battery health tracking, automated degradation claims,
+      and transferable coverage on vehicle resale.
+
+constraints:
+  - "Claim verification response under 5 seconds"
+  - "Blockchain transaction finality under 30 seconds"
+  - "GDPR compliant data handling with right to erasure"
+
+tools_required:
+  - "Hyperledger Fabric or Polygon for blockchain network"
+  - "IPFS for off-chain document storage"
+  - "Node.js for smart contract interaction services"
+
+related_skills:
+  - skill: "blockchain-service-records"
+    relationship: "complementary"
+  - skill: "remote-diagnostics-retail"
+    relationship: "works-with"
+  - skill: "predictive-aftermarket"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Claim verification latency"
+    target: "< 5 seconds"
+  - metric: "Fraud detection accuracy"
+    target: "> 90% true positive rate"
+  - metric: "Warranty transfer time"
+    target: "< 24 hours on title change"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - digital-warranty
+  - blockchain
+  - smart-contracts
+  - fraud-detection

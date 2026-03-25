@@ -1,0 +1,164 @@
+name: zero-gravity-seats
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "NASA-inspired ergonomic seating systems covering neutral body posture design, multi-zone pneumatic support, massage functions, and fatigue reduction for long-distance automotive travel."
+use_cases:
+  - "Designing zero-gravity recline positions that distribute body weight evenly"
+  - "Implementing multi-zone pneumatic lumbar and bolster adjustment systems"
+  - "Building intelligent seat posture coaching that adapts to driver fatigue signals"
+  - "Creating multi-program massage functions integrated into seat cushion and backrest"
+  - "Integrating seat position with ADAS for optimal seatbelt and airbag geometry"
+automotive_standards:
+  - "FMVSS 207 - Seating system strength requirements"
+  - "FMVSS 209/210 - Seat belt anchorage requirements for recline positions"
+  - "ECE R17 - Seat and head restraint approval standards"
+  - "SAE J826 - H-point determination for seating accommodation"
+  - "ISO 5353 - Seat reference point (SgRP) measurement methodology"
+instructions: |
+  # Zero Gravity Seats
+
+  ## Overview
+  Zero-gravity seats are inspired by the neutral body posture astronauts naturally assume
+  in microgravity, where joints settle at their lowest-stress angles. In automotive
+  applications, this translates to a reclined position with elevated knees, supported
+  thighs, and a gentle spinal curve that distributes body weight across the maximum
+  surface area. Combined with pneumatic multi-zone support, active climate control, and
+  massage functions, these seats dramatically reduce fatigue during long-distance travel.
+
+  ## Key Concepts
+
+  ### Neutral Body Posture
+  The NASA-defined neutral posture positions each body segment at specific angles:
+  - Torso reclined at 128 degrees from horizontal (40 degrees from vertical)
+  - Thigh angle elevated 15 degrees above the hip-knee line
+  - Knee flexion at approximately 128 degrees
+  - Ankle plantar flexion at 111 degrees
+  - Arms floating forward with elbows at 128 degrees
+  This distributes gravitational load evenly and minimizes intervertebral disc pressure.
+
+  ### Multi-Zone Support Architecture
+  Independent pneumatic bladders provide adjustable support across the seat:
+  - Lumbar zone with 4 independently inflatable chambers (left, right, upper, lower)
+  - Thoracic zone supporting the upper back with 2 chambers
+  - Bolster zones on cushion and backrest for lateral support during cornering
+  - Thigh extension zone adjustable to support varying leg lengths
+  - Headrest with tilt adjustment linked to recline angle
+
+  ### Massage Systems
+  Embedded actuators provide therapeutic massage during seated occupation:
+  - Pneumatic bladders inflate and deflate in sequence for kneading effects
+  - Vibration motors at key acupressure points provide localized stimulation
+  - Rolling massage uses cam-driven elements that travel along the spine
+  - Programs vary in speed, intensity, and coverage area (full, lumbar only, shoulders)
+
+  ## Implementation Guide
+
+  ### Step 1 - Define the Recline Kinematics
+  Design the seat mechanism for zero-gravity positioning:
+  - Engineer a multi-axis recline mechanism that tilts seat back and raises leg support
+  - Calculate the H-point migration path during recline for seatbelt compatibility
+  - Ensure the steering column and pedal positions remain accessible in partial recline
+  - Define the full zero-gravity position as available only when vehicle is in park
+
+  ### Step 2 - Design the Pneumatic System
+  Build the air bladder network for multi-zone support:
+  - Select bladder materials rated for 100000 inflate-deflate cycles minimum
+  - Design a manifold with individual valves for each of the 10 to 16 chambers
+  - Use a low-noise compressor (under 35 dBA at driver ear) for air supply
+  - Implement pressure sensors in each bladder for closed-loop firmness control
+
+  ### Step 3 - Implement Automatic Posture Adjustment
+  Create algorithms that optimize seat configuration for each occupant:
+  - Use the pressure sensor array to detect occupant weight distribution
+  - Identify under-supported regions where pressure exceeds comfort thresholds
+  - Inflate corresponding bladders to redistribute load more evenly
+  - Learn occupant preferences over time and recall settings via driver profile
+
+  ### Step 4 - Integrate Massage Programs
+  Build the massage function control system:
+  - Define 6 to 10 massage programs varying in technique, speed, and coverage
+  - Implement smooth transitions between inflate and deflate phases for natural feel
+  - Link massage timing to avoid conflicting with active bolster support during cornering
+  - Provide intensity adjustment from gentle (0.3 psi variation) to firm (2.0 psi)
+
+  ### Step 5 - Validate Safety in All Positions
+  Ensure occupant protection across the full adjustment range:
+  - Verify seatbelt geometry provides proper restraint at maximum recline
+  - Test airbag deployment effectiveness at all recline angles
+  - Confirm head restraint position prevents whiplash in reclined postures
+  - Implement automatic seat repositioning to upright before collision if time allows
+
+  ## Best Practices
+
+  ### Comfort Validation
+  - Conduct extended comfort trials of 4+ hours with diverse body types
+  - Measure interface pressure using thin-film pressure mapping at 10 mm resolution
+  - Target peak pressure below 40 mmHg on any 50 mm square region
+  - Validate lumbar support effectiveness with spinal curvature measurement
+
+  ### Noise and Vibration
+  - Locate the air compressor in a sound-insulated housing under the seat
+  - Use proportional valves instead of on-off solenoids to reduce pneumatic click noise
+  - Limit massage vibration transmission to adjacent seats through structural isolation
+  - Test compressor noise perception during quiet cabin conditions in EV mode
+
+  ### Thermal Integration
+  - Integrate seat heating elements in the comfort foam layer above pneumatic bladders
+  - Route ventilation air through channels between bladders for seat cooling
+  - Coordinate thermal zones with massage programs to avoid hot spots
+  - Provide independent thermal control for cushion, backrest, and bolster areas
+
+  ## Troubleshooting
+
+  ### Seat Does Not Reach Full Zero-Gravity Position
+  Verify the vehicle is in park, as full recline is typically restricted during driving.
+  Check the seat track position to ensure sufficient rearward travel is available.
+  Inspect the recline motor and linkage for mechanical binding.
+
+  ### Pneumatic Bladder Loses Pressure Over Time
+  Check all pneumatic fittings for air leaks using soapy water bubble test. Inspect the
+  bladder material for punctures from seat frame contact points. Verify the compressor
+  check valve is holding pressure when the pump is off.
+
+  ### Massage Feels Asymmetric
+  Verify all bladder valves are responding to commands by running a diagnostic inflation
+  sequence. Check for kinked air lines on the weak side. Recalibrate the pressure sensor
+  offsets for the affected chambers.
+
+  ### Occupant Reports Discomfort at Zero-Gravity Recline
+  Adjust the knee elevation angle which may be too aggressive for the individual. Fine-tune
+  the lumbar support inflation to match the occupant spinal curvature. Check that the
+  headrest tilt has followed the backrest recline angle correctly.
+
+  ## Integration Patterns
+
+  ### ADAS and Restraint Coordination
+  Ensuring zero-gravity seats work with active safety systems:
+  - Pre-tension seatbelts and return seat to upright position on pre-crash detection
+  - Transmit current recline angle to the airbag ECU for deployment force adaptation
+  - Adjust side bolster firmness automatically during dynamic driving for lateral support
+  - Coordinate with automatic emergency braking to brace the occupant before impact
+
+  ### Wellness Ecosystem Integration
+  Connecting seat functions with other cabin wellness features:
+  - Link massage activation to vital sign stress detection for automatic comfort response
+  - Coordinate seat heating and cooling with cabin climate for uniform thermal comfort
+  - Synchronize seat position adjustment with ambient lighting for relaxation scenes
+  - Feed pressure map data to the personalization engine for preference learning
+
+  ## Testing and Validation
+
+  ### Ergonomic Validation
+  Systematically verify comfort improvement from zero-gravity positioning:
+  - Measure intervertebral disc pressure using calibrated mannequins at each recline angle
+  - Conduct long-duration comfort trials comparing zero-gravity to standard upright seating
+  - Record EMG muscle activity in back and thigh muscles across seating positions
+  - Survey subjective comfort scores from 50 participants across diverse body types
+
+  ### Durability and Lifecycle Testing
+  Verify mechanism reliability over the vehicle lifetime:
+  - Cycle the full recline mechanism 25000 times simulating 10 years of daily use
+  - Inflate and deflate each pneumatic bladder 200000 times at operating pressure
+  - Run massage programs continuously for 500 hours checking for actuator wear
+  - Validate mechanism operation after thermal cycling from -40 C to 80 C for 500 cycles

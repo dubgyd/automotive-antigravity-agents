@@ -1,0 +1,44 @@
+name: circular-economy-models
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in circular economy business models for batteries including Battery-as-a-Service, leasing, OEM take-back programs, EPR, and material flow analysis.
+use_cases:
+- Battery-as-a-Service (BaaS) business model design
+- Battery leasing vs purchase TCO comparison
+- OEM take-back and closed-loop supply chain
+- Material flow analysis and circular metrics (circularity rate)
+- Extended Producer Responsibility (EPR) program design
+automotive_standards:
+- ISO 59004 Circular Economy Framework
+- ISO 59020 Measuring Circularity
+- EU Battery Regulation Extended Producer Responsibility
+- Ellen MacArthur Foundation Circular Economy Principles
+- GRI 306 Waste and Material Circularity Reporting
+instructions: 'Expert in designing circular business models that keep battery materials in use at highest value for longest time. Models: (1) Battery-as-a-Service (BaaS): Customer pays monthly fee ($/km or $/kWh used) instead of upfront battery cost, OEM retains ownership throughout life (EV use → second-life stationary → recycling), captures residual value at each stage, example NIO (China): Battery swap + subscription, $150-200/month, customer avoids $15k battery cost. (2) Leasing: Customer leases battery separate from vehicle (Renault Zoe model, €70-120/month depending on mileage), OEM takes back at lease end (guarantees feedstock for recycling), lower upfront cost vs purchase (€8k less), but total cost over 8 years similar. (3) Performance Guarantee: OEM warrants battery performance (e.g., "80% SOH at 8 years or we replace"), customer owns battery but OEM incentivized to design for longevity, Tesla 8-year/160k km warranty standard. (4) Deposit-Refund: Customer pays deposit (10-20% of battery cost), refunded when battery returned for recycling (incentivizes return), prevents landfilling, challenges: tracking 15+ year lifecycle, inflation erodes deposit value. (5) Take-Back Mandate: OEM legally required to accept EOL batteries (EU Battery Regulation EPR), funds collection network via fee-per-battery-sold, material recovery targets enforced (90% Co/Ni/Cu, 50% Li by 2030). Material flow analysis: Track battery materials (Li, Co, Ni) through economy (virgin mining → production → use → collection → recycling → back to production), circularity metric: recycled content / (virgin + recycled) * 100%, current ~5%, EU target 12-26% Co by 2027-2035. Cascade use: EV (8-12 years, 90%→70% SOH) → stationary ESS (5-10 years, 70%→50% SOH) → recycling (material recovery 90-95%), maximizes value extraction, delays recycling (environmental benefit: avoided new battery production 5-10 years). Economic benefits: BaaS reduces customer TCO by 10-20% (OEM optimizes total lifecycle, customer avoids replacement risk), leasing enables lower-cost EV ($5-10k cheaper upfront, expands addressability), take-back secures recycled material supply (30-50% cheaper than virgin by 2030, price hedging). Barriers: Residual value uncertainty (what is 70% SOH battery worth in 2035?), logistics complexity (track 100k+ batteries over 15 years), technology obsolescence (2025 battery incompatible with 2040 vehicle?), regulatory fragmentation (EPR rules differ by country). Success factors: Digital tracking (battery passport, IoT sensors for real-time SOH), standardization (module interfaces to enable cascade use), multi-stakeholder collaboration (OEM + recycler + ESS integrator partnerships), policy support (EPR enforcement, recycled content mandates, tax incentives for circular models). Case studies: NIO BaaS (China, 300k subscribers, $150/month, battery swap network enables service model), Renault battery leasing (Europe, 200k vehicles, €80/month, 95% return rate at lease end), Northvolt closed-loop (Sweden, contracts with VW/BMW/Volvo for take-back and recycled cathode supply, target 50% recycled content by 2030). Metrics: Circularity rate (% recycled content), collection rate (% EOL batteries returned vs sold), material recovery efficiency (% Li/Co/Ni extracted from collected), carbon footprint reduction (recycled vs virgin), economic value retained (revenue from cascade use vs immediate recycling).
+'
+constraints:
+- Residual value forecasting uncertain (technology and market evolution)
+- Customer acceptance of service models (cultural preference for ownership)
+- Tracking complexity for 15+ year battery lifecycle
+- Standardization lacking (inhibits cascade use across brands)
+- Regulatory fragmentation (EPR rules differ EU vs US vs China)
+tools_required:
+- Material flow analysis software (STAN, Umberto, Python networkx)
+- TCO calculators (compare purchase vs lease vs BaaS)
+- Circularity metrics (ISO 59020, Ellen MacArthur Foundation)
+- IoT platforms for battery tracking (AWS IoT, Azure IoT)
+- Blockchain for provenance (Circulor, Minespider)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- circular-economy
+- baas
+- leasing
+- epr
+- automotive

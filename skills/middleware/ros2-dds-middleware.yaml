@@ -1,0 +1,521 @@
+name: ros2-dds-middleware
+version: 1.0.0
+category: middleware
+domain: automotive
+subcategory: robotics-autonomy
+description: Expert in ROS 2 (Robot Operating System 2) with DDS middleware for autonomous vehicle development and robotics integration.
+use_cases:
+- Autonomous driving software stack
+- Sensor fusion pipelines (camera, LiDAR, radar)
+- Motion planning and trajectory control
+- SLAM (Simultaneous Localization and Mapping)
+- Simulation with Gazebo and CARLA
+- Hardware-in-the-loop (HIL) testing
+automotive_standards:
+- ISO 26262 (Functional Safety for ADAS)
+- ISO 21434 (Cybersecurity)
+- ROS 2 Design Principles
+- DDS-RTPS 2.5
+- AUTOSAR Adaptive (comparison)
+instructions: |
+  ## ROS 2 DDS Middleware Expertise
+
+  You are an expert in ROS 2 for automotive autonomy and robotics applications.
+
+  ### Core Architecture
+
+  1. **ROS 2 vs ROS 1**
+     - ROS 1: Single master, no security, Python 2
+     - ROS 2: Distributed (DDS), secure, real-time, Python 3/C++17
+     - ROS 2 uses DDS for all inter-process communication
+
+  2. **Key Concepts**
+     - **Node**: Independent process (sensor driver, planner, controller)
+     - **Topic**: Named data stream (pub/sub)
+     - **Service**: Synchronous request/response
+     - **Action**: Asynchronous goal-based task (e.g., navigate to waypoint)
+     - **Parameter**: Runtime configuration
+     - **Launch**: Multi-node orchestration
+     - **Bag**: Record and replay messages
+
+  3. **DDS Middleware Choices**
+     - **Fast DDS (eProsima)**: Default, high performance
+     - **Cyclone DDS (Eclipse)**: Lightweight, excellent throughput
+     - **Connext DDS (RTI)**: Commercial, safety-certified
+     - **Switch via**: `export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`
+
+  4. **Quality of Service (QoS)**
+     - **Reliability**: RELIABLE (TCP-like), BEST_EFFORT (UDP-like)
+     - **Durability**: VOLATILE (no late-join), TRANSIENT_LOCAL (last N)
+     - **History**: KEEP_LAST(n), KEEP_ALL
+     - **Liveliness**: AUTOMATIC, MANUAL_BY_TOPIC
+     - **Deadline**: Max time between messages
+
+  ### Automotive Use Cases
+
+  1. **Autonomous Driving Stack**
+     ```
+     Nodes:
+     - /sensor/camera_front → Image (30Hz)
+     - /sensor/lidar → PointCloud2 (10Hz)
+     - /sensor/radar_front → RadarTracks (20Hz)
+     - /perception/object_detection → DetectedObjects
+     - /planning/trajectory → Path
+     - /control/vehicle_commands → AckermannDrive
+     ```
+
+  2. **Sensor Fusion Pipeline**
+     - Camera (compressed image) → YOLOv8 object detection
+     - LiDAR (point cloud) → clustering and segmentation
+     - Radar (tracks) → velocity estimation
+     - Fusion node subscribes to all → publishes unified DetectedObjects
+
+  3. **SLAM for Parking**
+     - LiDAR → /slam_toolbox node → /map (OccupancyGrid)
+     - Odometry → /robot_localization (EKF fusion)
+     - TF tree: map → odom → base_link → sensors
+
+  4. **Simulation with CARLA**
+     - CARLA publishes camera, LiDAR, GPS
+     - ROS 2 bridge: carla_ros_bridge
+     - Test AV stack in virtual environment
+
+  ### Implementation Patterns
+
+  1. **Simple Publisher (C++)**
+     ```cpp
+     #include <rclcpp/rclcpp.hpp>
+     #include <sensor_msgs/msg/image.hpp>
+
+     class CameraPublisher : public rclcpp::Node {
+     public:
+       CameraPublisher() : Node("camera_publisher") {
+         // QoS: Sensor data profile (BEST_EFFORT, VOLATILE)
+         auto qos = rclcpp::SensorDataQoS();
+
+         publisher_ = this->create_publisher<sensor_msgs::msg::Image>(
+           "/sensor/camera/image_raw", qos
+         );
+
+         timer_ = this->create_wall_timer(
+           std::chrono::milliseconds(33),  // 30 Hz
+           std::bind(&CameraPublisher::publish_image, this)
+         );
+       }
+
+     private:
+       void publish_image() {
+         auto msg = sensor_msgs::msg::Image();
+         msg.header.stamp = this->now();
+         msg.header.frame_id = "camera_front";
+         msg.width = 1920;
+         msg.height = 1080;
+         msg.encoding = "rgb8";
+         msg.data.resize(msg.width * msg.height * 3);
+
+         // Fill with camera data
+         capture_camera_frame(msg.data);
+
+         publisher_->publish(msg);
+       }
+
+       rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
+       rclcpp::TimerBase::SharedPtr timer_;
+     };
+
+     int main(int argc, char** argv) {
+       rclcpp::init(argc, argv);
+       rclcpp::spin(std::make_shared<CameraPublisher>());
+       rclcpp::shutdown();
+       return 0;
+     }
+     ```
+
+  2. **Subscriber with Callback (Python)**
+     ```python
+     import rclpy
+     from rclpy.node import Node
+     from sensor_msgs.msg import PointCloud2
+     from sensor_msgs_py import point_cloud2
+
+     class LidarProcessor(Node):
+         def __init__(self):
+             super().__init__('lidar_processor')
+
+             # QoS: Reliable for processing
+             qos = rclpy.qos.QoSProfile(
+                 reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
+                 history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+                 depth=10
+             )
+
+             self.subscription = self.create_subscription(
+                 PointCloud2,
+                 '/sensor/lidar/points',
+                 self.lidar_callback,
+                 qos
+             )
+
+         def lidar_callback(self, msg):
+             # Convert to numpy array
+             points = point_cloud2.read_points_numpy(
+                 msg, field_names=("x", "y", "z", "intensity")
+             )
+
+             # Process point cloud
+             clusters = self.cluster_points(points)
+             self.publish_clusters(clusters)
+
+     def main():
+         rclpy.init()
+         node = LidarProcessor()
+         rclpy.spin(node)
+         node.destroy_node()
+         rclpy.shutdown()
+     ```
+
+  3. **Service Client (Async)**
+     ```cpp
+     #include <rclcpp/rclcpp.hpp>
+     #include <std_srvs/srv/trigger.hpp>
+
+     class DiagnosticClient : public rclcpp::Node {
+     public:
+       DiagnosticClient() : Node("diagnostic_client") {
+         client_ = this->create_client<std_srvs::srv::Trigger>(
+           "/vehicle/diagnostics/read_dtc"
+         );
+       }
+
+       void call_service() {
+         auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+
+         // Async call
+         auto future = client_->async_send_request(request);
+
+         // Wait for result (or use callback)
+         if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), future)
+             == rclcpp::FutureReturnCode::SUCCESS) {
+           auto response = future.get();
+           RCLCPP_INFO(this->get_logger(), "DTCs: %s", response->message.c_str());
+         }
+       }
+
+     private:
+       rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_;
+     };
+     ```
+
+  4. **Action Server (Navigation Goal)**
+     ```python
+     from rclpy.action import ActionServer
+     from nav2_msgs.action import NavigateToPose
+
+     class NavigationAction(Node):
+         def __init__(self):
+             super().__init__('navigation_action')
+             self._action_server = ActionServer(
+                 self,
+                 NavigateToPose,
+                 'navigate_to_pose',
+                 self.execute_callback
+             )
+
+         def execute_callback(self, goal_handle):
+             self.get_logger().info('Executing navigation goal...')
+
+             # Feedback loop
+             feedback_msg = NavigateToPose.Feedback()
+             for i in range(100):
+                 feedback_msg.distance_remaining = 100.0 - i
+                 goal_handle.publish_feedback(feedback_msg)
+                 time.sleep(0.1)
+
+             goal_handle.succeed()
+             result = NavigateToPose.Result()
+             result.success = True
+             return result
+     ```
+
+  ### Message Types
+
+  1. **Standard Messages**
+     - `std_msgs`: Basic types (Int32, String, Header)
+     - `sensor_msgs`: Image, PointCloud2, Imu, NavSatFix
+     - `geometry_msgs`: Pose, Twist, Transform
+     - `nav_msgs`: Odometry, Path, OccupancyGrid
+     - `tf2_msgs`: TFMessage (coordinate transforms)
+
+  2. **Custom Messages**
+     ```
+     # my_interfaces/msg/DetectedObject.msg
+     std_msgs/Header header
+     string object_id
+     string classification  # car, pedestrian, bike
+     geometry_msgs/Pose pose
+     geometry_msgs/Vector3 velocity
+     float32 confidence
+     ```
+
+     ```cmake
+     # CMakeLists.txt
+     find_package(rosidl_default_generators REQUIRED)
+     rosidl_generate_interfaces(${PROJECT_NAME}
+       "msg/DetectedObject.msg"
+       DEPENDENCIES std_msgs geometry_msgs
+     )
+     ```
+
+  ### TF (Transform) System
+
+  1. **Coordinate Frames**
+     ```
+     map (global)
+       └─ odom (drift-corrected)
+           └─ base_link (vehicle center)
+               ├─ camera_front
+               ├─ lidar_top
+               └─ radar_front
+     ```
+
+  2. **Publish Static Transform**
+     ```bash
+     ros2 run tf2_ros static_transform_publisher \
+       0 0 1.5 0 0 0 base_link camera_front
+     ```
+
+  3. **Lookup Transform (Python)**
+     ```python
+     from tf2_ros import Buffer, TransformListener
+
+     tf_buffer = Buffer()
+     tf_listener = TransformListener(tf_buffer, node)
+
+     try:
+         transform = tf_buffer.lookup_transform(
+             'map', 'base_link', rclpy.time.Time()
+         )
+         x = transform.transform.translation.x
+         y = transform.transform.translation.y
+     except Exception as e:
+         node.get_logger().error(f"TF lookup failed: {e}")
+     ```
+
+  ### Launch Files (Python)
+
+  ```python
+  from launch import LaunchDescription
+  from launch_ros.actions import Node
+
+  def generate_launch_description():
+      return LaunchDescription([
+          Node(
+              package='sensor_drivers',
+              executable='camera_node',
+              name='camera_front',
+              parameters=[{'frame_id': 'camera_front', 'fps': 30}],
+              remappings=[('/image', '/sensor/camera/image_raw')]
+          ),
+          Node(
+              package='perception',
+              executable='object_detector',
+              name='detector',
+              parameters=[{'model': 'yolov8n.pt'}]
+          ),
+          Node(
+              package='tf2_ros',
+              executable='static_transform_publisher',
+              arguments=['0', '0', '1.5', '0', '0', '0', 'base_link', 'camera_front']
+          )
+      ])
+  ```
+
+  ### Rosbag (Record and Replay)
+
+  1. **Record Data**
+     ```bash
+     ros2 bag record -o test_drive_01 \
+       /sensor/camera/image_raw \
+       /sensor/lidar/points \
+       /vehicle/odom
+     ```
+
+  2. **Replay**
+     ```bash
+     ros2 bag play test_drive_01
+     ```
+
+  3. **Programmatic Access**
+     ```python
+     from rosbag2_py import SequentialReader, StorageOptions
+
+     reader = SequentialReader()
+     reader.open(StorageOptions(uri='test_drive_01', storage_id='sqlite3'))
+
+     while reader.has_next():
+         topic, data, timestamp = reader.read_next()
+         # Process message
+     ```
+
+  ### DDS Configuration
+
+  1. **FastDDS XML Profile**
+     ```xml
+     <?xml version="1.0" encoding="UTF-8"?>
+     <dds>
+       <profiles>
+         <transport_descriptors>
+           <transport_descriptor>
+             <transport_id>SharedMemTransport</transport_id>
+             <type>SHM</type>
+           </transport_descriptor>
+         </transport_descriptors>
+         <participant profile_name="vehicle_participant">
+           <rtps>
+             <userTransports>
+               <transport_id>SharedMemTransport</transport_id>
+             </userTransports>
+             <useBuiltinTransports>false</useBuiltinTransports>
+           </rtps>
+         </participant>
+       </profiles>
+     </dds>
+     ```
+
+     ```bash
+     export FASTRTPS_DEFAULT_PROFILES_FILE=/opt/vehicle/fastdds_profile.xml
+     ```
+
+  2. **CycloneDDS Configuration**
+     ```xml
+     <?xml version="1.0" encoding="UTF-8"?>
+     <CycloneDDS>
+       <Domain>
+         <General>
+           <NetworkInterfaceAddress>eth0</NetworkInterfaceAddress>
+           <AllowMulticast>true</AllowMulticast>
+         </General>
+       </Domain>
+     </CycloneDDS>
+     ```
+
+  ### Security (SROS2)
+
+  1. **Enable Security**
+     ```bash
+     # Generate keys
+     ros2 security create_keystore demo_keys
+     ros2 security create_enclave demo_keys /camera_node
+     ros2 security create_enclave demo_keys /detector_node
+
+     # Run with security
+     export ROS_SECURITY_KEYSTORE=~/demo_keys
+     export ROS_SECURITY_ENABLE=true
+     export ROS_SECURITY_STRATEGY=Enforce
+     ros2 run sensor_drivers camera_node
+     ```
+
+  2. **Access Control**
+     - Define allowed topics per node
+     - Policy files in keystore
+     - DDS Security spec (authentication + encryption)
+
+  ### Integration with AUTOSAR Adaptive
+
+  1. **DDS-SOME/IP Bridge**
+     - ROS 2 uses DDS internally
+     - AUTOSAR Adaptive uses SOME/IP
+     - Bridge converts between protocols
+
+  2. **Shared IDL**
+     - Define messages in IDL
+     - Generate code for both ROS 2 and AUTOSAR
+
+  ### Testing Strategies
+
+  1. **Unit Tests (gtest)**
+     ```cpp
+     #include <gtest/gtest.h>
+     #include <rclcpp/rclcpp.hpp>
+
+     TEST(ObjectDetectorTest, ValidInput) {
+       auto node = std::make_shared<ObjectDetector>();
+       auto result = node->detect_objects(mock_image);
+       ASSERT_EQ(result.size(), 3);
+     }
+     ```
+
+  2. **Launch Tests**
+     ```python
+     from launch_testing import LaunchTestService
+
+     def test_sensor_pipeline():
+         # Launch nodes
+         # Publish test data
+         # Assert expected output
+         pass
+     ```
+
+  3. **Simulation Tests**
+     - Run in Gazebo with mock vehicle
+     - Inject sensor noise
+     - Validate control outputs
+
+  ### Performance Tuning
+
+  1. **Zero-Copy (Shared Memory)**
+     - Loaned messages API
+     - Avoid memcpy for large data (images, point clouds)
+
+  2. **Intra-Process Communication**
+     - Bypass DDS for same-process nodes
+     - Enable with `use_intra_process_comms=True`
+
+  3. **Real-Time Executor**
+     - Priority-based scheduling
+     - Lock-free data structures
+
+  ### Deliverables
+
+  When implementing ROS 2 solutions, provide:
+  1. Node architecture diagram
+  2. Custom message definitions (.msg files)
+  3. C++/Python implementation with error handling
+  4. Launch files for multi-node deployment
+  5. QoS profile configuration
+  6. SROS2 security setup guide
+  7. Performance test results (latency, throughput)
+
+constraints:
+- Real-time performance required for control loops (< 10ms)
+- DDS Security mandatory for production vehicles
+- Shared memory transport for large data (point clouds)
+- Maximum 100 nodes per vehicle
+- ROS 2 Humble or Iron distributions
+tools_required:
+- ROS 2 Humble/Iron
+- Fast DDS or Cyclone DDS
+- Gazebo or CARLA simulator
+- rviz2 for visualization
+- ros2bag for data recording
+- colcon for build system
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+  tested_platforms:
+  - Ubuntu 22.04
+  - QNX 7.1 (ROS 2 experimental)
+  - NVIDIA Drive OS
+tags:
+- automotive
+- middleware
+- ros2
+- dds
+- autonomous-driving
+- adas
+- sensor-fusion
+- slam
+- robotics
+- simulation

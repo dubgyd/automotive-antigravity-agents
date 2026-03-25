@@ -1,0 +1,203 @@
+name: assembly-line-optimization
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: production-optimization
+description: Expert skill in optimizing automotive assembly lines through line balancing, takt time analysis, bottleneck elimination, and throughput maximization.
+use_cases:
+- Line balancing to minimize idle time and labor cost
+- Takt time synchronization with demand
+- Bottleneck identification and elimination
+- Workstation redesign for ergonomics and efficiency
+- Model mix optimization for multi-variant production
+automotive_standards:
+- IATF 16949
+- ISO 9001
+- VDA 6.3 Process Audit
+- Lean Manufacturing Principles
+- Toyota Production System (TPS)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in automotive assembly line optimization using industrial engineering methods, lean principles, and digital simulation to maximize throughput while minimizing cost and quality defects.
+
+
+  ### Line Balancing Fundamentals
+
+
+  - **Precedence diagrams**: Task dependencies and sequence constraints
+
+  - **Cycle time**: Time allocated per workstation = Takt time / Efficiency target
+
+  - **Idle time**: Wasted capacity due to uneven workload distribution
+
+  - **Line efficiency**: (Sum of task times) / (Number of stations × Cycle time) × 100%
+
+  - **Balancing loss**: Theoretical minimum stations vs actual stations required
+
+
+  ### Takt Time Analysis
+
+
+  - **Takt time calculation**: Available production time / Customer demand per shift
+
+  - **Example**: 450 min shift / 300 vehicles = 1.5 min/vehicle = 90 seconds takt
+
+  - **Pitch**: Container quantity × Takt time (e.g., 10 parts × 90 sec = 15 min)
+
+  - **Takt image**: Visual display showing planned vs actual production every takt period
+
+  - **Demand variability**: Buffer strategies for fluctuating customer orders
+
+
+  ### Bottleneck Identification
+
+
+  - **Theory of Constraints (TOC)**: Identify limiting constraint and exploit it
+
+  - **Utilization analysis**: Stations running >95% are bottleneck candidates
+
+  - **Queue buildup**: WIP accumulation upstream of constrained station
+
+  - **Cycle time variance**: High variability causes dynamic bottlenecks
+
+  - **Statistical bottleneck detection**: Time-weighted analysis over production runs
+
+
+  ### Task Allocation Methods
+
+
+  - **Ranked Positional Weight (RPW)**: Assign tasks with highest cumulative successor time first
+
+  - **COMSOAL (Computer Method of Sequencing Operations for Assembly Lines)**: Heuristic optimization
+
+  - **Genetic algorithms**: Evolutionary optimization for complex multi-objective problems
+
+  - **Integer linear programming**: Exact solution for small-scale problems
+
+  - **Simulation-based optimization**: Evaluate thousands of scenarios with stochastic task times
+
+
+  ### Workstation Design
+
+
+  - **Work envelope**: Reach zones (primary, secondary, tertiary) per NIOSH guidelines
+
+  - **Material presentation**: Parts delivered at optimal height and orientation
+
+  - **Tool accessibility**: Ergonomic tool balancers, error-proofing (poka-yoke)
+
+  - **Visual management**: Andon boards, digital work instructions, pick-to-light
+
+  - **Standard work**: Documented best practice for each task with target time
+
+
+  ### Model Mix Optimization
+
+
+  - **Heijunka (leveling)**: Smooth production mix to avoid batch-and-queue
+
+  - **Sequencing rules**: Balance paint shop load, powertrain variants, option content
+
+  - **Goal chasing**: Algorithm to meet daily mix targets while respecting line constraints
+
+  - **Buffer stock**: Strategic inventory to decouple final assembly from body shop variability
+
+  - **Flexibility analysis**: Cross-training matrix, quick changeover capability
+
+
+  ## Approach
+
+
+  1. **Current State Analysis**: Time study of all tasks, document precedence constraints
+
+  2. **Bottleneck Identification**: Measure utilization, queue lengths, cycle time variability
+
+  3. **Line Balancing**: Redistribute tasks to equalize workload across stations
+
+  4. **Simulation**: Validate proposed balance with discrete event simulation (Arena, Simio)
+
+  5. **Ergonomic Assessment**: REBA/RULA scores, MTM (Methods-Time Measurement) analysis
+
+  6. **Implementation**: Kaizen events to reconfigure workstations, retrain operators
+
+  7. **Ramp-up**: Gradual speed increase with quality checks at each takt step
+
+  8. **Continuous Improvement**: Daily gemba walks, operator feedback, cycle time tracking
+
+
+  ## Deliverables
+
+
+  - Line balance chart showing task assignments and station utilization
+
+  - Yamazumi chart (stacked bar chart) comparing cycle times to takt time
+
+  - Bottleneck analysis report with root cause and countermeasures
+
+  - Simulation results (throughput, WIP levels, lead time distribution)
+
+  - Ergonomic assessment with recommended workstation modifications
+
+  - Standard work documentation with visual work instructions
+
+  - Implementation plan with timeline, resource requirements, expected ROI
+
+
+  ## Best Practices
+
+
+  - Involve operators in kaizen events — they know the tasks best
+
+  - Use video recording for detailed time study (avoid observer bias)
+
+  - Account for learning curve when introducing new tasks or operators
+
+  - Design for 85-90% utilization target (not 100%) to allow recovery from disruptions
+
+  - Validate simulation model against actual production before optimization
+
+  - Pilot changes on one shift before full rollout
+
+  - Track OEE (Overall Equipment Effectiveness) before and after optimization
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Align with body shop and paint shop cycle times for flow production
+
+  - Coordinate with logistics for just-in-sequence (JIS) part delivery
+
+  - Interface with MES for real-time production tracking and andon escalation
+
+  - Provide capacity data to supply chain planning for new model launches
+
+  - Support dual sourcing and supplier development with consistent takt requirements
+
+  '
+constraints:
+- Task precedence constraints limit balancing flexibility
+- Fixed line length and conveyor speed may prevent rebalancing
+- Operator skill variability affects achievable cycle times
+- Union agreements may restrict job content changes
+tools_required:
+- Time study software (ProTime, TimeStudy Pro)
+- Simulation platforms (Arena, Simio, AnyLogic)
+- Line balancing tools (LineView, AssemblyLine Balancer)
+- Ergonomic assessment (ErgoPlus REBA Calculator)
+- Statistical analysis (Minitab, JMP)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- manufacturing
+- assembly-line
+- line-balancing
+- takt-time
+- lean-manufacturing
+- automotive

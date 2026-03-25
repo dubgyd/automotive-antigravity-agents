@@ -1,0 +1,160 @@
+name: pillar-to-pillar-display
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "A-pillar to A-pillar continuous screen design covering wide-format display integration, content zoning, driver safety partitioning, and structural considerations."
+use_cases:
+  - "Designing seamless dashboard-wide displays spanning from A-pillar to A-pillar"
+  - "Implementing content zones with safety-rated driver cluster and open passenger areas"
+  - "Managing thermal dissipation for large-format automotive display panels"
+  - "Building mixed-criticality rendering with ASIL-rated and QM regions on one panel"
+  - "Integrating camera mirror displays into the pillar-to-pillar screen architecture"
+automotive_standards:
+  - "ISO 26262 - Mixed-criticality display rendering for ASIL-B instrument cluster zones"
+  - "SAE J2831 - HUD and display luminance and contrast requirements"
+  - "UN ECE R46 - Mirror replacement with camera monitor systems (CMS)"
+  - "ISO 15008 - Transport information visual presentation ergonomics"
+  - "FMVSS 111 - Rear visibility requirements for camera-based mirror integration"
+instructions: |
+  # Pillar-to-Pillar Display
+
+  ## Overview
+  Pillar-to-pillar displays replace the traditional instrument cluster, center stack, and
+  passenger-side dashboard with a single continuous screen stretching from one A-pillar to
+  the other. This creates an immersive visual surface that can dynamically allocate screen
+  real estate based on driving mode, occupant count, and content priority. Vehicles like
+  the Mercedes-Benz MBUX Hyperscreen and BMW Panoramic Vision demonstrate this trend.
+
+  ## Key Concepts
+
+  ### Display Panel Technologies
+  Large-format automotive panels use specific technologies:
+  - Mini-LED backlit LCD provides high brightness at lower cost, with local dimming zones
+  - OLED offers perfect blacks and wide color gamut but requires burn-in mitigation
+  - Micro-LED is the emerging choice, combining OLED contrast with LED longevity
+  - Typical panel sizes range from 1400 mm to 1600 mm in width
+
+  ### Content Zoning Architecture
+  The wide display is logically divided into independently managed zones:
+  - Driver zone runs safety-critical content (speed, warnings, turn signals)
+  - Center zone handles infotainment, navigation, and climate controls
+  - Passenger zone provides entertainment and comfort features
+  - Each zone can have independent rendering pipelines and update rates
+
+  ### Mixed-Criticality Rendering
+  Running ASIL-rated and non-rated content on a single physical panel:
+  - Hardware partitioning uses separate GPU contexts or dedicated display processors
+  - Watchdog monitors ensure the driver zone continues rendering during system faults
+  - A safety island chip can take over the driver zone if the main SoC fails
+  - Frame buffer memory isolation prevents non-safety content from corrupting safety zones
+
+  ## Implementation Guide
+
+  ### Step 1 - Mechanical and Thermal Design
+  Plan the physical integration of a 1400+ mm display panel:
+  - Design the carrier structure to accommodate thermal expansion across the width
+  - Implement a distributed backlight with zonal thermal management
+  - Place heat sinks and fans behind the panel with ducting to cabin HVAC
+  - Validate vibration resistance for the panel and its ribbon cable connections
+
+  ### Step 2 - Define Zone Boundaries
+  Establish logical zones with clear rendering ownership:
+  - Driver zone occupies roughly 30% of width, directly behind the steering wheel
+  - Center zone takes 40% for shared infotainment content
+  - Passenger zone uses the remaining 30% for front passenger entertainment
+  - Define anti-glare and privacy boundaries between driver and passenger zones
+
+  ### Step 3 - Implement the Multi-Zone Compositor
+  Build a compositor that manages independent zone rendering:
+  - Each zone has its own rendering context with dedicated frame buffers
+  - The compositor merges zones at the final scanout stage
+  - Zone boundaries can be soft (content flows across) or hard (strict isolation)
+  - Implement dynamic zone resizing for mode changes like park or autonomous
+
+  ### Step 4 - Integrate Camera Mirror Displays
+  Embed digital mirror feeds into the pillar-to-pillar surface:
+  - Left and right camera feeds render in dedicated areas near the A-pillars
+  - Camera feeds maintain a fixed minimum refresh rate of 30 fps per regulation
+  - Latency from camera capture to display must stay below 200 ms per UN ECE R46
+  - Implement automatic brightness matching between mirror feeds and surrounding content
+
+  ### Step 5 - Validate Mixed-Criticality Safety
+  Test the safety architecture thoroughly:
+  - Simulate main SoC crash and verify safety island takes over driver zone
+  - Measure driver zone render continuity during infotainment application crashes
+  - Verify memory isolation by injecting corrupted data into non-safety frame buffers
+  - Run ASIL-B fault injection campaigns per ISO 26262 Part 5
+
+  ## Best Practices
+
+  ### Anti-Distraction Design
+  - Dim or disable passenger zone content when no passenger is detected
+  - Apply a privacy film or angular filter to prevent driver from viewing passenger video
+  - Limit animation complexity in the driver peripheral vision area
+  - Blank non-essential content during emergency braking or collision warning events
+
+  ### Display Longevity
+  - For OLED panels, implement pixel shifting and content rotation to prevent burn-in
+  - Use brightness limiters on static UI elements like status bars and icons
+  - Monitor panel hours and proactively reduce brightness of aging pixels
+  - Design UI with dark backgrounds to reduce overall OLED pixel stress
+
+  ### Sunlight Readability
+  - Target minimum 1000 nits peak brightness for the driver zone
+  - Implement anti-reflective and anti-glare coatings on the cover glass
+  - Use adaptive contrast enhancement based on ambient light sensor input
+  - Test readability in worst-case scenarios including low sun angle and wet roads
+
+  ## Troubleshooting
+
+  ### Visible Seam Between Panel Segments
+  If the display uses tiled panels, check mechanical alignment of adjacent tiles. Verify
+  the bezel compensation rendering is correctly configured in the compositor. Measure
+  color and brightness uniformity at tile boundaries and recalibrate if needed.
+
+  ### Driver Zone Flickers During Infotainment Load
+  Confirm that GPU contexts are truly isolated between zones. Check the compositor
+  scheduling to ensure driver zone scanout has the highest priority. Verify the safety
+  island watchdog timeout is short enough to catch rendering stalls.
+
+  ### Passenger Content Visible to Driver
+  Check the privacy filter installation angle and verify it blocks viewing from the
+  driver eye position. Measure light leakage at various head positions. Consider
+  software-based dynamic privacy that darkens content when driver gaze is detected.
+
+  ### Excessive Heat Behind Dashboard
+  Review the thermal design by measuring surface temperatures with an IR camera. Ensure
+  HVAC ducting is directing airflow across the panel backside. Check that backlight
+  dimming zones are active to reduce power draw in unused screen areas.
+
+  ## Integration Patterns
+
+  ### Content Migration Between Zones
+  Allow users to move content across the wide display surface:
+  - Implement a drag gesture that transfers a widget from center to passenger zone
+  - Define content handoff protocol that transfers application state between zone renderers
+  - Animate content migration smoothly across zone boundaries for visual continuity
+  - Restrict certain content types from migrating to the driver zone during driving
+
+  ### Multi-User Input Resolution
+  Handle simultaneous touch input from driver and passenger:
+  - Use touch zone attribution to assign touch events to the correct occupant
+  - Prevent passenger touch events from being interpreted in the driver zone
+  - Implement touch priority so driver inputs take precedence during conflicts
+  - Log multi-user touch patterns for UX optimization and conflict analysis
+
+  ## Testing and Validation
+
+  ### Display Uniformity Assessment
+  Measure visual quality across the full 1400+ mm panel width:
+  - Check brightness uniformity using a 9x3 grid of measurement points
+  - Verify color consistency across zones using a spectroradiometer sweep
+  - Measure viewing angle performance from both driver and passenger eye positions
+  - Test for mura defects under flat gray test patterns at 10% and 50% brightness
+
+  ### Thermal Stress Testing
+  Validate long-term reliability under automotive thermal conditions:
+  - Run 85 C soak tests for 500 hours with the display in full white mode
+  - Cycle between -40 C and 85 C for 1000 cycles monitoring for delamination
+  - Measure display surface temperature during peak brightness in a closed cabin soak
+  - Verify that no panel zone exceeds 70 C surface temperature under any condition

@@ -1,0 +1,281 @@
+name: thermal-management
+description: Battery thermal management using liquid cooling, air cooling, and heat pipe systems with predictive control
+category: battery-thermal
+
+instructions: |
+  Implement battery thermal management strategies:
+
+  Cooling methods:
+  - Liquid cooling (most efficient, 30-40°C optimal range)
+  - Air cooling (simpler, 20-45°C range)
+  - Phase change materials (PCM) for peak absorption
+  - Heat pipes for uniform distribution
+
+  Control strategies:
+  - PID control for coolant temperature
+  - Model predictive control for energy optimization
+  - Pre-conditioning before charging/discharging
+  - Emergency cooling for thermal runaway prevention
+
+  Thermal models:
+  - Lumped capacitance (1D, 2D, 3D)
+  - Equivalent circuit thermal model
+  - CFD for detailed pack design
+  - Real-time simplified models for BMS
+
+  Performance targets:
+  - Temperature uniformity: ΔT < 5°C across pack
+  - Operating range: 20-35°C optimal
+  - Max cell temp: 60°C absolute limit
+  - Heating power: 2-5 kW, Cooling: 5-10 kW
+
+dependencies:
+  - NumPy for thermal calculations
+  - SciPy for heat transfer equations
+  - CoolProp for fluid properties
+  - FEniCS/FVM for advanced modeling
+
+examples:
+  - description: "Liquid cooling thermal management with PID control"
+    input: "Implement thermal management controller for liquid-cooled battery pack"
+    output: |
+      ```python
+      import numpy as np
+      from dataclasses import dataclass
+      from typing import Tuple
+
+      @dataclass
+      class ThermalConfig:
+          num_cells: int = 96
+          cell_capacity_ah: float = 50.0
+          cell_mass_kg: float = 1.0
+          cell_specific_heat: float = 1000.0  # J/(kg·K)
+          coolant_flow_rate: float = 10.0     # L/min
+          coolant_specific_heat: float = 4180  # J/(kg·K) water
+          heat_transfer_coeff: float = 150.0  # W/(m²·K)
+          cell_surface_area: float = 0.06     # m²
+
+      class BatteryThermalModel:
+          def __init__(self, config: ThermalConfig):
+              self.config = config
+
+              # State variables
+              self.cell_temps = np.ones(config.num_cells) * 25.0  # °C
+              self.coolant_temp_inlet = 25.0
+              self.ambient_temp = 25.0
+
+              # Thermal capacitance
+              self.thermal_capacitance = (
+                  config.cell_mass_kg * config.cell_specific_heat
+              )
+
+          def update(self, current_a: float, coolant_temp: float, dt: float):
+              """Update cell temperatures"""
+              # Heat generation from cell
+              q_gen = self._calculate_heat_generation(current_a)
+
+              # Heat transfer to coolant
+              q_coolant = self._calculate_coolant_heat_transfer(coolant_temp)
+
+              # Heat transfer to ambient (conduction/convection)
+              q_ambient = self._calculate_ambient_heat_transfer()
+
+              # Temperature update (lumped capacitance)
+              dT_dt = (q_gen - q_coolant - q_ambient) / self.thermal_capacitance
+              self.cell_temps += dT_dt * dt
+
+              # Update coolant temperature (energy balance)
+              self.coolant_temp_inlet = coolant_temp
+
+          def _calculate_heat_generation(self, current_a: float) -> np.ndarray:
+              """Calculate heat generation in each cell"""
+              # Joule heating: Q = I²R
+              # Entropy heating: Q = I * T * dV/dT (usually small)
+
+              # Internal resistance (simplified, temperature-dependent)
+              r_internal = 0.01 * (1 + 0.005 * (self.cell_temps - 25.0))
+
+              q_joule = current_a ** 2 * r_internal
+
+              return q_joule
+
+          def _calculate_coolant_heat_transfer(self, coolant_temp: float) -> np.ndarray:
+              """Heat transfer from cells to coolant"""
+              # Newton's law of cooling: Q = h * A * ΔT
+              delta_t = self.cell_temps - coolant_temp
+
+              q_coolant = (
+                  self.config.heat_transfer_coeff *
+                  self.config.cell_surface_area *
+                  delta_t
+              )
+
+              return q_coolant
+
+          def _calculate_ambient_heat_transfer(self) -> np.ndarray:
+              """Heat transfer to ambient (simplified)"""
+              h_ambient = 10.0  # W/(m²·K) natural convection
+              delta_t = self.cell_temps - self.ambient_temp
+
+              q_ambient = h_ambient * self.config.cell_surface_area * delta_t
+
+              return q_ambient
+
+          def get_max_temp(self) -> float:
+              return np.max(self.cell_temps)
+
+          def get_min_temp(self) -> float:
+              return np.min(self.cell_temps)
+
+          def get_avg_temp(self) -> float:
+              return np.mean(self.cell_temps)
+
+          def get_temp_uniformity(self) -> float:
+              """Temperature difference across pack"""
+              return self.get_max_temp() - self.get_min_temp()
+
+
+      class ThermalController:
+          def __init__(self, target_temp: float = 30.0):
+              self.target_temp = target_temp
+
+              # PID parameters
+              self.kp = 2.0
+              self.ki = 0.5
+              self.kd = 0.1
+
+              # PID state
+              self.integral = 0.0
+              self.last_error = 0.0
+
+          def compute_coolant_setpoint(self, avg_cell_temp: float,
+                                       dt: float) -> float:
+              """Compute coolant temperature setpoint using PID"""
+              error = self.target_temp - avg_cell_temp
+
+              # Proportional
+              p_term = self.kp * error
+
+              # Integral (with anti-windup)
+              self.integral += error * dt
+              self.integral = np.clip(self.integral, -10, 10)
+              i_term = self.ki * self.integral
+
+              # Derivative
+              d_term = self.kd * (error - self.last_error) / dt
+              self.last_error = error
+
+              # PID output
+              coolant_temp = self.target_temp - (p_term + i_term + d_term)
+
+              # Coolant temperature limits
+              coolant_temp = np.clip(coolant_temp, 15.0, 40.0)
+
+              return coolant_temp
+
+
+      class ThermalManagementSystem:
+          def __init__(self, config: ThermalConfig):
+              self.thermal_model = BatteryThermalModel(config)
+              self.controller = ThermalController(target_temp=30.0)
+
+              # Safety thresholds
+              self.max_safe_temp = 55.0
+              self.emergency_cool_temp = 50.0
+              self.min_safe_temp = 0.0
+              self.heating_temp = 10.0
+
+              # Cooling system state
+              self.coolant_flow_rate = config.coolant_flow_rate
+              self.coolant_temp_setpoint = 25.0
+              self.emergency_mode = False
+
+          def update(self, current_a: float, dt: float):
+              """Update thermal management system"""
+              # Get current state
+              avg_temp = self.thermal_model.get_avg_temp()
+              max_temp = self.thermal_model.get_max_temp()
+
+              # Safety checks
+              if max_temp > self.emergency_cool_temp:
+                  self.emergency_mode = True
+                  self.coolant_temp_setpoint = 15.0  # Max cooling
+              elif max_temp < self.emergency_cool_temp - 5:
+                  self.emergency_mode = False
+
+              # Normal control mode
+              if not self.emergency_mode:
+                  if max_temp > self.heating_temp:
+                      self.coolant_temp_setpoint = self.controller.compute_coolant_setpoint(
+                          avg_temp, dt
+                      )
+                  else:
+                      # Heating mode (cold weather)
+                      self.coolant_temp_setpoint = 35.0
+
+              # Update thermal model
+              self.thermal_model.update(current_a, self.coolant_temp_setpoint, dt)
+
+              # Check safety limits
+              if max_temp > self.max_safe_temp:
+                  return "CRITICAL_OVERHEAT"
+              elif max_temp < self.min_safe_temp:
+                  return "CRITICAL_COLD"
+              elif self.emergency_mode:
+                  return "EMERGENCY_COOLING"
+              else:
+                  return "NORMAL"
+
+          def get_status(self) -> dict:
+              return {
+                  'avg_temp': self.thermal_model.get_avg_temp(),
+                  'max_temp': self.thermal_model.get_max_temp(),
+                  'min_temp': self.thermal_model.get_min_temp(),
+                  'temp_uniformity': self.thermal_model.get_temp_uniformity(),
+                  'coolant_setpoint': self.coolant_temp_setpoint,
+                  'emergency_mode': self.emergency_mode
+              }
+
+
+      # Usage
+      if __name__ == "__main__":
+          config = ThermalConfig(num_cells=96, cell_capacity_ah=50.0)
+          tms = ThermalManagementSystem(config)
+
+          print("Simulating fast charging thermal management...")
+          print("\nTime(s) | Current(A) | Avg(°C) | Max(°C) | ΔT(°C) | Coolant(°C) | Status")
+          print("-" * 90)
+
+          dt = 1.0
+          duration = 3600  # 1 hour
+
+          for t in range(0, duration, 10):
+              # Simulate fast charging: 2C rate for first 30 min, then taper
+              if t < 1800:
+                  current_a = 100.0  # 2C for 50Ah cells
+              else:
+                  current_a = 50.0 - (t - 1800) / 36  # Taper
+
+              status = tms.update(current_a, dt)
+              state = tms.get_status()
+
+              if t % 100 == 0:
+                  print(f"{t:7d} | {current_a:10.1f} | "
+                        f"{state['avg_temp']:7.2f} | {state['max_temp']:7.2f} | "
+                        f"{state['temp_uniformity']:6.2f} | "
+                        f"{state['coolant_setpoint']:11.2f} | {status}")
+
+          print("\nSimulation complete.")
+          final_state = tms.get_status()
+          print(f"Final average temperature: {final_state['avg_temp']:.2f}°C")
+          print(f"Final temperature uniformity: {final_state['temp_uniformity']:.2f}°C")
+      ```
+
+tags:
+  - battery
+  - thermal-management
+  - cooling
+  - pid-control
+  - heat-transfer
+  - temperature-control
+  - bms

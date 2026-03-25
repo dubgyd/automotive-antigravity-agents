@@ -1,0 +1,150 @@
+name: supply-chain-strategy
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: supply_chain_strategy
+description: "Dual sourcing, near-shoring, risk diversification, supplier tiering, and vertical integration strategies for automotive OEMs"
+use_cases:
+  - "Dual and multi-sourcing strategy development"
+  - "Near-shoring and regionalization planning"
+  - "Supplier tiering and qualification management"
+  - "Vertical integration analysis for critical components"
+  - "Supply chain risk diversification and resilience planning"
+automotive_standards:
+  - "ISO 9001"
+  - "IATF 16949"
+  - "APQP"
+  - "PPAP"
+instructions: |
+  ## Overview
+
+  Supply chain strategy in automotive determines how OEMs and Tier-1 suppliers structure their supplier
+  networks, manage risk, optimize cost, and ensure resilience across a supply chain that typically spans
+  8,000-12,000 unique part numbers from 500-2,000 direct suppliers across 30+ countries. The semiconductor
+  crisis, COVID disruptions, and geopolitical tensions have fundamentally shifted supply chain strategy
+  from pure cost optimization to a balance of cost, resilience, and sustainability. The EV transition
+  adds new supply chain challenges: battery raw material security, new supplier relationships with
+  semiconductor and software companies, and regional content requirements. This skill covers dual sourcing,
+  near-shoring, risk diversification, supplier tiering, and vertical integration decisions.
+
+  ## Key Concepts
+
+  ### Supply Chain Architecture Models
+  - **Just-in-Time (JIT)**: Minimal inventory, frequent deliveries, synchronized with production sequence
+  - **Just-in-Sequence (JIS)**: Pre-assembled modules delivered in exact production sequence
+  - **Just-in-Case (JIC)**: Strategic inventory buffers for critical components (post-crisis evolution)
+  - **Hybrid JIT/JIC**: JIT for stable supply, safety stock for volatile or single-source components
+  - **Regional hub model**: Regional consolidation centers feeding multiple assembly plants
+  - **Direct ship**: High-value or bulky components delivered directly from supplier to line-side
+
+  ### Sourcing Strategy Options
+  - **Single source**: One supplier per component (lowest cost, highest risk)
+  - **Dual source**: Two qualified suppliers splitting volume (resilience at moderate cost premium)
+  - **Multi-source**: Three or more suppliers for critical components (maximum resilience)
+  - **Regional dual source**: One supplier per region for geopolitical risk mitigation
+  - **Designed-in dual source**: Component designed to accept parts from multiple suppliers interchangeably
+  - **Second source qualified**: Backup supplier tooled and qualified but not in regular production
+
+  ### Critical Material Supply Chains (EV-specific)
+  - **Lithium**: Australia, Chile, Argentina mine supply; China refining dominance; need for diversification
+  - **Cobalt**: DRC 70% of mine supply; ethical sourcing concerns; trend toward low-cobalt chemistries
+  - **Nickel**: Indonesia, Philippines, Russia supply; Class 1 nickel shortage for battery-grade
+  - **Rare earths**: China 60% mine, 90% processing; critical for permanent magnet motors
+  - **Semiconductors**: TSMC/Samsung foundry concentration; automotive-specific shortages
+  - **Copper**: Chile, Peru supply; increasing demand from electrification across all sectors
+
+  ## Implementation Guide
+
+  ### Step 1: Supply Chain Risk Assessment
+  - Map full supply chain to Tier-3 minimum for critical components (semiconductor, battery materials)
+  - Assess each supplier on financial health, geographic risk, capacity utilization, and alternatives
+  - Identify single points of failure: single-source components, single-site production, single-region
+  - Quantify risk exposure: production loss per day of disruption, annualized expected loss
+
+  ### Step 2: Sourcing Strategy Redesign
+  - Classify components by strategic importance and supply risk using Kraljic matrix
+  - Define sourcing policy by category: single, dual, or multi-source based on risk and cost trade-off
+  - Develop near-shoring strategy for critical components to reduce lead time and transport risk
+  - Negotiate supply agreements with volume commitments in exchange for capacity reservation
+
+  ### Step 3: Inventory and Logistics Optimization
+  - Set differentiated inventory policies: safety stock for critical/volatile, JIT for stable/local
+  - Implement control tower capability for end-to-end supply chain visibility and early warning
+  - Optimize logistics network: consolidation points, transport modes, customs pre-clearance
+  - Deploy digital supply chain twins for scenario simulation and disruption response planning
+
+  ### Step 4: Supplier Relationship Management
+  - Establish strategic supplier partnership program for top-50 suppliers (quarterly business reviews)
+  - Implement supplier development programs for capability building in quality, cost, and delivery
+  - Create supplier innovation days for early engagement on technology roadmap alignment
+  - Deploy supplier risk monitoring using financial, operational, and ESG data feeds
+
+  ## Decision Frameworks
+
+  ### Kraljic Matrix for Automotive Components
+  | | Low Supply Risk | High Supply Risk |
+  |---|---|---|
+  | **High Profit Impact** | Leverage (body stampings, seats) - competitive bidding | Strategic (semiconductors, battery cells) - partnerships |
+  | **Low Profit Impact** | Non-critical (fasteners, labels) - simplify | Bottleneck (rare coatings, specialty chemicals) - secure |
+
+  ### Near-shoring vs. Global Sourcing Decision
+  | Factor | Near-shore/Reshore | Continue Global |
+  |--------|-------------------|----------------|
+  | Lead time critical | <2 weeks needed | >4 weeks acceptable |
+  | Tariff impact | >10% tariff differential | Low tariff |
+  | Component value density | Low (high shipping cost/value) | High (low shipping cost/value) |
+  | Supply disruption frequency | High (recent disruptions) | Stable supply history |
+  | Local content requirement | Regulation mandates | No requirement |
+  | Cost differential | <15% premium acceptable | >15% cost advantage |
+
+  ### Vertical Integration Decision Points
+  - **Battery cells**: Insource/JV if >100K vehicles/year, outsource if below or technology uncertain
+  - **E-motors**: Insource if proprietary design differentiates, outsource commodity designs
+  - **Semiconductors**: Never manufacture; secure long-term supply agreements, invest in design capability
+  - **Software**: Insource differentiating layers, use open-source for commodity, outsource non-core
+
+  ## Best Practices
+
+  - Maintain Tier-N supply chain visibility at minimum to Tier-3 for all production-critical components
+  - Require dual source qualification for any component where single-source disruption stops production
+  - Build strategic inventory buffers (4-12 weeks) for semiconductors and battery materials
+  - Implement automated supplier risk monitoring with alerts for financial distress and capacity constraints
+  - Align supply chain localization with IRA, EU Battery Regulation, and other content requirements
+  - Develop supplier ESG due diligence program aligned with German LkSG and EU CSDDD requirements
+  - Create war room playbook for supply disruption response with pre-defined escalation and actions
+  - Negotiate flexible volume corridors (typically +/-15%) in supply agreements to absorb demand swings
+  - Invest in Catena-X or similar data-sharing platforms for end-to-end supply chain transparency
+  - Conduct annual supply chain stress tests simulating major disruption scenarios
+
+  ## Examples
+
+  ### Example 1: Semiconductor Supply Chain Restructuring
+  Post-chip-crisis, an OEM implements new semiconductor strategy: long-term agreements directly with
+  foundries (bypassing Tier-1 abstraction), dual-source for all MCU families, 12-week safety stock for
+  top-20 chip types, and standardized chip portfolio reducing unique part numbers by 40%. Investment in
+  chip design team to specify automotive-grade requirements directly. Result: zero production days lost
+  to chip shortage in first year vs. 30 days lost pre-restructuring.
+
+  ### Example 2: Battery Raw Material Securing
+  An OEM secures lithium and nickel supply for 10-year horizon. Strategy: offtake agreements with 3
+  lithium miners (Australia, Chile, Argentina), equity investment in nickel processing JV (Indonesia),
+  binding contract with cathode material processor (EU-based for local content). Total commitment: 8B EUR
+  over 10 years. Hedging: fixed-price for 40% of volume, market-linked for 60%. Circular economy:
+  contract with recycler to process end-of-life batteries, targeting 20% recycled content by 2030.
+
+  ### Example 3: Near-shoring Strategy for European Production
+  An OEM near-shores wiring harness production from North Africa to Eastern Europe (Romania, Poland) for
+  2 of 4 European assembly plants. Motivation: 3 supply disruptions in 2 years from logistics issues,
+  lead time reduction from 6 weeks to 10 days, anticipated EU content requirements. Cost impact: 8%
+  unit cost increase offset by 60% lower safety stock, 90% fewer expedited air freight events, and
+  elimination of one production stoppage per year (value: 15M EUR).
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: "2026-03-19"
+  maturity: production
+  complexity: advanced
+tags:
+  - "oem-decision-making"
+  - "supply-chain-strategy"
+  - "automotive"
+  - "oem"

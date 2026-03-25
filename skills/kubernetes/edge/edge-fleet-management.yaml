@@ -1,0 +1,794 @@
+---
+name: edge-fleet-management
+version: 1.0.0
+description: Manage fleet of 1000+ automotive edge Kubernetes clusters (vehicles, gateways, RSUs)
+category: kubernetes
+subcategory: edge
+tags: [fleet, edge, automotive, gitops, rancher, multi-cluster]
+
+instructions: |
+  ## Edge Fleet Management for Automotive Kubernetes
+
+  ### Overview
+
+  Managing thousands of edge Kubernetes clusters across a vehicle fleet requires
+  centralized orchestration with GitOps-based deployment, automated provisioning,
+  health monitoring, and OTA update distribution. Fleet management platforms
+  treat each vehicle or edge gateway as a managed cluster.
+
+  ### Fleet Architecture
+
+  ```
+  ┌─────────────────────────────────────────────────────────────┐
+  │              Central Management Cluster                      │
+  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │
+  │  │ Rancher  │ │ Fleet    │ │ ArgoCD   │ │ Monitoring   │  │
+  │  │ Server   │ │ Manager  │ │ Hub      │ │ (Thanos)     │  │
+  │  └──────────┘ └──────────┘ └──────────┘ └──────────────┘  │
+  └──────────────────────┬──────────────────────────────────────┘
+                         │  GitOps sync / agent registration
+         ┌───────────────┼───────────────┐
+         ▼               ▼               ▼
+  ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │ Vehicle  │   │ Vehicle  │   │ Gateway  │    1000+ edge clusters
+  │ K3s #1   │   │ K3s #2   │   │ K3s #N   │
+  │ Fleet    │   │ Fleet    │   │ Fleet    │
+  │ Agent    │   │ Agent    │   │ Agent    │
+  └──────────┘   └──────────┘   └──────────┘
+  ```
+
+  ### Fleet Management Platforms
+
+  | Platform | Approach | Scale | Best For |
+  |----------|----------|-------|---------|
+  | Rancher Fleet | GitOps bundles | 1M+ clusters | Large vehicle fleets |
+  | ArgoCD ApplicationSets | GitOps generators | 10K+ apps | Multi-tenant deployments |
+  | Azure Arc | Azure control plane | 10K+ clusters | Azure-centric fleets |
+  | AWS EKS Anywhere | EKS API at edge | 1K+ clusters | AWS-centric fleets |
+  | Anthos (GKE) | GCP control plane | 10K+ clusters | GCP-centric fleets |
+
+  ### Cluster Grouping
+
+  Organize edge clusters into groups for targeted deployments:
+
+  ```yaml
+  # Group by vehicle model
+  groups:
+    sedan-2025:
+      selector:
+        matchLabels:
+          vehicle/model: sedan
+          vehicle/year: "2025"
+    suv-premium:
+      selector:
+        matchLabels:
+          vehicle/model: suv
+          vehicle/trim: premium
+    gateways-europe:
+      selector:
+        matchLabels:
+          device/type: gateway
+          region: europe
+  ```
+
+  ### GitOps Deployment Pipeline
+
+  ```
+  Git Repository
+  ├── base/                  Shared manifests
+  │   ├── telemetry-agent/
+  │   └── diagnostics-agent/
+  ├── overlays/
+  │   ├── sedan-2025/        Model-specific overrides
+  │   ├── suv-premium/
+  │   └── gateway/
+  └── fleet.yaml             Fleet bundle definition
+  ```
+
+  Changes pushed to Git are automatically distributed to matching edge
+  clusters by the fleet controller. This ensures:
+  - Declarative desired state for all edge devices
+  - Audit trail of all deployments (Git history)
+  - Rollback by reverting a Git commit
+  - Progressive rollout (canary, blue-green) across fleet segments
+
+  ### Staged Rollouts
+
+  For safety-critical automotive updates, use staged rollouts:
+  1. **Canary** (1% of fleet): Deploy to a small test group
+  2. **Early adopters** (10%): Expand to volunteer vehicles
+  3. **Regional** (25-50%): Roll out by geography
+  4. **General availability** (100%): Full fleet deployment
+
+  Automatic rollback triggers if error rate exceeds threshold at any stage.
+
+  ### Health Monitoring
+
+  Monitor fleet health centrally:
+  - Cluster connectivity status (online/offline/degraded)
+  - Application deployment status per cluster
+  - Resource utilization trends across fleet
+  - Alert on clusters that drift from desired state
+  - Track software version distribution across fleet
+
+  ### Best Practices
+
+  - Use labels extensively for cluster grouping and targeting
+  - Implement staged rollouts with automatic rollback gates
+  - Store all configurations in Git (GitOps is the single source of truth)
+  - Design for offline operation (edge clusters must function without connectivity)
+  - Use lightweight agents that minimize resource consumption on edge devices
+  - Monitor fleet-wide metrics with centralized aggregation (Thanos, Cortex)
+  - Implement certificate rotation and secure bootstrap for new edge clusters
+  - Plan for network partitions; edge clusters should self-heal locally
+
+metadata:
+  author: Fleet Management Specialist
+  created: 2026-03-19
+  stability: stable
+  scale: 1000-100000 edge nodes
+  use_cases:
+    - Vehicle fleet management (connected cars)
+    - Edge gateway orchestration
+    - Roadside unit deployment
+    - Manufacturing edge devices
+    - OTA update distribution
+
+parameters:
+  fleet_name:
+    type: string
+    description: Name of the fleet
+    required: true
+    example: production-vehicle-fleet
+
+  management_platform:
+    type: enum
+    description: Fleet management platform
+    values: [rancher-fleet, argocd, fluxcd, custom]
+    default: rancher-fleet
+
+  git_repository:
+    type: string
+    description: Git repository for fleet configurations
+    required: true
+    example: https://github.com/automotive/fleet-configs
+
+  clusters_per_workspace:
+    type: integer
+    description: Number of clusters per workspace/namespace
+    default: 1000
+
+  sync_interval:
+    type: string
+    description: Configuration sync interval
+    default: 5m
+
+  enable_progressive_rollout:
+    type: boolean
+    description: Enable progressive/canary rollouts
+    default: true
+
+  rollout_strategy:
+    type: enum
+    description: Rollout strategy for updates
+    values: [immediate, staged, canary, blue-green]
+    default: staged
+
+  health_check_interval:
+    type: string
+    description: Health check interval for clusters
+    default: 1m
+
+  auto_remediation:
+    type: boolean
+    description: Enable automatic remediation
+    default: true
+
+steps:
+  - id: setup_fleet_management
+    name: Setup fleet management infrastructure
+    type: deployment
+    commands:
+      - name: Install Rancher Fleet
+        condition: management_platform == 'rancher-fleet'
+        command: |
+          # Install Fleet CRDs
+          kubectl apply -f https://github.com/rancher/fleet/releases/latest/download/fleet-crd.yaml
+
+          # Install Fleet controllers
+          kubectl apply -f https://github.com/rancher/fleet/releases/latest/download/fleet.yaml
+
+          # Wait for Fleet to be ready
+          kubectl wait --for=condition=Available deployment/fleet-controller -n cattle-fleet-system --timeout=300s
+
+      - name: Configure Fleet workspace
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: fleet.cattle.io/v1alpha1
+          kind: GitRepo
+          metadata:
+            name: {{fleet_name}}
+            namespace: fleet-default
+          spec:
+            repo: {{git_repository}}
+            branch: main
+            paths:
+              - fleet/clusters
+            targets:
+              - clusterSelector:
+                  matchLabels:
+                    fleet: {{fleet_name}}
+            correctDrift:
+              enabled: true
+              force: true
+              keepFailHistory: 10
+            serviceAccount: fleet-default
+          EOF
+
+  - id: define_cluster_groups
+    name: Define cluster groups and targeting
+    type: configuration
+    commands:
+      - name: Create cluster groups
+        command: |
+          # Vehicle clusters
+          kubectl apply -f - <<EOF
+          apiVersion: fleet.cattle.io/v1alpha1
+          kind: ClusterGroup
+          metadata:
+            name: vehicle-fleet
+            namespace: fleet-default
+          spec:
+            selector:
+              matchLabels:
+                cluster-type: vehicle
+                fleet: {{fleet_name}}
+          ---
+          # Gateway clusters
+          apiVersion: fleet.cattle.io/v1alpha1
+          kind: ClusterGroup
+          metadata:
+            name: gateway-fleet
+            namespace: fleet-default
+          spec:
+            selector:
+              matchLabels:
+                cluster-type: gateway
+                fleet: {{fleet_name}}
+          ---
+          # Manufacturing edge
+          apiVersion: fleet.cattle.io/v1alpha1
+          kind: ClusterGroup
+          metadata:
+            name: manufacturing-edge
+            namespace: fleet-default
+          spec:
+            selector:
+              matchLabels:
+                cluster-type: manufacturing
+                fleet: {{fleet_name}}
+          EOF
+
+  - id: configure_gitops_structure
+    name: Configure GitOps repository structure
+    type: configuration
+    commands:
+      - name: Create repository structure
+        command: |
+          mkdir -p fleet-configs/{clusters,workloads,overlays}
+          mkdir -p fleet-configs/clusters/{vehicle,gateway,manufacturing}
+          mkdir -p fleet-configs/workloads/{adas,battery,connectivity,ota}
+
+          cat > fleet-configs/README.md <<EOF
+          # Fleet Configuration Repository
+
+          ## Structure
+          - clusters/ - Cluster-specific configurations
+          - workloads/ - Application workloads
+          - overlays/ - Environment-specific overlays
+
+          ## Cluster Types
+          - vehicle: In-vehicle edge compute
+          - gateway: Edge gateways
+          - manufacturing: Factory edge nodes
+
+          ## Rollout Strategy
+          Progressive rollout with health checks.
+          EOF
+
+      - name: Create fleet.yaml for vehicles
+        command: |
+          cat > fleet-configs/workloads/adas/fleet.yaml <<EOF
+          defaultNamespace: automotive-adas
+
+          # Target vehicle clusters only
+          targetCustomizations:
+          - name: vehicle-adas
+            clusterSelector:
+              matchLabels:
+                cluster-type: vehicle
+            helm:
+              values:
+                replicaCount: 1
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 512Mi
+
+          # Progressive rollout configuration
+          rolloutStrategy:
+            maxUnavailable: 10%
+            maxSurge: 0
+            autoPartitionSize: 100
+            partitions:
+            - name: pilot
+              clusterSelector:
+                matchLabels:
+                  rollout-group: pilot
+              maxUnavailable: 1
+            - name: production
+              clusterSelector:
+                matchLabels:
+                  rollout-group: production
+              maxUnavailable: 10%
+
+          # Deployment dependencies
+          dependsOn:
+          - name: base-system
+            selector:
+              matchLabels:
+                workload: base
+
+          # Health checks
+          diff:
+            comparePatches:
+            - apiVersion: apps/v1
+              kind: Deployment
+              operations:
+              - {"op":"remove", "path":"/spec/replicas"}
+          EOF
+
+  - id: implement_progressive_rollout
+    name: Implement progressive rollout strategy
+    type: configuration
+    condition: enable_progressive_rollout
+    commands:
+      - name: Configure rollout stages
+        command: |
+          cat > fleet-configs/rollout-strategy.yaml <<EOF
+          # Progressive Rollout Strategy for Fleet
+
+          stages:
+            - name: pilot
+              description: "Pilot fleet (100 vehicles)"
+              clusters: 100
+              selector:
+                rollout-group: pilot
+              approval: automatic
+              healthChecks:
+                duration: 2h
+                failureThreshold: 5%
+
+            - name: early-adopters
+              description: "Early adopter fleet (1000 vehicles)"
+              clusters: 1000
+              selector:
+                rollout-group: early-adopters
+              approval: automatic
+              dependsOn: pilot
+              healthChecks:
+                duration: 24h
+                failureThreshold: 2%
+
+            - name: general
+              description: "General fleet (remaining vehicles)"
+              clusters: "*"
+              selector:
+                rollout-group: general
+              approval: manual
+              dependsOn: early-adopters
+              healthChecks:
+                duration: 7d
+                failureThreshold: 1%
+
+          # Rollback triggers
+          rollback:
+            automatic: true
+            conditions:
+              - metric: error_rate
+                threshold: 5%
+                duration: 15m
+              - metric: pod_crash_loop
+                threshold: 10%
+                duration: 5m
+              - metric: api_latency_p99
+                threshold: 1000ms
+                duration: 30m
+          EOF
+
+  - id: setup_monitoring
+    name: Setup fleet-wide monitoring
+    type: deployment
+    commands:
+      - name: Deploy metrics aggregator
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: fleet-metrics-config
+            namespace: fleet-system
+          data:
+            prometheus.yml: |
+              global:
+                scrape_interval: 30s
+                evaluation_interval: 30s
+                external_labels:
+                  cluster: fleet-manager
+
+              scrape_configs:
+              - job_name: 'fleet-clusters'
+                kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names:
+                    - fleet-system
+                relabel_configs:
+                - source_labels: [__meta_kubernetes_service_label_app]
+                  action: keep
+                  regex: fleet-agent
+
+              - job_name: 'edge-metrics'
+                static_configs:
+                - targets: ['edge-metrics-aggregator:9090']
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: fleet-metrics-aggregator
+            namespace: fleet-system
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: fleet-metrics
+            template:
+              metadata:
+                labels:
+                  app: fleet-metrics
+              spec:
+                containers:
+                - name: prometheus
+                  image: prom/prometheus:v2.48.0
+                  args:
+                  - --config.file=/etc/prometheus/prometheus.yml
+                  - --storage.tsdb.path=/prometheus
+                  - --storage.tsdb.retention.time=30d
+                  volumeMounts:
+                  - name: config
+                    mountPath: /etc/prometheus
+                  - name: data
+                    mountPath: /prometheus
+                  resources:
+                    requests:
+                      cpu: 1000m
+                      memory: 2Gi
+                    limits:
+                      cpu: 4000m
+                      memory: 8Gi
+                volumes:
+                - name: config
+                  configMap:
+                    name: fleet-metrics-config
+                - name: data
+                  persistentVolumeClaim:
+                    claimName: fleet-metrics-data
+          EOF
+
+      - name: Configure alerting
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: fleet-alerting-rules
+            namespace: fleet-system
+          data:
+            fleet-alerts.yml: |
+              groups:
+              - name: fleet_health
+                interval: 1m
+                rules:
+                - alert: ClusterDisconnected
+                  expr: up{job="fleet-agent"} == 0
+                  for: 5m
+                  labels:
+                    severity: critical
+                    fleet: {{fleet_name}}
+                  annotations:
+                    summary: "Cluster {{ \$labels.cluster }} disconnected"
+                    description: "Fleet cluster has been unreachable for 5+ minutes"
+
+                - alert: HighPodFailureRate
+                  expr: rate(kube_pod_status_phase{phase="Failed"}[5m]) > 0.1
+                  for: 10m
+                  labels:
+                    severity: warning
+                    fleet: {{fleet_name}}
+                  annotations:
+                    summary: "High pod failure rate in cluster {{ \$labels.cluster }}"
+
+                - alert: RolloutFailed
+                  expr: fleet_bundle_state{state="Failed"} > 0
+                  for: 5m
+                  labels:
+                    severity: critical
+                    fleet: {{fleet_name}}
+                  annotations:
+                    summary: "Fleet rollout failed"
+                    description: "Bundle {{ \$labels.bundle }} failed to deploy"
+
+                - alert: ClusterResourceExhaustion
+                  expr: |
+                    (sum(container_memory_usage_bytes) by (cluster) /
+                     sum(machine_memory_bytes) by (cluster)) > 0.9
+                  for: 15m
+                  labels:
+                    severity: warning
+                    fleet: {{fleet_name}}
+                  annotations:
+                    summary: "Cluster {{ \$labels.cluster }} resource exhaustion"
+          EOF
+
+  - id: implement_auto_remediation
+    name: Implement automatic remediation
+    type: deployment
+    condition: auto_remediation
+    commands:
+      - name: Deploy remediation controller
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: fleet-remediation-controller
+            namespace: fleet-system
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: fleet-remediation
+            template:
+              metadata:
+                labels:
+                  app: fleet-remediation
+              spec:
+                serviceAccountName: fleet-remediation
+                containers:
+                - name: controller
+                  image: automotive/fleet-remediation:latest
+                  env:
+                  - name: FLEET_NAME
+                    value: "{{fleet_name}}"
+                  - name: AUTO_REMEDIATION
+                    value: "{{auto_remediation}}"
+                  - name: HEALTH_CHECK_INTERVAL
+                    value: "{{health_check_interval}}"
+                  command:
+                  - /fleet-remediation
+                  - --remediation-strategies=/etc/remediation/strategies.yaml
+                  volumeMounts:
+                  - name: strategies
+                    mountPath: /etc/remediation
+                volumes:
+                - name: strategies
+                  configMap:
+                    name: remediation-strategies
+          ---
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: remediation-strategies
+            namespace: fleet-system
+          data:
+            strategies.yaml: |
+              strategies:
+              - name: restart-failed-pods
+                condition: pod_crash_loop
+                action: restart
+                params:
+                  max_restarts: 3
+                  backoff: exponential
+
+              - name: rollback-failed-deployment
+                condition: deployment_failure
+                action: rollback
+                params:
+                  keep_history: 5
+
+              - name: re-sync-cluster
+                condition: config_drift
+                action: sync
+                params:
+                  force: true
+
+              - name: restart-node
+                condition: node_not_ready
+                action: reboot
+                params:
+                  drain_timeout: 300s
+                  approval: manual
+          EOF
+
+automotive_fleet_patterns:
+  vehicle_fleet:
+    description: Manage in-vehicle edge clusters
+    characteristics:
+      - 10,000-100,000+ vehicles
+      - Intermittent connectivity
+      - Limited resources per vehicle
+      - Geographic distribution
+      - Progressive rollout critical
+
+    implementation: |
+      # Cluster registration
+      - Vehicle provisions with unique ID (VIN)
+      - Auto-registers with fleet management
+      - Receives cluster-specific configuration
+      - Pulls workload configurations via GitOps
+
+      # Deployment strategy
+      - Pilot fleet (1% of vehicles)
+      - Early adopters (10% of vehicles)
+      - General rollout (remaining 89%)
+      - Automatic rollback on failures
+
+      # Offline handling
+      - Local configuration cache
+      - Continue with last-known-good config
+      - Sync when connectivity restored
+      - Buffer telemetry data locally
+
+  gateway_fleet:
+    description: Manage edge gateway clusters
+    characteristics:
+      - 100-1,000 gateways
+      - Better connectivity than vehicles
+      - Aggregate data from multiple vehicles
+      - Higher compute resources
+
+    implementation: |
+      # Gateway acts as regional hub
+      - Manages local vehicle clusters
+      - Aggregates metrics and logs
+      - Provides caching layer
+      - Enables regional rollouts
+
+  manufacturing_edge:
+    description: Manufacturing facility edge nodes
+    characteristics:
+      - 10-100 facilities
+      - Stable connectivity
+      - High performance requirements
+      - Production line integration
+
+    implementation: |
+      # Per-facility deployment
+      - Dedicated cluster per line
+      - Real-time data processing
+      - Quality control integration
+      - Compliance tracking
+
+monitoring_dashboard:
+  fleet_overview:
+    metrics:
+      - Total clusters
+      - Clusters online/offline
+      - Clusters by version
+      - Rollout progress
+      - Failed deployments
+      - Resource utilization
+
+  cluster_health:
+    metrics:
+      - Node status
+      - Pod health
+      - Resource usage
+      - Network connectivity
+      - Last sync time
+      - Configuration drift
+
+  rollout_status:
+    metrics:
+      - Rollout stage
+      - Success rate
+      - Failure rate
+      - Rollback count
+      - Time to completion
+      - Affected clusters
+
+best_practices:
+  - Use GitOps for all configuration management
+  - Implement progressive rollout strategies
+  - Enable automatic health checks
+  - Configure rollback triggers
+  - Monitor fleet-wide metrics
+  - Use cluster labels for targeting
+  - Implement idempotent configurations
+  - Enable configuration drift detection
+  - Use secure communication (mTLS)
+  - Implement access control (RBAC)
+
+troubleshooting:
+  cluster_not_syncing:
+    symptoms: "Cluster not receiving updates"
+    diagnosis: |
+      - Check cluster connectivity
+      - Verify Fleet agent status
+      - Check Git repository access
+      - Review sync logs
+    solutions:
+      - Restart Fleet agent
+      - Verify credentials
+      - Check network policies
+      - Force re-sync
+
+  rollout_stuck:
+    symptoms: "Rollout not progressing"
+    diagnosis: |
+      - Check health check status
+      - Review rollout configuration
+      - Check cluster readiness
+    solutions:
+      - Review health check thresholds
+      - Check for blocked approvals
+      - Verify cluster capacity
+
+  high_failure_rate:
+    symptoms: "Many clusters failing updates"
+    diagnosis: |
+      - Check application logs
+      - Review resource requirements
+      - Verify configuration
+    solutions:
+      - Rollback to previous version
+      - Adjust resource limits
+      - Fix configuration issues
+      - Re-deploy incrementally
+
+related_skills:
+  - k3s-edge-deployment
+  - argocd-gitops
+  - k8s-monitoring-setup
+  - offline-capable-deployments
+  - vehicle-to-cloud-sync
+
+examples:
+  - name: Setup vehicle fleet management
+    command: |
+      edge-fleet-management \
+        --fleet-name=production-vehicle-fleet \
+        --management-platform=rancher-fleet \
+        --git-repository=https://github.com/automotive/fleet-configs \
+        --enable-progressive-rollout=true \
+        --rollout-strategy=staged
+
+  - name: Deploy to pilot vehicles
+    command: |
+      kubectl apply -f - <<EOF
+      apiVersion: fleet.cattle.io/v1alpha1
+      kind: Bundle
+      metadata:
+        name: adas-pilot
+        namespace: fleet-default
+      spec:
+        targets:
+        - clusterSelector:
+            matchLabels:
+              rollout-group: pilot
+        helm:
+          chart: adas-service
+          version: 2.0.0
+          values:
+            environment: production
+      EOF

@@ -1,0 +1,183 @@
+name: vision-guided-assembly
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+description: "Camera-based robot guidance systems for flexible automotive assembly"
+use_cases:
+  - "Deploy vision-guided robot bin picking for randomly oriented parts"
+  - "Implement gap and flush measurement at body-in-white closure panel stations"
+  - "Build deep learning object detection for variant verification before assembly"
+  - "Design hand-eye calibration systems for sub-millimeter robot guidance accuracy"
+  - "Create AR-projected operator guidance using ceiling-mounted vision systems"
+automotive_standards:
+  - "IATF 16949 - Error-Proofing and Inspection Requirements"
+  - "ISO 13849-1 - Safety of Machinery for Vision in Safety Applications"
+  - "VDA 5 - Measurement System Capability"
+  - "AIAG MSA - Measurement Systems Analysis for Vision Systems"
+  - "EMVA 1288 - Camera Characterization Standard"
+instructions: |
+  # Vision-Guided Assembly Systems
+
+  ## Overview
+  Vision-guided assembly uses cameras and machine learning to provide robots and
+  operators with real-time spatial information about workpiece location, orientation,
+  and quality. Modern systems combine 2D cameras for pattern recognition, 3D structured
+  light for depth measurement, and deep learning for robust object detection. This
+  replaces brittle rule-based vision with AI that generalizes across lighting conditions,
+  part variations, and occlusions in production environments.
+
+  ## Key Concepts
+
+  ### Vision System Architecture
+  A typical vision-guided assembly station follows this data flow:
+
+  - Cameras acquire images via GigE Vision or CoaXPress interface
+  - Preprocessing applies exposure correction, filtering, and region of interest
+  - Feature detection uses edge analysis, pattern matching, or deep learning
+  - Pose estimation calculates 6-DOF position and orientation
+  - Results feed to robot controller, operator HMI, or MES system
+
+  ### Camera Technologies for Automotive
+  - 2D Area Scan: Pattern matching, barcode reading, presence verification
+  - 2D Line Scan: High-resolution surface inspection on moving conveyors
+  - Structured Light 3D: Accurate depth maps for bin picking and gap measurement
+  - Time-of-Flight 3D: Large field of view for robot guidance and safety zones
+  - Stereo Vision: Dual camera depth estimation for large workspaces
+  - Laser Triangulation: Profile measurement for weld seam and adhesive bead
+
+  ### Accuracy Requirements by Application
+  - Bin picking: plus or minus 1-2mm using 3D structured light
+  - Robot path correction: plus or minus 0.3-0.5mm using stereo vision
+  - Gap and flush measurement: plus or minus 0.1mm using laser triangulation
+  - Windshield placement: plus or minus 0.5mm using 3D structured light with force
+
+  ## Implementation Guide
+
+  ### Step 1 - Vision System Configuration
+  Select the optimal camera and processing pipeline for each application.
+
+  ```python
+  class VisionSystemConfigurator:
+      def select_system(self, application: dict) -> dict:
+          """Select optimal vision configuration for assembly application."""
+          app_type = application["type"]
+          if app_type == "bin_picking":
+              return {
+                  "camera": "3D_structured_light",
+                  "resolution_mm": 0.5,
+                  "field_of_view_mm": [800, 600, 400],
+                  "processing": "deep_learning_6dof_pose",
+                  "robot_calibration": "hand_eye_calibration",
+              }
+          elif app_type == "gap_flush":
+              return {
+                  "camera": "laser_triangulation_profile",
+                  "resolution_mm": 0.02,
+                  "profile_rate_hz": 4000,
+                  "processing": "edge_detection_gap_step",
+                  "mounting": "robot_end_effector",
+              }
+          elif app_type == "variant_verification":
+              return {
+                  "camera": "2D_area_scan_color",
+                  "resolution_mp": 5.0,
+                  "processing": "deep_learning_classification",
+                  "lighting": "diffuse_dome_LED",
+                  "cycle_time_ms": 200,
+              }
+          return {"error": "Unknown application type"}
+  ```
+
+  ### Step 2 - Deep Learning Part Detection
+  Train object detection models for robust part recognition in production.
+
+  ```python
+  class VisionAITrainer:
+      def __init__(self, model_architecture: str = "yolov8"):
+          self.architecture = model_architecture
+
+      def prepare_dataset(self, image_count: int) -> dict:
+          """Prepare training dataset from production images."""
+          return {
+              "total_images": image_count,
+              "train_split": 0.80,
+              "val_split": 0.15,
+              "test_split": 0.05,
+              "augmentation": [
+                  "rotation_+-15deg",
+                  "brightness_+-30pct",
+                  "gaussian_noise",
+                  "perspective_transform",
+              ],
+              "min_instances_per_class": 200,
+          }
+
+      def evaluate_model(self, metrics: dict) -> dict:
+          """Evaluate trained model for production readiness."""
+          return {
+              "mAP_50": metrics["mAP_50"],
+              "inference_time_ms": metrics["latency"],
+              "target_hardware": "NVIDIA_Jetson_Orin",
+              "deployment": "TensorRT_optimized",
+              "production_ready": metrics["mAP_50"] >= 0.95,
+          }
+  ```
+
+  ### Step 3 - Robot Hand-Eye Calibration
+  Establish precise spatial relationship between camera and robot coordinate frames.
+
+  ```python
+  class HandEyeCalibrator:
+      def calibrate(self, robot_controller, camera, num_poses: int = 20) -> dict:
+          """Perform hand-eye calibration using Tsai-Lenz method."""
+          poses = []
+          for i in range(num_poses):
+              robot_pose = robot_controller.get_current_pose()
+              camera_pose = camera.detect_calibration_target()
+              poses.append({"robot": robot_pose, "camera": camera_pose})
+              robot_controller.move_to_next_calibration_pose()
+          transform = self._solve_hand_eye(poses)
+          validation = self._validate(transform, num_points=10)
+          return {
+              "transform_matrix": transform,
+              "translation_error_mm": validation["translation_rms"],
+              "rotation_error_deg": validation["rotation_rms"],
+              "quality": "good" if validation["translation_rms"] < 0.5 else "redo",
+          }
+  ```
+
+  ### Step 4 - Vision-Guided Bin Picking Sequence
+  Standard sequence for picking randomly oriented parts from containers:
+
+  ```
+  1. 3D camera captures point cloud of bin contents
+  2. Deep learning detects parts and estimates 6-DOF pose for each
+  3. Grasp planner selects best candidate for collision-free stable grip
+  4. Robot picks part and moves to re-identification camera
+  5. Fine pose correction before placement on fixture
+  6. If bin empty, signal for bin exchange
+  ```
+
+  ## Best Practices
+  - Invest in proper lighting design as it determines 80 percent of vision success
+  - Calibrate vision systems daily or after any robot collision or tool change
+  - Use deep learning for robustness but validate with known test parts every shift
+  - Design for worst case including dirtiest part and worst lighting condition
+  - Implement MSA Gage R&R for vision measurement systems same as contact gauges
+  - Deploy edge processing on Jetson or industrial PC to meet takt time requirements
+  - Keep training datasets representative of actual production conditions
+  - Log every vision result with image for traceability and model retraining
+
+  ## Troubleshooting
+  - Vision system fails in afternoon sun: Add light-blocking enclosure or bandpass
+    filter matched to LED illumination wavelength
+  - Deep learning model misclassifies similar parts: Add more training data for
+    confusing part pairs and increase image resolution in ambiguous regions
+  - Calibration drift causes pick failures: Schedule automatic calibration check
+    every 4 hours using a fixed reference target in the workspace
+  - 3D point cloud noisy on shiny surfaces: Use cross-polarized lighting with HDR
+    multi-exposure acquisition to suppress specular reflections
+  - Cycle time exceeded by vision processing: Optimize model with TensorRT INT8
+    quantization and reduce input resolution to minimum acceptable level
+  - Gap measurement disagrees with CMM: Verify sensor calibration against certified
+    gauge block and review measurement strategy alignment with CMM probe path

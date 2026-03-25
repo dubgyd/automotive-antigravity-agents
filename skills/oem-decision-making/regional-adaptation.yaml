@@ -1,0 +1,159 @@
+name: regional-adaptation
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: regional_adaptation
+description: Localization for global markets, regulatory alignment, cultural adaptation strategies
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Regional adaptation in the automotive industry addresses how global OEMs tailor vehicles, services,
+  manufacturing, and go-to-market strategies for different geographic markets. Each region has distinct
+  regulatory requirements (emissions, safety, homologation), customer preferences (size, features, price
+  sensitivity), infrastructure conditions (road quality, charging density, climate), and competitive
+  landscapes. Effective regional adaptation maximizes global platform efficiency while meeting local
+  market needs. This skill covers localization strategies, regulatory alignment, cultural adaptation,
+  manufacturing footprint decisions, and market entry approaches for automotive companies.
+
+  ## Key Concepts
+
+  ### Regional Regulatory Divergence
+  - **EU**: Euro 7 emissions, WLTP cycle, GSR II (mandatory ADAS), CSRD, EU Battery Regulation
+  - **China**: China 7 emissions, CAFC (fleet fuel consumption), MIIT connected car regulations, NEV mandates
+  - **US**: EPA/CARB emissions (split standards), FMVSS safety, IRA local content requirements
+  - **India**: BS-VI emissions, BNVSAP crash testing, AIS standards, local content for incentives
+  - **ASEAN**: UN R regulations adoption (varies by country), local assembly requirements, ASEAN NCAP
+  - **Middle East/Africa**: GSO standards (Gulf), SABS (South Africa), varied emissions enforcement
+
+  ### Vehicle Adaptation Categories
+  - **Powertrain adaptation**: Engine calibration for fuel quality, altitude, and temperature extremes
+  - **Chassis and suspension**: Ride height, damping, and tire specifications for road conditions
+  - **Climate systems**: HVAC sizing for extreme heat (Middle East) or cold (Scandinavia, Russia)
+  - **Electrical and connectivity**: Radio frequencies, navigation providers, local app ecosystems
+  - **Safety equipment**: Pedestrian protection, lighting standards, mandatory ADAS features by market
+  - **Interior and UX**: Language, units, drive side (LHD/RHD), cultural design preferences
+
+  ### Manufacturing Localization Drivers
+  - **Import tariffs**: 25% Chinese EV tariff in EU, 100% in US, 15-40% in various emerging markets
+  - **Local content requirements**: IRA (US), PLI scheme (India), NEV credit rules (China)
+  - **Logistics cost**: Shipping a vehicle costs 800-2,500 EUR depending on route and volume
+  - **Currency hedging**: Local production as natural hedge against exchange rate volatility
+  - **Government incentives**: Tax holidays, land grants, subsidized energy for local manufacturing
+
+  ## Implementation Guide
+
+  ### Step 1: Market Attractiveness Assessment
+  - Evaluate target markets on market size, growth rate, competitive intensity, and margin potential
+  - Assess regulatory complexity and cost of compliance for each market
+  - Map infrastructure readiness for BEV (charging), ADAS (connectivity), and digital services
+  - Estimate total cost-to-serve including homologation, localization engineering, and distribution
+
+  ### Step 2: Product Adaptation Planning
+  - Define platform-level design choices that enable multi-market deployment (modular architecture)
+  - Identify market-specific adaptations required by regulation, customer preference, and infrastructure
+  - Estimate engineering cost and lead time for each adaptation; target <5% of vehicle cost for localization
+  - Create configuration matrix mapping markets to variants with build complexity assessment
+
+  ### Step 3: Manufacturing and Supply Chain Localization
+  - Evaluate CKD (complete knock-down) vs. SKD (semi knock-down) vs. full local manufacturing
+  - Assess local supplier ecosystem maturity and ability to meet quality standards (IATF 16949)
+  - Model total landed cost scenarios: import vs. CKD assembly vs. local production at various volumes
+  - Define minimum economic volume for local plant investment (typically 50K-100K units/year)
+
+  ### Step 4: Go-to-Market and Channel Strategy
+  - Design distribution model: own retail, franchise dealer, online direct, or hybrid by market
+  - Adapt pricing strategy for local purchasing power, tax structure, and competitive positioning
+  - Localize marketing and brand communication for cultural context and media consumption habits
+  - Build after-sales network: service capacity, parts availability, digital service capabilities
+
+  ## Decision Frameworks
+
+  ### Market Entry Mode Selection
+  | Factor | Export (CBU) | CKD Assembly | Local Manufacturing | JV with Local Partner |
+  |--------|-------------|-------------|--------------------|--------------------|
+  | Volume threshold | <10K units | 10K-50K | >50K | Varies (regulatory) |
+  | Capital required | Minimal | Moderate | Very high | Shared |
+  | Tariff mitigation | None | Partial | Full | Full |
+  | Local content | None | Partial | High | High |
+  | Speed to market | Fast | Medium | Slow (2-4 years) | Medium |
+  | Control | Full | Full | Full | Shared |
+
+  ### Regional Priority Matrix
+  - **Tier 1 (Must-win)**: Markets with high volume, strategic importance, mandatory presence (EU, China, US)
+  - **Tier 2 (Growth)**: High-growth markets requiring investment (India, ASEAN, Middle East)
+  - **Tier 3 (Opportunistic)**: Smaller markets served through export with minimal adaptation
+  - **Tier 4 (Monitor)**: Markets with uncertain outlook, minimal investment, wait-and-see approach
+
+  ### Adaptation Cost-Benefit Analysis
+  - Calculate incremental revenue from market entry vs. engineering and manufacturing localization cost
+  - Model breakeven volume for market-specific adaptations
+  - Consider platform reuse: can adaptations serve multiple markets in a region?
+  - Factor in regulatory change risk: will current compliance remain valid for product lifecycle?
+
+  ## Best Practices
+
+  - Design global platforms with regional adaptation in mind from concept phase, not as afterthought
+  - Maximize shared components across markets (target >80% commonality) to maintain scale economics
+  - Establish regional engineering centers for adaptation work close to the market
+  - Build regulatory intelligence capability monitoring upcoming changes 3+ years ahead per market
+  - Test vehicles in actual market conditions: altitude, temperature, road surfaces, fuel quality
+  - Localize digital services (navigation, voice assistant, payment) with local technology partners
+  - Hire local talent for market-facing functions: sales, marketing, after-sales, government relations
+  - Maintain global quality standards regardless of manufacturing location or cost pressure
+  - Consider right-hand-drive markets (UK, Japan, India, Australia, ASEAN) in platform design early
+  - Plan charging infrastructure partnerships market-by-market for BEV launches
+
+  ## Examples
+
+  ### Example 1: European OEM China Market Adaptation
+  An OEM adapts its C-segment BEV for China. Modifications: extended wheelbase (+80mm) for rear
+  passenger preference, integrated WeChat/Alipay payment, Baidu navigation replacing Google, local
+  voice assistant (iFlytek), longer-range battery option (Chinese customers drive longer distances
+  between charges), China-specific color and trim options. Engineering cost: 45M EUR. Local
+  manufacturing at JV plant eliminates 25% import tariff and qualifies for NEV subsidies.
+
+  ### Example 2: Indian Market Entry via CKD
+  An OEM enters India with CKD assembly of 2 SUV models at partner plant. Local content starts at 30%
+  (body panels, seats, wiring harnesses from Indian suppliers), targeting 60% within 3 years to qualify
+  for PLI incentives. Adaptations: raised ground clearance, dust-proof air filtration, strengthened
+  suspension for road conditions, enhanced cooling for 45C+ ambient temperatures. Volume target:
+  25K units/year, breakeven in year 3.
+
+  ### Example 3: Gulf Region Premium Vehicle Strategy
+  A premium OEM adapts its flagship sedan for Gulf states. Key adaptations: desert climate package
+  (enhanced AC capacity, sand filtration, UV-resistant interior), Arabic HMI language and voice,
+  extended idle cooling capability, specific color palette (white dominates 40% of sales). Distribution
+  through exclusive dealer partner with 15 showrooms. Premium pricing 10% above European MSRP.
+  No local manufacturing justified at 3K units/year; export from German plant.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- regional-adaptation
+- automotive
+- oem

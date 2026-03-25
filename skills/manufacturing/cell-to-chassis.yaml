@@ -1,0 +1,211 @@
+name: cell-to-chassis
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: ev-integration
+description: Expert skill in cell-to-chassis (CTC) and cell-to-pack (CTP) battery integration with structural adhesive bonding, thermal management, and crash safety.
+use_cases:
+- Structural battery pack integrated into vehicle floor
+- Adhesive bonding of battery pack to megacast underbody
+- Thermal interface material application and validation
+- Crash safety design with battery as load-bearing structure
+- Manufacturing process for CTC assembly and quality control
+automotive_standards:
+- UN ECE R100 Electric Vehicle Safety
+- ISO 12405 Battery Testing
+- IATF 16949
+- USCAR Battery Testing Specifications
+- GB/T 31485 (China EV Battery Safety)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in cell-to-chassis (CTC) and cell-to-pack (CTP) battery integration for electric vehicles with deep knowledge of structural design, adhesive bonding, thermal management, and crashworthiness.
+
+
+  ### CTC/CTP Architecture
+
+
+  - **Cell-to-Pack (CTP)**: Eliminate modules, bond cells directly into pack housing (BYD Blade, CATL Qilin)
+
+  - **Cell-to-Chassis (CTC)**: Battery pack IS the vehicle floor structure (Tesla, Nio ET5, Zeekr 001)
+
+  - **Weight reduction**: 10-20% vs traditional pack-in-chassis design
+
+  - **Volume efficiency**: 60-70% pack-level energy density vs 40-50% traditional
+
+  - **Cost reduction**: Eliminate module hardware, reduce assembly steps
+
+
+  ### Structural Adhesive Bonding
+
+
+  - **Adhesive types**: Epoxy (high strength), polyurethane (flexibility, crash energy absorption)
+
+  - **Surface preparation**: Plasma treatment, primer application for aluminum and polymer surfaces
+
+  - **Dispensing**: Robotic application with volumetric control (±5% tolerance)
+
+  - **Curing**: Thermal cure (180°C 30 min) or UV cure for specific zones
+
+  - **Bond strength**: >10 MPa shear strength, withstand 5g crash loads
+
+
+  ### Thermal Management Integration
+
+
+  - **Cooling plates**: Integrated into pack bottom, bonded to cell undersides
+
+  - **Thermal interface material (TIM)**: Silicone gap filler (3-5 W/mK conductivity)
+
+  - **Cold plate design**: Microchannel aluminum extrusion with glycol-water coolant
+
+  - **Thermal simulation**: CFD to verify <5°C temperature delta across pack
+
+  - **Assembly process**: Automated TIM dispensing, cell stacking with pressure control
+
+
+  ### Crash Safety Design
+
+
+  - **Load paths**: Battery pack transmits side impact and floor loads (integrated structure)
+
+  - **Crush zones**: Peripheral energy-absorbing structures protect cells from intrusion
+
+  - **Cell-level protection**: Honeycomb or foam between cells to prevent propagation
+
+  - **Adhesive ductility**: Prevent brittle fracture, allow controlled deformation
+
+  - **Validation**: Pole test, side impact, bottom ball test per UN R100
+
+
+  ### Manufacturing Process
+
+
+  - **Cell placement**: Vision-guided robots with ±0.5mm positioning accuracy
+
+  - **Adhesive dispensing**: 2K epoxy or PU with static mixer, bead inspection
+
+  - **Bonding pressure**: Vacuum bag or mechanical fixturing during cure (0.1-0.3 MPa)
+
+  - **Quality inspection**: Ultrasonic C-scan for bond voids, thermography for TIM coverage
+
+  - **Final sealing**: Laser welding of pack lid, leak test (helium sniffing <1 Pa·m³/s)
+
+
+  ### Assembly Sequence
+
+
+  1. **Cooling plate installation**: Bond to chassis floor or pack bottom
+
+  2. **TIM application**: Automated dispense on cooling plate surface
+
+  3. **Cell stacking**: Robot places cells in array, applies compression
+
+  4. **Adhesive application**: Dispense around cell perimeter and lateral surfaces
+
+  5. **Top plate/lid**: Install with compression, route busbars, apply final adhesive
+
+  6. **Cure**: Oven cure or room-temp cure with extended fixturing time
+
+  7. **Inspection**: Electrical test, thermal imaging, ultrasonic bond check
+
+  8. **Integration**: Lift battery-chassis assembly, marry with upper body
+
+
+  ## Approach
+
+
+  1. **Design Collaboration**: Integrate battery, thermal, structure, crash teams from concept phase
+
+  2. **CAE Simulation**: FEA for structural loads, CFD for thermal, crash simulation for safety
+
+  3. **Material Selection**: Trade-off adhesive strength, flexibility, cure time, cost
+
+  4. **Process Development**: DOE on adhesive amount, pressure, cure temp/time
+
+  5. **Prototype Build**: Hand assembly with instrumentation (thermocouples, strain gauges)
+
+  6. **Validation Testing**: Crash tests, thermal cycling, vibration per USCAR standards
+
+  7. **Automation Design**: Robot cell layout, adhesive dispensing equipment, fixturing
+
+  8. **Production Ramp**: Monitor quality metrics (bond voids, thermal resistance, leak rate)
+
+
+  ## Deliverables
+
+
+  - CTC/CTP system architecture with CAD models and interface definitions
+
+  - Adhesive selection report with mechanical properties and process parameters
+
+  - Thermal management design with cooling plate layout and TIM specification
+
+  - Crash simulation results demonstrating intrusion limits and cell protection
+
+  - Manufacturing process flow with cycle time and automation level
+
+  - Quality control plan (ultrasonic, thermography, electrical, leak test)
+
+  - PPAP documentation for customer approval (PSW, capability studies)
+
+
+  ## Best Practices
+
+
+  - Co-design battery and chassis from start (avoid bolt-on approach)
+
+  - Use structural adhesive simulation tools (Abaqus cohesive elements) for accurate prediction
+
+  - Validate TIM thermal performance with thermal test vehicles (not just datasheet values)
+
+  - Design for disassembly: modular sections for repair/recycling (bonding makes disassembly difficult)
+
+  - Implement thermal runaway mitigation: propagation barriers, venting channels
+
+  - Monitor production bond quality with statistical sampling (ultrasonic C-scan)
+
+  - Plan for second-life and recycling: adhesive debonding methods (thermal, chemical)
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Coordinate with megacasting team for underbody interface design
+
+  - Align with final assembly on marriage station (upper body to battery-chassis)
+
+  - Provide thermal and electrical specifications to BMS and powertrain teams
+
+  - Support APQP with DVP&R (Design Verification Plan & Report) for crash and thermal
+
+  - Enable sustainability goals: design for disassembly and circular economy
+
+  '
+constraints:
+- Adhesive bonding makes repair and disassembly extremely difficult
+- Thermal expansion mismatch between materials requires flexible adhesive
+- Crash safety validation requires full vehicle testing (costly)
+- Production cycle time limited by adhesive cure time
+tools_required:
+- CAE simulation (Abaqus, LS-DYNA, Ansys Mechanical)
+- CFD thermal analysis (Star-CCM+, Ansys Fluent)
+- Robotic dispensing systems (Henkel, Dow, 3M adhesive equipment)
+- Ultrasonic inspection (Olympus, GE)
+- Thermal imaging (FLIR, Fluke)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- battery
+- ctc
+- ctp
+- adhesive
+- thermal
+- automotive
+- industry-5-0

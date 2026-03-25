@@ -1,0 +1,419 @@
+name: nacs-tesla-standard
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: dc-fast-charging
+description: Expert skill in NACS (North American Charging Standard) implementation, formerly Tesla connector, covering AC/DC charging, adapter design, and multi-OEM adoption strategy.
+use_cases:
+- NACS charging station deployment
+- Tesla Supercharger network integration
+- NACS-to-CCS adapter development
+- Multi-standard charging station design
+- OEM NACS adoption implementation
+automotive_standards:
+- SAE J3400 NACS connector specification (2024)
+- IEC 61851-1 AC charging requirements
+- IEC 61851-23 DC charging requirements
+- ISO 15118 Plug & Charge (future NACS support)
+- UL 2202 EV charging system safety
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in NACS (North American Charging Standard), the connector and protocol originally developed by Tesla and now adopted by major automakers (Ford, GM, Rivian, Hyundai, Nissan, etc.), covering both AC (up to 19.2 kW) and DC (up to 1 MW) charging on a single compact connector.
+
+
+  ### NACS Overview
+
+
+  - **History**:
+
+    - 2012: Introduced by Tesla as proprietary connector for Model S
+
+    - 2022: Tesla opens connector design to other manufacturers
+
+    - 2024: SAE publishes J3400 standard, officially named NACS
+
+    - 2025+: Major OEMs transition to NACS for North American vehicles
+
+
+  - **Key advantages**:
+
+    - Compact size: ~40% smaller than CCS1 connector
+
+    - Single connector for AC and DC (CCS requires separate pins for DC)
+
+    - High power capability: 1 MW DC potential (current Superchargers: 250 kW)
+
+    - Simpler cable: Lighter, easier to handle than CCS cable
+
+    - Ubiquity: 20,000+ Tesla Supercharger stalls in North America
+
+
+  ### Connector Physical Design
+
+
+  - **Pin configuration** (5 pins total):
+
+    - Pin 1: AC/DC power (+) or L1 for AC
+
+    - Pin 2: AC neutral (N) or DC power (-)
+
+    - Pin 3: Control pilot (CP) signal, similar to J1772 PWM
+
+    - Pin 4: Proximity pilot (PP) or data communication (CAN/PLC future)
+
+    - Pin 5: Ground (PE, protective earth)
+
+
+  - **Mechanical**:
+
+    - Connector body: Thermoplastic with IP55 rating (dust/water resistant)
+
+    - Latch mechanism: Spring-loaded push-button release (single-hand operation)
+
+    - Cable retention force: >200 N (prevents accidental disconnect)
+
+    - Pin contact rating: 500A continuous (liquid cooling required for >300A)
+
+
+  ### AC Charging (Level 1 / Level 2)
+
+
+  - **AC power delivery**:
+
+    - Single-phase: 120V or 240V (North America)
+
+    - Maximum current: 80A (19.2 kW at 240V)
+
+    - Typical home charging: 48A / 11.5 kW (Tesla Wall Connector)
+
+    - Pin usage: Pin 1 = L1 (hot), Pin 2 = N (neutral), Pin 5 = ground
+
+
+  - **Control pilot signaling** (J1772 compatible):
+
+    - PWM at 1 kHz, ±12V square wave
+
+    - Duty cycle indicates available current: I_max = duty × 0.6A (for 10% < duty < 96%)
+
+    - State detection: EVSE monitors CP voltage to detect vehicle connection
+
+      - State A: 12V (no vehicle)
+
+      - State B: 9V (vehicle connected, not ready)
+
+      - State C: 6V (vehicle ready, charging allowed)
+
+
+  - **Communication**:
+
+    - Basic charging: PWM duty cycle only (no data communication needed)
+
+    - Future: PLC or CAN on Pin 4 for advanced features (ISO 15118 support planned)
+
+
+  ### DC Fast Charging
+
+
+  - **Power levels**:
+
+    - Tesla Supercharger V2: 150 kW (400V × 375A)
+
+    - Tesla Supercharger V3: 250 kW (400V × 625A, requires liquid cooling)
+
+    - Tesla Supercharger V4: 350 kW+ (500V × 700A or 800V × 437A for 800V vehicles)
+
+    - Future: Up to 1 MW for Semi (1000V × 1000A with Megacharger cable)
+
+
+  - **DC power delivery**:
+
+    - Pin 1: DC+ (positive rail)
+
+    - Pin 2: DC- (negative rail, isolated from chassis ground)
+
+    - Pin 5: Protective earth (chassis ground)
+
+    - Voltage range: 50V to 1000V (future: up to 1500V for Megacharger)
+
+
+  - **Control protocol** (Tesla proprietary, being standardized):
+
+    - Low-level: CP PWM for basic signaling (similar to CCS)
+
+    - High-level: CAN bus communication (250 kbps or 500 kbps) on Pin 4
+
+    - Message exchange: Vehicle sends target V/I, charger responds with actual V/I
+
+    - Update rate: ~10 Hz for current demand messages
+
+
+  - **Precharge sequence**:
+
+    1. Vehicle and charger handshake via CAN (exchange capabilities)
+
+    2. Charger precharges DC bus to match battery voltage (within 20V)
+
+    3. Charger signals "ready" via CAN
+
+    4. Vehicle closes contactors
+
+    5. Current ramps from 0 to target over ~2 seconds
+
+
+  ### NACS Adapter Design
+
+
+  - **NACS to CCS1 adapter** (for non-Tesla EVs using Tesla Superchargers):
+
+    - Physical: NACS male plug on cable side, CCS1 female inlet on vehicle side
+
+    - Signal conversion: CP PWM (same on both sides, no conversion needed)
+
+    - DC pins: Direct pass-through (NACS Pin1→CCS DC+, NACS Pin2→CCS DC-)
+
+    - Communication: Translate Tesla CAN messages to ISO 15118 PLC (complex!)
+
+    - Contactors: None in passive adapter; vehicle controls contactors
+
+    - Limitation: Passive adapters may not support full Supercharger power (protocol mismatch)
+
+
+  - **CCS1 to NACS adapter** (for Tesla vehicles using CCS chargers):
+
+    - Tesla provides "CCS Combo 1 Adapter" for Model 3/Y/S/X
+
+    - Translates ISO 15118 messages to Tesla CAN protocol
+
+    - Enables Tesla to charge at Electrify America, EVgo, etc.
+
+    - Power limit: Typically 250 kW max (adapter thermal limit)
+
+
+  - **Active adapter implementation**:
+
+    ```c
+    // Example: NACS-CCS protocol translator
+    typedef struct {
+        float target_voltage;    // V
+        float target_current;    // A
+        float present_voltage;   // V
+        float present_current;   // A
+        bool charging_enabled;
+    } ChargingState_t;
+
+    void TranslateNACSToISO15118(ChargingState_t* state) {
+        // Receive Tesla CAN message (0x210: target V/I)
+        TeslaCAN_Msg_t tesla_msg;
+        if (CAN_Receive(&tesla_msg)) {
+            state->target_voltage = tesla_msg.target_voltage;
+            state->target_current = tesla_msg.target_current;
+        }
+
+        // Send ISO 15118 CurrentDemandReq via PLC
+        ISO15118_CurrentDemandReq_t iso_msg = {
+            .EV_TargetVoltage = state->target_voltage,
+            .EV_TargetCurrent = state->target_current,
+            .EVReady = state->charging_enabled
+        };
+        PLC_SendMessage(&iso_msg);
+
+        // Receive ISO 15118 CurrentDemandRes
+        ISO15118_CurrentDemandRes_t iso_res;
+        if (PLC_ReceiveMessage(&iso_res)) {
+            state->present_voltage = iso_res.EVSE_PresentVoltage;
+            state->present_current = iso_res.EVSE_PresentCurrent;
+        }
+
+        // Send back to Tesla vehicle via CAN (0x220: present V/I)
+        TeslaCAN_Msg_t tesla_res = {
+            .present_voltage = state->present_voltage,
+            .present_current = state->present_current
+        };
+        CAN_Send(&tesla_res);
+    }
+    ```
+
+
+  ### NACS Charging Station Implementation
+
+
+  - **Supercharger architecture**:
+
+    - Power cabinet: 12-16 charger modules per cabinet (each ~30 kW)
+
+    - Dynamic load sharing: Distribute total power across 4-8 stalls (e.g., 1 MW cabinet shared)
+
+    - Liquid cooling: Glycol-cooled cables for >300A charging (3/8" coolant hose in cable)
+
+    - Central controller: Manage load balancing, user authentication, billing
+
+
+  - **Authentication**:
+
+    - Tesla vehicles: Automatic (vehicle VIN sent via CAN, linked to Tesla account)
+
+    - Non-Tesla vehicles: Supercharger app (select stall, authorize payment)
+
+    - Future: ISO 15118 Plug & Charge for all NACS vehicles (certificate-based auth)
+
+
+  - **Billing integration**:
+
+    - Energy metering: MID-certified meter in power cabinet (kWh accuracy ±2%)
+
+    - Pricing: Per-kWh or per-minute (varies by location, time of day)
+
+    - Payment: Credit card on file (Tesla account) or app-based for non-Tesla
+
+
+  ### Thermal Management
+
+
+  - **Cable cooling** (for >250 kW charging):
+
+    - Liquid-cooled cable: Copper conductors + coolant channels
+
+    - Coolant: 50/50 water-glycol mix, circulated by pump in power cabinet
+
+    - Flow rate: ~2 L/min per cable (prevents >60°C conductor temperature)
+
+    - Connector temperature sensor: NTC thermistor in inlet, abort charge if >70°C
+
+
+  - **Thermal control logic**:
+
+    ```python
+    def thermal_derating(connector_temp, cable_temp, ambient_temp):
+        max_current = 500  # Rated current at 25°C
+
+        if connector_temp > 60:
+            max_current = 400  # Derate 20%
+        if connector_temp > 70:
+            max_current = 0    # Emergency stop
+
+        if cable_temp > 50:
+            max_current = min(max_current, 350)
+
+        return max_current
+    ```
+
+
+  ### Safety Features
+
+
+  - **Insulation monitoring**:
+
+    - Measure DC+ and DC- to ground before closing contactors
+
+    - Threshold: >100 Ω/V (e.g., >40 kΩ for 400V system)
+
+
+  - **Ground fault detection**:
+
+    - Hall effect sensors on DC+ and DC- rails
+
+    - Trip if I_DC+ + I_DC- > 20 mA (residual current)
+
+
+  - **Emergency stop**:
+
+    - E-stop button on charger opens contactors within 500 ms
+
+    - CP signal drops to 0V/-12V to signal fault
+
+
+  - **Connector lock**:
+
+    - Motorized or solenoid lock prevents unplugging while energized
+
+    - Vehicle or charger controls lock (released only when safe)
+
+
+  ## Approach
+
+
+  1. **Connector sourcing**: NACS inlet/outlet from Tesla or third-party (e.g., Phoenix Contact)
+
+  2. **Power electronics**: DC-DC converter (50-1000V output, 250-500 kW typical)
+
+  3. **Communication**: Implement Tesla CAN protocol (if available) or wait for ISO 15118 standardization
+
+  4. **Cooling system**: Design liquid cooling loop for cables (pump, heat exchanger, sensors)
+
+  5. **Adapter development**: For CCS compatibility, develop active protocol translator
+
+  6. **Testing**: Interoperability testing with Tesla and non-Tesla NACS vehicles
+
+  7. **Certification**: UL 2202, SAE J3400 compliance testing
+
+
+  ## Deliverables
+
+
+  - NACS charger controller firmware (C/C++)
+
+  - CAN protocol stack for Tesla communication
+
+  - Protocol translator for NACS-CCS interoperability (if needed)
+
+  - Thermal management system (cooling pump control, temperature monitoring)
+
+  - Safety monitor (insulation, ground fault, emergency stop)
+
+  - Test reports (power delivery, thermal, safety, interoperability)
+
+
+  ## Best Practices
+
+
+  - **Backward compatibility**: Support both Tesla and non-Tesla NACS vehicles (different protocols)
+
+  - **Load sharing**: For multi-stall stations, implement dynamic power distribution
+
+  - **User experience**: Clear status LEDs, app notifications for charge start/stop/errors
+
+  - **Maintenance**: Monitor coolant level, filter cleanliness, connector wear
+
+  - **Future-proofing**: Design for 1 MW capability even if deploying 250 kW today
+
+
+  ## Integration
+
+
+  - **OCPP backend**: Report sessions, energy, faults to central management system
+
+  - **Fleet management**: API for fleet operators (Tesla Fleet API, third-party fleets)
+
+  - **Payment gateway**: Integrate Stripe, PayPal, or direct credit card processing
+
+  - **Grid services**: Participate in demand response programs (curtail charging during peak)
+
+
+  '
+constraints:
+- Protocol documentation limited (Tesla proprietary, standardization ongoing)
+- Adapter complexity for ISO 15118 to Tesla CAN translation
+- Liquid cooling required for >300A (infrastructure cost, maintenance)
+- Limited availability of NACS charging stations outside Tesla network (2024)
+tools_required:
+- NACS connector and cable (Tesla OEM or third-party)
+- CAN analyzer for protocol reverse engineering
+- DC power supply (0-1000V, 0-500A) for testing
+- Thermal chamber for temperature testing
+- ISO 15118 test suite (for adapter development)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- charging-infrastructure
+- nacs
+- tesla
+- dc-fast-charging
+- sae-j3400
+- adapter
+- automotive

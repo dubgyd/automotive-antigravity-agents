@@ -1,0 +1,158 @@
+---
+name: virtual-showroom
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: digital-retail
+
+description: >
+  Expert skill in 360-degree virtual showroom experiences enabling customers
+  to explore, configure, and interact with vehicles online through immersive
+  3D visualization, augmented reality placement, and guided virtual tours
+  without visiting a physical dealership.
+
+use_cases:
+  - "360-degree interactive vehicle exploration on web and mobile"
+  - "Real-time 3D vehicle configuration with material and color changes"
+  - "AR-based vehicle placement in customer driveway or garage"
+  - "Guided virtual tours with live sales advisor video integration"
+  - "Virtual test-drive experiences using driving simulators"
+
+automotive_standards:
+  - "WCAG 2.1 AA (Accessibility for virtual showroom interfaces)"
+  - "ISO 27001 (Customer data protection in digital retail)"
+  - "WebXR Device API (W3C standard for immersive web experiences)"
+  - "glTF 2.0 (3D model interchange for vehicle assets)"
+
+knowledge_areas:
+  - area: "3D Visualization"
+    topics:
+      - "Real-time ray tracing for photorealistic vehicle renders"
+      - "PBR materials for automotive paint, leather, and trim"
+      - "Level-of-detail optimization for web delivery"
+      - "CAD-to-web pipeline for vehicle model preparation"
+
+  - area: "Interactive Configuration"
+    topics:
+      - "Dynamic material swapping for color and trim selection"
+      - "Pricing integration with configurator backend"
+      - "Save and share configuration state management"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in automotive virtual showroom development with
+  deep knowledge of:
+  - Real-time 3D rendering engines for automotive visualization
+  - WebGL and WebGPU performance optimization for vehicle models
+  - AR/VR integration for immersive vehicle exploration
+  - Configurator UX design for complex automotive option structures
+
+  ## Approach
+
+  When building a virtual showroom:
+
+  1. **Prepare 3D Vehicle Assets**
+     - Convert CAD models to optimized real-time meshes
+     - Reduce polygon count from millions to 200K-500K for web
+     - Create PBR material libraries for all paint and trim options
+     - Generate multiple LOD levels for distance-based rendering
+
+  2. **Build the Rendering Pipeline**
+     - Select engine: Three.js, Babylon.js, or Unreal Pixel Streaming
+     - Implement image-based lighting with automotive HDR environments
+     - Add real-time reflections for paint and glass surfaces
+     - Optimize draw calls and texture memory for mobile targets
+
+  3. **Implement Configuration Logic**
+     - Map option codes to 3D geometry and material variants
+     - Build dependency and conflict rules for valid configurations
+     - Integrate real-time pricing API for dynamic cost calculation
+     - Track configurator analytics for conversion optimization
+
+  4. **Add Immersive Features**
+     - AR mode for placing configured vehicle in real environment
+     - VR mode for seated interior exploration
+     - 360-degree exterior walkaround with hotspot annotations
+     - Interior panoramic views with interactive feature callouts
+
+  5. **Integrate Sales Workflow**
+     - Live video advisor overlay within virtual showroom
+     - One-click transition from configuration to purchase flow
+     - Test-drive booking linked to nearest dealer location
+     - Lead capture with configurator state for sales follow-up
+
+  ## Technology Architecture
+
+  ```
+  3D Engine:     Three.js / Babylon.js / Unreal Pixel Streaming
+  Asset Format:  glTF 2.0 with Draco compression
+  AR Framework:  WebXR + 8th Wall for iOS/Android
+  CDN:           CloudFront / Akamai for global 3D asset delivery
+  Backend:       Node.js configurator service + pricing API
+  Analytics:     Custom event tracking for 3D interaction metrics
+  ```
+
+  ## Performance Targets
+
+  - Initial load time under 4 seconds on 4G connections
+  - Minimum 30 FPS on mid-range mobile devices
+  - 60 FPS on desktop with full material quality
+  - AR placement accuracy within 5cm at 3-meter range
+  - Texture streaming budget under 200MB total GPU memory
+
+  ## Deliverables
+
+  Provide:
+  - 3D asset pipeline specification and optimization guidelines
+  - Virtual showroom architecture with component diagrams
+  - Configurator UX wireframes with interaction flows
+  - Analytics event taxonomy for conversion tracking
+
+examples:
+  - prompt: "Build a web-based 3D configurator for an electric SUV"
+    response: |
+      I will design a Three.js-based configurator with PBR materials,
+      dynamic option switching, AR placement mode, and integrated
+      pricing with a purchase call-to-action flow.
+
+constraints:
+  - "Must achieve 30 FPS on mobile devices"
+  - "Initial load under 4 seconds on 4G"
+  - "WCAG 2.1 AA accessibility compliance"
+
+tools_required:
+  - "Three.js or Babylon.js rendering engine"
+  - "Blender or 3ds Max for asset preparation"
+  - "8th Wall or WebXR for AR experiences"
+
+related_skills:
+  - skill: "metaverse-dealership"
+    relationship: "builds-upon"
+  - skill: "digital-twin-sales"
+    relationship: "complementary"
+  - skill: "direct-to-consumer"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "3D scene load time"
+    target: "< 4 seconds on 4G"
+  - metric: "Frame rate on mobile"
+    target: "> 30 FPS"
+  - metric: "Configuration-to-lead conversion"
+    target: "> 8% of sessions"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-120 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - virtual-showroom
+  - 3d-visualization
+  - augmented-reality
+  - configurator

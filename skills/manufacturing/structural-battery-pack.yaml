@@ -1,0 +1,292 @@
+name: structural-battery-pack
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: ev-battery-manufacturing
+description: Expert skill in manufacturing structural battery packs for electric vehicles where the battery enclosure serves as a load-bearing element of the vehicle body structure, covering cell-to-pack and cell-to-body architectures, structural adhesive bonding, thermal interface integration, and crash safety validation.
+use_cases:
+- Cell-to-pack (CTP) assembly eliminating module-level packaging for density improvement
+- Cell-to-body (CTB) integration where pack replaces floor structure
+- Structural adhesive bonding of cells to enclosure for load transfer
+- Thermal interface material (TIM) application between cells and cooling plates
+- Battery tray precision machining and dimensional control for body fitment
+- Leak testing and IP67 sealing validation for structural enclosures
+- Crash simulation and physical validation of structural battery configurations
+- Automated cell insertion and busbar welding for high-volume CTP production
+automotive_standards:
+- UN ECE R100 Battery Electric Vehicle Safety
+- UN 38.3 Transport of Lithium Batteries
+- ISO 6469 EV Safety (Parts 1-4)
+- IEC 62660 Secondary Lithium Cells (Performance and Safety)
+- GB/T 38031 Chinese EV Battery Safety Standard
+- EUCAR Hazard Level Classification
+- SAE J2464 EV Battery Abuse Testing
+- ISO 12405 Electrically Propelled Vehicles Test Specification
+instructions: |
+
+  ## Overview
+
+  Structural battery packs represent a paradigm shift in EV manufacturing where the battery
+  enclosure is no longer a bolt-on component but an integral load-bearing element of the
+  vehicle body structure. This eliminates redundant structural material, reduces weight by
+  10-20%, increases battery volume by 15-25%, and fundamentally changes manufacturing
+  processes from traditional body-in-white plus battery assembly to integrated structural
+  battery production.
+
+  The manufacturing challenges are significant: structural adhesives must simultaneously
+  bond cells, transfer crash loads, conduct heat, and remain serviceable. Dimensional
+  tolerances tighten because the battery IS the floor structure. And crash safety validation
+  becomes more complex when energy storage and structural integrity are combined.
+
+
+  ## Key Concepts
+
+  ### Architecture Comparison
+
+  ```
+  Traditional:    Cell -> Module -> Pack -> Bolted to body floor
+  CTP:            Cell -> Pack (no module) -> Bolted to body floor
+  CTB:            Cell -> Structural pack = Body floor structure
+  CTC:            Cell -> Directly integrated into body casting (emerging)
+
+  Weight savings:     CTP: 5-10%    CTB: 15-20%    CTC: 20-25% (theoretical)
+  Volume efficiency:  CTP: 65-70%   CTB: 70-80%    CTC: 80%+ (theoretical)
+  Serviceability:     CTP: Good     CTB: Limited    CTC: Very limited
+  ```
+
+  ### Structural Load Paths
+
+  - **Bending**: Pack acts as sandwich panel floor (cells = core, skins = enclosure top/bottom)
+  - **Torsion**: Adhesive bonds transfer shear between cells and enclosure walls
+  - **Side impact**: Pack cross-members and cell arrangement absorb lateral crash energy
+  - **Front/rear crash**: Pack connects to front and rear body structures through mounting
+  - **Fatigue**: Road loads cycle through pack structure over vehicle lifetime (10+ years)
+
+  ### Key Manufacturing Processes
+
+  - **Tray manufacturing**: Aluminum casting or extrusion with CNC machining
+  - **Cell insertion**: Automated pick-and-place with vision-guided alignment
+  - **Structural bonding**: Robotic adhesive dispensing (PU, epoxy, silicone structural)
+  - **TIM application**: Thermal pad placement or gap filler dispensing
+  - **Busbar welding**: Laser or ultrasonic welding for cell interconnection
+  - **Sealing**: Structural sealant and gasket for IP67 water protection
+  - **Leak testing**: Helium leak detection or pressure decay testing
+
+
+  ## Implementation Guide
+
+  ### Step 1: Battery Tray Manufacturing
+
+  ```python
+  # Battery tray dimensional control
+  class BatteryTrayManufacturing:
+      FLATNESS_TOLERANCE_MM = 0.5
+      POSITION_TOLERANCE_MM = 0.3
+      MOUNTING_HOLE_TOLERANCE_MM = 0.1
+
+      def validate_tray(self, measurement_data: dict) -> dict:
+          """Validate battery tray against structural and dimensional specs."""
+          results = {
+              "flatness": {
+                  "measured_mm": measurement_data["flatness_mm"],
+                  "tolerance_mm": self.FLATNESS_TOLERANCE_MM,
+                  "pass": measurement_data["flatness_mm"] <= self.FLATNESS_TOLERANCE_MM,
+              },
+              "cell_pocket_depth": {
+                  "measured_mm": measurement_data["pocket_depth_mm"],
+                  "nominal_mm": measurement_data["pocket_nominal_mm"],
+                  "tolerance_mm": 0.2,
+                  "pass": abs(measurement_data["pocket_depth_mm"] - measurement_data["pocket_nominal_mm"]) <= 0.2,
+              },
+              "mounting_points": self.check_mounting_holes(measurement_data["mounting_holes"]),
+              "sealing_surface": {
+                  "roughness_ra_um": measurement_data["seal_surface_ra"],
+                  "max_ra_um": 3.2,
+                  "pass": measurement_data["seal_surface_ra"] <= 3.2,
+              },
+          }
+          results["overall_pass"] = all(r["pass"] for r in results.values() if isinstance(r, dict) and "pass" in r)
+          return results
+  ```
+
+  ### Step 2: Structural Adhesive Application
+
+  ```yaml
+  structural_adhesive_system:
+    adhesive_type: two_component_polyurethane
+    properties:
+      tensile_strength_mpa: 15
+      shear_strength_mpa: 12
+      elongation_at_break_pct: 150
+      thermal_conductivity_w_mk: 1.5  # thermally conductive structural adhesive
+      glass_transition_temp_c: -40
+      operating_range_c: [-40, 85]
+    application:
+      robot: 6_axis_with_dispensing_head
+      bead_width_mm: 8
+      bead_height_mm: 3
+      dispensing_speed_mm_s: 200
+      pot_life_min: 15
+      cure_time_min: 30_at_80C  # or 24h at RT
+    quality_control:
+      bead_inspection: inline_laser_triangulation
+      cure_monitoring: dielectric_sensors_in_bondline
+      adhesion_test: destructive_peel_test_per_batch
+  ```
+
+  ### Step 3: Cell-to-Pack Assembly
+
+  ```python
+  # CTP automated assembly sequence
+  class CTPAssemblyLine:
+      def __init__(self, cell_spec: dict, pack_config: dict):
+          self.cell = cell_spec
+          self.config = pack_config
+
+      def assemble_pack(self) -> dict:
+          """Execute CTP assembly sequence."""
+          steps = [
+              self.prepare_tray(),
+              self.apply_thermal_interface(),
+              self.insert_cells(),
+              self.apply_structural_adhesive(),
+              self.install_busbars(),
+              self.weld_interconnections(),
+              self.install_bms_harness(),
+              self.apply_cover_sealant(),
+              self.install_cover(),
+              self.cure_adhesive(),
+              self.leak_test(),
+              self.electrical_test(),
+              self.end_of_line_validation(),
+          ]
+          return {"steps": len(steps), "cycle_time_min": sum(s["time_min"] for s in steps)}
+
+      def insert_cells(self) -> dict:
+          """Vision-guided cell insertion with force monitoring."""
+          return {
+              "step": "cell_insertion",
+              "method": "robot_pick_and_place_with_vision",
+              "accuracy_mm": 0.5,
+              "insertion_force_n": 50,
+              "force_limit_n": 100,
+              "cells_per_pack": self.config["cell_count"],
+              "time_min": self.config["cell_count"] * 0.1,
+          }
+
+      def leak_test(self) -> dict:
+          """IP67 leak test for structural pack."""
+          return {
+              "step": "leak_test",
+              "method": "helium_vacuum_chamber",
+              "leak_rate_limit_mbar_l_s": 1e-4,
+              "test_pressure_mbar": 50,
+              "time_min": 3,
+          }
+  ```
+
+  ### Step 4: Crash Safety Validation
+
+  ```
+  Structural Battery Crash Test Matrix:
+  ======================================
+  Test                    Standard           Pass Criteria
+  =====================   ================   ==========================
+  Side pole impact        FMVSS 214          No thermal event, structure intact
+  Front offset            Euro NCAP 64km/h   Battery sealed, no HV exposure
+  Rear impact             FMVSS 301          No electrolyte leak > threshold
+  Bottom impact (road)    UN R100 Annex 8    No short circuit after 7.5cm intrusion
+  Crush (quasi-static)    SAE J2464          Cell deformation < 30%
+  Drop test               UN 38.3 T7         No fire, no explosion
+  ```
+
+  ### Step 5: Thermal Management Integration
+
+  ```python
+  # Thermal interface between cells and cooling plate
+  class ThermalInterfaceDesign:
+      def specify_tim(self, cell_heat_w: float, contact_area_mm2: float, max_temp_rise_c: float) -> dict:
+          """Specify thermal interface material requirements."""
+          required_conductivity = (cell_heat_w * 1.0) / (contact_area_mm2 * 1e-6 * max_temp_rise_c)
+          return {
+              "required_conductivity_w_mk": round(required_conductivity, 2),
+              "recommended_material": "gap_filler_pad" if required_conductivity < 3 else "thermal_adhesive",
+              "thickness_mm": 1.0,
+              "compression_pct": 25,
+              "application_method": "automated_pad_placement" if required_conductivity < 3 else "robotic_dispensing",
+              "assembly_note": "Apply before cell insertion, compress during cover installation",
+          }
+  ```
+
+
+  ## Best Practices
+
+  - Design cell pockets with 0.5mm clearance for thermal expansion over lifetime
+  - Use structural adhesive that is both thermally conductive and crash-energy absorbing
+  - Test adhesive bond strength at -40C and +85C extremes, not just room temperature
+  - Implement inline leak testing on 100% of packs -- field water ingress is catastrophic
+  - Design for serviceability: plan for cell replacement even if CTB architecture
+  - Validate fatigue life of adhesive bonds under road load spectrum (10M+ cycles)
+  - Monitor adhesive cure with embedded sensors during production for process control
+  - Coordinate battery tray tolerances with body-in-white tolerances for mounting fit
+
+
+  ## Common Patterns
+
+  ### CTP Assembly Line Layout
+
+  ```
+  Station 1: Tray load + inspection
+  Station 2: TIM application (robotic dispensing)
+  Station 3-4: Cell insertion (vision-guided robots)
+  Station 5: Structural adhesive dispensing
+  Station 6: Busbar installation + laser welding
+  Station 7: BMS harness and connector installation
+  Station 8: Cover sealant + cover installation
+  Station 9: Adhesive cure (oven or IR heating)
+  Station 10: Leak test + electrical test + EOL
+  ```
+
+  ### Quality Gate Checkpoints
+
+  ```
+  Gate 1 (after tray):     Dimensional scan, sealing surface check
+  Gate 2 (after cells):    Cell position verification, OCV check
+  Gate 3 (after welding):  Weld quality inspection, insulation resistance
+  Gate 4 (after sealing):  Leak test IP67, HiPot test
+  Gate 5 (EOL):           Full charge/discharge, BMS communication, crash readiness
+  ```
+
+
+  ## Troubleshooting
+
+  - **Adhesive bead inconsistency**: Check dispensing temperature, nozzle wear, material viscosity
+  - **Leak test failures at cover seal**: Verify sealing surface flatness, gasket compression
+  - **Cell insertion force too high**: Check tray pocket dimensions, TIM pad oversize
+  - **Busbar weld defects**: Adjust laser parameters, verify cell terminal cleanliness
+  - **Thermal hotspots in operation**: Review TIM coverage, check for air voids in gap filler
+  - **Crash test intrusion exceeds limit**: Redesign cross-member spacing, add reinforcement
+
+constraints:
+- Structural battery limits repairability and cell replacement options
+- Adhesive cure time impacts production line throughput and floor space
+- Crash safety certification requires extensive physical testing program
+- Dimensional stack-up between cells, TIM, tray, and body is extremely tight
+tools_required:
+- Adhesive dispensing systems (Atlas Copco, Graco, Nordson)
+- Leak test equipment (Inficon, ATEQ, Cincinnati Test Systems)
+- Laser welding (Trumpf, IPG Photonics, Coherent)
+- Vision systems for cell placement (Cognex, Keyence)
+- Thermal simulation (ANSYS Fluent, Star-CCM+)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- battery-pack
+- structural-battery
+- ev-manufacturing
+- cell-to-pack
+- automotive

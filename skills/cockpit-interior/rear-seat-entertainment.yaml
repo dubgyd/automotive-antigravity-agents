@@ -1,0 +1,163 @@
+name: rear-seat-entertainment
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Passenger entertainment systems for rear-seat occupants covering headrest displays, ceiling screens, streaming integration, gaming, and individual audio zone management."
+use_cases:
+  - "Designing headrest-mounted display systems with individual content playback"
+  - "Implementing ceiling-mounted fold-down screens for shared viewing"
+  - "Building streaming service integration with DRM-compliant playback pipelines"
+  - "Creating in-vehicle gaming platforms with controller and cloud gaming support"
+  - "Integrating rear-seat entertainment with front-seat controls for parental management"
+automotive_standards:
+  - "HDMI Licensing for in-vehicle HDMI input connections"
+  - "Widevine L1 and FairPlay DRM requirements for streaming service certification"
+  - "Miracast and AirPlay wireless display protocols for device mirroring"
+  - "Bluetooth A2DP and LE Audio for wireless headphone connections"
+  - "ISO 15008 - Display readability for passenger viewing distances"
+instructions: |
+  # Rear-Seat Entertainment
+
+  ## Overview
+  Rear-seat entertainment systems transform the back of the vehicle into a personal
+  theater, gaming station, or productivity workspace for passengers. Modern
+  implementations range from headrest-mounted tablets to large ceiling screens,
+  supporting streaming video, cloud gaming, wireless device mirroring, and Bluetooth
+  audio. Each rear seat position can operate independently with its own content,
+  audio zone, and input method while the driver maintains control over volume limits
+  and content restrictions.
+
+  ## Key Concepts
+
+  ### Display Configurations
+  Multiple form factors serve different vehicle segments:
+  - Headrest-mounted displays (8 to 12 inches) provide individual viewing per seat
+  - Ceiling fold-down display (13 to 17 inches) serves as shared viewing for the row
+  - Seatback-integrated screens replace traditional headrest-mount with flush integration
+  - Detachable tablets that mount to the headrest but can be removed for handheld use
+
+  ### Content Sources
+  Entertainment content reaches rear screens through several paths:
+  - Built-in streaming apps (Netflix, YouTube, Disney+) running natively on the system
+  - HDMI input for game consoles, laptops, and external media players
+  - Wireless screen mirroring from smartphones via Miracast, AirPlay, or Chromecast
+  - USB media playback for locally stored video and music files
+  - Cloud gaming services (Xbox Cloud, GeForce Now) for controller-based gaming
+
+  ### Audio Management
+  Isolating rear-seat audio from the driver and other passengers:
+  - Bluetooth headphone pairing per seat position for private listening
+  - LE Audio broadcast mode allowing multiple headphones per single source
+  - Headrest speakers creating a personal sound zone without headphones
+  - Audio routing that prevents rear entertainment from reaching the driver zone
+
+  ## Implementation Guide
+
+  ### Step 1 - Select Display Hardware
+  Choose the display configuration for the target vehicle:
+  - Define screen size based on viewing distance (typically 600 to 800 mm from eyes)
+  - Select resolution appropriate for the size (1080p minimum for 10 inch and above)
+  - Choose between LCD and OLED based on contrast and power budget trade-offs
+  - Design the mount for vibration resistance and passenger head impact safety
+
+  ### Step 2 - Build the Media Platform
+  Implement the computing and playback infrastructure:
+  - Use an ARM SoC with hardware video decode supporting H.264, H.265, and VP9
+  - Implement a secure media pipeline with TEE for DRM content protection
+  - Achieve Widevine L1 and FairPlay certification for streaming service compatibility
+  - Support simultaneous independent playback on two or more rear displays
+
+  ### Step 3 - Integrate Streaming Services
+  Onboard major entertainment platforms:
+  - Implement the Netflix Partner SDK with vehicle-specific UI adaptations
+  - Integrate YouTube using the YouTube on TV API
+  - Support app installation from an automotive app store for additional services
+  - Implement cellular data management with configurable bandwidth limits
+
+  ### Step 4 - Enable Gaming
+  Build the gaming capability for rear-seat passengers:
+  - Support Bluetooth game controllers paired per seat position
+  - Implement cloud gaming client supporting Xbox Cloud Gaming and GeForce Now
+  - Provide HDMI input for portable game consoles
+  - Optimize network latency for cloud gaming by prioritizing gaming traffic on the modem
+
+  ### Step 5 - Implement Parental and Driver Controls
+  Give the driver oversight of rear-seat entertainment:
+  - Content rating filters configurable from the front-seat HMI
+  - Volume limit enforcement that caps rear audio regardless of passenger adjustment
+  - Screen time management with configurable daily limits per profile
+  - One-touch mute-all that silences rear entertainment during important announcements
+
+  ## Best Practices
+
+  ### Content Protection
+  - Maintain Widevine L1 hardware security level for HD streaming content
+  - Route all DRM content through the trusted execution environment
+  - Disable screen capture and recording on DRM-protected content paths
+  - Implement secure HDCP on any HDMI output or input connections
+
+  ### Network Bandwidth
+  - Implement adaptive bitrate streaming that responds to cellular signal quality
+  - Set default streaming quality to 720p to conserve data on metered connections
+  - Allow passengers to override quality settings up to the maximum available bandwidth
+  - Display data usage per session so passengers are aware of consumption
+
+  ### Thermal Management
+  - Size the SoC thermal solution for sustained 4K video decode at cabin soak temperature
+  - Implement thermal throttling that reduces resolution before allowing visible stuttering
+  - Monitor display surface temperature and dim if it exceeds 45 C at the touch surface
+  - Route cooling air from the HVAC system behind headrest-mounted displays
+
+  ## Troubleshooting
+
+  ### Streaming App Shows Low Resolution
+  Check cellular signal strength and available bandwidth. Verify the DRM security level
+  is L1, as L3 fallback restricts maximum resolution. Inspect the adaptive bitrate
+  ladder to confirm higher quality variants are being offered by the CDN.
+
+  ### Bluetooth Headphones Have Audio Lag
+  Switch to a low-latency Bluetooth codec (aptX Low Latency or LE Audio). Check that
+  the audio pipeline is not adding unnecessary buffering. Verify the headphone firmware
+  supports the low-latency mode being requested.
+
+  ### Cloud Gaming Feels Laggy
+  Measure the round-trip network latency to the gaming server. Verify the cellular
+  connection is meeting the minimum 20 Mbps bandwidth requirement. Check that QoS
+  traffic prioritization is active for the gaming data flow.
+
+  ### HDMI Input Shows No Signal
+  Verify the HDMI cable connection at both ends. Check HDCP handshake status in the
+  display diagnostic menu. Try a different HDMI cable as automotive vibration can
+  degrade connector contact quality over time.
+
+  ## Integration Patterns
+
+  ### Multi-Screen Content Sharing
+  Enabling content coordination across vehicle displays:
+  - Allow a passenger to cast rear screen content to the front center display for sharing
+  - Implement synchronized playback across two rear screens for same-content viewing
+  - Support picture-in-picture where navigation overlay appears on entertainment screens
+  - Route emergency vehicle warnings to all screens simultaneously regardless of content
+
+  ### Subscription and Account Management
+  Handling streaming service authentication in a multi-user vehicle:
+  - Link streaming accounts to driver profiles for automatic sign-in when identified
+  - Support guest account access with limited functionality for ride-share passengers
+  - Manage concurrent stream limits across vehicle and household devices intelligently
+  - Handle subscription expiration gracefully with clear messaging and renewal options
+
+  ## Testing and Validation
+
+  ### Video Quality Assessment
+  Measure playback quality under automotive conditions:
+  - Verify frame rate stability during cellular handover between towers
+  - Test adaptive bitrate switching smoothness under variable bandwidth conditions
+  - Measure audio-video synchronization across all supported streaming applications
+  - Validate HDR content rendering on displays that support wide color gamut
+
+  ### Head Impact Safety Testing
+  Verify display mounting meets occupant protection requirements:
+  - Test headrest-mounted displays against ECE R17 head restraint impact requirements
+  - Verify display housing materials meet FMVSS 201 head impact deceleration limits
+  - Ensure broken display does not create sharp edges that could injure occupants
+  - Test display retention under 20 g frontal deceleration to prevent projectile hazard

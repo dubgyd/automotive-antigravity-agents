@@ -1,0 +1,495 @@
+name: sotif-sensor-insufficiency
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: functional-insufficiency
+description: Analysis of sensor performance limitations and degraded conditions (rain, fog, glare) that expose functional insufficiencies in ADAS/AD systems.
+use_cases:
+- Sensor performance envelope definition
+- Degraded condition impact analysis
+- Multi-sensor fusion requirements derivation
+- ODD boundary definition based on sensor limits
+- Sensor cleaning system requirements
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-8 (Supporting Processes)
+- SAE J3016
+- ISO 19206 Road Vehicles Ultrasonic
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in analyzing sensor performance limitations and degraded conditions that lead to functional insufficiencies, a primary source of SOTIF hazards in ADAS/AD systems.
+
+
+  ### Sensor Types and Limitations
+
+
+  **Camera (Optical)**:
+
+  - Detection range: 50-200m (limited by resolution, optics)
+
+  - Degradation: Rain, fog, snow, dirt, sun glare, darkness
+
+  - Blind spots: Direct sun (5-15° above horizon), low contrast scenes
+
+  - Failure modes: False negatives (missed detection), false classification
+
+
+  **Radar (77 GHz)**:
+
+  - Detection range: 150-250m (long-range), 30-80m (short-range)
+
+  - Degradation: Heavy rain (slight), metallic reflections, ground clutter
+
+  - Blind spots: Stationary objects (no Doppler), soft targets (pedestrians)
+
+  - Failure modes: Ghost objects (multipath), missed VRUs
+
+
+  **Lidar (905 nm / 1550 nm)**:
+
+  - Detection range: 100-200m (mechanical), 50-100m (solid-state)
+
+  - Degradation: Rain/fog/snow (severe), dirt, direct sun
+
+  - Blind spots: Transparent objects (glass), specular surfaces
+
+  - Failure modes: Point cloud sparsity, missed detections in precipitation
+
+
+  **Ultrasonic (40 kHz)**:
+
+  - Detection range: 0.2-5m (parking assistance)
+
+  - Degradation: Temperature, air pressure, surface texture
+
+  - Blind spots: Soft/angled surfaces (absorb ultrasound)
+
+  - Failure modes: False echoes, missed small objects
+
+
+  ### Environmental Degradation Conditions
+
+
+  **Rain**:
+
+  - Camera: Water droplets on lens, reduced visibility, reflections
+
+  - Radar: Attenuation at 77 GHz (minor, ~0.5 dB/km at 25 mm/h)
+
+  - Lidar: Scattering from raindrops (severe, detection range halved at 10 mm/h)
+
+
+  **Fog**:
+
+  - Camera: Scattering reduces contrast (visibility < 100m in dense fog)
+
+  - Radar: Minimal impact (wavelength >> fog droplet size)
+
+  - Lidar: Severe scattering (detection range < 30m in dense fog)
+
+
+  **Snow**:
+
+  - Camera: Occluded by falling snow, white background, lens accumulation
+
+  - Radar: Clutter from falling snow (increased false positives)
+
+  - Lidar: Severe scattering, point cloud noise
+
+
+  **Sun Glare**:
+
+  - Camera: Sensor saturation, lens flare (critical at low sun angles 5-15°)
+
+  - Radar: No impact
+
+  - Lidar: Sensor saturation (905 nm more susceptible than 1550 nm)
+
+
+  **Darkness**:
+
+  - Camera: Reduced SNR, requires headlight illumination (range ~50m)
+
+  - Radar: No impact
+
+  - Lidar: No impact (active sensor)
+
+
+  **Dirt/Contamination**:
+
+  - Camera: Reduced visibility, must clean >70% lens area
+
+  - Radar: Minimal (unless heavy mud buildup)
+
+  - Lidar: Severe (dust/dirt on rotating mirror or lens)
+
+
+  ## Sensor Performance Modeling
+
+
+  ```python
+
+  import numpy as np
+
+
+  class SensorPerformanceModel:
+
+      """Model sensor detection range under various conditions"""
+
+
+      def __init__(self, sensor_type):
+
+          self.sensor_type = sensor_type
+
+          self.nominal_range = self._get_nominal_range()
+
+
+
+      def _get_nominal_range(self):
+
+          """Nominal detection range in clear conditions"""
+
+          ranges = {
+
+              "camera": 150,  # meters
+
+              "radar_lr": 250,
+
+              "lidar": 120,
+
+              "ultrasonic": 5
+
+          }
+
+          return ranges.get(self.sensor_type, 100)
+
+
+
+      def calculate_degraded_range(self, rain_mm_h=0, fog_visibility_m=1000,
+
+                                    sun_angle_deg=90, contamination_pct=0):
+
+          """
+
+          Calculate effective detection range under degraded conditions
+
+
+          Parameters:
+
+          - rain_mm_h: Rain intensity (mm/hour)
+
+          - fog_visibility_m: Visibility distance in fog (meters)
+
+          - sun_angle_deg: Sun angle above horizon (degrees)
+
+          - contamination_pct: Sensor contamination percentage (0-100)
+
+
+          Returns:
+
+          - Effective detection range (meters)
+
+          """
+
+          range_multiplier = 1.0
+
+
+          # Rain degradation
+
+          if self.sensor_type == "camera":
+
+              range_multiplier *= max(0.3, 1 - 0.02 * rain_mm_h)
+
+          elif self.sensor_type == "lidar":
+
+              range_multiplier *= max(0.2, 1 - 0.05 * rain_mm_h)
+
+          # Radar largely unaffected
+
+
+          # Fog degradation
+
+          if self.sensor_type in ["camera", "lidar"]:
+
+              if fog_visibility_m < 200:
+
+                  range_multiplier *= min(1.0, fog_visibility_m / 200)
+
+
+          # Sun glare (camera and lidar)
+
+          if 5 <= sun_angle_deg <= 15:
+
+              if self.sensor_type == "camera":
+
+                  range_multiplier *= 0.1  # Severe degradation
+
+              elif self.sensor_type == "lidar":
+
+                  range_multiplier *= 0.5
+
+
+          # Contamination
+
+          if contamination_pct > 30:
+
+              range_multiplier *= max(0.1, (100 - contamination_pct) / 70)
+
+
+          effective_range = self.nominal_range * range_multiplier
+
+          return effective_range
+
+
+  # Example usage
+
+  camera = SensorPerformanceModel("camera")
+
+  lidar = SensorPerformanceModel("lidar")
+
+  radar = SensorPerformanceModel("radar_lr")
+
+
+  # Scenario: Heavy rain (20 mm/h)
+
+  print(f"Camera range in heavy rain: {camera.calculate_degraded_range(rain_mm_h=20):.1f}m")
+
+  print(f"Lidar range in heavy rain: {lidar.calculate_degraded_range(rain_mm_h=20):.1f}m")
+
+  print(f"Radar range in heavy rain: {radar.calculate_degraded_range(rain_mm_h=20):.1f}m")
+
+
+  # Scenario: Sun glare at 10° above horizon
+
+  print(f"Camera range in sun glare: {camera.calculate_degraded_range(sun_angle_deg=10):.1f}m")
+
+  ```
+
+
+  ## Multi-Sensor Fusion Strategy
+
+
+  **Complementary Strengths**:
+
+  - Camera: High resolution, classification, lane markings
+
+  - Radar: All-weather, velocity measurement (Doppler), long range
+
+  - Lidar: 3D geometry, obstacle shape, mid-range accuracy
+
+
+  **Fusion Architecture**:
+
+  - Early fusion: Combine raw sensor data (high complexity)
+
+  - Late fusion: Combine object lists (common approach)
+
+  - Hybrid fusion: Combine features + objects
+
+
+  **Degraded Condition Strategy**:
+
+
+  | Condition | Primary Sensor | Secondary Sensor | Fallback |
+
+  |-----------|----------------|------------------|----------|
+
+  | Clear day | Camera | Lidar | Radar |
+
+  | Night | Lidar | Radar | Camera (limited) |
+
+  | Rain | Radar | Camera | Lidar (degraded) |
+
+  | Fog | Radar | Lidar (short range) | Camera (unusable) |
+
+  | Sun glare | Radar | Lidar | Camera (blind) |
+
+
+  ## ODD Definition Based on Sensor Limits
+
+
+  ```python
+
+  class ODDBoundaryChecker:
+
+      """Determine if current conditions are within ODD based on sensor performance"""
+
+
+      def __init__(self, required_detection_range=100):
+
+          self.required_range = required_detection_range
+
+          self.camera = SensorPerformanceModel("camera")
+
+          self.lidar = SensorPerformanceModel("lidar")
+
+          self.radar = SensorPerformanceModel("radar_lr")
+
+
+
+      def is_within_odd(self, rain_mm_h, fog_visibility_m, sun_angle_deg, contamination_pct):
+
+          """Check if sensor performance meets requirements"""
+
+          camera_range = self.camera.calculate_degraded_range(
+
+              rain_mm_h, fog_visibility_m, sun_angle_deg, contamination_pct)
+
+          lidar_range = self.lidar.calculate_degraded_range(
+
+              rain_mm_h, fog_visibility_m, sun_angle_deg, contamination_pct)
+
+          radar_range = self.radar.calculate_degraded_range(
+
+              rain_mm_h, fog_visibility_m, sun_angle_deg, contamination_pct)
+
+
+          # Require at least 2 sensors meet range requirement (redundancy)
+
+          sensors_ok = sum([
+
+              camera_range >= self.required_range,
+
+              lidar_range >= self.required_range,
+
+              radar_range >= self.required_range
+
+          ])
+
+
+          return sensors_ok >= 2
+
+
+  # Example: Check ODD compliance
+
+  odd_checker = ODDBoundaryChecker(required_detection_range=100)
+
+
+  # Scenario 1: Light rain (5 mm/h)
+
+  in_odd = odd_checker.is_within_odd(rain_mm_h=5, fog_visibility_m=500,
+
+                                      sun_angle_deg=45, contamination_pct=10)
+
+  print(f"Light rain - Within ODD: {in_odd}")
+
+
+  # Scenario 2: Heavy rain (25 mm/h) + fog
+
+  in_odd = odd_checker.is_within_odd(rain_mm_h=25, fog_visibility_m=80,
+
+                                      sun_angle_deg=45, contamination_pct=10)
+
+  print(f"Heavy rain + fog - Within ODD: {in_odd}")
+
+  ```
+
+
+  ## Mitigation Strategies
+
+
+  **Design-Based**:
+
+  - Multi-sensor redundancy (camera + radar + lidar)
+
+  - Sensor cleaning systems (washer, air jets, heating)
+
+  - Sensor placement optimization (avoid spray zones)
+
+  - Robust sensor hardware (heated lenses, hydrophobic coatings)
+
+
+  **Algorithm-Based**:
+
+  - Sensor quality monitoring (detect degradation)
+
+  - Dynamic sensor weighting (prioritize best sensor)
+
+  - Graceful degradation (reduce speed when sensors degrade)
+
+  - Map-based fallback (use HD maps when sensors insufficient)
+
+
+  **ODD-Based**:
+
+  - Exclude conditions where sensor performance insufficient
+
+  - Example: No operation in heavy rain (> 20 mm/h), dense fog (< 100m visibility)
+
+
+  ## Deliverables
+
+
+  - Sensor performance envelope specification (range vs environmental conditions)
+
+  - Degraded condition impact analysis
+
+  - Multi-sensor fusion architecture requirements
+
+  - ODD boundary definition based on sensor limits
+
+  - Sensor monitoring and cleaning system requirements
+
+  - Test plan for sensor performance validation
+
+
+  ## Best Practices
+
+
+  - Model sensor performance under all ODD conditions (not just nominal)
+
+  - Validate sensor models with real-world testing (rain chamber, fog chamber)
+
+  - Require multi-sensor redundancy (no single point of failure)
+
+  - Monitor sensor health in real-time (contamination, alignment, faults)
+
+  - Define quantitative ODD boundaries (not qualitative "heavy rain")
+
+  - Test sensor cleaning system effectiveness
+
+  - Plan for graceful degradation (not abrupt system shutdown)
+
+
+  ## Common Pitfalls
+
+
+  - Overestimating sensor performance in degraded conditions
+
+  - Not considering combined degradation (rain + dirt + sun glare)
+
+  - Single sensor dependency (no redundancy)
+
+  - ODD boundaries too optimistic (insufficient safety margin)
+
+  - Not validating sensor models with field testing
+
+  '
+constraints:
+- Physics limits sensor performance (cannot eliminate all degradation)
+- Multi-sensor systems add cost and complexity
+- Sensor cleaning systems have limited capacity
+- Real-world conditions more variable than lab testing
+tools_required:
+- Sensor simulation tools (CARLA, VTD)
+- Weather chamber testing facilities
+- Sensor fusion frameworks (ROS, MATLAB)
+- Field testing instrumentation
+- Performance analysis tools (Python, MATLAB)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- sensor-insufficiency
+- degraded-conditions
+- multi-sensor-fusion
+- odd-boundary
+- camera
+- radar
+- lidar

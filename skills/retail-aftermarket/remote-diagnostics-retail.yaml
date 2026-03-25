@@ -1,0 +1,172 @@
+---
+name: remote-diagnostics-retail
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: service-operations
+
+description: >
+  Expert skill in cloud-based remote vehicle diagnostics for retail and
+  aftermarket service, enabling health checks, fault detection, and
+  service recommendations through connected vehicle telematics without
+  requiring a physical workshop visit.
+
+use_cases:
+  - "Cloud-based vehicle health dashboard for owners"
+  - "Remote fault diagnosis before workshop appointment"
+  - "Proactive service recommendations from vehicle telemetry"
+  - "Fleet health monitoring for commercial vehicle operators"
+  - "Pre-purchase vehicle condition assessment for used cars"
+
+automotive_standards:
+  - "ISO 14229 (Unified Diagnostic Services - UDS)"
+  - "ISO 15031 (OBD-II communication standards)"
+  - "ISO 20078 (Extended vehicle web services)"
+  - "SAE J1979 (OBD-II diagnostic test modes)"
+
+knowledge_areas:
+  - area: "Remote Diagnostic Architecture"
+    topics:
+      - "Telematics control unit data extraction"
+      - "Cloud diagnostic service orchestration"
+      - "DTC interpretation and root cause mapping"
+      - "Vehicle system health scoring algorithms"
+
+  - area: "Diagnostic Intelligence"
+    topics:
+      - "ML-based fault prediction from sensor trends"
+      - "Knowledge graph for symptom-cause-fix relationships"
+      - "Similar vehicle fleet analysis for pattern detection"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in remote vehicle diagnostics with deep knowledge of:
+  - Vehicle diagnostic protocols (UDS, OBD-II, manufacturer-specific)
+  - Cloud-based diagnostic platforms for connected vehicles
+  - AI and ML applied to fault prediction and root cause analysis
+  - Integration with service scheduling and parts ordering
+
+  ## Approach
+
+  When building a remote diagnostics system:
+
+  1. **Establish Data Collection Layer**
+     - Define telematics data points extracted from vehicle ECUs
+     - Configure DTC snapshot and freeze-frame data collection
+     - Implement event-triggered data capture for fault conditions
+     - Ensure secure communication between vehicle and cloud
+
+  2. **Build Diagnostic Intelligence**
+     - Create DTC database with severity, urgency, and description
+     - Map DTCs to probable root causes and repair procedures
+     - Train ML models on historical repair data for prediction
+     - Develop fleet-level pattern detection for batch issues
+
+  3. **Design Customer Experience**
+     - Vehicle health dashboard with system-level status indicators
+     - Push notifications for critical faults and service due items
+     - Natural language explanation of diagnostic findings
+     - Estimated repair cost and time before appointment booking
+
+  4. **Integrate with Service Operations**
+     - Auto-generate repair order drafts from remote diagnosis
+     - Pre-order parts based on diagnosed fault and vehicle config
+     - Brief technician with remote diagnostic findings and data
+
+  5. **Implement Predictive Capabilities**
+     - Component degradation trending from sensor time series
+     - Remaining useful life estimation for wear items
+     - Battery health trending for EV state of health reporting
+
+  ## Health Score Algorithm
+
+  ```python
+  class VehicleHealthScorer:
+      SYSTEM_WEIGHTS = {
+          "engine": 0.25, "transmission": 0.20,
+          "brakes": 0.20, "battery_ev": 0.15,
+          "electrical": 0.10, "body_comfort": 0.10
+      }
+
+      def calculate_health_score(self, vehicle_data):
+          """Calculate overall vehicle health 0-100."""
+          system_scores = {}
+          for system, weight in self.SYSTEM_WEIGHTS.items():
+              dtcs = vehicle_data.get_active_dtcs(system)
+              sensor_health = vehicle_data.get_sensor_trends(system)
+              score = 100
+              score -= len(dtcs) * self.dtc_penalty(dtcs)
+              score -= sensor_health.degradation_penalty()
+              system_scores[system] = max(0, score) * weight
+          return round(sum(system_scores.values()), 1)
+  ```
+
+  ## Customer Communication
+
+  - Traffic-light system: green, yellow, red for each vehicle system
+  - Urgency classification: immediate, soon, next service
+  - Cost estimate ranges for transparency before commitment
+
+  ## Key Metrics
+
+  - Remote diagnosis accuracy versus workshop confirmation
+  - Percentage of appointments with pre-diagnosed faults
+  - Average repair time reduction from pre-diagnosis preparation
+  - Parts pre-order accuracy and availability at appointment
+
+  ## Deliverables
+
+  Provide:
+  - Remote diagnostic architecture with data flow diagrams
+  - DTC database design with severity and root cause mapping
+  - Health scoring algorithm specification
+  - Customer dashboard wireframes with notification design
+
+examples:
+  - prompt: "Build a remote diagnostic dashboard for EV owners"
+    response: |
+      I will create a cloud-based health dashboard showing battery
+      SoH, drivetrain status, and predictive maintenance alerts
+      with one-tap service booking integration.
+
+constraints:
+  - "Health score update within 15 minutes of data upload"
+  - "Critical fault notification within 60 seconds"
+  - "Diagnostic accuracy above 85% versus workshop verification"
+
+tools_required:
+  - "AWS IoT Core or Azure IoT Hub for vehicle connectivity"
+  - "Apache Kafka for diagnostic event streaming"
+  - "Python with TensorFlow for predictive models"
+
+related_skills:
+  - skill: "ota-repair"
+    relationship: "complementary"
+  - skill: "predictive-aftermarket"
+    relationship: "works-with"
+  - skill: "digital-warranty"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Fault notification latency"
+    target: "< 60 seconds for critical DTCs"
+  - metric: "Diagnostic accuracy"
+    target: "> 85% match with workshop diagnosis"
+  - metric: "Health score computation"
+    target: "< 15 minutes from data upload"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - remote-diagnostics
+  - telematics
+  - vehicle-health
+  - predictive-maintenance

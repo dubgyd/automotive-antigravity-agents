@@ -1,0 +1,771 @@
+name: green-hydrogen-production
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: hydrogen-supply
+description: Expert skill in green hydrogen production via electrolysis, renewable energy integration, efficiency analysis, and well-to-wheel lifecycle assessment.
+use_cases:
+- PEM/Alkaline/SOEC electrolyzer technology selection
+- Renewable energy integration (solar, wind)
+- Hydrogen production efficiency and cost modeling
+- Well-to-wheel (WTW) carbon footprint analysis
+- Electrolyzer stack sizing and power electronics
+- Hydrogen purification and compression
+automotive_standards:
+- ISO 14687 (Hydrogen fuel quality for PEM fuel cells)
+- IEC 62282-3-100 (Fuel cell technologies - Stationary fuel cell power systems - Safety)
+- SAE J2719 (Information report on the development of a hydrogen quality guideline)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in green hydrogen production via water electrolysis, renewable energy integration, techno-economic analysis, and well-to-wheel carbon accounting. Deep understanding of PEM, alkaline, and solid oxide electrolyzers, as well as hydrogen purification and compression.
+
+
+  ### Electrolysis Technologies
+
+
+  **1. PEM (Proton Exchange Membrane) Electrolyzer**:
+
+  - **Electrolyte**: Solid polymer membrane (Nafion)
+
+  - **Operating temp**: 50-80°C
+
+  - **Efficiency**: 60-70% (HHV basis)
+
+  - **Current density**: 1-3 A/cm²
+
+  - **Pros**: Fast transient response, compact, high purity H2
+
+  - **Cons**: High cost (Pt/Ir catalysts), acidic environment
+
+
+  **2. Alkaline Electrolyzer**:
+
+  - **Electrolyte**: KOH solution (20-30%)
+
+  - **Operating temp**: 60-90°C
+
+  - **Efficiency**: 60-70% (HHV basis)
+
+  - **Current density**: 0.2-0.5 A/cm²
+
+  - **Pros**: Mature technology, low cost, no precious metals
+
+  - **Cons**: Slower transient response, larger footprint, impurities
+
+
+  **3. SOEC (Solid Oxide Electrolysis Cell)**:
+
+  - **Electrolyte**: Yttria-stabilized zirconia (YSZ) ceramic
+
+  - **Operating temp**: 700-900°C
+
+  - **Efficiency**: 80-90% (HHV, with heat integration)
+
+  - **Current density**: 0.3-1 A/cm²
+
+  - **Pros**: Highest efficiency, can use waste heat
+
+  - **Cons**: High temperature, thermal cycling challenges, early stage
+
+
+  ```python
+
+  class ElectrolyzerModel:
+
+      def __init__(self, technology="PEM"):
+
+          self.technology = technology
+
+          self.efficiency_HHV = 0.65  # Default 65% HHV
+
+          self.stack_power_MW = 1.0   # 1 MW stack
+
+          self.current_density = 1.5  # A/cm² (PEM typical)
+
+
+
+      def calculate_h2_production_rate(self, P_electrical_MW):
+
+          """
+
+          Calculate H2 production rate from electrical power.
+
+
+
+          Args:
+
+              P_electrical_MW: Electrical power input [MW]
+
+
+
+          Returns:
+
+              m_H2_kg_hr: H2 production rate [kg/hr]
+
+          """
+
+          # HHV of H2 = 141.8 MJ/kg = 39.4 kWh/kg
+
+          HHV_H2_kWh_kg = 39.4
+
+
+
+          # H2 production rate
+
+          m_H2_kg_hr = (P_electrical_MW * 1000 * self.efficiency_HHV) / HHV_H2_kWh_kg
+
+
+
+          return m_H2_kg_hr
+
+
+
+      def calculate_stack_voltage(self, I_density):
+
+          """
+
+          Calculate electrolyzer cell voltage.
+
+
+
+          V_cell = V_tn + V_act + V_ohm
+
+          """
+
+          # Thermoneutral voltage (HHV basis)
+
+          V_tn = 1.48  # V
+
+
+
+          # Activation overpotential (simplified)
+
+          V_act = 0.1 + 0.05 * I_density  # V
+
+
+
+          # Ohmic overpotential
+
+          R_membrane = 0.15 / 1000  # Ohm·cm² (Nafion)
+
+          V_ohm = I_density * R_membrane
+
+
+
+          V_cell = V_tn + V_act + V_ohm
+
+
+
+          return V_cell
+
+
+
+      def size_electrolyzer_stack(self, H2_target_kg_day):
+
+          """
+
+          Size electrolyzer stack for target H2 production.
+
+
+
+          Args:
+
+              H2_target_kg_day: Target H2 production [kg/day]
+
+
+
+          Returns:
+
+              P_stack_MW: Required stack power [MW]
+
+          """
+
+          # Convert to kg/hr
+
+          H2_kg_hr = H2_target_kg_day / 24
+
+
+
+          # Required electrical power
+
+          HHV_H2_kWh_kg = 39.4
+
+          P_stack_MW = (H2_kg_hr * HHV_H2_kWh_kg) / (1000 * self.efficiency_HHV)
+
+
+
+          return P_stack_MW
+
+  ```
+
+
+  ### Renewable Energy Integration
+
+
+  **Solar PV + Electrolyzer**:
+
+  - **Challenge**: Intermittency (capacity factor 15-25%)
+
+  - **Solution**: Oversize PV array, battery buffer, or grid connection
+
+
+  **Wind + Electrolyzer**:
+
+  - **Challenge**: Variable power (capacity factor 30-50%)
+
+  - **Solution**: Electrolyzer with wide operating range (20-100% power)
+
+
+  ```python
+
+  class RenewableH2System:
+
+      def __init__(self):
+
+          self.PV_capacity_MW = 5.0
+
+          self.wind_capacity_MW = 3.0
+
+          self.electrolyzer_capacity_MW = 2.0
+
+          self.battery_capacity_MWh = 1.0  # Buffer storage
+
+
+
+      def simulate_hourly_production(self, solar_irradiance, wind_speed, hours=8760):
+
+          """
+
+          Simulate annual H2 production from renewables.
+
+
+
+          Args:
+
+              solar_irradiance: Array of solar irradiance [W/m²] (8760 hours)
+
+              wind_speed: Array of wind speed [m/s] (8760 hours)
+
+              hours: Simulation hours (8760 = 1 year)
+
+
+
+          Returns:
+
+              H2_annual_kg: Total H2 produced [kg/year]
+
+          """
+
+          import numpy as np
+
+
+
+          H2_total_kg = 0.0
+
+          battery_SOC = 0.5  # Start at 50%
+
+
+
+          for h in range(hours):
+
+              # PV power (simplified)
+
+              P_pv = self.PV_capacity_MW * (solar_irradiance[h] / 1000) * 0.18  # 18% eff
+
+
+
+              # Wind power (simplified power curve)
+
+              if wind_speed[h] < 3:
+
+                  P_wind = 0
+
+              elif wind_speed[h] < 12:
+
+                  P_wind = self.wind_capacity_MW * ((wind_speed[h] - 3) / 9) ** 3
+
+              else:
+
+                  P_wind = self.wind_capacity_MW
+
+
+
+              # Total renewable power
+
+              P_renewable = P_pv + P_wind
+
+
+
+              # Electrolyzer power (clamped to capacity)
+
+              P_electrolyzer = min(P_renewable, self.electrolyzer_capacity_MW)
+
+
+
+              # Excess to battery
+
+              P_excess = P_renewable - P_electrolyzer
+
+              battery_SOC += (P_excess / self.battery_capacity_MWh) * 1.0  # 1 hour
+
+              battery_SOC = max(0, min(1, battery_SOC))
+
+
+
+              # H2 production
+
+              electrolyzer = ElectrolyzerModel(technology="PEM")
+
+              H2_kg_hr = electrolyzer.calculate_h2_production_rate(P_electrolyzer)
+
+              H2_total_kg += H2_kg_hr
+
+
+
+          return H2_total_kg
+
+  ```
+
+
+  ### Hydrogen Purification
+
+
+  **ISO 14687 quality requirements for PEM fuel cells**:
+
+  - **H2 purity**: 99.97% minimum
+
+  - **Total hydrocarbons**: < 2 ppm
+
+  - **CO**: < 0.2 ppm
+
+  - **CO2**: < 2 ppm
+
+  - **H2O**: < 5 ppm
+
+  - **Particulates**: ISO 8573-1 Class 4
+
+
+  **Purification methods**:
+
+  - **PSA (Pressure Swing Adsorption)**: Removes N2, O2, CO2, H2O
+
+  - **Membrane separation**: Removes O2, N2 (lower purity)
+
+  - **Cryogenic**: High purity but energy-intensive
+
+
+  ```c
+
+  typedef struct {
+
+      float H2_purity;       // % (target 99.97%)
+
+      float CO_ppm;          // ppm (target < 0.2)
+
+      float H2O_ppm;         // ppm (target < 5)
+
+      bool meets_iso14687;
+
+  } H2Quality_t;
+
+
+
+  void check_h2_quality(H2Quality_t *quality) {
+
+      quality->meets_iso14687 = true;
+
+
+
+      if (quality->H2_purity < 99.97f) {
+
+          printf("FAIL: H2 purity %.3f%% < 99.97%%\n", quality->H2_purity);
+
+          quality->meets_iso14687 = false;
+
+      }
+
+
+
+      if (quality->CO_ppm > 0.2f) {
+
+          printf("FAIL: CO %.2f ppm > 0.2 ppm\n", quality->CO_ppm);
+
+          quality->meets_iso14687 = false;
+
+      }
+
+
+
+      if (quality->H2O_ppm > 5.0f) {
+
+          printf("FAIL: H2O %.2f ppm > 5 ppm\n", quality->H2O_ppm);
+
+          quality->meets_iso14687 = false;
+
+      }
+
+
+
+      if (quality->meets_iso14687) {
+
+          printf("PASS: H2 quality meets ISO 14687\n");
+
+      }
+
+  }
+
+  ```
+
+
+  ### Compression and Storage
+
+
+  **Compression stages**:
+
+  - **Electrolyzer output**: 10-30 bar
+
+  - **Intermediate storage**: 200 bar (tube trailer transport)
+
+  - **Station storage**: 900 bar (for 700 bar vehicle refueling)
+
+
+  **Compressor types**:
+
+  - **Mechanical (piston, diaphragm)**: 60-70% isentropic efficiency
+
+  - **Ionic liquid**: 80-85% efficiency, lower maintenance
+
+  - **Electrochemical**: Integrated with electrolyzer, 90% eff (emerging)
+
+
+  ```python
+
+  def calculate_compression_energy(m_H2_kg, P_in_bar, P_out_bar, T_in_K=298):
+
+      """
+
+      Calculate energy required to compress hydrogen.
+
+
+
+      Args:
+
+          m_H2_kg: H2 mass [kg]
+
+          P_in_bar: Inlet pressure [bar]
+
+          P_out_bar: Outlet pressure [bar]
+
+          T_in_K: Inlet temperature [K]
+
+
+
+      Returns:
+
+          W_compression_kWh: Compression energy [kWh]
+
+      """
+
+      import numpy as np
+
+
+
+      gamma = 1.4  # Heat capacity ratio for H2
+
+      R_specific = 4124  # J/(kg·K) for H2
+
+      eta_compressor = 0.65  # Isentropic efficiency
+
+
+
+      # Number of stages (assume PR = 3 per stage)
+
+      PR_total = P_out_bar / P_in_bar
+
+      N_stages = int(np.ceil(np.log(PR_total) / np.log(3)))
+
+      PR_stage = PR_total ** (1 / N_stages)
+
+
+
+      # Isentropic work per stage
+
+      W_stage = (gamma / (gamma - 1)) * R_specific * T_in_K * \
+
+                (PR_stage ** ((gamma - 1) / gamma) - 1)
+
+
+
+      # Total work (all stages)
+
+      W_total = W_stage * N_stages / eta_compressor  # J/kg
+
+
+
+      # Total energy
+
+      W_compression_kWh = (W_total * m_H2_kg) / 3.6e6  # kWh
+
+
+
+      return W_compression_kWh
+
+  ```
+
+
+  ### Well-to-Wheel Analysis
+
+
+  **Pathway comparison**:
+
+  - **Green H2 FCEV**: Renewable electricity → Electrolyzer → H2 → FC → Wheels
+
+  - **BEV**: Renewable electricity → Battery → Motor → Wheels
+
+  - **Gasoline ICE**: Crude oil → Refining → Combustion → Wheels
+
+
+  ```python
+
+  def calculate_wtw_efficiency(pathway="green_h2_fcev"):
+
+      """
+
+      Calculate well-to-wheel efficiency.
+
+
+
+      Returns:
+
+          WTW efficiency (electricity/fuel to wheels)
+
+      """
+
+      if pathway == "green_h2_fcev":
+
+          eta_electrolyzer = 0.65  # HHV basis
+
+          eta_compression = 0.90   # 10% loss
+
+          eta_fc_system = 0.55     # FC system efficiency
+
+          eta_motor = 0.95
+
+          eta_wtw = eta_electrolyzer * eta_compression * eta_fc_system * eta_motor
+
+          # ~0.32 (32%)
+
+
+
+      elif pathway == "bev":
+
+          eta_charging = 0.95
+
+          eta_battery = 0.90
+
+          eta_motor = 0.95
+
+          eta_wtw = eta_charging * eta_battery * eta_motor
+
+          # ~0.81 (81%)
+
+
+
+      elif pathway == "gasoline_ice":
+
+          eta_refining = 0.88
+
+          eta_ice = 0.25  # Thermal efficiency
+
+          eta_wtw = eta_refining * eta_ice
+
+          # ~0.22 (22%)
+
+
+
+      return eta_wtw
+
+  ```
+
+
+  ### Techno-Economic Analysis
+
+
+  ```python
+
+  def calculate_levelized_cost_of_h2(CAPEX_electrolyzer_per_kW=800,
+
+                                     electricity_price_per_kWh=0.03,
+
+                                     electrolyzer_lifetime_years=20,
+
+                                     capacity_factor=0.4):
+
+      """
+
+      Calculate Levelized Cost of Hydrogen (LCOH).
+
+
+
+      Args:
+
+          CAPEX_electrolyzer_per_kW: Capital cost [$/kW]
+
+          electricity_price_per_kWh: Electricity price [$/kWh]
+
+          electrolyzer_lifetime_years: Equipment lifetime [years]
+
+          capacity_factor: Utilization (0-1)
+
+
+
+      Returns:
+
+          LCOH: Levelized cost of H2 [$/kg]
+
+      """
+
+      # Assumptions
+
+      stack_efficiency_HHV = 0.65
+
+      HHV_H2_kWh_kg = 39.4
+
+      O_M_pct_CAPEX = 0.03  # 3% O&M per year
+
+
+
+      # CAPEX amortization
+
+      discount_rate = 0.07
+
+      CRF = (discount_rate * (1 + discount_rate) ** electrolyzer_lifetime_years) / \
+
+            ((1 + discount_rate) ** electrolyzer_lifetime_years - 1)
+
+
+
+      CAPEX_per_kg_H2 = (CAPEX_electrolyzer_per_kW * CRF) / \
+
+                        (8760 * capacity_factor * stack_efficiency_HHV / HHV_H2_kWh_kg)
+
+
+
+      # O&M cost
+
+      O_M_per_kg_H2 = (CAPEX_electrolyzer_per_kW * O_M_pct_CAPEX) / \
+
+                      (8760 * capacity_factor * stack_efficiency_HHV / HHV_H2_kWh_kg)
+
+
+
+      # Electricity cost
+
+      electricity_per_kg_H2 = HHV_H2_kWh_kg / stack_efficiency_HHV * electricity_price_per_kWh
+
+
+
+      # Total LCOH
+
+      LCOH = CAPEX_per_kg_H2 + O_M_per_kg_H2 + electricity_per_kg_H2
+
+
+
+      return LCOH
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Technology Selection**: Choose PEM, alkaline, or SOEC based on requirements
+
+  2. **Renewable Integration**: Design PV/wind capacity and battery buffer
+
+  3. **Stack Sizing**: Calculate electrolyzer power for target H2 production
+
+  4. **Purification Design**: Select PSA or membrane separation for ISO 14687 compliance
+
+  5. **Compression Sizing**: Calculate stages and power for target pressure
+
+  6. **WTW Analysis**: Compare green H2 pathway to BEV and ICE alternatives
+
+  7. **Economic Modeling**: Calculate LCOH and compare to grey/blue H2
+
+
+  ## Deliverables
+
+
+  - Electrolyzer technology selection study (PEM vs alkaline vs SOEC)
+
+  - Renewable integration model (PV/wind sizing, annual H2 production)
+
+  - Stack sizing calculations and efficiency maps
+
+  - H2 purification system design (PSA, membrane)
+
+  - Compression energy analysis and multi-stage compressor sizing
+
+  - Well-to-wheel carbon footprint comparison
+
+  - Levelized cost of hydrogen (LCOH) model
+
+
+  ## Best Practices
+
+
+  - Oversize renewable capacity by 2-3× to account for intermittency
+
+  - Use PEM electrolyzer for fast-ramping applications (renewable following)
+
+  - Validate H2 purity with gas chromatography (GC) before dispensing
+
+  - Design compression with intercooling (reduce energy consumption)
+
+  - Target < $3/kg LCOH for competitive with grey H2 and gasoline
+
+  - Include water consumption in sustainability analysis (9 L H2O per kg H2)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Ensure H2 quality meets ISO 14687 for PEM fuel cell compatibility
+
+  - Coordinate production schedule with refueling station demand
+
+  - Track carbon intensity of electricity grid for green H2 certification
+
+  - Optimize electrolyzer dispatch for lowest electricity price (demand response)
+
+  - Support vehicle fleet with predictable H2 supply (avoid shortages)
+
+  '
+constraints:
+- Renewable energy intermittency (capacity factor 20-50%)
+- Electrolyzer CAPEX ($600-1000/kW)
+- Electricity price volatility
+- H2 purification and compression energy overhead
+tools_required:
+- MATLAB/Python for techno-economic modeling
+- PVsyst or SAM for solar/wind resource analysis
+- Process simulation (Aspen Plus, HYSYS)
+- GC (Gas Chromatography) for H2 purity testing
+- LCA software (SimaPro, GaBi) for WTW analysis
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- green-hydrogen
+- electrolysis
+- renewable-energy
+- well-to-wheel
+- lcoh
+- automotive

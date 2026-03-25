@@ -1,0 +1,152 @@
+name: brand-positioning
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: brand_positioning
+description: Market segmentation, brand equity building, customer perception management for automotive
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Brand positioning in the automotive industry defines how an OEM or Tier-1 supplier is perceived relative
+  to competitors in the minds of customers, dealers, investors, and regulators. In an era of electrification,
+  software-defined vehicles (SDVs), and mobility-as-a-service (MaaS), brand positioning determines pricing
+  power, customer loyalty, talent attraction, and long-term enterprise value. This skill covers market
+  segmentation, brand equity measurement, customer perception management, and repositioning strategies
+  specific to automotive OEMs navigating the ICE-to-EV transition.
+
+  ## Key Concepts
+
+  ### Brand Architecture Models
+  - **House of Brands**: Independent brands under one parent (e.g., Stellantis with Peugeot, Jeep, Alfa Romeo)
+  - **Branded House**: Single master brand across segments (e.g., BMW with 1-Series through 7-Series, iX, M)
+  - **Endorsed Brands**: Sub-brands backed by corporate parent (e.g., Hyundai IONIQ, Genesis by Hyundai)
+  - **Hybrid Architecture**: Combination models for legacy OEMs managing ICE and EV portfolios simultaneously
+
+  ### Market Segmentation for Automotive
+  - **Demographic segmentation**: Income tiers, age groups, urban vs. rural, fleet vs. retail
+  - **Psychographic segmentation**: Performance enthusiasts, eco-conscious, tech-forward, value-seekers
+  - **Usage-based segmentation**: Daily commuters, long-distance travelers, commercial operators, ride-share
+  - **Geographic segmentation**: Regulatory-driven (ZEV mandates), infrastructure-driven (charging density)
+  - **Behavioral segmentation**: Brand-loyal vs. switchers, early adopters vs. mainstream, lease vs. buy
+
+  ### Brand Equity Measurement
+  - **Aided and unaided brand awareness**: Survey-based tracking across target demographics
+  - **Brand consideration and purchase intent**: Funnel metrics from awareness to conversion
+  - **Net Promoter Score (NPS)**: Customer loyalty and advocacy measurement
+  - **Brand value quantification**: Interbrand, BrandZ, or BAV methodologies applied to automotive
+  - **Social listening and sentiment analysis**: Real-time perception tracking across digital channels
+  - **Residual value correlation**: How brand strength translates to vehicle depreciation rates
+
+  ## Implementation Guide
+
+  ### Step 1: Brand Audit and Current State Assessment
+  - Map current brand perception using customer surveys, dealer feedback, and media analysis
+  - Benchmark against direct competitors on key brand attributes (quality, innovation, value, sustainability)
+  - Analyze sales funnel conversion rates by segment to identify perception gaps
+  - Review brand consistency across touchpoints: advertising, dealership experience, digital, after-sales
+
+  ### Step 2: Target Positioning Definition
+  - Define desired brand positioning statement: target audience, frame of reference, point of difference
+  - Develop perceptual maps plotting your brand vs. competitors on key attribute axes
+  - Identify white space opportunities where no competitor strongly owns a position
+  - Validate positioning with customer clinics, conjoint analysis, and concept testing
+
+  ### Step 3: Brand Strategy Execution
+  - Align product portfolio to support positioning (vehicle design, features, pricing)
+  - Develop integrated marketing communications plan across owned, earned, and paid media
+  - Train dealer network on brand values and customer experience standards
+  - Implement brand governance framework with clear guidelines and approval processes
+
+  ### Step 4: Monitoring and Adaptation
+  - Establish quarterly brand health tracking dashboards
+  - Monitor competitive repositioning moves and adjust strategy accordingly
+  - Measure ROI of brand investments through marketing mix modeling
+  - Conduct annual brand strategy reviews aligned with product cycle planning
+
+  ## Decision Frameworks
+
+  ### Brand Repositioning Decision Matrix
+  | Factor | Stay Course | Evolve | Reposition | New Brand |
+  |--------|------------|--------|------------|-----------|
+  | Brand equity strength | High | Medium | Low | Negative |
+  | Market shift magnitude | Incremental | Moderate | Transformational | Disruptive |
+  | Investment required | Low | Medium | High | Very high |
+  | Time to impact | Immediate | 1-2 years | 3-5 years | 5+ years |
+  | Risk level | Minimal | Low | Medium | High |
+
+  ### EV Transition Brand Strategy Options
+  - **Umbrella extension**: Launch EVs under existing brand (e.g., Mercedes EQ, BMW i)
+  - **Clean-sheet sub-brand**: Create dedicated EV brand (e.g., Hyundai IONIQ, Volvo Polestar spin-off)
+  - **Full rebrand**: Transform entire brand identity around electrification
+  - **Dual-track**: Maintain separate ICE heritage brand and EV-forward brand simultaneously
+
+  ### Pricing Strategy Alignment
+  - **Premium positioning**: Higher MSRP justified by brand prestige, features, and ownership experience
+  - **Value positioning**: Competitive pricing with strong feature-per-dollar narrative
+  - **Aspirational accessibility**: Entry-level models as gateway to brand ecosystem
+  - **Subscription and FoD**: Features-on-demand as brand differentiator and recurring revenue
+
+  ## Best Practices
+
+  - Conduct brand health tracking at minimum quarterly using consistent methodology
+  - Ensure brand positioning aligns with actual product capabilities to avoid credibility gaps
+  - Manage brand portfolio complexity to avoid cannibalization between sub-brands and nameplates
+  - Invest in employer branding to attract software and EV talent critical to brand promises
+  - Leverage heritage and provenance where credible, but avoid anchoring to obsolete ICE identity
+  - Build brand around customer outcomes (mobility, sustainability, safety) not just product specs
+  - Coordinate brand positioning globally while allowing regional adaptation for local markets
+  - Measure brand equity impact on residual values, which directly affect TCO and lease attractiveness
+  - Integrate sustainability credentials into brand positioning as ESG becomes purchase consideration
+  - Use data from connected vehicles (OTA, usage patterns) to personalize brand experience
+
+  ## Examples
+
+  ### Example 1: Legacy OEM EV Repositioning
+  A European premium OEM with strong ICE heritage must reposition for electrification. Brand audit reveals
+  high awareness but low EV credibility vs. Tesla. Strategy: launch dedicated EV sub-brand with distinct
+  design language, direct-to-consumer digital sales channel, and sustainability-first messaging. Measure
+  success via EV consideration scores, cross-shopping data vs. Tesla/Chinese EVs, and NPS delta.
+
+  ### Example 2: Volume OEM Market Segmentation Refresh
+  A mass-market OEM discovers through conjoint analysis that their customers segment into three distinct
+  groups: price-sensitive (40%), tech-forward (35%), and eco-conscious (25%). Current marketing treats
+  all as one audience. Recommendation: develop three distinct communication tracks with shared brand
+  platform, allocate marketing spend proportionally, and develop trim/feature packages for each segment.
+
+  ### Example 3: Chinese OEM Global Brand Building
+  A Chinese EV OEM entering European markets faces low awareness and trust deficit. Brand strategy:
+  establish design center in Europe for local design credibility, partner with premium European suppliers
+  for quality signaling, offer industry-leading warranty for risk reduction, and invest heavily in
+  Euro NCAP safety ratings as objective third-party validation of brand quality claims.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- brand-positioning
+- automotive
+- oem

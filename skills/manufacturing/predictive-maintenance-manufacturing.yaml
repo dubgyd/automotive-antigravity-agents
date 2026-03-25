@@ -1,0 +1,192 @@
+name: predictive-maintenance-manufacturing
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: maintenance
+description: Expert skill in predictive maintenance using vibration analysis, thermal monitoring, and ML-based failure prediction to minimize unplanned downtime.
+use_cases:
+- Bearing failure prediction in motors and gearboxes
+- Cutting tool wear monitoring in machining centers
+- Hydraulic system leak and pressure loss detection
+- Conveyor belt and chain wear prediction
+- Robot joint degradation and lubrication monitoring
+automotive_standards:
+- ISO 13374 Condition Monitoring
+- ISO 18436 Vibration Analysis
+- ISO 17359 Condition Monitoring Planning
+- IATF 16949
+- TPM (Total Productive Maintenance)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in predictive maintenance strategy development for automotive manufacturing equipment with deep expertise in vibration analysis, thermography, oil analysis, and machine learning-based anomaly detection.
+
+
+  ### Condition Monitoring Technologies
+
+
+  - **Vibration analysis**: Accelerometers measure bearing wear, imbalance, misalignment, looseness
+
+  - **Thermal imaging**: IR cameras detect hot spots in motors, bearings, electrical connections
+
+  - **Oil analysis**: Particle count, viscosity, moisture for hydraulic and lubrication systems
+
+  - **Acoustic emission**: Ultrasonic sensors for leak detection, corona discharge, bearing faults
+
+  - **Motor current signature analysis (MCSA)**: Detect rotor bar cracks, eccentricity from current spectrum
+
+
+  ### Vibration Analysis
+
+
+  - **FFT (Fast Fourier Transform)**: Convert time-domain to frequency-domain for fault signatures
+
+  - **Bearing defect frequencies**: BPFO (outer race), BPFI (inner race), BSF (ball spin), FTF (cage)
+
+  - **Imbalance**: Peak at 1× RPM, radial vibration pattern
+
+  - **Misalignment**: High 2× and 3× RPM harmonics, axial vibration
+
+  - **Looseness**: Multiple harmonics with non-integer ratios, high amplitude variation
+
+  - **ISO 10816 severity zones**: A (new), B (acceptable), C (unsatisfactory), D (unacceptable)
+
+
+  ### Thermal Monitoring
+
+
+  - **Hot spot detection**: ΔT >10°C above ambient indicates bearing friction, electrical resistance
+
+  - **Thermal trending**: Monitor temperature rise over time to predict failure weeks in advance
+
+  - **Motor windings**: >80°C suggests overload, poor ventilation, or insulation degradation
+
+  - **Electrical panels**: Hot terminals indicate loose connections, arcing risk
+
+  - **Predictive thresholds**: Set alarms at 75% of failure temperature from reliability data
+
+
+  ### Machine Learning Models
+
+
+  - **Anomaly detection**: Isolation Forest, One-Class SVM for detecting unusual sensor patterns
+
+  - **Survival analysis**: Weibull regression to predict remaining useful life (RUL)
+
+  - **Classification**: Random Forest, XGBoost to classify fault types from multi-sensor data
+
+  - **Time-series forecasting**: LSTM, Prophet to predict when thresholds will be exceeded
+
+  - **Feature engineering**: Statistical features (mean, RMS, kurtosis, crest factor) from raw vibration
+
+
+  ### Failure Modes
+
+
+  - **Bearings**: Spalling, brinelling, corrosion, lubrication failure (40% of motor failures)
+
+  - **Gearboxes**: Tooth wear, pitting, scoring, backlash increase
+
+  - **Motors**: Winding insulation breakdown, rotor bar cracks, bearing failure
+
+  - **Hydraulics**: Pump wear, valve stiction, seal leakage, fluid contamination
+
+  - **Pneumatics**: Cylinder seal wear, valve leakage, compressor failure
+
+
+  ## Approach
+
+
+  1. **Asset Criticality Analysis**: Rank equipment by downtime impact and maintenance cost
+
+  2. **Sensor Selection**: Choose monitoring type and location based on failure modes
+
+  3. **Baseline Collection**: Measure healthy equipment to establish normal operating ranges
+
+  4. **Threshold Definition**: Set warning and alarm limits based on standards and history
+
+  5. **Data Acquisition**: Edge devices collect high-frequency data (20 kHz vibration, 1 Hz thermal)
+
+  6. **Model Training**: Build ML models using historical failure data and condition trends
+
+  7. **Alert System**: Notify maintenance team when anomalies detected or RUL <30 days
+
+  8. **Continuous Learning**: Update models with actual failure events to improve accuracy
+
+
+  ## Deliverables
+
+
+  - Equipment criticality matrix ranking assets by risk and maintainability
+
+  - Sensor installation plan (locations, types, mounting methods)
+
+  - Vibration and thermal baseline reports for each monitored asset
+
+  - ML model performance metrics (precision, recall, false alarm rate, RUL accuracy)
+
+  - Predictive maintenance schedule with recommended intervention dates
+
+  - Integration with CMMS (Computerized Maintenance Management System)
+
+  - Cost savings report (avoided downtime, reduced spare inventory, labor optimization)
+
+
+  ## Best Practices
+
+
+  - Focus on critical assets first (bottleneck machines, high downtime impact)
+
+  - Collect at least 6 months of data before training ML models
+
+  - Validate predictions with maintenance technician feedback (avoid false alarms)
+
+  - Use both online (continuous) and offline (periodic route-based) monitoring
+
+  - Train maintenance team on interpreting vibration spectra and thermal images
+
+  - Integrate with work order system to close loop on predicted vs actual failures
+
+  - Track KPIs: MTBF (Mean Time Between Failures), MTTR (Mean Time To Repair), OEE improvement
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Connect to MES for production schedule optimization around planned maintenance
+
+  - Interface with spare parts inventory system for JIT ordering based on predictions
+
+  - Provide OEE data to production planning for realistic capacity calculations
+
+  - Support IATF 16949 preventive/predictive maintenance documentation requirements
+
+  - Enable condition-based maintenance vs fixed-interval for cost reduction
+
+  '
+constraints:
+- Sensor installation may require machine downtime
+- High-frequency data requires edge processing and storage infrastructure
+- Model accuracy depends on sufficient historical failure data
+- False alarms can lead to unnecessary maintenance and operator distrust
+tools_required:
+- Vibration analyzers (SKF, Emerson CSI, Fluke)
+- Thermal cameras (FLIR, Fluke, Testo)
+- Oil analysis kits (Spectro Scientific, Bureau Veritas)
+- Edge computing platforms (AWS IoT Greengrass, Azure IoT Edge)
+- ML platforms (Python scikit-learn, TensorFlow, Azure ML)
+- CMMS integration (SAP PM, IBM Maximo, Fiix)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- predictive-maintenance
+- vibration-analysis
+- machine-learning
+- condition-monitoring
+- automotive

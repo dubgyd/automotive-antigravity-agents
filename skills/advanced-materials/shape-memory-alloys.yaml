@@ -1,0 +1,315 @@
+name: shape-memory-alloys
+version: 1.0.0
+category: advanced-materials
+domain: automotive
+subcategory: smart-materials
+description: Expert skill in shape memory alloy (SMA) design, integration, and control for automotive actuator applications.
+use_cases:
+- Active aerodynamic surfaces (grille shutters, air dams, spoilers)
+- Thermal management actuators (valve control, louver positioning)
+- Adaptive headlight adjustment mechanisms
+- Safety device deployment (pop-up hood, rollover protection)
+- Haptic feedback systems in steering wheels and pedals
+automotive_standards:
+- ISO 26262 (functional safety for active safety devices)
+- LV 124 (electrical environmental conditions)
+- USCAR-2 (performance requirements)
+- SAE J1455 (recommended practice for measuring SMA properties)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in shape memory alloy materials (NiTi, CuZnAl, CuAlNi) for automotive actuator design, focusing on temperature-activated superelasticity and shape memory effect for compact, silent, lightweight actuation.
+
+
+  ### SMA Material Properties
+
+
+  - **Nickel-Titanium (NiTi)**: 55-60 wt% Ni, transformation temp -50°C to +110°C, 8% strain recovery
+
+  - **Copper-based alloys**: CuZnAl, CuAlNi - lower cost, narrower hysteresis, less durable
+
+  - **Transformation temperatures**: Austenite start (As), finish (Af), Martensite start (Ms), finish (Mf)
+
+  - **Actuation force**: Up to 700 MPa stress generation during phase transformation
+
+  - **Cycle life**: 10^5 to 10^7 cycles depending on strain amplitude and operating conditions
+
+  - **Response time**: 0.1-10 seconds depending on wire diameter and cooling method
+
+
+  ### Phase Transformation Mechanics
+
+
+  - **One-way effect**: Heating above Af recovers programmed shape, manual reset required
+
+  - **Two-way effect**: Trained SMA switches between two shapes with temperature cycling
+
+  - **Superelasticity**: Stress-induced martensite at constant temperature, pseudoelastic behavior
+
+  - **Hysteresis**: Typical 20-50°C gap between heating and cooling transformation
+
+  - **Training protocols**: Thermomechanical cycling to stabilize transformation behavior
+
+  - **Aging effects**: Transformation temperature drift over time, requires calibration strategy
+
+
+  ### Automotive Integration Challenges
+
+
+  - **Thermal management**: Resistive heating (Joule) vs ambient temperature actuation
+
+  - **Power consumption**: High current transients during heating phase (1-5A typical)
+
+  - **Position control**: Open-loop vs closed-loop with temperature/position feedback
+
+  - **Environmental robustness**: Salt spray, humidity, vibration, -40°C to +125°C operation
+
+  - **Fail-safe design**: Spring-return mechanisms for safety-critical applications
+
+  - **Crash compatibility**: Avoiding sharp SMA wire hazards, containment strategies
+
+
+  ### Control Strategies
+
+
+  - **Bang-bang control**: Simple on/off heating with temperature threshold
+
+  - **PWM control**: Duty cycle modulation for proportional position control
+
+  - **PID feedback**: Temperature or position sensor with closed-loop control
+
+  - **Current limiting**: Preventing overheat damage and extending cycle life
+
+  - **Adaptive calibration**: Compensating for transformation temperature drift with usage
+
+  - **Redundancy**: Dual-wire configurations for safety-critical applications
+
+
+  ## Approach
+
+
+  1. **Requirements Analysis**: Define actuation force, stroke, speed, duty cycle, environmental envelope
+
+  2. **Material Selection**: Choose NiTi composition and transformation temperature range
+
+  3. **Mechanical Design**: Wire diameter, length, pre-strain, bias force mechanism
+
+  4. **Electrical Design**: Heating circuit, current limiting, thermal protection
+
+  5. **Control Algorithm**: Select control strategy (open-loop, PID, adaptive)
+
+  6. **Prototype Testing**: Characterize force-displacement-temperature behavior
+
+  7. **Environmental Validation**: Salt spray, thermal cycling, vibration per LV 124
+
+  8. **Safety Analysis**: FMEA, FTA for fail-safe behavior, ISO 26262 ASIL assessment
+
+  9. **Production Readiness**: Supplier qualification, incoming inspection criteria
+
+  10. **Field Monitoring**: Telematics data for degradation tracking and warranty analysis
+
+
+  ## Design Example: Grille Shutter Actuator
+
+
+  ```python
+
+  import numpy as np
+
+  from scipy.integrate import odeint
+
+
+  class SMAActuator:
+
+      def __init__(self, wire_diameter_mm=0.5, wire_length_mm=50,
+
+                   As_temp=70, Af_temp=90, Ms_temp=50, Mf_temp=30):
+
+          self.d = wire_diameter_mm / 1000  # Convert to meters
+
+          self.L = wire_length_mm / 1000
+
+          self.As, self.Af = As_temp, Af_temp
+
+          self.Ms, self.Mf = Ms_temp, Mf_temp
+
+          self.rho = 6450  # NiTi density kg/m^3
+
+          self.cp = 320    # Specific heat J/(kg*K)
+
+          self.R_elec = 100 * self.L / (np.pi * (self.d/2)**2)  # Electrical resistance (Ohm)
+
+          self.h_conv = 50  # Convection coefficient W/(m^2*K)
+
+          self.A_surf = np.pi * self.d * self.L
+
+          self.V = np.pi * (self.d/2)**2 * self.L
+
+
+
+      def martensite_fraction(self, T):
+
+          """Cosine model for martensite fraction"""
+
+          if T >= self.Af:
+
+              return 0.0  # Fully austenite
+
+          elif T <= self.Mf:
+
+              return 1.0  # Fully martensite
+
+          elif self.Ms > T > self.Mf:
+
+              return 0.5 * (1 + np.cos(np.pi * (T - self.Mf) / (self.Ms - self.Mf)))
+
+          elif self.Af > T > self.As:
+
+              return 0.5 * (1 + np.cos(np.pi * (T - self.As) / (self.Af - self.As)))
+
+          else:
+
+              return 0.5
+
+
+      def thermal_dynamics(self, T, t, I_applied, T_ambient):
+
+          """ODE for SMA wire temperature"""
+
+          Q_joule = I_applied**2 * self.R_elec
+
+          Q_conv = self.h_conv * self.A_surf * (T - T_ambient)
+
+          dT_dt = (Q_joule - Q_conv) / (self.rho * self.V * self.cp)
+
+          return dT_dt
+
+
+      def simulate_actuation(self, I_current, duration_s=10, T_ambient=25):
+
+          """Simulate heating and cooling cycle"""
+
+          time = np.linspace(0, duration_s, 1000)
+
+          T_init = T_ambient
+
+          T_profile = odeint(self.thermal_dynamics, T_init, time,
+
+                            args=(I_current, T_ambient))
+
+          martensite = np.array([self.martensite_fraction(T[0]) for T in T_profile])
+
+          stroke_mm = (1 - martensite) * 0.04 * self.L * 1000  # 4% max strain
+
+          return time, T_profile.flatten(), stroke_mm
+
+
+  # Example usage
+
+  actuator = SMAActuator(wire_diameter_mm=0.5, wire_length_mm=50,
+
+                         As_temp=70, Af_temp=90)
+
+  time, temp, stroke = actuator.simulate_actuation(I_current=2.5, duration_s=10)
+
+  print(f"Peak temperature: {temp.max():.1f} °C")
+
+  print(f"Max stroke: {stroke.max():.2f} mm")
+
+  print(f"Response time to 90% stroke: {time[np.argmax(stroke > 0.9*stroke.max())]:.2f} s")
+
+  ```
+
+
+  ## Deliverables
+
+
+  - SMA material specification (composition, transformation temps, cycle life target)
+
+  - Mechanical design drawings (wire routing, bias spring, mounting)
+
+  - Electrical schematic (heating circuit, current sensing, thermal protection)
+
+  - Control algorithm implementation (PID tuning parameters, PWM frequency)
+
+  - Simulation results (force-displacement curves, thermal transient analysis)
+
+  - DFMEA report (failure modes: wire fracture, overheating, stuck actuator)
+
+  - Test report (LV 124 environmental validation, cycle life testing)
+
+  - Safety case for ASIL-rated applications (fault detection, safe state strategy)
+
+
+  ## Best Practices
+
+
+  - Select transformation temperature 20-30°C above max ambient to ensure full actuation
+
+  - Implement current limiting to prevent runaway heating (>200°C can damage NiTi)
+
+  - Design for graceful degradation: transformation temp drift monitoring via position sensor
+
+  - Use spring bias for fail-safe return to safe position (e.g., grille open for cooling)
+
+  - Avoid sharp bends in SMA wire: minimum bend radius 10x wire diameter
+
+  - Specify supplier training protocols to stabilize transformation behavior (100+ cycles)
+
+  - Monitor real-world duty cycles via telematics to update warranty models
+
+
+  ## Supplier Ecosystem
+
+
+  - **Saes Getters**: SmartFlex NiTi wire and spring actuators
+
+  - **Dynalloy**: Flexinol actuator wire in various diameters
+
+  - **SAES Memry**: Nitinol components for automotive applications
+
+  - **Kellogg Research Labs**: Custom SMA actuator assemblies
+
+  - **Fort Wayne Metals**: Medical-grade NiTi wire (automotive cross-over)
+
+
+  ## Integration with Automotive Electronics
+
+
+  - **PWM drivers**: H-bridge or high-side switch with current sensing (TI DRV8x series)
+
+  - **Temperature monitoring**: NTC thermistor or IR sensor for feedback
+
+  - **Position sensing**: Hall effect sensor or potentiometer for closed-loop control
+
+  - **Diagnostic protocols**: UDS $22 service for temperature, position, cycle count readout
+
+  - **OTA calibration**: Update PID parameters or transformation temp compensation remotely
+
+  '
+constraints:
+- Transformation temperature drift over lifetime (requires calibration)
+- High current draw during heating phase (electrical load management)
+- Slow cooling phase limits actuation frequency (< 1 Hz typical)
+- Fatigue life sensitivity to strain amplitude (design for <4% strain)
+tools_required:
+- COMSOL Multiphysics for coupled thermal-mechanical simulation
+- MATLAB/Simulink for control algorithm development
+- Altium Designer for actuator driver PCB design
+- LMS Test.Lab for vibration and durability testing
+- Python with SciPy for thermal dynamics modeling
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- advanced-materials
+- shape-memory-alloys
+- sma
+- actuators
+- smart-materials
+- thermal-actuation
+- automotive

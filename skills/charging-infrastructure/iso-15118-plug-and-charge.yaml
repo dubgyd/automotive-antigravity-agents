@@ -1,0 +1,458 @@
+name: iso-15118-plug-and-charge
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: communication-protocol
+description: Expert skill in ISO 15118 implementation for Plug & Charge, covering TLS certificate management, EXI encoding, V2G communication, and automated authentication.
+use_cases:
+- Plug & Charge authentication implementation (no RFID/app needed)
+- ISO 15118-2 and ISO 15118-20 protocol stack development
+- Certificate provisioning and management (PKI infrastructure)
+- EXI (Efficient XML Interchange) encoding/decoding
+- Smart charging and bidirectional V2G communication
+automotive_standards:
+- ISO 15118-1 General information and requirements
+- ISO 15118-2 Network and application protocol (EV-EVSE)
+- ISO 15118-3 Physical and data link layer (PLC)
+- ISO 15118-20 AC/DC charging with bidirectional power transfer
+- RFC 5280 X.509 certificates for PKI
+- RFC 5246 TLS 1.2 (minimum version for Plug & Charge)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in ISO 15118 implementation for advanced electric vehicle charging, covering Plug & Charge automated authentication using X.509 certificates, EXI-encoded message exchange, high-level V2G communication protocol, and integration with charging infrastructure backend systems.
+
+
+  ### ISO 15118 Overview
+
+
+  - **Purpose**:
+
+    - Enable Plug & Charge: Automatic authentication without RFID card or app
+
+    - Smart charging: EV and EVSE negotiate power schedules dynamically
+
+    - Bidirectional V2G: Vehicle can discharge battery to grid (ISO 15118-20)
+
+    - Future-proof: Support AC, DC, wireless, and inductive charging
+
+
+  - **Protocol versions**:
+
+    - **ISO 15118-2** (2014): V2G communication for AC and DC charging
+
+    - **ISO 15118-20** (2022): Enhanced for bidirectional power transfer, improved smart charging
+
+
+  - **Communication layers**:
+
+    - Physical: PLC (PowerLine Communication) via Control Pilot (CP) line
+
+    - Data link: HomePlug Green PHY (HPGP) for OFDM modulation
+
+    - Network: IPv6 (link-local addresses, no router needed)
+
+    - Transport: TCP for reliable message delivery
+
+    - Application: V2GTP (Vehicle-to-Grid Transfer Protocol), EXI-encoded XML messages
+
+
+  ### SLAC (Signal Level Attenuation Characterization)
+
+
+  - **Purpose**: Establish PLC link between EV and EVSE before high-level communication
+
+  - **Process**:
+
+    1. EV broadcasts CM_SLAC_PARM.REQ (request SLAC parameters)
+
+    2. EVSE responds with CM_SLAC_PARM.CNF (confirmation, EVSE MAC address)
+
+    3. EV sends CM_START_ATTEN_CHAR.IND (start attenuation characterization)
+
+    4. EVSE sends multiple CM_ATTEN_CHAR.IND (attenuation measurements on different subcarriers)
+
+    5. EV evaluates signal quality, selects best EVSE (if multiple nearby)
+
+    6. EV sends CM_SLAC_MATCH.REQ (request to establish connection)
+
+    7. EVSE responds with CM_SLAC_MATCH.CNF (confirm, provide network ID and key)
+
+    8. PLC link established, IPv6 addresses assigned
+
+
+  - **Timing**: SLAC typically completes in 2-5 seconds (depends on RF environment)
+
+
+  ### IPv6 and V2GTP
+
+
+  - **IPv6 link-local addressing**:
+
+    - EV: fe80::1 (or auto-generated from MAC address)
+
+    - EVSE: fe80::2
+
+    - No DHCP needed (link-local scope sufficient for direct EV-EVSE communication)
+
+
+  - **V2GTP (V2G Transfer Protocol)**:
+
+    - Thin protocol layer above TCP (port 15118)
+
+    - Encapsulates EXI-encoded application messages
+
+    - Header: Version, PayloadType (EXI or SDP for discovery)
+
+    - Used for service discovery and main charging messages
+
+
+  - **SDP (Service Discovery Protocol)**:
+
+    - UDP broadcast to discover EVSE on network
+
+    - EV sends SECC Discovery Request
+
+    - EVSE responds with SECC Discovery Response (IP address, port, security level)
+
+
+  ### EXI Encoding
+
+
+  - **EXI (Efficient XML Interchange)**:
+
+    - Binary encoding of XML (10× smaller, 100× faster to parse than text XML)
+
+    - Schema-informed: EV and EVSE share XSD schema (ISO 15118-2 message definitions)
+
+    - Compression: Huffman coding for element names, values
+
+
+  - **Example message** (SessionSetupReq):
+
+    ```xml
+    <SessionSetupReq>
+      <Header>
+        <SessionID>0x123456789ABCDEF0</SessionID>
+      </Header>
+      <EVCCID>DEADBEEF01020304</EVCCID>
+    </SessionSetupReq>
+    ```
+
+    - Text XML: ~200 bytes
+
+    - EXI encoded: ~30 bytes (85% size reduction)
+
+
+  - **EXI encoding in C**:
+
+    ```c
+    #include <openv2g/appHandshake.h>
+    #include <openv2g/xmldsig.h>
+
+    int encode_session_setup_req(uint8_t* buffer, size_t max_len) {
+        bitstream_t stream;
+        struct SessionSetupReqType req;
+
+        // Initialize bitstream
+        bitstream_init(&stream, buffer, max_len);
+
+        // Populate message
+        req.Header.SessionID.bytesLen = 8;
+        memcpy(req.Header.SessionID.bytes, session_id, 8);
+        req.EVCCID.bytesLen = 6;
+        memcpy(req.EVCCID.bytes, evc_id, 6);
+
+        // Encode to EXI
+        encode_v2gSessionSetupReqType(&stream, &req);
+
+        return stream.byte_pos;  // Return encoded length
+    }
+    ```
+
+
+  ### Plug & Charge Authentication
+
+
+  - **Certificate hierarchy** (PKI):
+
+    - Root CA: OEM or mobility operator root certificate
+
+    - Sub-CA1: Provisioning certificate (for initial vehicle enrollment)
+
+    - Sub-CA2: Contract certificate (for billing, issued to driver account)
+
+    - Leaf certificate: Vehicle certificate (unique per EV, tied to VIN)
+
+
+  - **Certificate provisioning**:
+
+    1. Vehicle installed with provisioning certificate at factory
+
+    2. Driver creates account with eMSP (e-Mobility Service Provider)
+
+    3. eMSP issues contract certificate to vehicle via backend (OTA update)
+
+    4. Vehicle stores contract certificate in secure element (TPM or HSM)
+
+    5. At charge session, vehicle presents contract certificate to EVSE
+
+    6. EVSE validates certificate chain, checks revocation (OCSP or CRL)
+
+    7. If valid, EVSE grants access without RFID/payment card
+
+
+  - **TLS handshake**:
+
+    - Client (EV): Presents contract certificate
+
+    - Server (EVSE): Validates certificate, checks expiry, revocation status
+
+    - Mutual TLS: EVSE also presents certificate (authenticates charging station)
+
+    - Session key: Established for encrypted message exchange (AES-128 or AES-256)
+
+
+  - **Certificate validation**:
+
+    ```python
+    def validate_contract_certificate(cert, root_ca):
+        # 1. Check certificate not expired
+        if cert.not_after < datetime.now():
+            return False
+
+        # 2. Verify signature chain to root CA
+        if not verify_signature_chain(cert, root_ca):
+            return False
+
+        # 3. Check revocation status (OCSP)
+        ocsp_response = query_ocsp(cert.serial_number)
+        if ocsp_response.status == REVOKED:
+            return False
+
+        # 4. Check certificate purpose (must include "ISO 15118 V2G")
+        if "ISO15118" not in cert.extended_key_usage:
+            return False
+
+        return True
+    ```
+
+
+  ### ISO 15118-2 Message Flow
+
+
+  - **Session setup**:
+
+    1. SessionSetupReq: EV sends EVCC ID (EV Communication Controller ID)
+
+    2. SessionSetupRes: EVSE responds with EVSE ID, timestamp
+
+
+  - **Service discovery**:
+
+    1. ServiceDiscoveryReq: EV asks what services EVSE supports (AC, DC, Internet, V2G)
+
+    2. ServiceDiscoveryRes: EVSE lists available services (e.g., "DC charging, Plug & Charge auth")
+
+
+  - **Payment service selection**:
+
+    1. PaymentServiceSelectionReq: EV selects External Payment (Plug & Charge) or Contract
+
+    2. PaymentServiceSelectionRes: EVSE acknowledges
+
+
+  - **Certificate installation** (if needed):
+
+    1. CertificateInstallationReq: EV requests new contract certificate
+
+    2. CertificateInstallationRes: EVSE provides certificate via backend
+
+    (Typically done during initial provisioning, not every charge session)
+
+
+  - **Authorization**:
+
+    1. AuthorizationReq: EV sends contract certificate chain
+
+    2. AuthorizationRes: EVSE validates certificate, responds with "Accepted" or "Rejected"
+
+
+  - **Charge parameter discovery**:
+
+    1. ChargeParameterDiscoveryReq: EV sends battery parameters (capacity, max voltage, max current)
+
+    2. ChargeParameterDiscoveryRes: EVSE sends available power, charging profiles
+
+
+  - **DC charging sequence** (for DC fast charging):
+
+    1. CableCheckReq: EV checks cable insulation
+
+    2. PreChargeReq: EV requests EVSE to precharge to battery voltage
+
+    3. PowerDeliveryReq: EV requests to start power flow
+
+    4. CurrentDemandReq: EV sends target V/I every 100-250 ms
+
+    5. CurrentDemandRes: EVSE sends actual V/I
+
+    6. WeldingDetectionReq: Check for welded contactors after charging
+
+
+  - **Session stop**:
+
+    1. SessionStopReq: EV requests to end session
+
+    2. SessionStopRes: EVSE confirms, session data logged for billing
+
+
+  ### Smart Charging with ISO 15118
+
+
+  - **Charging schedule negotiation**:
+
+    - EVSE sends charging schedule (kW available vs time)
+
+    - EV sends departure time and desired energy
+
+    - Both negotiate optimal charging curve (minimize cost or maximize renewable energy use)
+
+
+  - **Example charging schedule** (EVSE offers TOU pricing):
+
+    ```python
+    charging_schedule = {
+        "schedules": [
+            {"start": "22:00", "duration": 180, "power_limit": 7.4, "price": 0.10},  # Cheap overnight
+            {"start": "01:00", "duration": 300, "power_limit": 7.4, "price": 0.08},  # Super cheap 1-6am
+            {"start": "06:00", "duration": 120, "power_limit": 3.6, "price": 0.25}   # Peak morning
+        ]
+    }
+
+    # EV selects schedule to charge during cheapest hours
+    ev_schedule = optimize_charging(
+        current_soc=20,
+        target_soc=80,
+        battery_capacity=60,  # kWh
+        departure_time="07:00",
+        schedules=charging_schedule
+    )
+    # Result: Charge 7.4 kW from 22:00-01:00 (22.2 kWh), then 7.4 kW 01:00-06:00 (37 kWh), done by 6am
+    ```
+
+
+  ### Bidirectional V2G (ISO 15118-20)
+
+
+  - **Discharge to grid**:
+
+    - EV sends "Discharging mode" flag in PowerDeliveryReq
+
+    - Negative current: EV supplies power to grid (instead of drawing)
+
+    - Use case: Grid frequency regulation, peak shaving, backup power
+
+
+  - **V2G schedule**:
+
+    - Grid operator sends discharge request (e.g., "Need 10 kW from 5-6 PM")
+
+    - EV checks battery SOC, user preferences (minimum reserve for driving range)
+
+    - If acceptable, EV discharges at requested power level
+
+
+  - **Revenue model**:
+
+    - EV owner compensated for energy exported ($/kWh) and grid services ($/kW capacity)
+
+    - Example: $0.40/kWh for peak discharge + $5/kW/month for capacity reservation
+
+
+  ## Approach
+
+
+  1. **PLC modem integration**: Integrate HPGP modem (Qualcomm QCA7000, Broadcom)
+
+  2. **ISO 15118 stack**: Use open-source library (RISE-V2G, OpenV2G) or commercial (Vector, Siemens)
+
+  3. **Certificate management**: Set up PKI infrastructure (root CA, provisioning, contract certs)
+
+  4. **EXI codec**: Integrate EXI processor (ExiCPP, OpenEXI)
+
+  5. **Backend integration**: Connect EVSE to eMSP for certificate validation, billing
+
+  6. **Testing**: Use CharIN test suite, interoperability testing with multiple EVs
+
+
+  ## Deliverables
+
+
+  - ISO 15118 protocol stack (C/C++/Java)
+
+  - PLC modem driver and SLAC implementation
+
+  - EXI encoder/decoder for message serialization
+
+  - Certificate provisioning and validation logic
+
+  - Backend API for billing, authorization, session logging
+
+  - Test reports (CharIN compliance, interoperability)
+
+
+  ## Best Practices
+
+
+  - **Security**: Store private keys in secure element (TPM, HSM), never in software
+
+  - **Certificate expiry**: Auto-renew contract certificates before expiry (OTA update)
+
+  - **OCSP stapling**: Cache OCSP responses to reduce latency during authorization
+
+  - **Fallback**: If Plug & Charge fails, fall back to RFID or app-based authentication
+
+  - **Logging**: Record all ISO 15118 messages for debugging interoperability issues
+
+
+  ## Integration
+
+
+  - **OCPP**: ISO 15118 session data (energy, duration) sent to CSMS via OCPP
+
+  - **eMSP**: Backend validates certificates, manages billing, sends invoices
+
+  - **Vehicle backend**: OEM server provisions certificates, monitors charge sessions
+
+  - **Grid operator**: V2G schedules sent from utility to EVSE to EV
+
+
+  '
+constraints:
+- Certificate management complexity (PKI infrastructure, OCSP, revocation)
+- PLC link quality variable (electrical noise, cable quality)
+- EXI encoding/decoding adds CPU overhead (mitigated by optimized libraries)
+- Interoperability testing required (many EV/EVSE combinations)
+tools_required:
+- PLC modem (Qualcomm QCA7000, Broadcom BCM60333)
+- ISO 15118 stack (RISE-V2G, OpenV2G, Vector, Siemens)
+- EXI codec library (ExiCPP, OpenEXI)
+- PKI tools (OpenSSL for certificate generation/validation)
+- CharIN test suite for conformance testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: expert
+tags:
+- charging-infrastructure
+- iso-15118
+- plug-and-charge
+- exi
+- tls
+- pki
+- v2g
+- automotive

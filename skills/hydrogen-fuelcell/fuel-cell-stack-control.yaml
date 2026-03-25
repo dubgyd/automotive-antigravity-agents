@@ -1,0 +1,573 @@
+name: fuel-cell-stack-control
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: embedded-control
+description: Expert skill in fuel cell stack real-time control including air stoichiometry, hydrogen recirculation, humidification, and purge strategies.
+use_cases:
+- Stack current and voltage regulation
+- Air compressor control for oxygen stoichiometry
+- Hydrogen recirculation pump/ejector control
+- Membrane humidification management
+- Anode purge strategy implementation
+- Start/stop sequence control
+automotive_standards:
+- ISO 26262 (Functional safety for automotive ECUs)
+- AUTOSAR Adaptive Platform
+- SAE J2615 (Performance testing of fuel cell systems)
+- IEC 61508 (Functional safety of electrical systems)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in real-time fuel cell stack control algorithms, air/hydrogen supply regulation, water management, and start/stop procedures. Deep understanding of sensor fusion, feedback control, and fault detection for automotive fuel cell systems.
+
+
+  ### Air Stoichiometry Control
+
+
+  **Stoichiometry definition**: Ratio of supplied air to theoretical minimum required for reaction.
+
+  - **Cathode stoichiometry**: λ_air = 2.0-2.5 (excess oxygen for mass transport)
+
+  - **Anode stoichiometry**: λ_H2 = 1.2-1.5 (with recirculation)
+
+
+  ```c
+
+  typedef struct {
+
+      float lambda_target;    // Target stoichiometry ratio
+
+      float I_stack;          // Stack current [A]
+
+      float P_amb;            // Ambient pressure [Pa]
+
+      float T_amb;            // Ambient temperature [K]
+
+      float compressor_speed; // RPM
+
+      float air_flow_rate;    // g/s
+
+  } AirControl_t;
+
+
+
+  void control_air_stoichiometry(AirControl_t *ctrl) {
+
+      // Oxygen consumption rate (Faraday''s law)
+
+      float F = 96485.0f;  // C/mol
+
+      float M_O2 = 32.0f;  // g/mol
+
+
+
+      // Theoretical O2 consumption: I/(4F) mol/s (4 electrons per O2)
+
+      float mdot_O2_consumed = (ctrl->I_stack / (4.0f * F)) * M_O2;  // g/s
+
+
+
+      // Required air mass flow (21% O2 by mass in air)
+
+      float mdot_air_req = mdot_O2_consumed / 0.21f * ctrl->lambda_target;
+
+
+
+      // Compressor map lookup (speed vs flow vs pressure ratio)
+
+      float PR_target = 2.0f;  // Pressure ratio (cathode pressure)
+
+      float compressor_speed_target = compressor_map_inverse(mdot_air_req, PR_target);
+
+
+
+      // PI controller for compressor speed
+
+      static float error_integral = 0.0f;
+
+      float error = mdot_air_req - ctrl->air_flow_rate;
+
+
+
+      float Kp = 50.0f;   // Proportional gain [RPM/(g/s)]
+
+      float Ki = 10.0f;   // Integral gain
+
+
+
+      error_integral += error * 0.01f;  // 10 ms timestep
+
+      error_integral = fmaxf(-1000.0f, fminf(1000.0f, error_integral));  // Anti-windup
+
+
+
+      ctrl->compressor_speed = compressor_speed_target + Kp * error + Ki * error_integral;
+
+
+
+      // Clamp to compressor limits
+
+      ctrl->compressor_speed = fmaxf(10000.0f, fminf(80000.0f, ctrl->compressor_speed));
+
+  }
+
+  ```
+
+
+  ### Hydrogen Recirculation Control
+
+
+  **Recirculation strategies**:
+
+  - **Ejector (passive)**: Venturi effect using high-pressure H2 to recirculate anode gas
+
+  - **Pump (active)**: Electric pump for precise control, higher efficiency at low load
+
+
+  ```python
+
+  class H2RecirculationController:
+
+      def __init__(self):
+
+          self.H2_stoich_target = 1.3  # Anode stoichiometry
+
+          self.purge_interval = 60.0    # seconds
+
+          self.last_purge_time = 0.0
+
+
+
+      def control_recirculation(self, I_stack, P_anode, t_current):
+
+          """
+
+          Control H2 recirculation pump to maintain anode stoichiometry.
+
+          Periodic purge to remove N2 and water accumulation.
+
+          """
+
+          F = 96485  # C/mol
+
+
+
+          # H2 consumption rate: I/(2F) mol/s (2 electrons per H2)
+
+          mdot_H2_consumed = (I_stack / (2 * F)) * 2.016  # g/s (M_H2 = 2.016 g/mol)
+
+
+
+          # Required H2 supply (fresh + recirculated)
+
+          mdot_H2_total = mdot_H2_consumed * self.H2_stoich_target
+
+
+
+          # Fresh H2 from tank (controlled by inlet valve)
+
+          mdot_H2_fresh = mdot_H2_consumed  # 1:1 replacement of consumed H2
+
+
+
+          # Recirculation flow
+
+          mdot_H2_recirc = mdot_H2_total - mdot_H2_fresh
+
+
+
+          # Pump speed control (simplified linear model)
+
+          pump_speed = mdot_H2_recirc * 1000  # RPM (model-dependent)
+
+
+
+          # Purge logic: Remove N2 crossover and product water
+
+          if (t_current - self.last_purge_time) > self.purge_interval:
+
+              self.execute_purge(duration=0.5)  # 500 ms purge
+
+              self.last_purge_time = t_current
+
+
+
+          return pump_speed
+
+
+
+      def execute_purge(self, duration):
+
+          """Open anode purge valve to expel N2 and water."""
+
+          # Open purge valve for specified duration
+
+          # Results in temporary stoichiometry increase and H2 loss
+
+          print(f"Executing anode purge for {duration} s")
+
+          # set_purge_valve(OPEN)
+
+          # time.sleep(duration)
+
+          # set_purge_valve(CLOSE)
+
+  ```
+
+
+  ### Humidification Control
+
+
+  **Humidification methods**:
+
+  - **Enthalpy wheel**: Passive, uses product water heat/moisture
+
+  - **Membrane humidifier**: Compact, effective for automotive
+
+  - **Direct water injection**: Active control, requires water tank
+
+
+  ```c
+
+  typedef struct {
+
+      float RH_cathode_target;  // Target relative humidity [%]
+
+      float T_stack;            // Stack temperature [°C]
+
+      float T_air_inlet;        // Inlet air temperature [°C]
+
+      float mdot_air;           // Air mass flow [g/s]
+
+      float water_injection;    // Water injection rate [g/s]
+
+  } HumidificationControl_t;
+
+
+
+  void control_humidification(HumidificationControl_t *hum) {
+
+      // Saturation vapor pressure (Antoine equation simplified)
+
+      float P_sat = 610.78f * expf(17.27f * hum->T_stack / (hum->T_stack + 237.3f));  // Pa
+
+
+
+      // Target water vapor content for desired RH
+
+      float RH_frac = hum->RH_cathode_target / 100.0f;
+
+      float P_water_target = RH_frac * P_sat;
+
+
+
+      // Current water vapor pressure (from sensor or model)
+
+      float P_water_current = 500.0f;  // Pa (example)
+
+
+
+      // Water injection rate to achieve target humidity
+
+      float M_water = 18.015f;  // g/mol
+
+      float R = 8.314f;         // J/(mol·K)
+
+
+
+      // Simplified control: proportional to deficit
+
+      float deficit = P_water_target - P_water_current;
+
+      hum->water_injection = fmaxf(0.0f, deficit * 0.001f * hum->mdot_air);
+
+
+
+      // Limit to prevent flooding
+
+      hum->water_injection = fminf(hum->water_injection, hum->mdot_air * 0.05f);
+
+  }
+
+  ```
+
+
+  ### Stack Start/Stop Sequence
+
+
+  **Cold start procedure** (-20°C ambient):
+
+  1. **Pre-purge**: Flush air through cathode to remove moisture
+
+  2. **Anode fill**: Slowly open H2 valve to prevent membrane damage
+
+  3. **Idle current**: Apply 5-10 A to generate heat (self-heating)
+
+  4. **Temperature ramp**: Wait until stack reaches 40-50°C
+
+  5. **Normal operation**: Increase current to meet power demand
+
+
+  ```python
+
+  class FCStartupController:
+
+      def __init__(self):
+
+          self.state = "OFF"
+
+          self.startup_timer = 0.0
+
+
+
+      def execute_startup_sequence(self, T_stack, dt=0.1):
+
+          """
+
+          Cold start sequence for fuel cell stack.
+
+          Returns: (state, I_stack_target)
+
+          """
+
+          if self.state == "OFF":
+
+              # Initiate startup
+
+              print("Starting fuel cell system...")
+
+              self.state = "PRE_PURGE"
+
+              self.startup_timer = 0.0
+
+              return self.state, 0.0
+
+
+
+          elif self.state == "PRE_PURGE":
+
+              # Run compressor to flush cathode
+
+              self.startup_timer += dt
+
+              if self.startup_timer > 5.0:  # 5 second purge
+
+                  self.state = "ANODE_FILL"
+
+                  self.startup_timer = 0.0
+
+              return self.state, 0.0
+
+
+
+          elif self.state == "ANODE_FILL":
+
+              # Gradually open H2 valve to prevent pressure shock
+
+              self.startup_timer += dt
+
+              if self.startup_timer > 2.0:
+
+                  self.state = "IDLE_HEATING"
+
+                  self.startup_timer = 0.0
+
+              return self.state, 0.0
+
+
+
+          elif self.state == "IDLE_HEATING":
+
+              # Apply small current to generate heat
+
+              if T_stack < 40.0:
+
+                  I_target = 10.0  # A (idle current for heating)
+
+              else:
+
+                  self.state = "READY"
+
+                  I_target = 0.0
+
+              return self.state, I_target
+
+
+
+          elif self.state == "READY":
+
+              return self.state, 0.0  # Ready for load
+
+  ```
+
+
+  **Shutdown procedure**:
+
+  1. **Load ramp-down**: Reduce current to zero over 10-20 seconds
+
+  2. **Anode purge**: Remove residual H2 (safety, prevent corrosion)
+
+  3. **Air purge**: Dry cathode to prevent freezing
+
+  4. **Coolant drain** (if below freezing): Prevent ice formation
+
+
+  ### Fault Detection and Mitigation
+
+
+  ```c
+
+  typedef enum {
+
+      FAULT_NONE,
+
+      FAULT_LOW_VOLTAGE,       // Cell reversal risk
+
+      FAULT_HIGH_TEMP,         // Thermal runaway
+
+      FAULT_LOW_H2_PRESSURE,   // Supply issue
+
+      FAULT_FLOODING,          // Excess water
+
+      FAULT_DRYING,            // Membrane dehydration
+
+      FAULT_AIR_STARVATION     // Compressor failure
+
+  } FCFaultCode_t;
+
+
+
+  FCFaultCode_t detect_faults(float V_stack, float T_stack, float P_H2, float lambda_air) {
+
+      if (V_stack < 180.0f) {
+
+          // Low voltage - possible cell reversal
+
+          return FAULT_LOW_VOLTAGE;
+
+      }
+
+      if (T_stack > 85.0f) {
+
+          // Overtemperature - reduce load, increase cooling
+
+          return FAULT_HIGH_TEMP;
+
+      }
+
+      if (P_H2 < 1.0f) {
+
+          // Low H2 pressure - tank empty or regulator failure
+
+          return FAULT_LOW_H2_PRESSURE;
+
+      }
+
+      if (lambda_air < 1.5f) {
+
+          // Air starvation - compressor issue
+
+          return FAULT_AIR_STARVATION;
+
+      }
+
+      return FAULT_NONE;
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Sensor Integration**: Interface with voltage, current, temperature, pressure, flow sensors
+
+  2. **Stoichiometry Regulation**: Implement feedback control for air and H2 supply
+
+  3. **Humidification Management**: Balance membrane hydration vs flooding
+
+  4. **Purge Strategy**: Design periodic anode purge to remove N2 and water
+
+  5. **State Machine Implementation**: Code startup, running, shutdown, fault states
+
+  6. **Thermal Control**: Regulate coolant flow based on stack temperature
+
+  7. **Safety Monitoring**: Detect faults, implement safe shutdown sequences
+
+
+  ## Deliverables
+
+
+  - Real-time control algorithms (C/C++ for AUTOSAR)
+
+  - Air stoichiometry controller (compressor speed regulation)
+
+  - Hydrogen recirculation controller (pump/ejector control)
+
+  - Humidification controller (water injection/membrane)
+
+  - Start/stop sequence state machines
+
+  - Fault detection and mitigation logic
+
+  - HIL test scenarios and validation results
+
+
+  ## Best Practices
+
+
+  - Use feedforward + feedback control for compressor (current-based feedforward, flow-based feedback)
+
+  - Implement anti-windup in integral controllers to prevent overshoot
+
+  - Validate stoichiometry control across full current range (0-300 A)
+
+  - Design purge strategy to minimize H2 loss while preventing N2 accumulation
+
+  - Implement graceful degradation (reduce power) on non-critical faults
+
+  - Test cold start sequence at -30°C and below
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Deploy control algorithms on AUTOSAR Adaptive ECU (QNX/Linux RTOS)
+
+  - Interface with vehicle power manager for load commands
+
+  - Provide stack voltage/current to DC-DC converter controller
+
+  - Log diagnostic data (CAN/Ethernet) for prognostics and health management
+
+  - Support OTA updates for control parameter tuning
+
+  '
+constraints:
+- Real-time execution on embedded ECU (10-100 ms cycle time)
+- Sensor accuracy and latency
+- Actuator bandwidth (compressor, valves, pump)
+- Safety-critical shutdown under fault conditions
+tools_required:
+- AUTOSAR Adaptive Platform or Classic Platform
+- MATLAB/Simulink for controller design
+- dSPACE/ETAS HIL for validation
+- CANalyzer/CANoe for CAN diagnostics
+- Python/C for algorithm prototyping
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- stack-control
+- stoichiometry
+- recirculation
+- humidification
+- embedded-control
+- automotive

@@ -1,0 +1,276 @@
+name: nvidia-omniverse-factory
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: nvidia omniverse factory
+description: Expert skill in using NVIDIA Omniverse and Isaac Sim platforms to build physically accurate digital twins of automotive factories, enabling virtual commissioning, robot simulation, material flow optimization, and AI-driven factory planning with real-time ray-traced visualization.
+use_cases:
+- Physically accurate factory digital twin with real-time ray tracing visualization
+- Robot path planning and collision detection using Isaac Sim within Omniverse
+- Virtual commissioning of welding, painting, and assembly production lines
+- AI training for autonomous mobile robots (AMR) in synthetic factory environments
+- Material flow simulation with physics-based conveyor and AGV modeling
+- Multi-site factory comparison using federated Omniverse Nucleus servers
+- Ergonomic analysis with human motion simulation in production workstations
+- Energy consumption simulation for HVAC, lighting, and equipment across factory zones
+automotive_standards:
+- ISO 23247 Digital Twin Framework for Manufacturing
+- ISO 10218-1/2 Robot Safety
+- IEC 61131-3 PLC Programming (virtual PLC integration)
+- AutomationML (IEC 62714) for engineering data exchange
+- IATF 16949 (Process Planning and Validation)
+- VDA 5050 AGV/AMR Communication Interface
+- OPC UA (IEC 62541) for industrial data connectivity
+instructions: |
+
+  ## Overview
+
+  NVIDIA Omniverse is a computing platform for building and operating physically accurate
+  digital twins. For automotive manufacturing, Omniverse enables creation of factory-scale
+  simulations where every robot, conveyor, AGV, and operator is modeled with real physics,
+  connected to live production data, and rendered with cinematic quality.
+
+  Combined with Isaac Sim for robotics and Metropolis for vision AI, Omniverse provides
+  the foundation for autonomous factory operations where AI agents are trained in simulation
+  and deployed to physical systems with minimal sim-to-real gap.
+
+
+  ## Key Concepts
+
+  ### Omniverse Architecture
+
+  - **Nucleus**: Central collaboration server for USD scene management and versioning
+  - **Kit**: Extensible application framework for building custom tools
+  - **Isaac Sim**: Robot simulation with ROS/ROS2 integration and synthetic data generation
+  - **Replicator**: Synthetic data generation for training computer vision models
+  - **Audio2Face/Machinima**: Not relevant for factory -- focus on engineering extensions
+  - **Connect**: Plugins for CAD tools (Revit, SolidWorks, Siemens NX) to push data to USD
+
+  ### Universal Scene Description (USD)
+
+  - **Native format**: All Omniverse content authored in Pixar USD
+  - **Composition**: Layer, reference, and variant mechanisms for non-destructive editing
+  - **Physics**: PhysX integration for rigid body, articulated body, and soft body simulation
+  - **Materials**: MDL (Material Definition Language) for PBR materials with physical accuracy
+
+  ### Factory Digital Twin Layers
+
+  ```
+  Layer 7: AI/Analytics      (Reinforcement learning, anomaly detection)
+  Layer 6: Visualization     (RTX ray tracing, viewport streaming)
+  Layer 5: Simulation        (PhysX, Isaac Sim, flow simulation)
+  Layer 4: Behavior          (Robot programs, PLC logic, AGV routes)
+  Layer 3: Data Integration  (OPC UA, MQTT, REST API connectors)
+  Layer 2: Geometry          (USD scene graph, CAD imports, LiDAR scans)
+  Layer 1: Infrastructure    (Nucleus server, GPU compute, network)
+  ```
+
+
+  ## Implementation Guide
+
+  ### Step 1: Omniverse Infrastructure Setup
+
+  ```yaml
+  omniverse_deployment:
+    nucleus_server:
+      type: enterprise
+      storage_tb: 10
+      users: 200
+      authentication: ldap_sso
+    compute_nodes:
+      gpu: NVIDIA_A100_or_L40S
+      count: 4
+      purpose: simulation_and_rendering
+    workstations:
+      gpu: NVIDIA_RTX_4090_or_A6000
+      count: 20
+      purpose: interactive_authoring
+    network:
+      bandwidth_gbps: 25
+      protocol: nucleus_live_sync
+  ```
+
+  ### Step 2: Factory Scene Construction
+
+  ```python
+  # Omniverse factory scene builder using USD API
+  from pxr import Usd, UsdGeom, UsdPhysics, Sdf
+
+  class FactorySceneBuilder:
+      def __init__(self, nucleus_url: str):
+          self.stage = Usd.Stage.CreateNew(f"{nucleus_url}/factory/main.usd")
+          UsdGeom.SetStageUpAxis(self.stage, UsdGeom.Tokens.z)
+          UsdGeom.SetStageMetersPerUnit(self.stage, 1.0)
+
+      def add_robot_cell(self, cell_name: str, robot_usd: str, position: tuple):
+          """Add a robot cell to the factory scene."""
+          cell_prim = self.stage.DefinePrim(f"/factory/cells/{cell_name}", "Xform")
+          robot_ref = self.stage.DefinePrim(
+              f"/factory/cells/{cell_name}/robot", "Xform"
+          )
+          robot_ref.GetReferences().AddReference(robot_usd)
+          xform = UsdGeom.Xformable(cell_prim)
+          xform.AddTranslateOp().Set(position)
+
+      def add_conveyor(self, name: str, start: tuple, end: tuple, speed_mps: float):
+          """Add physics-enabled conveyor belt."""
+          conveyor = self.stage.DefinePrim(f"/factory/conveyors/{name}", "Xform")
+          # Add rigid body physics and conveyor surface velocity
+          physics_api = UsdPhysics.RigidBodyAPI.Apply(conveyor)
+          # Configure conveyor belt surface properties
+          self.set_conveyor_velocity(conveyor, start, end, speed_mps)
+
+      def connect_opc_ua(self, equipment_prim: str, opc_node: str):
+          """Bind OPC UA data point to USD prim attribute for live updates."""
+          prim = self.stage.GetPrimAtPath(equipment_prim)
+          prim.CreateAttribute("opc:nodeId", Sdf.ValueTypeNames.String).Set(opc_node)
+  ```
+
+  ### Step 3: Isaac Sim Robot Simulation
+
+  ```python
+  # Isaac Sim robot simulation for automotive welding cell
+  from omni.isaac.core import World
+  from omni.isaac.core.robots import Robot
+
+  class WeldingCellSimulation:
+      def __init__(self):
+          self.world = World(stage_units_in_meters=1.0)
+
+      def setup_robot(self, robot_usd: str, position: list):
+          """Load and configure welding robot in simulation."""
+          self.world.scene.add(
+              Robot(prim_path="/World/robot", usd_path=robot_usd, position=position)
+          )
+
+      def simulate_weld_cycle(self, weld_points: list, speed_mps: float = 0.5):
+          """Run welding cycle simulation and measure cycle time."""
+          total_time = 0.0
+          for i, point in enumerate(weld_points):
+              move_time = self.plan_motion(point, speed_mps)
+              weld_time = point.get("weld_duration_s", 0.3)
+              total_time += move_time + weld_time
+          return {"cycle_time_s": total_time, "weld_count": len(weld_points)}
+
+      def generate_synthetic_data(self, camera_positions: list, num_frames: int):
+          """Use Replicator to generate training data for weld inspection AI."""
+          # Configure domain randomization for lighting, part variation, defects
+          return self.replicator.generate(
+              cameras=camera_positions,
+              frames=num_frames,
+              annotations=["bounding_box_2d", "semantic_segmentation"],
+          )
+  ```
+
+  ### Step 4: AGV/AMR Fleet Simulation
+
+  ```python
+  # Simulate autonomous mobile robot fleet in factory
+  class AMRFleetSimulator:
+      def __init__(self, factory_stage, fleet_size: int = 20):
+          self.stage = factory_stage
+          self.fleet = self.spawn_amr_fleet(fleet_size)
+
+      def spawn_amr_fleet(self, count: int):
+          """Deploy AMR fleet with VDA 5050 compatible control."""
+          fleet = []
+          for i in range(count):
+              amr = self.stage.DefinePrim(f"/factory/amr/unit_{i:03d}", "Xform")
+              # Configure navigation, obstacle avoidance, fleet coordination
+              fleet.append(amr)
+          return fleet
+
+      def optimize_routes(self, delivery_orders: list) -> dict:
+          """Run RL-based route optimization for material delivery."""
+          # Train reinforcement learning agent in simulation
+          return {
+              "throughput_deliveries_per_hour": 45,
+              "average_delivery_time_s": 120,
+              "fleet_utilization_pct": 78,
+              "collision_events": 0,
+          }
+  ```
+
+  ### Step 5: Live Data Integration
+
+  ```
+  Factory Floor                 Omniverse Nucleus
+  =============                 =================
+  Siemens S7-1500 (OPC UA) --> Omniverse Connect (OPC UA Extension)
+  KUKA Robot (RSI)          --> Isaac Sim Robot State Sync
+  SICK LiDAR (ROS2)        --> Isaac ROS2 Bridge
+  Energy Meters (MQTT)      --> Custom Omniverse Extension
+  MES (REST API)            --> Kit Extension with HTTP Client
+  ```
+
+
+  ## Best Practices
+
+  - Use USD references (not copies) for reusable equipment to keep scene manageable
+  - Organize factory scene by zone: /factory/body_shop, /factory/paint, /factory/assembly
+  - Run physics simulation on dedicated GPU nodes, not on authoring workstations
+  - Validate robot kinematics in Isaac Sim against physical robot before trusting results
+  - Use Omniverse Nucleus checkpoints for version control of factory layouts
+  - Generate synthetic data with domain randomization for robust vision AI training
+  - Start with a single cell digital twin, prove value, then scale to full factory
+  - Maintain consistent coordinate systems: Z-up, meters, matching plant survey
+
+
+  ## Common Patterns
+
+  ### Virtual Commissioning Pipeline
+
+  1. Import robot cell CAD from NX/SolidWorks via Omniverse Connect
+  2. Add physics properties (collision meshes, joint limits, conveyor surfaces)
+  3. Connect virtual PLC via OPC UA for signal-level commissioning
+  4. Run cycle simulation, measure timing, detect collisions
+  5. Iterate robot paths in Isaac Sim until cycle time target met
+  6. Export validated programs to physical robot controllers
+
+  ### Synthetic Data Generation for Quality AI
+
+  ```
+  Replicator Pipeline:
+    Scene: welding_cell_twin
+    Camera: inspection_camera_01
+    Randomization:
+      - part_pose: uniform(+-2mm, +-1deg)
+      - lighting: 3000K-6500K, 200-1000 lux
+      - weld_defect: [none, porosity, undercut, spatter] @ [70%, 10%, 10%, 10%]
+    Output: 50,000 labeled images
+    Format: COCO annotations + semantic masks
+  ```
+
+
+  ## Troubleshooting
+
+  - **Slow scene loading**: Reduce mesh density with decimation, use LOD variants in USD
+  - **Physics instability**: Increase solver iterations, check collision mesh quality
+  - **OPC UA connection drops**: Verify firewall rules, use OPC UA redundancy mode
+  - **Isaac Sim ROS2 latency**: Use FastDDS instead of CycloneDDS, check QoS settings
+  - **GPU memory overflow**: Split factory into zones, load on demand
+  - **USD merge conflicts**: Use Omniverse layering -- each team edits their own layer
+
+constraints:
+- Requires high-end NVIDIA GPUs (RTX 4090 / A6000 / A100 minimum)
+- USD scene complexity must be managed to maintain interactive frame rates
+- Sim-to-real gap exists for contact-rich tasks (grinding, polishing)
+- Nucleus server requires enterprise infrastructure and IT support
+tools_required:
+- NVIDIA Omniverse Enterprise (Nucleus, Kit, Isaac Sim, Replicator)
+- NVIDIA GPUs (A100/L40S for simulation, RTX 4090/A6000 for workstations)
+- CAD connectors (Omniverse Connect for NX, SolidWorks, Revit)
+- ROS2 (Humble/Iron) for robot communication bridge
+- OPC UA servers for PLC and SCADA integration
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- nvidia-omniverse
+- digital-twin
+- isaac-sim
+- simulation
+- automotive

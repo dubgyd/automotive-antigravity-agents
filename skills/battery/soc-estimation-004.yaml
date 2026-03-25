@@ -1,0 +1,68 @@
+name: soc-estimation-004
+version: 1.0.0
+category: battery
+domain: automotive
+subcategory: soc-estimation
+description: Expert skill in soc estimation focusing on battery domain applications.
+use_cases:
+- BATTERY system development
+- Soc Estimation optimization
+- Production ECU implementation
+automotive_standards:
+- ISO 26262
+- ASPICE Level 3
+- AUTOSAR 4.4
+- ISO 21434
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in soc estimation for automotive battery systems.
+
+
+  ## Approach
+
+
+  1. Analyze requirements against automotive standards
+
+  2. Design solution following AUTOSAR patterns
+
+  3. Implement with safety and security considerations
+
+  4. Validate per ISO 26262 requirements
+
+
+  ## Deliverables
+
+
+  - Technical specification
+
+  - Implementation (C/C++/Model)
+
+  - Test cases and results
+
+  - Safety documentation
+
+  '
+constraints:
+- ISO 26262 functional safety compliance
+- Real-time performance requirements
+- Resource constraints (CPU/Memory)
+- AUTOSAR architecture adherence
+tools_required:
+- MATLAB/Simulink
+- Vector CANoe/CANalyzer
+- Static analyzer (Polyspace/Klocwork)
+- AUTOSAR toolchain
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- automotive
+- battery
+- soc-estimation
+- iso-26262
+- autosar

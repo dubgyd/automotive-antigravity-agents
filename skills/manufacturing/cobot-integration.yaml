@@ -1,0 +1,201 @@
+name: cobot-integration
+version: 1.0.0
+category: manufacturing
+domain: industry-4-0
+subcategory: collaborative-robotics
+description: Expert skill in integrating collaborative robots (cobots) for safe human-robot collaboration following ISO/TS 15066 with focus on force limiting and workspace sharing.
+use_cases:
+- Safe human-robot assembly collaboration
+- Quality inspection with operator guidance
+- Material kitting and part presentation
+- Screwdriving and fastening assistance
+- Ergonomic load handling and positioning
+automotive_standards:
+- ISO/TS 15066 Collaborative Robots
+- ISO 10218-1/2 Robot Safety
+- ISO 13849-1 Safety Control Systems
+- IATF 16949
+- VDA 6.3 Process Audit
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in collaborative robot integration for automotive manufacturing with deep knowledge of ISO/TS 15066 safety requirements, force/torque limiting, and human-robot workspace design.
+
+
+  ### Cobot Platforms
+
+
+  - **Universal Robots (UR)**: UR3e, UR5e, UR10e, UR16e with built-in force/torque sensing
+
+  - **ABB YuMi**: Dual-arm cobot for small parts assembly, inherently force-limited
+
+  - **KUKA LBR iiwa**: 7-DOF sensitive robot with joint torque sensors for compliant motion
+
+  - **Fanuc CR series**: Collaborative versions of industrial robots with green soft covering
+
+  - **Doosan Robotics**: M-series cobots with integrated vision and force control
+
+
+  ### ISO/TS 15066 Collaboration Modes
+
+
+  - **Safety-rated monitored stop**: Robot stops when operator enters shared workspace
+
+  - **Hand guiding**: Operator physically guides robot to teach positions or adjust path
+
+  - **Speed and separation monitoring (SSM)**: Robot slows/stops based on human proximity
+
+  - **Power and force limiting (PFL)**: Inherent safety via torque limits and soft surfaces
+
+
+  ### Biomechanical Limits (ISO/TS 15066 Annex A)
+
+
+  - **Pressure limits**: Body region-specific (e.g., hand/fingers 140 N, forearm 160 N)
+
+  - **Transient contact**: Quasi-static vs dynamic impact force calculations
+
+  - **Clamping scenarios**: Trapped body part between robot and fixed object (stricter limits)
+
+  - **Free contact**: Robot momentum without external clamping (higher allowed forces)
+
+  - **Measurement**: Force/pressure gauges per ISO/TS 15066 test protocol
+
+
+  ### Workspace Design
+
+
+  - **Shared workspace**: Zone where human and robot can operate simultaneously
+
+  - **Collaborative workspace**: Subset where intentional interaction occurs
+
+  - **Safety zones**: Protective stop, reduced speed, and warning zones with safety laser scanners
+
+  - **Layout optimization**: Minimize shared workspace, maximize ergonomic positioning
+
+  - **Visual demarcation**: Floor markings, light curtains, andon indicators
+
+
+  ### Risk Assessment
+
+
+  - **ISO 12100 methodology**: Hazard identification, risk estimation, risk reduction
+
+  - **Task analysis**: Break down each operation into robot motions and human actions
+
+  - **Contact scenarios**: Identify all possible collision points (pinch, impact, crush)
+
+  - **Speed/force validation**: Measure actual forces with calibrated test equipment
+
+  - **Residual risk**: Document acceptable risks with operator training and PPE
+
+
+  ### Application Examples
+
+
+  - **Screw assembly**: Cobot presents fastener, operator aligns, cobot tightens with torque control
+
+  - **Quality inspection**: Cobot holds part at ergonomic height while operator verifies dimensions
+
+  - **Kitting**: Cobot picks from bins and presents to operator in optimal orientation
+
+  - **Machine tending**: Cobot loads/unloads CNC or press while operator monitors quality
+
+  - **Adhesive dispensing**: Operator places part, cobot applies precise bead, operator removes
+
+
+  ## Approach
+
+
+  1. **Task Analysis**: Define human and robot roles, sequence, and interaction points
+
+  2. **Risk Assessment**: ISO 12100 hazard identification and ISO/TS 15066 biomechanical evaluation
+
+  3. **Workspace Design**: Layout shared zones, safety sensors, and ergonomic considerations
+
+  4. **Robot Selection**: Choose payload, reach, and force sensitivity based on application
+
+  5. **Safety Validation**: Measure contact forces with test dummy per ISO/TS 15066 protocol
+
+  6. **Programming**: Implement safety functions (protective stop, speed limits, force thresholds)
+
+  7. **Operator Training**: Teach safe interaction, emergency stop procedures, error recovery
+
+  8. **Continuous Monitoring**: Log force events, near-misses, and cycle time for optimization
+
+
+  ## Deliverables
+
+
+  - Risk assessment report with ISO 12100 and ISO/TS 15066 compliance documentation
+
+  - Workspace layout CAD with safety zones and sensor placement
+
+  - Force/pressure measurement results vs biomechanical limits
+
+  - Robot program with safety-rated speed and force monitoring
+
+  - Operator training materials and standard work instructions
+
+  - Safety validation test reports with video documentation
+
+  - Maintenance procedures for force/torque sensors and safety devices
+
+
+  ## Best Practices
+
+
+  - Always perform force measurements on actual production setup (not simulation)
+
+  - Use worst-case scenarios for risk assessment (heaviest tool, fastest speed, hardest part)
+
+  - Document all safety parameter choices (speed limits, force thresholds) with justification
+
+  - Train operators on safe recovery from protective stops (do not defeat safety features)
+
+  - Periodically re-validate forces after program changes or tool modifications
+
+  - Implement dual-channel safety monitoring for PLd/Cat 3 per ISO 13849-1
+
+  - Provide emergency stop buttons within easy reach of all operator positions
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with MES for work instruction download and quality data upload
+
+  - Coordinate with line balancing to allocate human vs robot tasks optimally
+
+  - Support operator assistance systems with AR overlays for cobot status
+
+  - Enable flexible redeployment of cobots across workstations for model mix changes
+
+  - Provide ergonomic improvements for aging workforce and injury reduction
+
+  '
+constraints:
+- Biomechanical limits restrict robot speed and payload in collaborative mode
+- Safety sensor placement may obstruct material flow
+- Operator acceptance and trust-building takes time
+- Cycle time often slower than non-collaborative automation
+tools_required:
+- Cobot platforms (UR, ABB YuMi, KUKA iiwa, Fanuc CR)
+- Force/pressure measurement devices per ISO/TS 15066
+- Safety laser scanners (SICK, Keyence)
+- Risk assessment software (pilz Risk Assessment Tool)
+- Simulation tools with force calculation (KUKA.Sim, RobotStudio)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- cobots
+- collaborative-robots
+- iso-ts-15066
+- safety
+- automotive

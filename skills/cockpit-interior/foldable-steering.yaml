@@ -1,0 +1,163 @@
+name: foldable-steering
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Retractable and foldable steering wheel systems for L4/L5 autonomous vehicles covering stow mechanisms, safety interlocks, driver takeover transitions, and regulatory compliance."
+use_cases:
+  - "Designing motorized steering wheel retraction for autonomous lounge mode"
+  - "Implementing rapid steering deployment for driver takeover requests"
+  - "Building safety interlock chains for steering stow and deploy operations"
+  - "Creating foldable steering wheels that collapse into the dashboard"
+  - "Integrating retractable pedals with steering retraction for full cockpit stow"
+automotive_standards:
+  - "SAE J3016 - Levels of driving automation defining steering requirements"
+  - "FMVSS 203 - Steering wheel impact protection requirements"
+  - "FMVSS 204 - Steering column rearward displacement in crash"
+  - "ECE R12 - Steering mechanism crash behavior"
+  - "ISO 26262 - Functional safety for stow/deploy mechanism ASIL-C"
+instructions: |
+  # Foldable Steering
+
+  ## Overview
+  Retractable steering wheel systems allow the steering column and wheel to fold into
+  the dashboard or slide forward out of the driver's space when the vehicle operates in
+  Level 4 or Level 5 autonomous mode. This frees up cabin space for the lounge, workspace,
+  or entertainment configurations that define the autonomous vehicle experience. The
+  critical engineering challenge lies in ensuring the steering can deploy rapidly and
+  safely when the driver needs to resume manual control.
+
+  ## Key Concepts
+
+  ### Retraction Mechanisms
+  Three primary approaches to storing the steering wheel:
+  - Telescopic retraction slides the entire column forward into the dashboard cavity
+  - Fold-flat design collapses the steering wheel rim into a compact disk shape
+  - Flip-stow rotates the column and wheel downward beneath the instrument panel
+  - Each approach requires the steering shaft to maintain mechanical connection or
+    transition to steer-by-wire when disconnected
+
+  ### Steer-by-Wire Enabling
+  Full steering retraction typically requires steer-by-wire architecture:
+  - Eliminates the mechanical shaft between steering wheel and rack
+  - Allows the wheel to retract without affecting steering rack geometry
+  - Requires redundant electrical and mechanical actuation at the rack
+  - Must meet ISO 26262 ASIL-D for the steering actuator system
+
+  ### Takeover Transition
+  The critical path from autonomous to manual driving:
+  - Takeover request issued by the autonomous driving system with 10+ second lead time
+  - Steering deploys from stowed position to driving position within 3 seconds
+  - Driver confirmation required through hands-on-wheel detection before handover
+  - If driver does not take over, vehicle executes minimum risk condition autonomously
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Retraction Mechanism
+  Engineer the physical stow and deploy hardware:
+  - Calculate the required stow envelope within the dashboard packaging constraints
+  - Design a telescopic column with 300 mm minimum retraction travel
+  - Specify the drive motor for 3-second full deployment against gravity and friction
+  - Include a manual release mechanism for deployment in case of motor failure
+
+  ### Step 2 - Implement the Interlock System
+  Build the safety verification chain for stow operations:
+  - Verify autonomous driving mode is active and confirmed by the ADAS controller
+  - Confirm vehicle speed is below the maximum threshold for stow transition
+  - Check driver acknowledgment through HMI confirmation before stow begins
+  - Monitor the entire stow path for obstructions using force-limiting sensors
+
+  ### Step 3 - Engineer Rapid Deployment
+  Optimize the deploy mechanism for takeover scenarios:
+  - Use a spring-assist mechanism that accelerates initial deployment
+  - Motor drives the column to the driver-memorized position precisely
+  - Hands-on-wheel detection activates within 500 ms of reaching driving position
+  - Deploy mechanism must function in all temperature ranges from -40 C to 85 C
+
+  ### Step 4 - Integrate Pedal Retraction
+  Coordinate steering stow with accelerator and brake pedal retraction:
+  - Pedals fold into the floor or slide forward simultaneously with steering
+  - Pedal deployment synchronizes with steering deployment during takeover
+  - Brake pedal must reach functional position before steering to enable emergency braking
+  - Floor area freed by pedal retraction can expose a flat floor for lounge mode
+
+  ### Step 5 - Validate Crash Safety
+  Ensure the steering system meets crash requirements in all states:
+  - Stowed position must not create additional injury risk in a frontal crash
+  - Deployed position must meet FMVSS 203 steering wheel impact requirements
+  - Column must not rearward displace excessively per FMVSS 204 in any position
+  - Test crash performance at intermediate positions during deployment transition
+
+  ## Best Practices
+
+  ### Deployment Speed and Smoothness
+  - Target 3-second full deployment including settling and lock confirmation
+  - Apply smooth acceleration and deceleration profiles to avoid occupant startle
+  - Provide audio cues during deployment to alert the driver of incoming steering
+  - Allow emergency full-speed deployment override when time-to-collision is short
+
+  ### Mechanical Reliability
+  - Design the retraction mechanism for 50000 cycles over the vehicle lifetime
+  - Use maintenance-free bearings and lubrication in the telescopic mechanism
+  - Test mechanism operation after 1000 hours of vibration exposure
+  - Include position sensors with redundant feedback for safety-critical positioning
+
+  ### Fail-Safe Behavior
+  - If steering cannot deploy, escalate to minimum risk condition (controlled stop)
+  - Motor failure triggers the spring-assist backup to push steering to driving position
+  - Electrical failure defaults to mechanical lock in the last known good position
+  - Never allow the vehicle to enter a state where steering is stowed and manual driving
+    is the only option
+
+  ## Troubleshooting
+
+  ### Steering Will Not Stow
+  Check interlock status to identify which safety condition is blocking stow. Verify the
+  autonomous driving mode signal is confirmed by the ADAS controller. Inspect the stow
+  path for physical obstructions detected by the force-limiting sensors.
+
+  ### Steering Deploys Slowly During Takeover
+  Check motor drive current for overload indicating mechanical resistance. Inspect the
+  spring-assist mechanism tension. Verify column rail lubrication and check for debris
+  in the telescopic guide rails.
+
+  ### Position Sensor Disagrees with Actual Column Position
+  Recalibrate the position sensor by running a full stow-and-deploy cycle to end stops.
+  Check for sensor cable damage from repeated column movement. Verify the redundant
+  position sensors agree with each other before investigating the mechanism.
+
+  ### Steering Locks in Intermediate Position
+  Activate the manual release mechanism to move the column to a defined end position.
+  Check for motor driver fault codes in the steering controller diagnostic. Inspect the
+  locking pin mechanism for engagement at an unintended intermediate detent.
+
+  ## Integration Patterns
+
+  ### Autonomous Mode Coordination
+  Synchronizing steering retraction with the full autonomous transition:
+  - Coordinate stow timing with seat rotation, pedal retraction, and display repositioning
+  - Implement a state machine that tracks the cabin transition progress across all systems
+  - Handle partial transitions where one system fails while others have already moved
+  - Provide a unified cabin mode indicator showing transition progress to the occupant
+
+  ### Driver Monitoring Handoff
+  Managing the driver monitoring requirements during steering transitions:
+  - Continue driver monitoring even after steering is stowed for takeover readiness
+  - Increase monitoring intensity as planned takeover events approach
+  - Require hands-on-wheel confirmation within 5 seconds of steering reaching drive position
+  - Escalate to minimum risk condition if hands-on-wheel is not confirmed after deployment
+
+  ## Testing and Validation
+
+  ### Deployment Timing Certification
+  Verify steering deploys within the required time budget:
+  - Measure deployment time from command to locked-in-position across 1000 cycles
+  - Test at temperature extremes of -40 C and 85 C where mechanism friction varies
+  - Validate deployment under vehicle motion including cornering and braking loads
+  - Certify that manual emergency release achieves deployment within 5 seconds
+
+  ### Crash Safety in All States
+  Validate occupant protection across the full retraction range:
+  - Run frontal barrier crash tests with steering in stowed, mid-travel, and deployed states
+  - Verify column intrusion distance at each position against FMVSS 204 limits
+  - Test the locking mechanism retention under 50 g impulsive crash loads
+  - Validate that a crash during deployment transition does not create additional hazards

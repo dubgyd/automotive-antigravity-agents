@@ -1,0 +1,138 @@
+---
+# Automotive Skill Template
+# Copy this template to create new automotive domain skills
+
+name: skill-name-here
+version: "1.0.0"
+category: domain-category
+domain: automotive
+subcategory: specific-area
+
+description: >
+  Clear, concise description of what this skill does.
+  Should explain the automotive context and use case.
+
+use_cases:
+  - "Specific use case 1"
+  - "Specific use case 2"
+  - "Specific use case 3"
+
+automotive_standards:
+  - "ISO 26262 (Functional Safety)"
+  - "ASPICE Level 3"
+  - "AUTOSAR Classic/Adaptive"
+  - "ISO 21434 (Cybersecurity)"
+
+knowledge_areas:
+  - area: "Primary Knowledge Area"
+    topics:
+      - "Topic 1"
+      - "Topic 2"
+      - "Topic 3"
+  - area: "Secondary Knowledge Area"
+    topics:
+      - "Topic A"
+      - "Topic B"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in [DOMAIN AREA] with deep knowledge of:
+  - Competency 1
+  - Competency 2
+  - Competency 3
+
+  ## Approach
+
+  When invoked for [TASK TYPE]:
+  1. Step 1
+  2. Step 2
+  3. Step 3
+
+  ## Standards & Best Practices
+
+  - Follow [STANDARD NAME] requirements
+  - Adhere to [PROCESS MODEL] guidelines
+  - Implement [PATTERN/PRACTICE]
+
+  ## Deliverables
+
+  Provide:
+  - Deliverable 1 with format
+  - Deliverable 2 with format
+  - Deliverable 3 with format
+
+  ## Safety & Security Considerations
+
+  - Safety requirement 1
+  - Security requirement 2
+  - Compliance check 3
+
+examples:
+  - prompt: "Example task request"
+    response: |
+      Example response showing proper format and approach.
+
+      Include code snippets if applicable:
+      ```language
+      code example
+      ```
+
+      Analysis:
+      - Point 1
+      - Point 2
+
+      Recommendations:
+      - Action 1
+      - Action 2
+
+constraints:
+  - "Constraint 1: Must comply with ISO standard X"
+  - "Constraint 2: Real-time performance requirement"
+  - "Constraint 3: Memory footprint limit"
+
+tools_required:
+  - "Tool 1 (version)"
+  - "Tool 2 (version)"
+  - "Standard library/framework"
+
+related_skills:
+  - skill: "related-skill-1"
+    relationship: "prerequisite|complementary|alternative"
+  - skill: "related-skill-2"
+    relationship: "builds-upon|works-with"
+
+integration_points:
+  - system: "ECU/System Name"
+    interface: "CAN/Ethernet/FlexRay"
+    protocol: "Protocol specification"
+
+performance_criteria:
+  - metric: "Response time"
+    target: "< 100ms"
+  - metric: "Resource usage"
+    target: "< 50% CPU, < 10MB RAM"
+  - metric: "Accuracy"
+    target: "> 99.5%"
+
+validation:
+  - method: "Unit testing"
+    coverage: "90%"
+  - method: "Integration testing"
+    scope: "Full system"
+  - method: "HIL/SIL verification"
+    requirements: "All safety-critical paths"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production|beta|experimental"
+  complexity: "basic|intermediate|advanced|expert"
+  estimated_time: "5-30 minutes"
+
+tags:
+  - automotive
+  - domain-specific-tag-1
+  - domain-specific-tag-2
+  - process-tag
+  - standard-tag

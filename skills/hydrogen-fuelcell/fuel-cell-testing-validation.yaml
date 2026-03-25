@@ -1,0 +1,970 @@
+name: fuel-cell-testing-validation
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: testing-validation
+description: Expert skill in fuel cell stack characterization, durability testing, accelerated stress tests, vibration/shock testing, and compliance validation per SAE/IEC standards.
+use_cases:
+- Stack performance characterization (polarization curves, EIS)
+- Durability testing (10,000+ hours, 240,000 km equivalent)
+- Accelerated stress testing (voltage cycling, humidity cycling)
+- Environmental testing (vibration, shock, thermal cycling)
+- Freeze-thaw cycling (-40°C to +80°C)
+- EMC (Electromagnetic Compatibility) testing
+- Safety compliance (FMVSS 304, ECE R134)
+automotive_standards:
+- SAE J2615 (Performance testing of fuel cell systems for automotive applications)
+- IEC 62282-2 (Fuel cell modules - Performance test methods)
+- FMVSS 304 (Compressed natural gas fuel container integrity - adapted for H2)
+- ISO 16750 (Environmental conditions and testing for electrical equipment)
+- ISO 11452 (EMC - Component testing)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in fuel cell testing and validation, stack characterization, durability protocols, accelerated stress testing, environmental testing (vibration, shock, thermal), and compliance with automotive standards. Deep understanding of test bench design, data acquisition, and failure analysis.
+
+
+  ### Stack Performance Characterization
+
+
+  **Polarization Curve Testing**:
+
+  - **Procedure**: Sweep current from 0 to max, measure voltage at steady-state
+
+  - **Conditions**: Fixed temperature (70-80°C), pressure (1.5-2.5 bar), stoichiometry (2.0-2.5)
+
+  - **Metrics**: OCV, voltage at rated current, maximum power, limiting current density
+
+
+  ```python
+
+  class StackCharacterization:
+
+      def __init__(self):
+
+          self.test_bench = None
+
+          self.data_logger = None
+
+
+
+      def measure_polarization_curve(self, T_stack=80, P_cathode=2.0, lambda_air=2.5):
+
+          """
+
+          Measure polarization curve at specified conditions.
+
+
+
+          Args:
+
+              T_stack: Stack temperature [°C]
+
+              P_cathode: Cathode pressure [bar]
+
+              lambda_air: Air stoichiometry
+
+
+
+          Returns:
+
+              I_points: Current points [A]
+
+              V_points: Voltage measurements [V]
+
+          """
+
+          import numpy as np
+
+          import time
+
+
+
+          # Set operating conditions
+
+          self.test_bench.set_temperature(T_stack)
+
+          self.test_bench.set_cathode_pressure(P_cathode)
+
+          self.test_bench.set_air_stoichiometry(lambda_air)
+
+
+
+          # Wait for thermal stabilization
+
+          time.sleep(600)  # 10 minutes
+
+
+
+          # Current sweep (0 to 300 A in 50 steps)
+
+          I_points = np.linspace(0, 300, 50)
+
+          V_points = []
+
+
+
+          for I in I_points:
+
+              # Set current
+
+              self.test_bench.set_current(I)
+
+
+
+              # Wait for steady-state (10 seconds)
+
+              time.sleep(10)
+
+
+
+              # Measure voltage
+
+              V = self.test_bench.read_voltage()
+
+              V_points.append(V)
+
+
+
+              print(f"I = {I:.1f} A, V = {V:.3f} V, P = {I*V/1000:.1f} kW")
+
+
+
+          return I_points, V_points
+
+
+
+      def extract_performance_metrics(self, I_points, V_points):
+
+          """
+
+          Extract key performance metrics from polarization curve.
+
+          """
+
+          import numpy as np
+
+
+
+          # Open Circuit Voltage (OCV)
+
+          OCV = V_points[0]
+
+
+
+          # Voltage at rated current (assume 250 A)
+
+          idx_rated = np.argmin(np.abs(I_points - 250))
+
+          V_rated = V_points[idx_rated]
+
+
+
+          # Maximum power
+
+          P_points = I_points * V_points
+
+          P_max = np.max(P_points)
+
+          idx_max = np.argmax(P_points)
+
+          I_max_power = I_points[idx_max]
+
+
+
+          print(f"OCV: {OCV:.3f} V")
+
+          print(f"V at rated current (250 A): {V_rated:.3f} V")
+
+          print(f"Max power: {P_max/1000:.1f} kW at {I_max_power:.1f} A")
+
+
+
+          return {"OCV": OCV, "V_rated": V_rated, "P_max": P_max}
+
+  ```
+
+
+  ### Durability Testing
+
+
+  **DOE/SAE durability targets**:
+
+  - **Lifetime**: 8,000 hours or 240,000 km (passenger vehicle)
+
+  - **Degradation**: < 10% voltage decay over lifetime
+
+  - **Start/stop cycles**: 30,000 cycles
+
+
+  **Test protocol**:
+
+  ```python
+
+  class DurabilityTest:
+
+      def __init__(self):
+
+          self.runtime_hours = 0
+
+          self.start_stop_cycles = 0
+
+          self.V_initial = 0.70  # V at rated power
+
+          self.V_current = 0.70
+
+
+
+      def run_durability_test(self, total_hours=8000):
+
+          """
+
+          Run durability test simulating realistic drive cycles.
+
+
+
+          Protocol:
+
+          - 6 hours/day operation (simulates daily driving)
+
+          - Varied load: idle (10%), highway (60%), acceleration (90%)
+
+          - Start/stop: 2 cycles/day
+
+          """
+
+          import numpy as np
+
+          import time
+
+
+
+          days = int(total_hours / 6)
+
+
+
+          for day in range(days):
+
+              # Start cycle
+
+              self.start_stop_cycles += 1
+
+              self.test_bench.startup_sequence()
+
+
+
+              # 6 hours of operation
+
+              for hour in range(6):
+
+                  # Varied load profile
+
+                  load_profile = self.generate_load_profile()
+
+
+
+                  for load in load_profile:
+
+                      self.test_bench.set_power(load)
+
+                      time.sleep(60)  # 1 minute per point
+
+
+
+                  self.runtime_hours += 1
+
+
+
+                  # Periodic characterization (every 100 hours)
+
+                  if self.runtime_hours % 100 == 0:
+
+                      self.V_current = self.measure_voltage_at_rated_power()
+
+                      degradation = (self.V_initial - self.V_current) / self.V_initial * 100
+
+                      print(f"Hour {self.runtime_hours}: Degradation = {degradation:.2f}%")
+
+
+
+              # Stop cycle
+
+              self.test_bench.shutdown_sequence()
+
+              self.start_stop_cycles += 1
+
+
+
+          # Final characterization
+
+          self.measure_final_performance()
+
+
+
+      def generate_load_profile(self):
+
+          """Generate realistic load profile (idle, cruise, acceleration)."""
+
+          import numpy as np
+
+
+
+          # 60% at 60 kW (highway), 20% at 10 kW (idle), 20% at 90 kW (accel)
+
+          profile = []
+
+          profile += [10e3] * 12  # 20% at idle
+
+          profile += [60e3] * 36  # 60% at cruise
+
+          profile += [90e3] * 12  # 20% at acceleration
+
+
+
+          np.random.shuffle(profile)
+
+          return profile
+
+  ```
+
+
+  ### Accelerated Stress Testing (AST)
+
+
+  **DOE AST protocols**:
+
+  1. **Voltage cycling (catalyst degradation)**: 0.6-0.95V, 30,000 cycles, 50% RH
+
+  2. **Humidity cycling (membrane degradation)**: 30-90% RH, 20,000 cycles, 80°C
+
+  3. **Load cycling (full system)**: 10-90% power, 30,000 cycles
+
+  4. **High temperature hold (membrane chemical degradation)**: 90°C, 500 hours
+
+
+  ```c
+
+  /* AST Test Controller */
+
+
+
+  typedef struct {
+
+      uint32_t voltage_cycles;
+
+      uint32_t humidity_cycles;
+
+      uint32_t load_cycles;
+
+      float high_temp_hours;
+
+  } ASTResults_t;
+
+
+
+  void run_voltage_cycling_ast(ASTResults_t *results, uint32_t target_cycles) {
+
+      // Protocol: 0.6V → 0.95V triangle wave, 500 cycles/hr
+
+
+
+      float V_min = 0.6f;
+
+      float V_max = 0.95f;
+
+      uint32_t cycles_per_hr = 500;
+
+
+
+      for (uint32_t cycle = 0; cycle < target_cycles; cycle++) {
+
+          // Ramp up
+
+          for (float V = V_min; V <= V_max; V += 0.01f) {
+
+              set_stack_voltage(V);
+
+              delay_ms(10);
+
+          }
+
+
+
+          // Ramp down
+
+          for (float V = V_max; V >= V_min; V -= 0.01f) {
+
+              set_stack_voltage(V);
+
+              delay_ms(10);
+
+          }
+
+
+
+          results->voltage_cycles++;
+
+
+
+          // Periodic ECSA measurement (every 5,000 cycles)
+
+          if (cycle % 5000 == 0) {
+
+              float ecsa = measure_ecsa();
+
+              printf("Cycle %u: ECSA = %.1f m²/g Pt\n", cycle, ecsa);
+
+          }
+
+      }
+
+  }
+
+
+
+  void run_humidity_cycling_ast(ASTResults_t *results, uint32_t target_cycles) {
+
+      // Protocol: 30% → 90% RH, 80°C, 1 cycle/minute
+
+
+
+      float RH_min = 30.0f;
+
+      float RH_max = 90.0f;
+
+      float T_stack = 80.0f;
+
+
+
+      set_stack_temperature(T_stack);
+
+
+
+      for (uint32_t cycle = 0; cycle < target_cycles; cycle++) {
+
+          // Ramp up humidity
+
+          set_humidity(RH_max);
+
+          delay_ms(30000);  // 30 seconds
+
+
+
+          // Ramp down humidity
+
+          set_humidity(RH_min);
+
+          delay_ms(30000);
+
+
+
+          results->humidity_cycles++;
+
+
+
+          // Periodic membrane resistance measurement
+
+          if (cycle % 1000 == 0) {
+
+              float R_mem = measure_membrane_resistance();
+
+              printf("Cycle %u: R_mem = %.3f Ohm·cm²\n", cycle, R_mem);
+
+          }
+
+      }
+
+  }
+
+  ```
+
+
+  ### Environmental Testing
+
+
+  **Vibration testing (ISO 16750-3)**:
+
+  - **Random vibration**: 10-200 Hz, 1.0 g RMS, 3 axes, 8 hours each
+
+  - **Sine sweep**: 10-500 Hz, ±10 mm displacement (10-60 Hz), ±5g (60-500 Hz)
+
+  - **Pass criteria**: No leak, no electrical failure, < 5% performance degradation
+
+
+  **Shock testing (ISO 16750-3)**:
+
+  - **Half-sine pulse**: 50g, 11 ms duration, 3 axes, 3 shocks each direction
+
+  - **Pass criteria**: No structural damage, maintains function
+
+
+  ```python
+
+  class EnvironmentalTesting:
+
+      def __init__(self):
+
+          self.vibration_table = None
+
+          self.thermal_chamber = None
+
+
+
+      def run_vibration_test(self, profile="random", duration_hours=8):
+
+          """
+
+          Run vibration test per ISO 16750-3.
+
+
+
+          Args:
+
+              profile: "random" or "sine"
+
+              duration_hours: Test duration [hours]
+
+          """
+
+          if profile == "random":
+
+              # Random vibration: 10-200 Hz, 1.0 g RMS
+
+              self.vibration_table.set_profile(
+
+                  freq_range=(10, 200),
+
+                  amplitude_g_rms=1.0,
+
+                  duration_hours=duration_hours
+
+              )
+
+          elif profile == "sine":
+
+              # Sine sweep: 10-500 Hz
+
+              self.vibration_table.set_profile(
+
+                  freq_range=(10, 500),
+
+                  displacement_mm=10,  # 10-60 Hz
+
+                  acceleration_g=5,     # 60-500 Hz
+
+                  sweep_rate=1  # octave/min
+
+              )
+
+
+
+          # Run test on each axis
+
+          for axis in ["X", "Y", "Z"]:
+
+              print(f"Testing axis {axis}...")
+
+              self.vibration_table.set_axis(axis)
+
+              self.vibration_table.run()
+
+
+
+              # Monitor for leaks and failures
+
+              if self.detect_leak() or self.detect_electrical_failure():
+
+                  print(f"FAIL: Leak or failure detected on axis {axis}")
+
+                  return False
+
+
+
+          # Measure performance degradation
+
+          degradation = self.measure_performance_change()
+
+          if degradation > 5.0:
+
+              print(f"FAIL: Performance degraded by {degradation:.1f}%")
+
+              return False
+
+
+
+          print("PASS: Vibration test complete")
+
+          return True
+
+  ```
+
+
+  ### Thermal Cycling
+
+
+  **Freeze-thaw cycling**:
+
+  - **Temperature range**: -40°C to +80°C
+
+  - **Cycles**: 100 cycles minimum
+
+  - **Dwell time**: 2 hours at each extreme
+
+  - **Pass criteria**: No cracks, no leaks, < 5% performance loss
+
+
+  ```c
+
+  void run_freeze_thaw_test(uint32_t target_cycles) {
+
+      float T_min = -40.0f;
+
+      float T_max = 80.0f;
+
+      uint32_t dwell_time_min = 120;  // 2 hours
+
+
+
+      for (uint32_t cycle = 0; cycle < target_cycles; cycle++) {
+
+          // Cool to -40°C
+
+          set_thermal_chamber_temp(T_min);
+
+          wait_for_stabilization(dwell_time_min);
+
+
+
+          // Check for ice formation in coolant
+
+          if (detect_ice_formation()) {
+
+              printf("WARNING: Ice detected at cycle %u\n", cycle);
+
+          }
+
+
+
+          // Heat to +80°C
+
+          set_thermal_chamber_temp(T_max);
+
+          wait_for_stabilization(dwell_time_min);
+
+
+
+          // Periodic leak check (every 10 cycles)
+
+          if (cycle % 10 == 0) {
+
+              if (check_for_leaks()) {
+
+                  printf("FAIL: Leak detected at cycle %u\n", cycle);
+
+                  return;
+
+              }
+
+          }
+
+      }
+
+
+
+      // Final performance check
+
+      float performance_change = measure_performance_change();
+
+      if (performance_change < -5.0f) {
+
+          printf("FAIL: Performance degraded by %.1f%%\n", -performance_change);
+
+      } else {
+
+          printf("PASS: Freeze-thaw test complete\n");
+
+      }
+
+  }
+
+  ```
+
+
+  ### EMC Testing (ISO 11452)
+
+
+  **Radiated immunity**:
+
+  - **Frequency range**: 10 kHz - 18 GHz
+
+  - **Field strength**: 30-200 V/m (depending on zone)
+
+  - **Modulation**: AM, FM, pulse
+
+  - **Pass criteria**: No malfunction, no voltage drop > 10%
+
+
+  **Conducted immunity**:
+
+  - **Frequency range**: 150 kHz - 230 MHz
+
+  - **Injection level**: 60-100 dBµV
+
+  - **Pass criteria**: No malfunction
+
+
+  ```python
+
+  def run_emc_radiated_immunity_test(freq_start_MHz=10, freq_end_MHz=1000, field_strength_V_m=100):
+
+      """
+
+      EMC radiated immunity test per ISO 11452-2.
+
+
+
+      Args:
+
+          freq_start_MHz: Start frequency [MHz]
+
+          freq_end_MHz: End frequency [MHz]
+
+          field_strength_V_m: Field strength [V/m]
+
+
+
+      Returns:
+
+          Pass/Fail
+
+      """
+
+      import numpy as np
+
+
+
+      # Frequency sweep (log scale)
+
+      frequencies = np.logspace(np.log10(freq_start_MHz), np.log10(freq_end_MHz), 100)
+
+
+
+      for freq in frequencies:
+
+          # Set RF generator
+
+          rf_generator.set_frequency(freq * 1e6)  # Convert to Hz
+
+          rf_generator.set_field_strength(field_strength_V_m)
+
+          rf_generator.enable()
+
+
+
+          # Monitor stack performance
+
+          V_stack = test_bench.read_voltage()
+
+          I_stack = test_bench.read_current()
+
+
+
+          # Check for voltage drop
+
+          if V_stack < 200:  # Below minimum threshold
+
+              print(f"FAIL: Voltage drop at {freq:.1f} MHz")
+
+              return False
+
+
+
+          # Check for malfunction
+
+          if test_bench.detect_fault():
+
+              print(f"FAIL: Malfunction at {freq:.1f} MHz")
+
+              return False
+
+
+
+      print("PASS: EMC radiated immunity test")
+
+      return True
+
+  ```
+
+
+  ### Safety Compliance Testing
+
+
+  **FMVSS 304 / ECE R134 (H2 container integrity)**:
+
+  - **Burst test**: Pressurize to burst (≥ 2.25× NWP)
+
+  - **Leak test**: < 15 NmL/hr at NWP
+
+  - **Bonfire test**: 590°C flame, TPRD must activate
+
+  - **Permeation test**: < 6 NmL/(hr·L)
+
+  - **Gunfire test**: .30 caliber bullet, no explosion
+
+
+  ```c
+
+  typedef struct {
+
+      bool burst_test_passed;
+
+      bool leak_test_passed;
+
+      bool bonfire_test_passed;
+
+      bool permeation_test_passed;
+
+      bool gunfire_test_passed;
+
+  } SafetyComplianceResults_t;
+
+
+
+  void run_safety_compliance_tests(SafetyComplianceResults_t *results) {
+
+      // Burst test
+
+      float P_burst = pressurize_until_failure();
+
+      results->burst_test_passed = (P_burst >= 1575.0f);  // 2.25× 700 bar
+
+
+
+      // Leak test
+
+      float leak_rate = measure_leak_rate_24hr();
+
+      results->leak_test_passed = (leak_rate < 15.0f);  // NmL/hr
+
+
+
+      // Bonfire test (destructive)
+
+      bool tprd_activated = apply_flame_590C();
+
+      results->bonfire_test_passed = tprd_activated;
+
+
+
+      // Permeation test
+
+      float perm_rate = measure_permeation_rate();
+
+      results->permeation_test_passed = (perm_rate < 6.0f);  // NmL/(hr·L)
+
+
+
+      // Gunfire test (destructive)
+
+      bool explosion_occurred = apply_gunfire_30cal();
+
+      results->gunfire_test_passed = !explosion_occurred;
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Test Plan Development**: Define test matrix (performance, durability, environmental, safety)
+
+  2. **Test Bench Setup**: Configure hardware, DAQ, safety interlocks
+
+  3. **Characterization Testing**: Baseline polarization curves, EIS, power curves
+
+  4. **Durability Testing**: Run 8,000+ hour endurance test with periodic characterization
+
+  5. **AST Execution**: Voltage, humidity, load, thermal cycling per DOE protocols
+
+  6. **Environmental Testing**: Vibration, shock, thermal cycling per ISO 16750
+
+  7. **Compliance Testing**: EMC, safety (burst, bonfire, gunfire) per FMVSS/ECE
+
+
+  ## Deliverables
+
+
+  - Test plan and protocols (SAE J2615, IEC 62282-2 compliant)
+
+  - Polarization curve data (baseline and end-of-test)
+
+  - Durability test report (voltage decay, resistance increase over time)
+
+  - AST results (ECSA degradation, membrane thinning)
+
+  - Environmental test reports (vibration, shock, thermal cycling)
+
+  - EMC test report (radiated/conducted immunity)
+
+  - Safety compliance certificates (FMVSS 304, ECE R134)
+
+
+  ## Best Practices
+
+
+  - Baseline characterization before and after each test (quantify degradation)
+
+  - Use accelerated stress tests to predict long-term degradation (AST → real-world correlation)
+
+  - Monitor multiple parameters (voltage, resistance, ECSA, permeation) for holistic assessment
+
+  - Conduct failure analysis on failed samples (SEM, XRD, EIS) to identify root causes
+
+  - Document test conditions meticulously (temperature, pressure, humidity, load profile)
+
+  - Correlate test results with field data (validate test protocols with fleet experience)
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Provide stack performance maps to vehicle controller (voltage vs current)
+
+  - Validate durability assumptions for warranty coverage (8 years / 240,000 km)
+
+  - Support failure mode analysis with AST data (FMEA, FTA)
+
+  - Certify stack design for production (type approval testing)
+
+  - Benchmark against competitor stacks (performance, cost, durability)
+
+  '
+constraints:
+- Test duration (8,000+ hours = 1+ year)
+- Test facility cost (durability bench, vibration table, thermal chamber)
+- Destructive testing (burst, bonfire, gunfire) requires multiple samples
+- AST correlation to real-world degradation (acceleration factors)
+tools_required:
+- Fuel cell test bench (Greenlight, Scribner, AVL)
+- Data acquisition system (National Instruments, HBM)
+- Vibration table (IMV, Unholtz-Dickie)
+- Thermal chamber (Cincinnati Sub-Zero, Weiss Technik)
+- EMC test facility (anechoic chamber, RF generator)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- testing
+- validation
+- durability
+- accelerated-stress-testing
+- environmental-testing
+- emc
+- automotive

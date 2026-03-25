@@ -1,0 +1,377 @@
+---
+name: odx-management
+category: diagnostics
+description: ODX database management and parsing for diagnostic data
+
+instructions: |
+  ## ODX Database Management Guide — ISO 22901 / ASAM MCD-2 D
+
+  ### Overview
+
+  ODX (Open Diagnostic data eXchange) is the standardized XML format for describing
+  vehicle diagnostic data. It replaces proprietary diagnostic databases with a
+  vendor-neutral format that tools from any manufacturer can consume. ODX defines
+  ECU variants, diagnostic services, DIDs, DTCs, and communication parameters.
+
+  ### ODX File Types
+
+  | Type | Extension | Content |
+  |------|-----------|---------|
+  | ODX-D | .odx-d | Diagnostic data (services, DIDs, DTCs) |
+  | ODX-C | .odx-c | Communication parameters (timing, addressing) |
+  | ODX-V | .odx-v | Vehicle topology and ECU mapping |
+  | ODX-CS | .odx-cs | Comparam Subset (reusable communication) |
+  | ODX-F | .odx-f | Flash data and programming sequences |
+  | PDX | .pdx | Packed ODX (ZIP container of all above) |
+
+  ### ODX Data Model
+
+  ```
+  ODX Database
+  ├── Comparam Spec (ODX-CS)
+  │   └── Communication parameters (timing, transport)
+  ├── Vehicle Information (ODX-V)
+  │   ├── Logical Links (ECU addressing)
+  │   └── Vehicle Topology
+  └── Diagnostic Layer (ODX-D)
+      ├── Base Variant (shared definitions)
+      │   ├── Diagnostic Services (UDS services)
+      │   ├── Data Identifiers (DIDs)
+      │   ├── Trouble Codes (DTCs)
+      │   └── Routines
+      └── ECU Variants (per-ECU overrides)
+          ├── Variant A (e.g., left headlight)
+          └── Variant B (e.g., right headlight)
+  ```
+
+  ### Key ODX Elements
+
+  - **DIAG-COMM**: Diagnostic service definition (request/response structure)
+  - **DOP (Data Object Property)**: Data type with physical and internal encoding
+  - **COMPU-METHOD**: Conversion formula (LINEAR, TAB-INTP, TEXTTABLE, etc.)
+  - **DTC-DOP**: Trouble code definition with text and severity
+  - **UNIT**: Physical unit (km/h, degC, bar, etc.)
+  - **STRUCTURE**: Composite data type (byte fields within a DID)
+
+  ### Scaling and Conversion
+
+  ODX COMPU-METHODs define how raw bytes become physical values:
+
+  ```xml
+  <!-- LINEAR: physical = (raw * factor) + offset -->
+  <COMPU-METHOD>
+    <CATEGORY>LINEAR</CATEGORY>
+    <COMPU-INTERNAL-TO-PHYS>
+      <COMPU-SCALE>
+        <COMPU-RATIONAL-COEFFS>
+          <COMPU-NUMERATOR><V>-40</V><V>0.1</V></COMPU-NUMERATOR>
+          <COMPU-DENOMINATOR><V>1</V></COMPU-DENOMINATOR>
+        </COMPU-RATIONAL-COEFFS>
+      </COMPU-SCALE>
+    </COMPU-INTERNAL-TO-PHYS>
+  </COMPU-METHOD>
+  <!-- Result: physical = raw * 0.1 + (-40) -->
+  ```
+
+  ### Encoding and Decoding
+
+  Encoding a UDS request from ODX:
+  1. Find the DIAG-COMM for the desired service
+  2. Identify request STRUCTURE and its PARAMs
+  3. Encode each parameter using its DOP (data type, byte position, bit length)
+  4. Apply byte order (big-endian for UDS)
+  5. Assemble complete request byte array
+
+  Decoding a UDS response:
+  1. Match response SID (request SID + 0x40)
+  2. Parse response STRUCTURE from ODX
+  3. Extract raw bytes per PARAM position
+  4. Apply COMPU-METHOD to convert to physical values
+  5. Return structured result with names, values, and units
+
+  ### ECU Variant Identification
+
+  ODX uses variant coding patterns to identify ECU hardware and software:
+  1. Read identification DIDs (0xF186 active session, 0xF187 spare part number)
+  2. Match against MATCHING-PARAMETER definitions in ODX
+  3. Select correct ECU variant for proper DID/DTC interpretation
+
+  ### ODX Tools and Libraries
+
+  - **odxtools** (Python): Open-source ODX parser (pip install odxtools)
+  - **ODXStudio**: Commercial ODX authoring tool (Vector)
+  - **D-PDU API**: Standardized API for ODX-based diagnostic access
+  - **CANdelaStudio**: Diagnostic database authoring (Vector)
+
+  ### ODX and AUTOSAR Integration
+
+  ODX diagnostic extracts can be converted to AUTOSAR ARXML:
+  - ODX DIAG-COMM maps to AUTOSAR DiagnosticServiceTable
+  - ODX DTC-DOP maps to AUTOSAR DiagnosticTroubleCodeUds
+  - Conversion enables sharing between ODX-based tools and AUTOSAR toolchains
+
+  ### Best Practices
+
+  - Use PDX containers to bundle all ODX files for a vehicle project
+  - Validate ODX consistency after manual edits (check references, duplicates)
+  - Version ODX databases alongside ECU software releases
+  - Cache parsed ODX data for fast startup in diagnostic applications
+  - Use ODX subset exports for lightweight field diagnostic tools
+  - Compare ODX versions to detect breaking changes before tool updates
+  - Generate human-readable documentation from ODX for service technicians
+
+skills:
+  - name: parse_odx_database
+    description: Parse ODX/PDX files into usable format
+    task: |
+      Load and parse ODX database:
+      1. Parse ODX-D (Diagnostic Data) XML file structure
+      2. Extract ECU variants and diagnostic addresses
+      3. Parse service definitions (UDS services, sub-functions)
+      4. Load DID definitions with data types and scaling
+      5. Build indexed structure for fast lookups
+    tools:
+      - odxtools_adapter
+    validation:
+      - ODX parsed without errors
+      - All ECU variants extracted
+      - Service and DID lookups functional
+
+  - name: resolve_dtc_descriptions
+    description: Resolve DTC codes to human-readable descriptions
+    task: |
+      DTC resolution from ODX:
+      1. Look up DTC code in ODX trouble code table
+      2. Extract short name and long description
+      3. Get severity rating (A, B, C, D, U)
+      4. Retrieve possible causes and remedies
+      5. Return structured DTC information object
+    tools:
+      - odxtools_adapter
+    validation:
+      - DTC found in database
+      - Description extracted
+      - Severity and remedies included
+
+  - name: get_did_metadata
+    description: Retrieve DID metadata from ODX
+    task: |
+      Extract DID information:
+      1. Look up DID by identifier (e.g., 0xF190)
+      2. Get data type (uint16, ascii, etc.)
+      3. Extract scaling parameters (offset, factor, unit)
+      4. Get min/max valid ranges
+      5. Retrieve short name and description
+    tools:
+      - odxtools_adapter
+    validation:
+      - DID metadata complete
+      - Scaling parameters correct
+      - Data type identified
+
+  - name: encode_diagnostic_request
+    description: Encode diagnostic request using ODX
+    task: |
+      Request encoding:
+      1. Select service from ODX (e.g., ReadDataByIdentifier)
+      2. Add parameters per ODX specification
+      3. Apply byte ordering (big-endian for UDS)
+      4. Calculate length fields if variable-length
+      5. Generate complete request byte array
+    tools:
+      - odxtools_adapter
+    validation:
+      - Request encoded correctly
+      - Byte order correct
+      - Length fields accurate
+
+  - name: decode_diagnostic_response
+    description: Decode diagnostic response using ODX
+    task: |
+      Response decoding:
+      1. Identify service from response SID (request SID + 0x40)
+      2. Parse parameters according to ODX specification
+      3. Extract negative response codes if present (0x7F)
+      4. Apply data type conversions (int, float, string)
+      5. Return structured response object
+    tools:
+      - odxtools_adapter
+    validation:
+      - Response decoded successfully
+      - Data types converted correctly
+      - NRCs handled properly
+
+  - name: apply_did_scaling
+    description: Apply ODX scaling to raw DID values
+    task: |
+      Data scaling application:
+      1. Retrieve scaling formula from ODX (linear, rational, etc.)
+      2. Apply formula: physical_value = (raw_value * factor) + offset
+      3. Handle special values (N/A, error, not available)
+      4. Apply unit conversion if needed
+      5. Format to appropriate precision
+    tools:
+      - odxtools_adapter
+    validation:
+      - Scaling applied correctly
+      - Special values handled
+      - Precision appropriate
+
+  - name: validate_ecu_variant
+    description: Validate ECU variant against ODX
+    task: |
+      ECU variant validation:
+      1. Read ECU identification DIDs (HW version, SW version)
+      2. Match against ODX ECU variant definitions
+      3. Verify diagnostic address matches
+      4. Check compatibility of requested services
+      5. Warn if variant mismatch detected
+    tools:
+      - odxtools_adapter
+      - python_uds_adapter
+    validation:
+      - Variant identified correctly
+      - Compatibility verified
+      - Mismatches flagged
+
+  - name: export_odx_subset
+    description: Export ODX subset for specific ECU
+    task: |
+      ODX subset export:
+      1. Filter ODX database for specific ECU variant
+      2. Include only relevant services and DIDs
+      3. Export to lightweight format (JSON, YAML)
+      4. Validate exported subset completeness
+      5. Generate documentation from subset
+    tools:
+      - odxtools_adapter
+    validation:
+      - Subset filtered correctly
+      - Export format valid
+      - Documentation generated
+
+  - name: compare_odx_versions
+    description: Compare different ODX database versions
+    task: |
+      ODX version comparison:
+      1. Load multiple ODX versions for same ECU
+      2. Identify added, removed, or modified services
+      3. Track DID changes (new, deprecated, changed scaling)
+      4. Detect breaking changes in diagnostic interface
+      5. Generate migration guide for version upgrade
+    tools:
+      - odxtools_adapter
+    validation:
+      - Changes identified correctly
+      - Breaking changes flagged
+      - Migration guide complete
+
+  - name: validate_odx_consistency
+    description: Validate ODX database internal consistency
+    task: |
+      Consistency validation:
+      1. Check for duplicate DIDs or service definitions
+      2. Validate referenced elements exist (e.g., data types)
+      3. Verify scaling parameters are mathematically valid
+      4. Check for circular references
+      5. Generate validation report with errors/warnings
+    tools:
+      - odxtools_adapter
+    validation:
+      - Duplicates detected
+      - References validated
+      - Report comprehensive
+
+  - name: merge_odx_databases
+    description: Merge multiple ODX databases
+    task: |
+      ODX database merging:
+      1. Load multiple ODX files (different ECUs or variants)
+      2. Resolve naming conflicts (unique identifiers)
+      3. Merge ECU variant definitions
+      4. Combine DID and DTC tables
+      5. Export unified ODX database
+    tools:
+      - odxtools_adapter
+    validation:
+      - Databases merged without conflicts
+      - All variants included
+      - Export valid
+
+  - name: generate_odx_documentation
+    description: Generate human-readable ODX documentation
+    task: |
+      Documentation generation:
+      1. Parse ODX for all ECU variants
+      2. Generate service catalog (supported UDS services)
+      3. Create DID reference table with descriptions
+      4. Export DTC list with severity and remedies
+      5. Format as HTML, PDF, or Markdown
+    tools:
+      - odxtools_adapter
+    validation:
+      - Documentation complete
+      - Format readable
+      - All elements included
+
+  - name: odx_to_autosar
+    description: Convert ODX to AUTOSAR diagnostic extracts
+    task: |
+      ODX to AUTOSAR conversion:
+      1. Parse ODX diagnostic specification
+      2. Map to AUTOSAR DiagnosticExtract schema
+      3. Generate ARXML files for AUTOSAR toolchain
+      4. Validate ARXML against AUTOSAR XSD
+      5. Test import into AUTOSAR tools
+    tools:
+      - odxtools_adapter
+    validation:
+      - ARXML generated correctly
+      - Schema validation passes
+      - Import successful
+
+  - name: odx_cache_management
+    description: Manage ODX parsing cache for performance
+    task: |
+      Cache management:
+      1. Parse ODX and serialize to fast-loading format (pickle, msgpack)
+      2. Store cache with version and checksum
+      3. Detect ODX file changes and invalidate cache
+      4. Load from cache if valid, parse if not
+      5. Reduce startup time from seconds to milliseconds
+    tools:
+      - odxtools_adapter
+    validation:
+      - Cache created successfully
+      - Cache invalidation works
+      - Load time reduced significantly
+
+  - name: odx_service_discovery
+    description: Discover supported services from ODX
+    task: |
+      Service discovery:
+      1. Enumerate all services defined in ODX for ECU variant
+      2. List sub-functions and parameters for each service
+      3. Identify required security access levels
+      4. Check session requirements (default, extended, programming)
+      5. Generate service capability matrix
+    tools:
+      - odxtools_adapter
+    validation:
+      - All services enumerated
+      - Requirements identified
+      - Matrix complete
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 15
+  standards:
+    - ISO 22901-1 (ODX)
+    - ASAM MCD-2 D
+  file_formats:
+    - ODX-D: Diagnostic Data
+    - ODX-C: Communication
+    - ODX-V: Vehicle
+    - PDX: Packed ODX

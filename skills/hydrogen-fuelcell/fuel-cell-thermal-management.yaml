@@ -1,0 +1,706 @@
+name: fuel-cell-thermal-management
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: thermal-systems
+description: Expert skill in fuel cell thermal management system design, coolant loop optimization, cold start strategies, and waste heat recovery.
+use_cases:
+- Fuel cell cooling system design and sizing
+- Radiator and heat exchanger selection
+- Cold start strategy below -20°C
+- Freeze protection and coolant selection
+- Waste heat recovery for cabin heating
+- Thermal runaway prevention
+automotive_standards:
+- SAE J2938 (Fuel cell vehicle technical information report)
+- ISO 23828 (Fuel cell road vehicles - Energy consumption measurement)
+- VDI 2167 (Design of cooling systems)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in fuel cell thermal management, coolant loop design, radiator sizing, cold start procedures, and waste heat utilization. Deep understanding of heat generation in fuel cells, temperature uniformity requirements, and freeze protection strategies.
+
+
+  ### Fuel Cell Heat Generation
+
+
+  **Heat sources in PEM fuel cell**:
+
+  - **Reversible heat (entropic)**: ΔS·T·I/nF ≈ 0.05-0.1 V × I
+
+  - **Irreversible heat (losses)**: (E_thermo - V_cell) × I
+
+  - **Total heat**: Q_total = (1.25V - V_cell) × I × N_cells
+
+
+  ```python
+
+  def calculate_fc_heat_generation(I_stack, V_cell, N_cells=350, T_stack=80):
+
+      """
+
+      Calculate heat generation in fuel cell stack.
+
+
+
+      Args:
+
+          I_stack: Stack current [A]
+
+          V_cell: Cell voltage [V]
+
+          N_cells: Number of cells in stack
+
+          T_stack: Stack temperature [°C]
+
+
+
+      Returns:
+
+          Q_heat: Heat generation rate [W]
+
+      """
+
+      # Thermoneutral voltage (HHV-based)
+
+      V_tn = 1.25  # V (higher heating value basis)
+
+
+
+      # Heat generation per cell
+
+      Q_cell = (V_tn - V_cell) * I_stack  # W per cell
+
+
+
+      # Total stack heat
+
+      Q_total = Q_cell * N_cells  # W
+
+
+
+      # At rated power: V_cell ≈ 0.65V → Q ≈ (1.25 - 0.65) × 250A × 350 = 52.5 kW
+
+      return Q_total
+
+  ```
+
+
+  **Typical values**:
+
+  - Rated power: 100 kW electrical → 50-60 kW heat rejection
+
+  - Stack efficiency: 55-60% at rated power → 40-45% waste heat
+
+  - Coolant temperature: 60-80°C (low compared to ICE 90-105°C)
+
+
+  ### Coolant Loop Design
+
+
+  **Coolant selection**:
+
+  - **Deionized water + ethylene glycol**: 50/50 mix, freeze protection to -37°C
+
+  - **Conductivity**: < 10 µS/cm (prevent membrane shorting via coolant)
+
+  - **Deionization filter**: Ion exchange resin to maintain low conductivity
+
+
+  ```c
+
+  typedef struct {
+
+      float coolant_flow_rate;   // L/min
+
+      float T_inlet;             // °C
+
+      float T_outlet;            // °C
+
+      float Q_heat_removal;      // W
+
+      float delta_T_target;      // °C (typically 10-15°C)
+
+  } CoolantLoop_t;
+
+
+
+  void calculate_coolant_flow(CoolantLoop_t *loop, float Q_heat) {
+
+      // Heat removal equation: Q = m_dot * Cp * ΔT
+
+      float Cp_coolant = 3600.0f;  // J/(kg·K) for 50/50 water/glycol
+
+      float rho_coolant = 1070.0f; // kg/m³
+
+
+
+      // Required mass flow rate
+
+      float mdot_kg_s = Q_heat / (Cp_coolant * loop->delta_T_target);  // kg/s
+
+
+
+      // Convert to volumetric flow rate
+
+      loop->coolant_flow_rate = (mdot_kg_s / rho_coolant) * 60000.0f;  // L/min
+
+
+
+      // Example: 50 kW heat, 10°C rise → ~83 L/min
+
+  }
+
+  ```
+
+
+  ### Radiator Sizing
+
+
+  **Heat exchanger requirements**:
+
+  - **Coolant-side**: Flow rate 60-100 L/min, pressure drop < 0.5 bar
+
+  - **Air-side**: Ram air + fan, air flow 1.5-2.5 kg/s
+
+  - **LMTD (Log Mean Temperature Difference)**: Calculate based on inlet/outlet temps
+
+
+  ```python
+
+  def size_radiator(Q_heat, T_coolant_in, T_coolant_out, T_air_in, v_vehicle_max=120):
+
+      """
+
+      Size radiator for fuel cell cooling.
+
+
+
+      Args:
+
+          Q_heat: Heat rejection [W]
+
+          T_coolant_in: Coolant inlet temperature [°C]
+
+          T_coolant_out: Coolant outlet temperature [°C]
+
+          T_air_in: Ambient air temperature [°C]
+
+          v_vehicle_max: Maximum vehicle speed [km/h]
+
+
+
+      Returns:
+
+          A_core: Required radiator core area [m²]
+
+      """
+
+      import numpy as np
+
+
+
+      # Air outlet temperature (estimate)
+
+      T_air_out = T_air_in + 15  # °C (typical rise)
+
+
+
+      # Log Mean Temperature Difference (LMTD)
+
+      dT1 = T_coolant_in - T_air_out
+
+      dT2 = T_coolant_out - T_air_in
+
+      LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
+
+
+
+      # Heat transfer coefficient (typical for automotive radiator)
+
+      U = 250  # W/(m²·K) (overall, includes fins)
+
+
+
+      # Required heat transfer area
+
+      A_core = Q_heat / (U * LMTD)  # m²
+
+
+
+      return A_core
+
+  ```
+
+
+  ### Cold Start Strategy
+
+
+  **Challenges at -20°C**:
+
+  - Coolant frozen (even with glycol, viscosity very high)
+
+  - Membrane frozen (water in ionomer channels)
+
+  - Poor catalyst kinetics at low temperature
+
+
+  **Cold start procedure**:
+
+  ```c
+
+  typedef enum {
+
+      COLD_START_FROZEN,
+
+      COLD_START_PREHEAT,
+
+      COLD_START_IDLE_CURRENT,
+
+      COLD_START_WARMUP,
+
+      COLD_START_READY
+
+  } ColdStartState_t;
+
+
+
+  void cold_start_sequence(ColdStartState_t *state, float T_stack, float T_ambient) {
+
+      switch (*state) {
+
+          case COLD_START_FROZEN:
+
+              // Check if stack is frozen
+
+              if (T_stack < -10.0f) {
+
+                  // Activate electric heater (if available)
+
+                  enable_electric_heater(3000);  // 3 kW PTC heater
+
+                  *state = COLD_START_PREHEAT;
+
+              } else {
+
+                  *state = COLD_START_IDLE_CURRENT;
+
+              }
+
+              break;
+
+
+
+          case COLD_START_PREHEAT:
+
+              // Wait for stack to thaw
+
+              if (T_stack > 0.0f) {
+
+                  disable_electric_heater();
+
+                  *state = COLD_START_IDLE_CURRENT;
+
+              }
+
+              break;
+
+
+
+          case COLD_START_IDLE_CURRENT:
+
+              // Apply idle current to generate heat (self-heating)
+
+              set_stack_current(10.0f);  // A (low current, inefficient → more heat)
+
+
+
+              // Circulate coolant slowly to distribute heat
+
+              set_coolant_pump_speed(20);  // % (low flow, allow stack to heat up)
+
+
+
+              if (T_stack > 30.0f) {
+
+                  *state = COLD_START_WARMUP;
+
+              }
+
+              break;
+
+
+
+          case COLD_START_WARMUP:
+
+              // Gradually increase current and coolant flow
+
+              set_stack_current(50.0f);  // A
+
+              set_coolant_pump_speed(50);  // %
+
+
+
+              if (T_stack > 60.0f) {
+
+                  *state = COLD_START_READY;
+
+              }
+
+              break;
+
+
+
+          case COLD_START_READY:
+
+              // Normal operation
+
+              break;
+
+      }
+
+  }
+
+  ```
+
+
+  ### Freeze Protection
+
+
+  **Strategies**:
+
+  1. **Coolant antifreeze**: 50/50 water/glycol (-37°C protection)
+
+  2. **Drain-down**: Purge coolant to reservoir when shutting down in freezing conditions
+
+  3. **Heater**: Electric PTC heater (battery-powered) to maintain 0°C minimum
+
+  4. **Stack purge**: Remove product water from anode/cathode to prevent ice formation
+
+
+  ```python
+
+  def execute_freeze_protection_shutdown(T_ambient):
+
+      """
+
+      Shutdown sequence for sub-zero temperatures.
+
+      """
+
+      if T_ambient < 0:
+
+          print("Freeze protection active")
+
+
+
+          # Step 1: Purge anode and cathode
+
+          purge_anode_loop(duration=5.0)  # Remove H2 and water
+
+          purge_cathode_loop(duration=10.0)  # Blow out product water
+
+
+
+          # Step 2: Drain coolant to reservoir (optional, aggressive)
+
+          # drain_coolant_to_reservoir()
+
+
+
+          # Step 3: Activate keep-warm heater (if parked for extended period)
+
+          if T_ambient < -10:
+
+              enable_keepwarm_heater(500)  # 500 W to maintain 0°C
+
+  ```
+
+
+  ### Thermal Uniformity Control
+
+
+  **Goal**: Maintain ΔT < 5°C across stack (cell-to-cell temperature variation).
+
+
+  ```c
+
+  #define N_TEMP_SENSORS 5  // Distributed along stack
+
+
+
+  typedef struct {
+
+      float T_cell[N_TEMP_SENSORS];  // °C
+
+      float T_max;
+
+      float T_min;
+
+      float T_avg;
+
+      bool thermal_runaway_risk;
+
+  } ThermalUniformity_t;
+
+
+
+  void monitor_thermal_uniformity(ThermalUniformity_t *therm) {
+
+      // Calculate statistics
+
+      therm->T_max = therm->T_cell[0];
+
+      therm->T_min = therm->T_cell[0];
+
+      float sum = 0.0f;
+
+
+
+      for (int i = 0; i < N_TEMP_SENSORS; i++) {
+
+          if (therm->T_cell[i] > therm->T_max) therm->T_max = therm->T_cell[i];
+
+          if (therm->T_cell[i] < therm->T_min) therm->T_min = therm->T_cell[i];
+
+          sum += therm->T_cell[i];
+
+      }
+
+
+
+      therm->T_avg = sum / N_TEMP_SENSORS;
+
+
+
+      // Check uniformity
+
+      float delta_T = therm->T_max - therm->T_min;
+
+
+
+      if (delta_T > 10.0f) {
+
+          // Poor coolant distribution - adjust flow or reduce power
+
+          trigger_alarm(ALARM_TEMP_NONUNIFORM);
+
+      }
+
+
+
+      // Check for thermal runaway
+
+      if (therm->T_max > 90.0f) {
+
+          therm->thermal_runaway_risk = true;
+
+          emergency_shutdown();
+
+      }
+
+  }
+
+  ```
+
+
+  ### Waste Heat Recovery
+
+
+  **Applications**:
+
+  - **Cabin heating**: Use FC coolant loop (60-80°C) for HVAC
+
+  - **Battery warming**: Preheat battery buffer in cold weather
+
+  - **Fuel pre-heating**: Warm incoming H2 and air (minor benefit)
+
+
+  ```python
+
+  class WasteHeatRecovery:
+
+      def __init__(self):
+
+          self.cabin_heat_demand = 0  # W
+
+          self.Q_fc_available = 50000  # W (from FC)
+
+
+
+      def distribute_heat(self, T_cabin, T_cabin_target, T_ambient):
+
+          """
+
+          Distribute waste heat to cabin and battery.
+
+          """
+
+          # Cabin heating demand
+
+          if T_cabin < T_cabin_target:
+
+              self.cabin_heat_demand = (T_cabin_target - T_cabin) * 500  # W (simplified)
+
+          else:
+
+              self.cabin_heat_demand = 0
+
+
+
+          # Use FC waste heat for cabin (via coolant-to-air heat exchanger)
+
+          Q_to_cabin = min(self.cabin_heat_demand, self.Q_fc_available)
+
+
+
+          # Remaining heat to radiator
+
+          Q_to_radiator = self.Q_fc_available - Q_to_cabin
+
+
+
+          return Q_to_cabin, Q_to_radiator
+
+  ```
+
+
+  ### Coolant Pump Control
+
+
+  ```c
+
+  void control_coolant_pump(float T_stack, float Q_heat, float T_target) {
+
+      static float pump_speed = 50.0f;  // % (initial)
+
+
+
+      // PI controller
+
+      float error = T_stack - T_target;
+
+      static float error_integral = 0.0f;
+
+
+
+      float Kp = 2.0f;  // %/°C
+
+      float Ki = 0.5f;
+
+
+
+      error_integral += error * 0.1f;  // 100 ms timestep
+
+      error_integral = fmaxf(-50.0f, fminf(50.0f, error_integral));  // Anti-windup
+
+
+
+      pump_speed += Kp * error + Ki * error_integral;
+
+
+
+      // Clamp to pump limits
+
+      pump_speed = fmaxf(20.0f, fminf(100.0f, pump_speed));
+
+
+
+      set_pump_pwm(pump_speed);
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Heat Load Calculation**: Determine heat generation at rated and peak power
+
+  2. **Coolant Loop Design**: Select coolant type, flow rate, pump sizing
+
+  3. **Radiator Selection**: Size heat exchanger core area and fan capacity
+
+  4. **Cold Start Strategy**: Develop pre-heat and self-heating procedures
+
+  5. **Freeze Protection**: Implement purge, drain, and heater strategies
+
+  6. **Waste Heat Utilization**: Design cabin heating and battery warming interfaces
+
+  7. **Control Algorithm**: Code temperature regulation and fault detection
+
+
+  ## Deliverables
+
+
+  - Thermal system architecture diagram (pump, radiator, heater, sensors)
+
+  - Heat load calculations and cooling requirements
+
+  - Radiator sizing and fan control strategy
+
+  - Cold start procedure (state machine and control logic)
+
+  - Freeze protection shutdown sequence
+
+  - Waste heat recovery system design
+
+  - Coolant pump control algorithm (PI/PID)
+
+
+  ## Best Practices
+
+
+  - Design coolant loop for 10-15°C temperature rise across stack
+
+  - Use deionized water/glycol with conductivity monitoring
+
+  - Implement dual-zone cooling if stack has hotspots
+
+  - Test cold start at -30°C with soak time (overnight freeze)
+
+  - Size radiator for worst-case: high ambient temp (40°C), low vehicle speed
+
+  - Monitor coolant conductivity and replace when > 10 µS/cm
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface with stack controller for temperature setpoint
+
+  - Provide waste heat to HVAC system (cabin heating)
+
+  - Monitor coolant temperature for battery pre-heating
+
+  - Log thermal performance data (CAN bus) for diagnostics
+
+  - Integrate with vehicle thermal management (battery, power electronics)
+
+  '
+constraints:
+- Low coolant temperature (60-80°C) reduces radiator effectiveness
+- Deionized coolant maintenance (conductivity control)
+- Cold start energy consumption from battery
+- Packaging constraints for radiator and coolant routing
+tools_required:
+- CFD tools (ANSYS Fluent) for coolant flow analysis
+- Thermal simulation (MATLAB/Simulink, GT-Suite)
+- Radiator design software (Kuli, CoilDesigner)
+- Temperature data acquisition system
+- Freeze chamber for cold start testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- thermal-management
+- cooling-system
+- cold-start
+- waste-heat-recovery
+- automotive

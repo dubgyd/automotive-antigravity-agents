@@ -1,0 +1,163 @@
+name: rotating-cabin
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Swivel seat systems for autonomous lounge mode covering rotation mechanisms, safety interlocks, seatbelt reconfiguration, and cabin layout transitions for L4/L5 autonomous vehicles."
+use_cases:
+  - "Designing 180-degree swivel front seats for face-to-face autonomous lounge mode"
+  - "Implementing safety interlock systems that prevent rotation during manual driving"
+  - "Building seatbelt and airbag reconfiguration for rear-facing occupant positions"
+  - "Creating smooth cabin transition animations between driving and lounge configurations"
+  - "Integrating rotating seats with floor-mounted table and display repositioning"
+automotive_standards:
+  - "FMVSS 207 - Seating system strength and anchorage for rotating mounts"
+  - "FMVSS 208 - Occupant crash protection for non-standard seating positions"
+  - "ECE R17 - Seat approval including swivel mechanism strength tests"
+  - "SAE J3016 - Levels of driving automation defining when rotation is permitted"
+  - "ISO 26262 - Functional safety for seat rotation interlock systems"
+instructions: |
+  # Rotating Cabin
+
+  ## Overview
+  Rotating cabin layouts transform the vehicle interior from a traditional forward-facing
+  cockpit into a lounge-like social space when autonomous driving is engaged. Front seats
+  swivel 180 degrees to face rear passengers, creating a face-to-face conference or
+  relaxation arrangement. This capability is a defining feature of Level 4 and Level 5
+  autonomous vehicles, requiring significant engineering in structural design, occupant
+  safety, and seamless transition management.
+
+  ## Key Concepts
+
+  ### Rotation Mechanism Design
+  The mechanical system enabling seat swivel:
+  - Heavy-duty slew bearing mounted between seat base and floor rail
+  - Electric motor with worm gear providing smooth, controlled rotation
+  - Rotation arc of 180 degrees for full reversal, or 90 degrees for side-facing
+  - Locking pin mechanism engaging at defined positions (0, 90, 180 degrees)
+  - Load rating supporting 150 kg occupant plus dynamic crash loads
+
+  ### Safety Interlocks
+  Multiple conditions must be verified before permitting seat rotation:
+  - Vehicle must be in autonomous driving mode (L4 or L5) confirmed by ADAS controller
+  - Vehicle speed may need to be below a threshold during rotation transition
+  - Seatbelt must be unbuckled or reconfigured for the target position
+  - Cabin clearance sensors confirm no obstruction in the rotation path
+  - All interlocks implemented as safety-rated functions per ISO 26262 ASIL-B
+
+  ### Occupant Protection in Rotated Positions
+  Crash safety requirements change fundamentally when occupants face rearward:
+  - Rear-facing occupants experience deceleration forces against the seat back
+  - Seatbelt geometry must be reconfigured with dedicated anchor points per position
+  - Airbag deployment strategy changes completely for non-forward-facing occupants
+  - Side-impact protection must account for all rotation positions
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Rotation Platform
+  Engineer the structural foundation for seat swivel:
+  - Calculate the required bearing load capacity for crash scenarios in all positions
+  - Design the floor structure to distribute rotation point loads to the body-in-white
+  - Integrate power, data, heating, and ventilation connections through a rotary coupler
+  - Ensure the rotation mechanism maintains seat height within the cabin headroom
+
+  ### Step 2 - Build the Interlock System
+  Implement the safety verification chain:
+  - Query the autonomous driving controller for current automation level confirmation
+  - Read occupancy sensors to verify occupant awareness of impending rotation
+  - Scan clearance sensors (ultrasonic or optical) around the rotation arc
+  - Implement a two-stage confirmation requiring occupant acknowledgment before rotation
+
+  ### Step 3 - Reconfigure Restraint Systems
+  Adapt seatbelts and airbags for each seat position:
+  - Install seatbelt anchor points at both forward and rearward facing positions
+  - Use motorized belt retractors that adjust belt path based on seat orientation
+  - Configure airbag deployment tables indexed by current seat rotation angle
+  - Disable frontal airbags when the seat faces rearward and activate rear-facing units
+
+  ### Step 4 - Manage the Cabin Transition
+  Orchestrate the full transition from driving to lounge mode:
+  - Retract the steering wheel and pedals (covered by the foldable-steering skill)
+  - Deploy the center table or workspace surface from the console
+  - Reposition displays to face the new seating arrangement
+  - Adjust ambient lighting and climate for the lounge configuration
+
+  ### Step 5 - Validate Crash Performance
+  Test occupant protection in every permissible seat configuration:
+  - Run frontal, side, and rear crash simulations at each rotation detent position
+  - Verify seatbelt loads remain within acceptable ranges for all configurations
+  - Test airbag timing and coverage for rotated occupant positions
+  - Validate the rotation lock mechanism withstands crash loads without releasing
+
+  ## Best Practices
+
+  ### Rotation Speed and Comfort
+  - Limit rotation speed to 10 degrees per second for passenger comfort
+  - Apply smooth acceleration and deceleration profiles to avoid jerky motion
+  - Provide audio cues during rotation to prevent motion surprise for passengers
+  - Allow the occupant to stop rotation at any point with a single button press
+
+  ### Electrical Continuity
+  - Use a slip ring or rotary connector rated for 50000 rotation cycles minimum
+  - Route seat heating, cooling, sensor, and communication circuits through the connector
+  - Include redundant power paths for safety-critical functions like seatbelt pretensioners
+  - Test electrical continuity under vibration and temperature cycling conditions
+
+  ### Transition Time Budget
+  - Full transition from driving to lounge mode should complete within 30 seconds
+  - Steering wheel retraction and seat rotation can proceed in parallel
+  - Display repositioning should complete before seats reach the final position
+  - Reverse transition to driving mode must complete within 15 seconds for take-over
+
+  ## Troubleshooting
+
+  ### Seat Rotation Blocked by Interlock
+  Check which interlock condition is failing on the diagnostic display. Verify the
+  autonomous driving mode signal is being received by the seat controller. Inspect
+  clearance sensors for obstructions like bags or loose items in the rotation path.
+
+  ### Rotation Motor Stalls Mid-Travel
+  Check the motor current draw for overload conditions. Inspect the slew bearing for
+  debris or damage that increases friction. Verify the worm gear lubrication is adequate
+  and has not dried out.
+
+  ### Seatbelt Warning After Rotation
+  Confirm the seatbelt buckle switch for the new position is being read correctly. Verify
+  the belt retractor has repositioned the belt path for the current seat angle. Check that
+  the restraint controller has received the updated seat position message.
+
+  ### Display Does Not Reposition for Lounge Mode
+  Verify the display actuator received the cabin mode transition command. Check for
+  mechanical interference in the display mounting arm travel path. Inspect the display
+  position sensor for correct reading at the target lounge position.
+
+  ## Integration Patterns
+
+  ### Autonomous Mode Handshake
+  Coordinating cabin rotation with the autonomous driving controller:
+  - Query the autonomous system confidence level before permitting rotation
+  - Monitor planned route for upcoming scenarios requiring driver takeover
+  - Pre-position seats to forward-facing before arriving at geofence boundaries
+  - Implement a grace period timer that begins reverse rotation before takeover request
+
+  ### Entertainment Mode Transition
+  Configuring the entertainment system for lounge seating:
+  - Route video content to ceiling or table-mounted displays visible from rotated positions
+  - Reconfigure the spatial audio system for the new listener orientations
+  - Activate shared content mode where all occupants view the same media
+  - Adjust ambient lighting to lounge scene with reduced brightness and warm tones
+
+  ## Testing and Validation
+
+  ### Rotation Mechanism Durability
+  Verify the swivel system survives automotive lifetime usage:
+  - Cycle full 180-degree rotation 20000 times under maximum occupant weight
+  - Test rotation under vehicle tilt conditions simulating grades up to 15 degrees
+  - Verify locking pin engagement force and retention after 20000 engagement cycles
+  - Inspect slew bearing for wear and preload changes after lifecycle testing
+
+  ### Emergency Scenario Testing
+  Validate behavior during safety-critical transitions:
+  - Simulate an emergency takeover during active seat rotation and verify safe completion
+  - Test crash performance with seats at 45, 90, and 135 degree intermediate positions
+  - Verify that rotation stops safely if power is lost mid-travel
+  - Validate seat belt configuration at every 15-degree rotation increment

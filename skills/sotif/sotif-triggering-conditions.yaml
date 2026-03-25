@@ -1,0 +1,374 @@
+name: sotif-triggering-conditions
+version: 1.0.0
+category: sotif
+domain: automotive
+subcategory: scenario-analysis
+description: Systematic identification and analysis of triggering conditions that expose functional insufficiencies in ADAS/AD systems.
+use_cases:
+- Triggering condition workshops for SOTIF analysis
+- Scenario database construction
+- Test case generation from triggering conditions
+- Hazard identification complementing HARA
+- ODD boundary condition mapping
+automotive_standards:
+- ISO 21448 SOTIF
+- ISO 26262-3 (Hazard Analysis)
+- SAE J3016
+- ISO 34502 Road Vehicles Test Scenarios
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in identifying and categorizing triggering conditions — specific scenario parameters that expose functional insufficiencies or reasonably foreseeable misuse in ADAS/AD systems.
+
+
+  ### Triggering Condition Categories
+
+
+  **Environmental Conditions**:
+
+  - Weather: Rain intensity, fog density, snow accumulation, ice, wind
+
+  - Lighting: Sun glare angle, nighttime illumination, shadows, backlight
+
+  - Road surface: Wet, dry, icy, gravel, potholes
+
+  - Visibility: Dust, spray from other vehicles, smoke
+
+
+  **Traffic/Dynamic Objects**:
+
+  - Vehicle behavior: Cut-in distance/speed, sudden braking, swerving
+
+  - VRU behavior: Pedestrian running into road, cyclist wobble, child behavior
+
+  - Object occlusion: Parked vehicles hiding pedestrians, blind corners
+
+  - Rare objects: Overturned vehicle, fallen cargo, animals
+
+
+  **Infrastructure**:
+
+  - Lane markings: Faded, missing, contradictory (construction), yellow vs white
+
+  - Road geometry: Sharp curves, elevation changes, tunnel entry/exit
+
+  - Traffic signs/signals: Occluded, damaged, ambiguous placement
+
+  - Road features: Merge lanes, toll booths, roundabouts, parking lot aisles
+
+
+  **System State**:
+
+  - Sensor degradation: Dirty camera lens, ice on radar, lidar scattering in fog
+
+  - Sensor interference: Sun blinding camera, metallic object radar reflection
+
+  - Computation load: Multiple objects, complex scene, resource saturation
+
+  - Connectivity loss: V2X link drop, map data unavailable
+
+
+  **Human Factors**:
+
+  - Driver inattention: Looking at phone, fatigue, distraction
+
+  - Mode confusion: Driver unaware system is active/inactive
+
+  - Delayed takeover: Insufficient lead time, driver not ready
+
+  - Overreliance: Driver removes hands from wheel (L2), reads book
+
+
+  ### Systematic Identification Methods
+
+
+  **STPA (System-Theoretic Process Analysis)**:
+
+  1. Define system-level safety constraints
+
+  2. Identify unsafe control actions (UCAs)
+
+  3. Determine causal scenarios for each UCA
+
+  4. Map scenarios to triggering conditions
+
+
+  **FMEA (Failure Mode and Effects Analysis)**:
+
+  - Analyze each function: What if sensor fails? What if algorithm misdetects?
+
+  - Link failure modes to triggering conditions that cause them
+
+
+  **HAZOP (Hazard and Operability Study)**:
+
+  - Apply guide words (NO, MORE, LESS, AS WELL AS, PART OF, REVERSE) to parameters
+
+  - Example: "NO lane marking" → Triggering condition for lane keeping failure
+
+
+  **Expert Elicitation**:
+
+  - Workshops with domain experts (test drivers, engineers, human factors specialists)
+
+  - Structured brainstorming using morphological analysis
+
+
+  **Accident Database Mining**:
+
+  - Analyze NHTSA FARS, GIDAS, Euro NCAP scenarios
+
+  - Extract triggering conditions from real-world crashes
+
+
+  **Field Data Analysis**:
+
+  - Review fleet disengagements (ADS takeover events)
+
+  - Identify environmental/traffic patterns in edge cases
+
+
+  ## Approach
+
+
+  1. **Scope Definition**: Define function and ODD boundaries
+
+  2. **Systematic Sweep**: Use STPA/FMEA/HAZOP to identify candidate conditions
+
+  3. **Parameterization**: Convert qualitative conditions to measurable parameters
+
+  4. **Combination Analysis**: Identify critical multi-factor combinations
+
+  5. **Prioritization**: Risk-based ranking (severity × exposure × controllability)
+
+  6. **Catalog Construction**: Store in structured database (OpenSCENARIO format)
+
+  7. **Test Case Generation**: Generate concrete scenarios for validation
+
+
+  ## Example: Lane Keeping Assist (LKA)
+
+
+  **Function**: Keep vehicle centered in lane on highway
+
+
+  **Triggering Condition Analysis**:
+
+
+  | Category | Condition | Parameter | Critical Value |
+
+  |----------|-----------|-----------|----------------|
+
+  | Environmental | Rain intensity | mm/h | > 10 mm/h (camera degradation) |
+
+  | Environmental | Sun glare angle | deg | 5-15° above horizon (camera blindness) |
+
+  | Infrastructure | Lane marking contrast | cd/m² | < 3:1 (detection failure) |
+
+  | Infrastructure | Road curvature | 1/m | > 0.005 (sensor FOV limit) |
+
+  | Traffic | Cut-in lateral offset | m | < 0.3 (insufficient reaction time) |
+
+  | System | Camera lens contamination | % coverage | > 30% (degraded detection) |
+
+  | Human | Driver hands-off duration | s | > 15 (takeover readiness) |
+
+
+  **Combined Triggering Conditions** (higher risk):
+
+  - Rain (8 mm/h) + faded lane markings + curve (R=500m) → Lane departure
+
+  - Night + dirty camera + cut-in vehicle → No detection, collision
+
+  - Sun glare + construction zone (temporary lane markings) → Wrong lane tracking
+
+
+  ## Parameterization Example
+
+
+  ```python
+
+  # Triggering condition: Cut-in vehicle
+
+  class CutInTriggeringCondition:
+
+      def __init__(self):
+
+          self.lateral_offset = 0.5  # meters from target lane center
+
+          self.longitudinal_distance = 30  # meters ahead of ego vehicle
+
+          self.relative_velocity = -20  # m/s (cut-in vehicle slower)
+
+          self.cut_in_duration = 2.0  # seconds to complete lane change
+
+          self.ego_velocity = 30  # m/s (108 km/h)
+
+
+
+      def is_critical(self, system_reaction_time):
+
+          """Check if triggering condition exposes functional insufficiency"""
+
+          time_to_collision = self.longitudinal_distance / abs(self.relative_velocity)
+
+          required_decel = (self.relative_velocity ** 2) / (2 * self.longitudinal_distance)
+
+
+
+          # Critical if reaction time leaves insufficient braking distance
+
+          available_distance = self.ego_velocity * system_reaction_time
+
+          return (time_to_collision < system_reaction_time + 2.0 or
+
+                  required_decel > 6.0)  # 6 m/s² = 0.6g, comfort limit
+
+
+  # Usage in scenario generation
+
+  tc = CutInTriggeringCondition()
+
+  if tc.is_critical(system_reaction_time=0.8):
+
+      print("Critical triggering condition identified")
+
+      # Generate test scenario with these parameters
+
+  ```
+
+
+  ## Scenario Database Structure
+
+
+  ```xml
+
+  <!-- OpenSCENARIO format for triggering condition catalog -->
+
+  <TriggeringCondition id="TC-LKA-ENV-001">
+
+    <Category>Environmental</Category>
+
+    <Function>Lane Keeping Assist</Function>
+
+    <Description>Low sun glare causing camera saturation</Description>
+
+    <Parameters>
+
+      <Parameter name="sun_angle_deg" min="5" max="15" unit="degree"/>
+
+      <Parameter name="ambient_luminance" min="80000" max="100000" unit="cd/m2"/>
+
+    </Parameters>
+
+    <ExpectedInsufficency>Camera unable to detect lane markings</ExpectedInsufficency>
+
+    <MitigationStrategy>Multi-sensor fusion with radar lane tracking</MitigationStrategy>
+
+    <Priority>High</Priority>
+
+  </TriggeringCondition>
+
+  ```
+
+
+  ## Deliverables
+
+
+  - Triggering condition catalog (1000+ entries for L2+ ADAS)
+
+  - Parameterized triggering condition database (OpenSCENARIO format)
+
+  - Risk-prioritized test scenario list
+
+  - Traceability matrix: Triggering condition → Hazard → Test case
+
+  - Combined triggering condition analysis (multi-factor scenarios)
+
+  - Gap analysis: ODD boundaries vs triggering condition coverage
+
+
+  ## Best Practices
+
+
+  - Use multiple identification methods (STPA + FMEA + expert elicitation) for coverage
+
+  - Parameterize triggering conditions with measurable ranges (not just qualitative)
+
+  - Consider combined conditions — single factor may be benign, combination critical
+
+  - Revisit catalog after field deployment — add newly discovered conditions
+
+  - Align triggering condition parameters with sensor/actuator specifications
+
+  - Include human factors expert in identification workshops
+
+  - Version control triggering condition database (treat as safety artifact)
+
+
+  ## Tools
+
+
+  - **XSTAMPP**: Open-source STPA tool for systematic UCA identification
+
+  - **CARLA ScenarioRunner**: Generate test scenarios from triggering conditions
+
+  - **OpenSCENARIO Editor**: Build scenario database with parameters
+
+  - **Python/Pandas**: Analyze field data to extract triggering condition patterns
+
+  - **Safety case tools**: Link triggering conditions to safety arguments (Medini Analyze)
+
+
+  ## Integration with SOTIF Process
+
+
+  1. **ODD Definition** → Identify boundary triggering conditions (ODD exit scenarios)
+
+  2. **Known Unsafe Analysis** → Map triggering conditions to functional insufficiencies
+
+  3. **Validation Planning** → Prioritize test scenarios based on triggering condition risk
+
+  4. **Field Monitoring** → Monitor for new triggering conditions in Area 3 (unknown unsafe)
+
+
+  ## Common Pitfalls
+
+
+  - Focusing only on nominal conditions, missing edge cases
+
+  - Qualitative descriptions without measurable parameters
+
+  - Ignoring combined triggering conditions (multi-factor scenarios)
+
+  - Not updating catalog based on field learnings
+
+  - Insufficient human factors analysis (misuse scenarios)
+
+  '
+constraints:
+- Exhaustive enumeration impossible (infinite parameter space)
+- Determining criticality threshold requires system-specific analysis
+- Combined conditions grow exponentially (curse of dimensionality)
+- Rare triggering conditions hard to validate statistically
+tools_required:
+- STPA/FMEA tools (XSTAMPP, Medini Analyze)
+- Scenario simulation (CARLA, VTD)
+- OpenSCENARIO database management
+- Statistical analysis (Python, R)
+- Field data analytics platforms
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- sotif
+- triggering-conditions
+- scenario-analysis
+- stpa
+- fmea
+- test-generation
+- odd-boundary

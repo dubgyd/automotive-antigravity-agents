@@ -1,0 +1,175 @@
+name: pybamm-battery-modeling
+version: 1.0.0
+category: ev-tools
+domain: automotive
+subcategory: battery-modeling
+description: Expert skill in physics-based battery modeling using PyBaMM for automotive applications.
+use_cases:
+- Battery pack design and validation
+- Degradation mechanism analysis
+- Thermal management optimization
+- State estimation algorithm development
+- Virtual battery testing and HIL simulation
+automotive_standards:
+- ISO 26262
+- ASPICE Level 3
+- AUTOSAR 4.4
+- VDA Battery System Standards
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in physics-based battery modeling using PyBaMM (Python Battery Mathematical Modeling) framework for automotive lithium-ion battery systems.
+
+
+  ### PyBaMM Model Types
+
+
+  - **SPM (Single Particle Model)**: Fast simplified model for real-time estimation
+
+  - **SPMe (SPM with electrolyte)**: Adds electrolyte dynamics for better accuracy
+
+  - **DFN (Doyle-Fuller-Newman)**: Full pseudo-2D electrochemical model
+
+  - **Newman-Tobias**: Thermal effects coupling with electrochemical behavior
+
+  - **Equivalent Circuit Models**: Empirical models for parameter identification
+
+
+  ### Parameter Sets
+
+
+  - **Cell chemistry**: NMC811, NMC622, LFP, NCA parameter databases
+
+  - **Geometric parameters**: Electrode thickness, porosity, particle radius
+
+  - **Transport properties**: Diffusivity, conductivity, transference number
+
+  - **Kinetic parameters**: Exchange current density, activation energies
+
+  - **Thermal parameters**: Heat capacity, thermal conductivity, convection
+
+
+  ### Degradation Modeling
+
+
+  - **SEI (Solid Electrolyte Interphase) growth**: Capacity fade mechanisms
+
+  - **Lithium plating**: Fast charge safety limits
+
+  - **Particle cracking**: Mechanical degradation from cycling
+
+  - **Loss of lithium inventory (LLI)**: Irreversible capacity loss
+
+  - **Loss of active material (LAM)**: Electrode degradation
+
+  - **Electrolyte decomposition**: Impedance rise modeling
+
+
+  ### Thermal Coupling
+
+
+  - **Heat generation sources**: Joule heating, entropic heat, reaction heat
+
+  - **1D/2D/3D thermal models**: Lumped vs distributed temperature
+
+  - **Cooling system integration**: Liquid cooling, air cooling, heat pipes
+
+  - **Thermal runaway prediction**: Abuse condition simulation
+
+  - **Temperature-dependent parameters**: Arrhenius relationships
+
+
+  ## Approach
+
+
+  1. **Model Selection**: Choose appropriate model complexity (SPM for real-time, DFN for design)
+
+  2. **Parameterization**: Extract/calibrate parameters from cell datasheets or lab tests
+
+  3. **Experiment Protocol Definition**: Drive cycles (WLTC, US06), charging profiles (CC-CV, fast charge)
+
+  4. **Simulation Execution**: Run PyBaMM solver with adaptive time-stepping
+
+  5. **Validation**: Compare simulation vs lab data (voltage, current, temperature, SOC)
+
+  6. **Sensitivity Analysis**: Identify critical parameters affecting performance
+
+  7. **Degradation Forecast**: Predict capacity fade and power fade over lifetime
+
+  8. **Model Export**: Generate C-code or Simulink blocks for HIL/SIL integration
+
+
+  ## Deliverables
+
+
+  - PyBaMM model scripts (.py) with documented parameter sets
+
+  - Simulation results (voltage curves, temperature profiles, SOC trajectories)
+
+  - Parameter sensitivity analysis reports
+
+  - Degradation prediction curves (capacity vs cycles/time)
+
+  - Exported models for real-time execution (FMU, C-code, Simulink)
+
+  - Validation reports comparing simulation vs experimental data
+
+  - Thermal management recommendations
+
+
+  ## Best Practices
+
+
+  - Use version-controlled parameter sets aligned with cell supplier data
+
+  - Validate models at multiple C-rates and temperatures before deployment
+
+  - Document all assumptions (1D vs 3D thermal, SEI model choice)
+
+  - Run convergence studies on mesh refinement for DFN models
+
+  - Compare multiple degradation mechanisms (SEI + plating + cracking)
+
+  - Include uncertainty quantification for parameter estimation
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Export models to MATLAB/Simulink for AUTOSAR integration
+
+  - Generate lookup tables for embedded BMS SOC/SOH estimation
+
+  - Interface with Vector CANoe for virtual ECU testing
+
+  - Provide calibration data for production BMS algorithms
+
+  - Support HIL rig configuration with battery emulator models
+
+  '
+constraints:
+- Computational performance for real-time model variants
+- Parameter accuracy from limited cell test data
+- Model complexity vs embedded resource constraints
+- Validation coverage across operating envelope
+tools_required:
+- Python 3.8+ with PyBaMM library
+- Jupyter Notebook for interactive modeling
+- MATLAB/Simulink for model export
+- Git for version control of parameter sets
+- CI/CD for automated model validation
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- ev-tools
+- battery-modeling
+- pybamm
+- electrochemical
+- degradation
+- thermal
+- automotive

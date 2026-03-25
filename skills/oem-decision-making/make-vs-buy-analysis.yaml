@@ -1,0 +1,159 @@
+name: make-vs-buy-analysis
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: make_vs_buy_analysis
+description: Core competency assessment, vertical integration strategy, TCO comparison framework
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Make-vs-buy analysis is one of the most consequential strategic decisions for automotive OEMs and
+  suppliers, determining which components, systems, and capabilities to develop internally versus source
+  from external partners. The EV transition has fundamentally disrupted traditional make-vs-buy boundaries:
+  OEMs are vertically integrating into battery cells, e-motors, and power electronics while simultaneously
+  increasing reliance on software suppliers. This skill covers core competency assessment, total cost of
+  ownership comparison, vertical integration strategy, risk-adjusted decision frameworks, and transition
+  planning for insourcing or outsourcing automotive components and capabilities.
+
+  ## Key Concepts
+
+  ### Strategic Dimensions of Make-vs-Buy
+  - **Core competency alignment**: Does this capability differentiate us and create competitive advantage?
+  - **Value chain control**: Does controlling this component improve quality, cost, or speed-to-market?
+  - **Supply security**: Is external supply reliable, or does single-source dependency create unacceptable risk?
+  - **Intellectual property**: Does insourcing protect critical IP and prevent knowledge leakage to competitors?
+  - **Scale economics**: Can internal production achieve cost parity with specialized external suppliers?
+  - **Organizational capability**: Do we have (or can we build) the talent and processes to execute?
+
+  ### Total Cost of Ownership (TCO) Components
+  - **Direct costs (Make)**: Raw materials, direct labor, equipment depreciation, facility overhead
+  - **Direct costs (Buy)**: Purchase price, tooling amortization, logistics, import duties
+  - **Indirect costs (Make)**: Engineering overhead, quality management, IT systems, management attention
+  - **Indirect costs (Buy)**: Supplier management, incoming inspection, warranty claim processing
+  - **Risk costs**: Supply disruption, quality failures, technology obsolescence, demand volatility impact
+  - **Opportunity costs**: Capital tied up in manufacturing vs. deployed elsewhere, management bandwidth
+
+  ### EV-Era Make-vs-Buy Shifts
+  - **Battery cells**: Trend toward insourcing/JV (previously 100% bought from Asian cell makers)
+  - **E-motors and inverters**: Many OEMs bringing in-house (previously outsourced to Tier-1)
+  - **Power electronics**: SiC/GaN semiconductor co-development with chip makers
+  - **Vehicle software/OS**: Massive insourcing trend (previously embedded in supplier ECUs)
+  - **ADAS/AD software**: Split between in-house and partnerships depending on OEM capability
+  - **Thermal management**: Increasingly integrated at vehicle level, insourced for system optimization
+
+  ## Implementation Guide
+
+  ### Step 1: Component and Capability Mapping
+  - Create comprehensive map of all components, systems, and capabilities in vehicle architecture
+  - Classify each by current source (internal, external, mixed) and current strategic importance
+  - Identify components where make-vs-buy decision needs reassessment due to technology or market shifts
+  - Prioritize analysis based on spend magnitude, strategic importance, and decision urgency
+
+  ### Step 2: Multi-Criteria Assessment
+  - Score each component on strategic dimensions: differentiation, IP protection, supply risk, quality control
+  - Build TCO model comparing internal production vs. external sourcing over product lifecycle (7-10 years)
+  - Assess capability gap: what investment (people, facilities, IP) is needed to bring in-house?
+  - Model volume sensitivity: at what volume does insourcing become economically viable?
+
+  ### Step 3: Decision and Transition Planning
+  - Apply decision framework to determine make, buy, or hybrid (co-develop, JV) recommendation
+  - For insourcing decisions: develop capability buildup plan with timeline, investment, and milestones
+  - For outsourcing decisions: define supplier selection criteria, dual-source strategy, and IP protections
+  - Create transition plan managing current supply relationships during the shift period
+
+  ### Step 4: Implementation and Review
+  - Execute transition with clear project management: budget tracking, milestone reviews, risk management
+  - Monitor actual TCO vs. business case assumptions with variance analysis
+  - Conduct post-decision review at 12 and 24 months to validate strategic rationale
+  - Update make-vs-buy assessment annually as technology and market conditions evolve
+
+  ## Decision Frameworks
+
+  ### Strategic Sourcing Matrix
+  | | Low Strategic Importance | High Strategic Importance |
+  |---|---|---|
+  | **OEM has capability** | Buy (cost focus) | Make (protect advantage) |
+  | **OEM lacks capability** | Buy (don't invest) | Build or Acquire (strategic gap) |
+
+  ### Make-vs-Buy Scoring Model
+  - **Strategic differentiation (25%)**: Does this create unique customer value?
+  - **TCO advantage (20%)**: Which option has lower lifecycle cost including risk?
+  - **Supply chain resilience (20%)**: What is the risk of supply disruption with external sourcing?
+  - **IP protection (15%)**: Does insourcing better protect proprietary technology?
+  - **Speed to market (10%)**: Which option delivers capability faster?
+  - **Organizational readiness (10%)**: Can we realistically execute internal production?
+
+  ### Hybrid Options Between Pure Make and Buy
+  - **Co-development**: Joint engineering with supplier, OEM owns design, supplier manufactures
+  - **License and manufacture**: License external technology, produce internally for IP retention
+  - **Joint venture**: Shared investment and operation for components requiring massive scale
+  - **Strategic partnership**: Long-term exclusive supply with embedded engineering collaboration
+  - **Insource design, outsource production**: Own IP and specifications, contract manufacturing
+
+  ## Best Practices
+
+  - Never make the decision purely on current cost comparison; include strategic value and risk
+  - Model TCO over the full product lifecycle (7-10 years), not just next year's budget
+  - Include exit costs and transition risks in both directions (insourcing has ramp risk, outsourcing has lock-in)
+  - Assess capability requirements honestly; underestimating insourcing complexity is the top failure mode
+  - Consider second-source strategy even for insourced components to maintain market pressure on cost
+  - Involve purchasing, engineering, manufacturing, and finance jointly in the assessment
+  - Re-evaluate make-vs-buy decisions at each major technology generation change
+  - Factor in government incentives for local production (IRA, IPCEI) that can shift the TCO equation
+  - Protect IP proactively when outsourcing: black-box specifications, split sourcing of know-how
+  - Plan for workforce transition when insourcing (hiring) or outsourcing (redeployment/severance)
+
+  ## Examples
+
+  ### Example 1: Battery Cell Insourcing Decision
+  An OEM currently buys cells from two Korean suppliers at 85 EUR/kWh. Analysis: insourcing via JV
+  gigafactory requires 3B EUR CapEx, projected cell cost of 72 EUR/kWh at 40 GWh scale by year 4.
+  Strategic benefits: supply security (eliminated 6-month lead time risk), IP development in cell
+  chemistry, eligibility for IRA manufacturing tax credits (45 USD/kWh). Decision: proceed with JV,
+  maintain one external supplier as benchmark and backup. Breakeven at 65% utilization.
+
+  ### Example 2: ADAS Software Insourcing
+  An OEM evaluates bringing L2+ ADAS software in-house from current Tier-1 supplier. Current cost:
+  120 EUR per vehicle for black-box software. Insourcing requires 200 engineers (3 years to build team),
+  150M EUR over 5 years. At 500K vehicles/year, insourcing breaks even in year 4. Strategic value:
+  ability to differentiate driving experience, faster OTA update cycles, reduced dependency on single
+  supplier. Decision: insource perception and planning software, continue buying sensor middleware.
+
+  ### Example 3: Stamping Outsourcing Decision
+  A Tier-1 supplier evaluates outsourcing body stampings currently produced in-house. TCO analysis shows
+  external supplier 12% cheaper due to higher press utilization and lower labor costs. However, stamping
+  is integrated with welding line requiring JIT delivery. Risk analysis: supply disruption would halt
+  production within 4 hours. Decision: maintain in-house for high-volume parts (supply security), outsource
+  low-volume parts and service parts where JIT is less critical. Net savings: 5M EUR/year.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- make-vs-buy-analysis
+- automotive
+- oem

@@ -1,0 +1,168 @@
+name: recycling-overview
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of battery recycling landscape including collection, logistics, pre-processing, material recovery, and regulatory drivers.
+use_cases:
+- End-of-life battery management strategy
+- Recycling partner selection and evaluation
+- Circular economy business model design
+- Battery passport compliance planning
+- Material recovery cost-benefit analysis
+automotive_standards:
+- EU Battery Regulation 2023/1542
+- ISO 14001 Environmental Management
+- ISO 14040 Life Cycle Assessment
+- UN ECE R100 Battery Safety
+- Basel Convention Battery Transport
+instructions: '
+
+  ## Core Competencies
+
+  Expert in comprehensive battery recycling value chain from collection through material recovery, with focus on automotive lithium-ion battery systems at end-of-life.
+
+  ### Collection & Reverse Logistics
+
+  - **OEM Take-Back Programs**: Warranty returns, end-of-lease vehicle battery collection
+  - **Dealer Network Collection**: Drop-off points, storage safety requirements
+  - **Third-Party Aggregators**: Independent collection services, battery brokers
+  - **Direct Dismantler Pickup**: ELV (End-of-Life Vehicle) dismantling facilities
+  - **Transportation Compliance**: ADR/DOT hazmat classification (Class 9), packaging requirements
+  - **Storage Safety**: Fire suppression, SOC management (discharge to 30%), temperature control
+  - **Traceability Systems**: Battery passport scanning, chain-of-custody documentation
+
+  ### Pre-Processing & Mechanical Treatment
+
+  - **Battery Pack Disassembly**: High-voltage safety lockout, module separation, coolant drainage
+  - **Depth of Discharge**: Discharge to safe levels (20-30% SOC) using resistive loads
+  - **Cryogenic Processing**: Liquid nitrogen shredding to prevent thermal runaway
+  - **Mechanical Shredding**: Hammer mills, shear shredders, particle size reduction
+  - **Sieving & Separation**: Magnetic separation (steel), eddy current (aluminum/copper), air classification
+  - **Black Mass Collection**: Fine powder (<2mm) containing cathode/anode active materials
+  - **Electrolyte Handling**: VOC capture, solvent recovery, neutralization
+
+  ### Material Recovery Routes
+
+  **Pyrometallurgy** (40% global capacity):
+  - High-temperature smelting (1400-1600°C) in rotary kilns or blast furnaces
+  - Metal alloy recovery (Co, Ni, Cu) with 95%+ efficiency
+  - Lithium and graphite lost to slag (low recovery)
+  - Energy-intensive but handles mixed chemistries
+  - Major players: Glencore, Umicore smelters
+
+  **Hydrometallurgy** (50% global capacity):
+  - Acid leaching (H2SO4, HCl, HNO3) at 60-90°C
+  - Solvent extraction for selective metal separation
+  - Precipitation of metal salts (CoSO4, NiSO4, Li2CO3)
+  - 90-98% recovery for Li, Co, Ni, Mn
+  - Lower energy vs pyro, but requires pure feedstock
+  - Major players: Redwood Materials, Li-Cycle
+
+  **Direct Recycling** (10% global capacity, emerging):
+  - Cathode-to-cathode recycling without destroying crystal structure
+  - Relithiation to restore stoichiometry
+  - 70% energy savings vs virgin material
+  - Highly chemistry-specific (NMC811 vs LFP incompatible)
+  - Research stage with pilot plants (ReCell Center, Ascend Elements)
+
+  ### Regulatory Drivers
+
+  **EU Battery Regulation 2023/1542**:
+  - Collection targets: 45% by 2023, 70% by 2030
+  - Recycling efficiency: 90% for Co/Ni/Cu by 2027, 95% by 2030
+  - Recycled content mandates: 12% Co/4% Li by 2030, 20% Co/10% Li by 2035
+  - Battery passport mandatory from 2027 for >2kWh batteries
+  - Carbon footprint declaration mandatory from 2024
+
+  **Extended Producer Responsibility (EPR)**:
+  - OEMs responsible for end-of-life collection and recycling costs
+  - Producer Responsibility Organizations (PROs) manage compliance
+  - Fee-per-battery sold to fund recycling infrastructure
+
+  **China Battery Traceability**:
+  - GB/T 38698-2020 battery recycling technical policy
+  - Mandatory battery code tracking in national database
+  - OEMs required to establish collection networks
+
+  ### Economics & Market Dynamics
+
+  - **Recycling Cost**: 1000-1500 EUR/ton for hydrometallurgy processing
+  - **Material Revenue**: 800-2500 EUR/ton depending on commodity prices (Co, Ni, Li volatility)
+  - **Break-Even Point**: NMC batteries break-even at current prices, LFP not economical (low Co/Ni content)
+  - **Second-Life Diversion**: 30-40% of EV batteries diverted to stationary storage before recycling
+  - **Logistics Cost**: 15-25% of total recycling cost (weight, hazmat classification)
+
+  ### Environmental Impact
+
+  - **CO2 Savings**: Recycled cathode materials have 40-60% lower carbon footprint vs virgin
+  - **Water Usage**: Hydrometallurgy uses 10-50 m³ water per ton processed (requires treatment)
+  - **Energy Balance**: Pyro uses 15-25 MWh/ton, Hydro uses 5-10 MWh/ton, Direct 2-5 MWh/ton
+  - **Waste Streams**: Slag from pyro (10-15% mass), neutralized leachate from hydro
+
+  ## Approach
+
+  1. **Assess Current State**: Battery chemistry mix, volume projections, existing collection infrastructure
+  2. **Map Value Chain**: Identify collection points, transport providers, recycling partners
+  3. **Evaluate Recycling Routes**: Match chemistry to optimal process (NMC → hydro, LFP → second-life)
+  4. **Model Economics**: Build total cost model including logistics, processing, material revenue
+  5. **Regulatory Compliance**: Ensure EPR compliance, battery passport readiness, reporting
+  6. **Design Collection Network**: Optimize depot locations, storage capacity, transport routes
+  7. **Contract Negotiations**: SLAs with recyclers covering yield, purity, cost-per-ton
+  8. **Traceability Implementation**: Integrate battery passport scanning at collection points
+
+  ## Deliverables
+
+  - Battery recycling strategy document with route selection justification
+  - Collection network design (depot locations, capacity, catchment areas)
+  - Total cost of recycling model (5-year projection)
+  - Recycling partner evaluation matrix (technology, capacity, cost, compliance)
+  - EPR compliance roadmap and reporting templates
+  - Battery passport integration specification
+  - Material recovery yield forecasts by chemistry type
+  - Environmental impact assessment (CO2, water, waste)
+
+  ## Best Practices
+
+  - Segregate battery chemistries at collection to maximize recycling efficiency
+  - Discharge batteries to 30% SOC before transport to reduce fire risk
+  - Prioritize direct recycling for homogenous NMC streams from fleet vehicles
+  - Use hydrometallurgy for mixed chemistry streams with high Co/Ni content
+  - Divert LFP and high-SOH NMC to second-life before recycling
+  - Implement real-time commodity price tracking to optimize material sale timing
+  - Design packs for disassembly (modular, bolted vs welded, accessible connectors)
+  - Include recycling cost in Total Cost of Ownership (TCO) models
+
+  ## Integration with Automotive Workflow
+
+  - Provide battery EOL handling instructions in service manuals
+  - Integrate collection network into dealer management systems
+  - Export battery passport data at vehicle sale/lease end
+  - Track warranty returns through recycling to closed-loop supply
+  - Coordinate with purchasing to prioritize recyclers offering recycled material supply contracts
+
+  '
+constraints:
+- Mixed chemistry feedstock reduces recycling efficiency
+- Lithium recovery economics depend on volatile commodity prices
+- LFP batteries have low material value (no cobalt/nickel)
+- Regulatory landscape differs by region (EU vs US vs China)
+- Transportation costs scale non-linearly with distance
+tools_required:
+- Battery passport scanning systems
+- Material composition analyzers (XRF, ICP-MS)
+- Cost modeling tools (Excel, Python pandas)
+- LCA software (GaBi, SimaPro)
+- ERP integration for collection network management
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- recycling
+- circular-economy
+- epr
+- material-recovery
+- automotive

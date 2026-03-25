@@ -1,0 +1,800 @@
+---
+name: k3s-edge-deployment
+version: 1.0.0
+description: K3s lightweight Kubernetes deployment for automotive edge computing (vehicles, gateways, roadside units)
+category: kubernetes
+subcategory: edge
+tags: [k3s, edge, automotive, vehicle, fleet, lightweight]
+
+instructions: |
+  ## K3s Edge Deployment for Automotive
+
+  ### Overview
+
+  K3s is a lightweight, certified Kubernetes distribution designed for edge and
+  IoT environments. For automotive applications, K3s runs on vehicle compute
+  units (VCUs), edge gateways, and roadside units (RSUs) with minimal resource
+  requirements (512MB RAM, single ARM64/AMD64 core).
+
+  ### K3s vs Full Kubernetes
+
+  | Feature | K3s | Full K8s |
+  |---------|-----|----------|
+  | Binary size | ~60MB single binary | Multiple components |
+  | RAM minimum | 512MB | 2GB+ |
+  | Datastore | SQLite (default), etcd | etcd |
+  | Dependencies | None (self-contained) | containerd, kubelet, etc. |
+  | TLS | Auto-generated certificates | Manual or kubeadm |
+  | Startup time | < 30 seconds | Minutes |
+  | Built-in | Traefik, CoreDNS, Flannel | Install separately |
+
+  ### Installation
+
+  ```bash
+  # Server (control plane) — single command
+  curl -sfL https://get.k3s.io | sh -
+
+  # Agent (worker node) — join existing server
+  curl -sfL https://get.k3s.io | K3S_URL=https://<server>:6443 \
+    K3S_TOKEN=<token> sh -
+
+  # Air-gapped installation (vehicle with no internet)
+  # Download binary and images tarball on connected system
+  # Copy to /usr/local/bin/k3s and /var/lib/rancher/k3s/agent/images/
+  ```
+
+  ### Automotive Edge Configuration
+
+  ```bash
+  # Minimal server for vehicle compute unit
+  curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
+    --disable traefik \
+    --disable servicelb \
+    --disable metrics-server \
+    --write-kubeconfig-mode 644 \
+    --node-label vehicle/vin=WBA12345 \
+    --node-label vehicle/model=sedan-2025 \
+    --data-dir /data/k3s \
+    --kubelet-arg=eviction-hard=memory.available<100Mi \
+    --kubelet-arg=system-reserved=cpu=200m,memory=256Mi" sh -
+  ```
+
+  Key flags for automotive edge:
+  - `--disable traefik`: Use vehicle-specific ingress or none
+  - `--data-dir`: Point to persistent storage (eMMC, SSD)
+  - `--kubelet-arg=eviction-hard`: Protect system from OOM
+  - `--kubelet-arg=system-reserved`: Reserve resources for OS/drivers
+  - `--node-label`: Tag with VIN, model, region for fleet management
+
+  ### Resource Budgeting
+
+  Typical vehicle compute unit (4-core ARM64, 4GB RAM):
+
+  ```
+  Total: 4 CPU, 4096 MB RAM
+  ├── System reserved:     200m CPU,  256 MB
+  ├── K3s overhead:        200m CPU,  512 MB
+  ├── Available for pods: 3600m CPU, 3328 MB
+  │   ├── Telemetry agent:  100m,  128 MB
+  │   ├── Diagnostics:      200m,  256 MB
+  │   ├── OTA agent:        100m,  128 MB
+  │   ├── V2X stack:        500m,  512 MB
+  │   └── ADAS pipeline:   2000m, 2048 MB
+  └── Eviction threshold:           100 MB
+  ```
+
+  ### Offline Operation
+
+  Vehicles operate without connectivity. K3s handles this:
+  - SQLite datastore persists state locally (no external etcd needed)
+  - Pre-pulled container images from local registry or embedded tarball
+  - Local persistent volumes for data buffering
+  - Workloads continue running independently of the control plane server
+
+  ### Networking Considerations
+
+  - Use `--flannel-backend=host-gw` for local-only networking (no VXLAN overhead)
+  - For multi-interface vehicles, configure `--node-ip` to bind to correct NIC
+  - Use `--cluster-cidr` and `--service-cidr` to avoid conflicts with vehicle networks
+  - Configure DNS to resolve cloud endpoints when connectivity is available
+
+  ### Best Practices
+
+  - Use air-gapped installation for production vehicles (no internet dependency)
+  - Pre-pull all container images and embed in the OS image
+  - Set resource limits on all pods to prevent resource starvation
+  - Use node labels for fleet management targeting
+  - Configure automatic restart (systemd) for K3s service
+  - Monitor disk usage and implement log rotation
+  - Use read-only root filesystem where possible for security
+  - Test offline scenarios thoroughly (connectivity loss, power cycles)
+
+metadata:
+  author: Edge Computing Specialist Agent
+  created: 2026-03-19
+  stability: stable
+  prerequisites:
+    - Linux ARM64 or AMD64 system
+    - 512MB RAM minimum (1GB recommended)
+    - Outbound internet connectivity (initial setup)
+  use_cases:
+    - Vehicle compute units (VCU)
+    - Edge gateways
+    - Roadside units (RSU)
+    - Manufacturing edge nodes
+    - Testing facilities edge compute
+
+parameters:
+  node_name:
+    type: string
+    description: Unique name for the edge node
+    required: true
+    example: vehicle-vin-abc123
+
+  deployment_mode:
+    type: enum
+    description: K3s deployment mode
+    required: true
+    values: [server, agent, server-agent]
+    default: server-agent
+
+  k3s_version:
+    type: string
+    description: K3s version to install
+    required: false
+    default: v1.28.6+k3s2
+
+  server_url:
+    type: string
+    description: K3s server URL for agent mode
+    required_if: deployment_mode == 'agent'
+    example: https://k3s-master.example.com:6443
+
+  token:
+    type: string
+    description: Cluster join token
+    required_if: deployment_mode == 'agent'
+    sensitive: true
+
+  enable_local_storage:
+    type: boolean
+    description: Enable local-path storage provisioner
+    default: true
+
+  enable_traefik:
+    type: boolean
+    description: Enable Traefik ingress controller
+    default: false
+
+  disable_components:
+    type: array
+    description: Components to disable
+    items:
+      type: enum
+      values: [traefik, servicelb, metrics-server, coredns]
+    default: [traefik, servicelb]
+
+  data_dir:
+    type: string
+    description: K3s data directory
+    default: /var/lib/rancher/k3s
+
+  enable_airgap:
+    type: boolean
+    description: Enable airgap installation (offline mode)
+    default: false
+
+  offline_bundle_path:
+    type: string
+    description: Path to offline installation bundle
+    required_if: enable_airgap == true
+
+  resource_limits:
+    type: object
+    description: Resource limits for edge node
+    properties:
+      max_pods:
+        type: integer
+        default: 50
+      reserved_cpu:
+        type: string
+        default: 100m
+      reserved_memory:
+        type: string
+        default: 256Mi
+
+steps:
+  - id: prereq_check
+    name: Check edge node prerequisites
+    type: validation
+    commands:
+      - name: Check system resources
+        command: |
+          # Check available RAM
+          TOTAL_RAM=$(free -m | awk '/^Mem:/{print $2}')
+          if [ $TOTAL_RAM -lt 512 ]; then
+            echo "ERROR: Insufficient RAM ($TOTAL_RAM MB). Minimum 512MB required."
+            exit 1
+          fi
+
+          # Check disk space
+          AVAILABLE_DISK=$(df -BG /var | tail -1 | awk '{print $4}' | sed 's/G//')
+          if [ $AVAILABLE_DISK -lt 5 ]; then
+            echo "ERROR: Insufficient disk space. Minimum 5GB required."
+            exit 1
+          fi
+
+      - name: Check architecture
+        command: |
+          ARCH=$(uname -m)
+          case $ARCH in
+            x86_64|amd64) ARCH=amd64 ;;
+            aarch64|arm64) ARCH=arm64 ;;
+            armv7l) ARCH=arm ;;
+            *) echo "ERROR: Unsupported architecture: $ARCH"; exit 1 ;;
+          esac
+          echo "Architecture: $ARCH"
+
+      - name: Verify network connectivity
+        command: |
+          {% if not enable_airgap %}
+          if ! ping -c 1 -W 5 8.8.8.8 > /dev/null 2>&1; then
+            echo "WARNING: No internet connectivity. Use airgap mode for offline installation."
+          fi
+          {% endif %}
+
+  - id: install_k3s
+    name: Install K3s
+    type: installation
+    depends_on: [prereq_check]
+
+    commands:
+      - name: Download K3s installer
+        condition: not enable_airgap
+        command: |
+          curl -sfL https://get.k3s.io -o /tmp/k3s-install.sh
+          chmod +x /tmp/k3s-install.sh
+
+      - name: Install K3s server
+        condition: deployment_mode in ['server', 'server-agent']
+        command: |
+          INSTALL_K3S_VERSION={{k3s_version}} \
+          K3S_NODE_NAME={{node_name}} \
+          INSTALL_K3S_EXEC="server \
+            --data-dir={{data_dir}} \
+            --node-label edge.automotive/type=compute \
+            --node-label edge.automotive/location={{location}} \
+            --max-pods={{resource_limits.max_pods}} \
+            --kube-reserved=cpu={{resource_limits.reserved_cpu}},memory={{resource_limits.reserved_memory}} \
+            {% for component in disable_components %}
+            --disable={{component}} \
+            {% endfor %}
+            {% if not enable_local_storage %}
+            --disable=local-storage \
+            {% endif %}
+            --tls-san={{node_name}}.local \
+            --write-kubeconfig-mode=644" \
+          sh /tmp/k3s-install.sh
+
+      - name: Install K3s agent
+        condition: deployment_mode == 'agent'
+        command: |
+          INSTALL_K3S_VERSION={{k3s_version}} \
+          K3S_NODE_NAME={{node_name}} \
+          K3S_URL={{server_url}} \
+          K3S_TOKEN={{token}} \
+          INSTALL_K3S_EXEC="agent \
+            --data-dir={{data_dir}} \
+            --node-label edge.automotive/type=compute \
+            --max-pods={{resource_limits.max_pods}}" \
+          sh /tmp/k3s-install.sh
+
+      - name: Configure airgap installation
+        condition: enable_airgap
+        command: |
+          # Extract airgap images
+          mkdir -p /var/lib/rancher/k3s/agent/images/
+          cp {{offline_bundle_path}}/k3s-airgap-images-*.tar.gz /var/lib/rancher/k3s/agent/images/
+
+          # Install K3s binary
+          cp {{offline_bundle_path}}/k3s /usr/local/bin/k3s
+          chmod +x /usr/local/bin/k3s
+
+          # Install systemd service
+          cp {{offline_bundle_path}}/k3s.service /etc/systemd/system/
+          systemctl daemon-reload
+          systemctl enable k3s
+          systemctl start k3s
+
+  - id: configure_kubeconfig
+    name: Configure kubeconfig
+    type: configuration
+    depends_on: [install_k3s]
+    condition: deployment_mode in ['server', 'server-agent']
+
+    commands:
+      - name: Setup kubeconfig
+        command: |
+          mkdir -p $HOME/.kube
+          cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+          # Update server URL with node name
+          sed -i "s/127.0.0.1/{{node_name}}.local/g" $HOME/.kube/config
+
+      - name: Verify cluster access
+        command: |
+          kubectl get nodes
+          kubectl get pods -A
+
+  - id: install_edge_components
+    name: Install edge-specific components
+    type: deployment
+    depends_on: [configure_kubeconfig]
+
+    commands:
+      - name: Install metrics-server (lightweight)
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: metrics-server
+            namespace: kube-system
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: metrics-server
+            namespace: kube-system
+          spec:
+            selector:
+              matchLabels:
+                k8s-app: metrics-server
+            template:
+              metadata:
+                labels:
+                  k8s-app: metrics-server
+              spec:
+                serviceAccountName: metrics-server
+                containers:
+                - name: metrics-server
+                  image: registry.k8s.io/metrics-server/metrics-server:v0.7.0
+                  args:
+                  - --cert-dir=/tmp
+                  - --secure-port=10250
+                  - --kubelet-preferred-address-types=InternalIP
+                  - --kubelet-use-node-status-port
+                  - --metric-resolution=30s
+                  - --kubelet-insecure-tls
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 64Mi
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
+          EOF
+
+      - name: Configure edge storage class
+        condition: enable_local_storage
+        command: |
+          kubectl patch storageclass local-path \
+            -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+      - name: Deploy edge monitoring
+        command: |
+          kubectl create namespace edge-monitoring
+
+          # Deploy lightweight Prometheus
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: prometheus-config
+            namespace: edge-monitoring
+          data:
+            prometheus.yml: |
+              global:
+                scrape_interval: 30s
+                evaluation_interval: 30s
+              scrape_configs:
+              - job_name: 'kubernetes-nodes'
+                kubernetes_sd_configs:
+                - role: node
+              - job_name: 'kubernetes-pods'
+                kubernetes_sd_configs:
+                - role: pod
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: prometheus
+            namespace: edge-monitoring
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: prometheus
+            template:
+              metadata:
+                labels:
+                  app: prometheus
+              spec:
+                containers:
+                - name: prometheus
+                  image: prom/prometheus:v2.48.0
+                  args:
+                  - "--config.file=/etc/prometheus/prometheus.yml"
+                  - "--storage.tsdb.path=/prometheus"
+                  - "--storage.tsdb.retention.time=7d"
+                  - "--storage.tsdb.retention.size=2GB"
+                  volumeMounts:
+                  - name: config
+                    mountPath: /etc/prometheus
+                  - name: data
+                    mountPath: /prometheus
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 256Mi
+                    limits:
+                      cpu: 500m
+                      memory: 512Mi
+                volumes:
+                - name: config
+                  configMap:
+                    name: prometheus-config
+                - name: data
+                  emptyDir: {}
+          EOF
+
+  - id: configure_edge_policies
+    name: Configure edge-specific policies
+    type: configuration
+    depends_on: [install_edge_components]
+
+    commands:
+      - name: Set resource quotas
+        command: |
+          kubectl create namespace automotive-workloads
+
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ResourceQuota
+          metadata:
+            name: edge-quota
+            namespace: automotive-workloads
+          spec:
+            hard:
+              requests.cpu: "2"
+              requests.memory: 2Gi
+              limits.cpu: "4"
+              limits.memory: 4Gi
+              persistentvolumeclaims: "5"
+          EOF
+
+      - name: Configure pod disruption budgets
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: policy/v1
+          kind: PodDisruptionBudget
+          metadata:
+            name: critical-workload-pdb
+            namespace: automotive-workloads
+          spec:
+            minAvailable: 1
+            selector:
+              matchLabels:
+                criticality: high
+          EOF
+
+      - name: Set network policies
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: networking.k8s.io/v1
+          kind: NetworkPolicy
+          metadata:
+            name: default-deny-ingress
+            namespace: automotive-workloads
+          spec:
+            podSelector: {}
+            policyTypes:
+            - Ingress
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: NetworkPolicy
+          metadata:
+            name: allow-same-namespace
+            namespace: automotive-workloads
+          spec:
+            podSelector: {}
+            ingress:
+            - from:
+              - podSelector: {}
+          EOF
+
+  - id: enable_fleet_management
+    name: Enable fleet management integration
+    type: deployment
+    depends_on: [configure_edge_policies]
+
+    commands:
+      - name: Install fleet agent
+        command: |
+          kubectl create namespace fleet-system
+
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: fleet-agent
+            namespace: fleet-system
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: fleet-agent
+            template:
+              metadata:
+                labels:
+                  app: fleet-agent
+              spec:
+                serviceAccountName: fleet-agent
+                containers:
+                - name: agent
+                  image: rancher/fleet-agent:v0.9.0
+                  env:
+                  - name: FLEET_CLUSTER_NAME
+                    value: "{{node_name}}"
+                  - name: FLEET_NAMESPACE
+                    value: "fleet-system"
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 64Mi
+          ---
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: fleet-agent
+            namespace: fleet-system
+          EOF
+
+      - name: Configure GitOps sync
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: gitops-config
+            namespace: fleet-system
+          data:
+            repository: "https://github.com/automotive-fleet/edge-configs"
+            branch: "main"
+            path: "clusters/{{node_name}}"
+            sync-interval: "5m"
+          EOF
+
+outputs:
+  kubeconfig:
+    description: Kubeconfig for edge node
+    path: /etc/rancher/k3s/k3s.yaml
+
+  node_token:
+    description: Token for joining additional agents
+    command: cat /var/lib/rancher/k3s/server/node-token
+
+  cluster_status:
+    description: Cluster status
+    command: kubectl get nodes,pods -A
+
+automotive_patterns:
+  vehicle_deployment:
+    description: Deploy K3s on vehicle compute unit
+    characteristics:
+      - Single-node cluster
+      - Limited resources (1-2 CPU cores, 2-4GB RAM)
+      - Intermittent connectivity
+      - Local data processing and caching
+    implementation: |
+      k3s-edge-deployment \
+        --node-name=$VEHICLE_VIN \
+        --deployment-mode=server-agent \
+        --disable-components=traefik,servicelb \
+        --resource-limits.max-pods=20 \
+        --enable-airgap=true
+
+  gateway_deployment:
+    description: Deploy K3s on edge gateway
+    characteristics:
+      - Multi-node cluster possible
+      - Better resources (4-8 CPU cores, 8-16GB RAM)
+      - More stable connectivity
+      - Aggregates data from multiple vehicles
+    implementation: |
+      k3s-edge-deployment \
+        --node-name=$GATEWAY_ID \
+        --deployment-mode=server \
+        --enable-local-storage=true \
+        --resource-limits.max-pods=100
+
+  manufacturing_edge:
+    description: Deploy K3s at manufacturing facility
+    characteristics:
+      - Reliable power and network
+      - High performance requirements
+      - Local data processing for production lines
+    implementation: |
+      k3s-edge-deployment \
+        --node-name=$FACILITY-edge-$ID \
+        --deployment-mode=server-agent \
+        --enable-traefik=true
+
+fleet_management:
+  registration:
+    description: Register edge node with central fleet management
+    steps:
+      - Generate unique node identifier
+      - Register with central management API
+      - Receive cluster configuration
+      - Apply GitOps repository configuration
+
+  synchronization:
+    description: Sync configurations and applications
+    methods:
+      - GitOps (Flux, ArgoCD)
+      - REST API polling
+      - Message queue (MQTT, Kafka)
+    frequency:
+      - Online: Every 5 minutes
+      - Offline: On reconnection
+
+  monitoring:
+    description: Report node health to central system
+    metrics:
+      - Node status and resources
+      - Pod health
+      - Network connectivity
+      - Storage utilization
+      - Application-specific metrics
+
+offline_capabilities:
+  data_caching:
+    description: Cache critical data locally
+    implementation: |
+      - Use PersistentVolumes for data persistence
+      - Deploy local databases (SQLite, PostgreSQL)
+      - Implement cache invalidation strategies
+
+  workload_continuity:
+    description: Continue operations without cloud connectivity
+    strategies:
+      - Local decision making
+      - Buffered telemetry data
+      - Automatic reconnection and sync
+      - Degraded mode operation
+
+  update_management:
+    description: Handle updates in offline scenarios
+    approach:
+      - Bundle updates for offline installation
+      - Staged rollout when connectivity restored
+      - Rollback capability
+      - Health checks before commit
+
+best_practices:
+  resource_management:
+    - Set realistic resource requests and limits
+    - Use priority classes for critical workloads
+    - Implement pod disruption budgets
+    - Monitor resource utilization
+
+  security:
+    - Rotate node tokens regularly
+    - Use network policies
+    - Enable pod security standards
+    - Implement RBAC
+    - Scan container images
+
+  high_availability:
+    - Use multiple nodes when possible
+    - Configure pod anti-affinity
+    - Implement health checks and auto-restart
+    - Plan for network partitions
+
+  automotive_compliance:
+    - Audit all operations
+    - Implement secure boot
+    - Encrypt data at rest and in transit
+    - Document change management
+
+monitoring:
+  node_health:
+    - CPU/memory utilization
+    - Disk I/O and space
+    - Network connectivity
+    - Container runtime status
+
+  application_health:
+    - Pod status and restarts
+    - Application-specific metrics
+    - Resource consumption
+    - Response times
+
+  connectivity:
+    - Uplink status
+    - Data synchronization lag
+    - API reachability
+    - Time synchronization
+
+troubleshooting:
+  k3s_not_starting:
+    symptoms: "K3s service fails to start"
+    diagnosis: "journalctl -u k3s -f"
+    solutions:
+      - Check system resources
+      - Verify port availability (6443, 10250)
+      - Check SELinux/AppArmor policies
+      - Review logs for specific errors
+
+  pods_pending:
+    symptoms: "Pods stuck in Pending state"
+    diagnosis: "kubectl describe pod <name>"
+    solutions:
+      - Check node resources
+      - Verify storage provisioner
+      - Review pod specifications
+      - Check node taints
+
+  network_issues:
+    symptoms: "Pod networking not working"
+    diagnosis: "kubectl get pods -n kube-system | grep flannel"
+    solutions:
+      - Restart flannel pods
+      - Check iptables rules
+      - Verify CNI configuration
+      - Test pod-to-pod connectivity
+
+related_skills:
+  - k8s-cluster-setup
+  - edge-fleet-management
+  - vehicle-to-cloud-sync
+  - offline-capable-deployments
+  - helm-deployment-strategies
+
+examples:
+  - name: Vehicle edge node
+    description: Deploy K3s on vehicle with offline capability
+    command: |
+      k3s-edge-deployment \
+        --node-name=vehicle-vin-abc123 \
+        --deployment-mode=server-agent \
+        --disable-components=traefik,servicelb \
+        --resource-limits.max-pods=30 \
+        --enable-airgap=false
+
+  - name: Edge gateway cluster
+    description: Deploy multi-node K3s cluster at gateway
+    command: |
+      # Master node
+      k3s-edge-deployment \
+        --node-name=gateway-01-master \
+        --deployment-mode=server \
+        --enable-local-storage=true
+
+      # Worker nodes (run on each worker)
+      k3s-edge-deployment \
+        --node-name=gateway-01-worker-N \
+        --deployment-mode=agent \
+        --server-url=https://gateway-01-master:6443 \
+        --token=<cluster-token>
+
+  - name: Offline manufacturing edge
+    description: Deploy with complete offline bundle
+    command: |
+      k3s-edge-deployment \
+        --node-name=factory-edge-01 \
+        --deployment-mode=server-agent \
+        --enable-airgap=true \
+        --offline-bundle-path=/mnt/usb/k3s-bundle

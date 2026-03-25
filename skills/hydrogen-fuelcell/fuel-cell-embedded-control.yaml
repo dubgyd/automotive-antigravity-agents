@@ -1,0 +1,930 @@
+name: fuel-cell-embedded-control
+version: 1.0.0
+category: hydrogen-fuelcell
+domain: automotive
+subcategory: embedded-software
+description: Expert skill in real-time fuel cell control on AUTOSAR/QNX platforms, sensor interfaces, state machines, and safety-critical software development.
+use_cases:
+- AUTOSAR Adaptive/Classic platform for FC control
+- Real-time sensor data acquisition (CAN, I2C, SPI, analog)
+- FC state machine implementation (startup, running, shutdown, fault)
+- Safety-critical software per ISO 26262 (ASIL B/C)
+- Power electronics interface (DC-DC converter, compressor motor)
+- OTA update support for control parameters
+automotive_standards:
+- ISO 26262 (Functional safety for automotive software)
+- AUTOSAR Adaptive Platform R23-11
+- AUTOSAR Classic Platform R4.4
+- MISRA C:2012 (Coding guidelines)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in embedded software development for fuel cell control systems, AUTOSAR platform integration, real-time operating systems (RTOS), sensor interfaces, and safety-critical software per ISO 26262. Deep understanding of FC state machines, power electronics control, and diagnostic protocols.
+
+
+  ### Platform Selection
+
+
+  **AUTOSAR Classic Platform**:
+
+  - **OS**: OSEK/VDX real-time OS
+
+  - **Cycle time**: 10-100 ms for FC control
+
+  - **Use case**: Traditional ECU, deterministic timing, cost-sensitive
+
+  - **Programming**: C with AUTOSAR SW-C (Software Components)
+
+
+  **AUTOSAR Adaptive Platform**:
+
+  - **OS**: POSIX-compliant (QNX, Linux with PREEMPT_RT)
+
+  - **Cycle time**: 10-100 ms (similar to Classic, but more flexible)
+
+  - **Use case**: High-performance controller, OTA updates, Ethernet communication
+
+  - **Programming**: C++ with ara::com (communication), ara::exec (execution)
+
+
+  ```cpp
+
+  // AUTOSAR Adaptive - FC Stack Controller
+
+
+
+  #include "ara/com/runtime.h"
+
+  #include "ara/exec/execution_client.h"
+
+  #include "fc_control_interface.h"
+
+
+
+  class FCStackController {
+
+  public:
+
+      FCStackController() {
+
+          // Initialize AUTOSAR runtime
+
+          ara::com::Runtime::GetInstance().Initialize();
+
+
+
+          // Subscribe to power request
+
+          power_request_sub_ = fc_interface_.SubscribePowerRequest();
+
+
+
+          // Publish stack status
+
+          stack_status_pub_ = fc_interface_.GetStackStatusPublisher();
+
+      }
+
+
+
+      void Run() {
+
+          while (true) {
+
+              // Read power request (from vehicle power manager)
+
+              auto power_req = power_request_sub_->GetNewSamples();
+
+
+
+              if (power_req.size() > 0) {
+
+                  float P_target = power_req[0]->power_kW;
+
+
+
+                  // Execute control loop
+
+                  ControlStackPower(P_target);
+
+              }
+
+
+
+              // 100 ms cycle time
+
+              std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+          }
+
+      }
+
+
+
+  private:
+
+      void ControlStackPower(float P_target_kW) {
+
+          // Read sensors
+
+          float I_stack = ReadStackCurrent();
+
+          float V_stack = ReadStackVoltage();
+
+          float T_stack = ReadStackTemperature();
+
+
+
+          // State machine
+
+          UpdateStateMachine(P_target_kW, T_stack);
+
+
+
+          // Calculate target current
+
+          float I_target = (P_target_kW * 1000.0f) / V_stack;
+
+
+
+          // Control air stoichiometry
+
+          ControlAirCompressor(I_target);
+
+
+
+          // Control H2 recirculation
+
+          ControlH2Pump(I_target);
+
+
+
+          // Publish status
+
+          FCStackStatus status;
+
+          status.current_A = I_stack;
+
+          status.voltage_V = V_stack;
+
+          status.temperature_C = T_stack;
+
+          status.power_kW = (I_stack * V_stack) / 1000.0f;
+
+
+
+          stack_status_pub_->Send(status);
+
+      }
+
+
+
+      FCControlInterface fc_interface_;
+
+      std::shared_ptr<ara::com::Subscriber<PowerRequest>> power_request_sub_;
+
+      std::shared_ptr<ara::com::Publisher<FCStackStatus>> stack_status_pub_;
+
+  };
+
+  ```
+
+
+  ### Sensor Interfaces
+
+
+  **Analog sensors** (voltage, temperature):
+
+  - **ADC**: 12-bit or 16-bit resolution
+
+  - **Sampling rate**: 100 Hz - 1 kHz
+
+  - **Filtering**: Moving average or Kalman filter
+
+
+  **Digital sensors** (pressure, flow):
+
+  - **I2C**: Low-speed (100 kHz - 400 kHz), multi-drop bus
+
+  - **SPI**: High-speed (1-10 MHz), point-to-point
+
+  - **CAN**: Automotive standard, 500 kbps - 1 Mbps
+
+
+  ```c
+
+  /* AUTOSAR Classic - Sensor Data Acquisition */
+
+
+
+  #include "Adc.h"
+
+  #include "I2c.h"
+
+  #include "Can.h"
+
+
+
+  typedef struct {
+
+      float I_stack;        // A
+
+      float V_stack;        // V
+
+      float T_stack;        // °C
+
+      float P_cathode;      // bar
+
+      float P_anode;        // bar
+
+      float mdot_air;       // kg/s
+
+      float RH_cathode;     // %
+
+  } SensorData_t;
+
+
+
+  void ReadSensors(SensorData_t *sensors) {
+
+      // Read stack current (ADC channel 0, shunt resistor 100 µOhm)
+
+      uint16_t adc_current = Adc_ReadGroup(ADC_GROUP_CURRENT);
+
+      float V_shunt = (adc_current / 4096.0f) * 5.0f;  // 12-bit ADC, 5V ref
+
+      sensors->I_stack = V_shunt / 100e-6f;  // V / R_shunt
+
+
+
+      // Read stack voltage (ADC channel 1, voltage divider 100:1)
+
+      uint16_t adc_voltage = Adc_ReadGroup(ADC_GROUP_VOLTAGE);
+
+      sensors->V_stack = (adc_voltage / 4096.0f) * 5.0f * 100.0f;
+
+
+
+      // Read stack temperature (I2C sensor PT1000)
+
+      uint16_t temp_raw;
+
+      I2c_ReadReg(I2C_ADDR_TEMP_SENSOR, 0x00, &temp_raw, 2);
+
+      sensors->T_stack = temp_raw * 0.0625f;  // 0.0625°C resolution
+
+
+
+      // Read cathode pressure (CAN message from pressure sensor ECU)
+
+      Can_MessageType can_msg;
+
+      Can_Receive(CAN_MSG_ID_P_CATHODE, &can_msg);
+
+      sensors->P_cathode = (can_msg.data[0] << 8 | can_msg.data[1]) * 0.01f;  // bar
+
+
+
+      // Apply filtering (moving average)
+
+      FilterSensorData(sensors);
+
+  }
+
+
+
+  void FilterSensorData(SensorData_t *sensors) {
+
+      static float I_stack_history[10] = {0};
+
+      static int index = 0;
+
+
+
+      // Add current sample to history
+
+      I_stack_history[index] = sensors->I_stack;
+
+      index = (index + 1) % 10;
+
+
+
+      // Calculate moving average
+
+      float sum = 0.0f;
+
+      for (int i = 0; i < 10; i++) {
+
+          sum += I_stack_history[i];
+
+      }
+
+      sensors->I_stack = sum / 10.0f;
+
+  }
+
+  ```
+
+
+  ### State Machine Implementation
+
+
+  **FC states**:
+
+  - **OFF**: No power, all valves closed
+
+  - **STARTUP**: Pre-purge, leak check, idle current
+
+  - **IDLE**: Minimum power (5-10 kW), ready for load
+
+  - **RUNNING**: Normal operation (10-100 kW)
+
+  - **SHUTDOWN**: Ramp down, purge, coolant drain
+
+  - **FAULT**: Emergency shutdown on fault detection
+
+
+  ```c
+
+  typedef enum {
+
+      FC_STATE_OFF,
+
+      FC_STATE_STARTUP,
+
+      FC_STATE_IDLE,
+
+      FC_STATE_RUNNING,
+
+      FC_STATE_SHUTDOWN,
+
+      FC_STATE_FAULT
+
+  } FCState_t;
+
+
+
+  typedef struct {
+
+      FCState_t current_state;
+
+      FCState_t previous_state;
+
+      uint32_t state_entry_time_ms;
+
+      float P_target_kW;
+
+      float T_stack;
+
+  } FCStateMachine_t;
+
+
+
+  void UpdateStateMachine(FCStateMachine_t *sm, float P_target_kW, float T_stack) {
+
+      sm->P_target_kW = P_target_kW;
+
+      sm->T_stack = T_stack;
+
+
+
+      FCState_t next_state = sm->current_state;
+
+
+
+      switch (sm->current_state) {
+
+          case FC_STATE_OFF:
+
+              if (P_target_kW > 0.0f) {
+
+                  next_state = FC_STATE_STARTUP;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_STARTUP:
+
+              // Wait for stack temperature > 40°C
+
+              if (T_stack > 40.0f) {
+
+                  next_state = FC_STATE_IDLE;
+
+              }
+
+
+
+              // Timeout after 60 seconds
+
+              if ((GetCurrentTimeMs() - sm->state_entry_time_ms) > 60000) {
+
+                  next_state = FC_STATE_FAULT;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_IDLE:
+
+              if (P_target_kW > 10.0f) {
+
+                  next_state = FC_STATE_RUNNING;
+
+              } else if (P_target_kW == 0.0f) {
+
+                  next_state = FC_STATE_SHUTDOWN;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_RUNNING:
+
+              if (P_target_kW < 5.0f) {
+
+                  next_state = FC_STATE_IDLE;
+
+              }
+
+
+
+              // Fault detection
+
+              if (T_stack > 90.0f) {
+
+                  next_state = FC_STATE_FAULT;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_SHUTDOWN:
+
+              // Wait for current to ramp to zero
+
+              if (ReadStackCurrent() < 1.0f) {
+
+                  next_state = FC_STATE_OFF;
+
+              }
+
+              break;
+
+
+
+          case FC_STATE_FAULT:
+
+              // Remain in fault until manual reset
+
+              break;
+
+      }
+
+
+
+      // State transition
+
+      if (next_state != sm->current_state) {
+
+          sm->previous_state = sm->current_state;
+
+          sm->current_state = next_state;
+
+          sm->state_entry_time_ms = GetCurrentTimeMs();
+
+
+
+          // Execute entry actions
+
+          ExecuteStateEntry(sm);
+
+      }
+
+  }
+
+
+
+  void ExecuteStateEntry(FCStateMachine_t *sm) {
+
+      switch (sm->current_state) {
+
+          case FC_STATE_STARTUP:
+
+              OpenH2Valve();
+
+              StartAirCompressor();
+
+              break;
+
+
+
+          case FC_STATE_SHUTDOWN:
+
+              PurgeAnodeLoop();
+
+              RampDownCompressor();
+
+              break;
+
+
+
+          case FC_STATE_FAULT:
+
+              CloseH2Valve();
+
+              StopAirCompressor();
+
+              TriggerAlarm(ALARM_FC_FAULT);
+
+              break;
+
+      }
+
+  }
+
+  ```
+
+
+  ### Power Electronics Control
+
+
+  **DC-DC converter control**:
+
+  - **PWM frequency**: 10-20 kHz
+
+  - **Current mode control**: Regulate FC current
+
+  - **Voltage regulation**: Maintain HV bus voltage
+
+
+  ```c
+
+  typedef struct {
+
+      float V_fc;           // V (FC stack voltage)
+
+      float I_fc;           // A (FC stack current)
+
+      float V_bus_target;   // V (HV bus voltage setpoint)
+
+      float duty_cycle;     // PWM duty cycle [0-1]
+
+  } DCDC_Controller_t;
+
+
+
+  void ControlDCDC(DCDC_Controller_t *ctrl, float I_fc_target) {
+
+      // Read FC voltage and bus voltage
+
+      ctrl->V_fc = ReadStackVoltage();
+
+      float V_bus = ReadBusVoltage();
+
+
+
+      // PI controller for current regulation
+
+      static float error_integral = 0.0f;
+
+      float error = I_fc_target - ctrl->I_fc;
+
+
+
+      float Kp = 0.1f;
+
+      float Ki = 0.01f;
+
+
+
+      error_integral += error * 0.001f;  // 1 ms timestep
+
+      error_integral = fmaxf(-100.0f, fminf(100.0f, error_integral));  // Anti-windup
+
+
+
+      // Calculate duty cycle
+
+      ctrl->duty_cycle = 0.5f + Kp * error + Ki * error_integral;
+
+
+
+      // Clamp to safe limits
+
+      ctrl->duty_cycle = fmaxf(0.1f, fminf(0.9f, ctrl->duty_cycle));
+
+
+
+      // Apply PWM to gate driver
+
+      SetPWMDuty(ctrl->duty_cycle);
+
+  }
+
+  ```
+
+
+  ### Safety-Critical Software (ISO 26262)
+
+
+  **ASIL B/C requirements**:
+
+  - **Redundant sensors**: Dual pressure, temperature sensors
+
+  - **Watchdog monitoring**: Detect software hang
+
+  - **CRC and sequence counter**: Detect corrupted CAN messages
+
+  - **Safe state**: Close H2 valve, stop compressor on fault
+
+
+  ```c
+
+  /* ISO 26262 Safety Monitor */
+
+
+
+  typedef struct {
+
+      bool sensor_fault;
+
+      bool communication_fault;
+
+      bool actuator_fault;
+
+      uint32_t watchdog_counter;
+
+  } SafetyMonitor_t;
+
+
+
+  void CheckSafety(SafetyMonitor_t *safety, SensorData_t *sensors) {
+
+      // Check sensor plausibility (redundant sensors)
+
+      float P_cathode_1 = sensors->P_cathode;
+
+      float P_cathode_2 = ReadRedundantPressureSensor();
+
+
+
+      if (fabsf(P_cathode_1 - P_cathode_2) > 0.5f) {  // > 0.5 bar deviation
+
+          safety->sensor_fault = true;
+
+          TriggerSafeState();
+
+      }
+
+
+
+      // Check CAN message CRC
+
+      if (!VerifyCANMessageCRC()) {
+
+          safety->communication_fault = true;
+
+          TriggerSafeState();
+
+      }
+
+
+
+      // Kick watchdog
+
+      safety->watchdog_counter++;
+
+      KickWatchdog();
+
+  }
+
+
+
+  void TriggerSafeState(void) {
+
+      // Emergency shutdown
+
+      CloseH2Valve();
+
+      StopAirCompressor();
+
+      DisableDCDCConverter();
+
+
+
+      // Alert driver
+
+      TriggerWarningLight();
+
+      SetDTC(DTC_FC_SAFE_STATE_TRIGGERED);
+
+  }
+
+  ```
+
+
+  ### OTA Update Support
+
+
+  **AUTOSAR Adaptive - Update and Configuration Management (UCM)**:
+
+  ```cpp
+
+  #include "ara/ucm/update_request.h"
+
+
+
+  class FCControllerUpdater {
+
+  public:
+
+      void CheckForUpdates() {
+
+          auto ucm_client = ara::ucm::UpdateClient::Create();
+
+
+
+          // Query available updates
+
+          auto updates = ucm_client->GetAvailableUpdates();
+
+
+
+          if (!updates.empty()) {
+
+              // Download and install update (only when vehicle parked)
+
+              if (IsVehicleParked()) {
+
+                  ucm_client->InstallUpdate(updates[0].id);
+
+              }
+
+          }
+
+      }
+
+  };
+
+  ```
+
+
+  ### Diagnostic Protocol (UDS)
+
+
+  ```c
+
+  /* UDS (ISO 14229) Diagnostic Services */
+
+
+
+  void HandleUDSRequest(uint8_t service_id, uint8_t *data, uint16_t length) {
+
+      switch (service_id) {
+
+          case 0x22:  // ReadDataByIdentifier
+
+              {
+
+                  uint16_t did = (data[0] << 8) | data[1];
+
+
+
+                  if (did == 0x1001) {  // FC stack voltage
+
+                      float V_stack = ReadStackVoltage();
+
+                      SendUDSResponse(0x62, (uint8_t*)&V_stack, sizeof(float));
+
+                  }
+
+              }
+
+              break;
+
+
+
+          case 0x19:  // ReadDTCInformation
+
+              {
+
+                  uint8_t dtc_list[10];
+
+                  uint8_t dtc_count = GetStoredDTCs(dtc_list, 10);
+
+                  SendUDSResponse(0x59, dtc_list, dtc_count);
+
+              }
+
+              break;
+
+      }
+
+  }
+
+  ```
+
+
+  ## Approach
+
+
+  1. **Platform Selection**: Choose AUTOSAR Classic or Adaptive based on requirements
+
+  2. **Sensor Interface Design**: Define ADC, I2C, SPI, CAN interfaces for all sensors
+
+  3. **State Machine Implementation**: Code startup, running, shutdown, fault states
+
+  4. **Control Algorithm Development**: Implement stoichiometry, humidification, thermal control
+
+  5. **Power Electronics Integration**: Interface with DC-DC converter, compressor motor driver
+
+  6. **Safety Integration**: Implement ISO 26262 safety monitors, redundant checks
+
+  7. **Diagnostic Protocol**: Implement UDS services for service diagnostics
+
+
+  ## Deliverables
+
+
+  - AUTOSAR software architecture (SW-C composition, RTE configuration)
+
+  - Sensor interface driver code (ADC, I2C, CAN)
+
+  - FC state machine implementation (C/C++)
+
+  - Control algorithms (air stoichiometry, H2 recirculation, thermal)
+
+  - Safety monitor code (ISO 26262 ASIL B/C compliant)
+
+  - UDS diagnostic services (Read DTC, Read data, actuator test)
+
+  - OTA update handler (AUTOSAR Adaptive UCM)
+
+
+  ## Best Practices
+
+
+  - Follow MISRA C:2012 coding guidelines for safety-critical code
+
+  - Use static code analysis tools (Coverity, Polyspace) to detect defects
+
+  - Implement software watchdog with 100 ms timeout
+
+  - Design for graceful degradation (limp mode on non-critical faults)
+
+  - Log all state transitions and fault events to non-volatile memory
+
+  - Validate control algorithms on HIL bench before vehicle integration
+
+
+  ## Integration with FCEV Workflow
+
+
+  - Interface with vehicle CAN bus for power requests and status reporting
+
+  - Coordinate with battery BMS for hybrid power split
+
+  - Provide diagnostic data to OBD-II connector for service access
+
+  - Support remote diagnostics and OTA updates via Ethernet (AUTOSAR Adaptive)
+
+  - Integrate with vehicle safety system (crash detection, emergency shutdown)
+
+  '
+constraints:
+- Real-time constraints (10-100 ms cycle time)
+- Safety-critical software certification (ISO 26262)
+- Limited ECU resources (RAM, flash, CPU)
+- AUTOSAR platform learning curve
+tools_required:
+- Vector DaVinci Developer/Configurator (AUTOSAR toolchain)
+
+- dSPACE ControlDesk for HIL testing
+- IAR Embedded Workbench or GCC for C/C++ compilation
+- CANalyzer/CANoe for CAN diagnostics
+- Static analysis tools (Coverity, Polyspace)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- hydrogen-fuelcell
+- embedded-control
+- autosar
+- real-time
+- iso-26262
+- state-machine
+- automotive

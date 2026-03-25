@@ -1,0 +1,903 @@
+---
+name: helm-charts-creation
+version: 1.0.0
+description: Create production-ready Helm charts for automotive Kubernetes applications
+category: kubernetes
+subcategory: helm
+tags: [helm, charts, packaging, kubernetes, automotive]
+
+instructions: |
+  ## Helm Charts for Automotive Kubernetes Applications
+
+  ### Overview
+
+  Helm is the package manager for Kubernetes. Helm charts bundle Kubernetes
+  manifests with templating and values files, enabling reproducible deployments
+  across environments (dev, staging, production) and fleet-wide distribution
+  of automotive applications.
+
+  ### Chart Structure
+
+  ```
+  adas-processing-service/
+  ├── Chart.yaml              Chart metadata (name, version, dependencies)
+  ├── values.yaml             Default configuration values
+  ├── values-staging.yaml     Environment-specific overrides
+  ├── values-production.yaml
+  ├── templates/
+  │   ├── _helpers.tpl        Template helper functions
+  │   ├── deployment.yaml     Deployment manifest
+  │   ├── service.yaml        Service manifest
+  │   ├── hpa.yaml            HorizontalPodAutoscaler
+  │   ├── configmap.yaml      Configuration
+  │   ├── secret.yaml         Secrets (encrypted with sops/sealed-secrets)
+  │   ├── ingress.yaml        Ingress rules
+  │   ├── serviceaccount.yaml Service account
+  │   ├── pdb.yaml            PodDisruptionBudget
+  │   └── NOTES.txt           Post-install instructions
+  └── charts/                 Dependency charts (subcharts)
+  ```
+
+  ### Chart.yaml
+
+  ```yaml
+  apiVersion: v2
+  name: adas-processing-service
+  description: ADAS sensor data processing service for automotive cloud
+  type: application
+  version: 1.2.0          # Chart version (SemVer)
+  appVersion: "3.5.1"     # Application version
+  dependencies:
+    - name: redis
+      version: 18.x.x
+      repository: https://charts.bitnami.com/bitnami
+      condition: redis.enabled
+  ```
+
+  ### Templating Essentials
+
+  ```yaml
+  # templates/deployment.yaml
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: {{ include "chart.fullname" . }}
+    labels:
+      {{- include "chart.labels" . | nindent 4 }}
+  spec:
+    replicas: {{ .Values.replicaCount }}
+    selector:
+      matchLabels:
+        {{- include "chart.selectorLabels" . | nindent 6 }}
+    template:
+      spec:
+        containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+  ```
+
+  Key template functions:
+  - `{{ .Values.x }}`: Access values.yaml
+  - `{{ include "helper" . }}`: Call named template
+  - `{{ toYaml }}`: Convert to YAML string
+  - `{{ nindent N }}`: Indent output by N spaces
+  - `{{- -}}`: Trim whitespace
+  - `{{ if .Values.x }}...{{ end }}`: Conditional rendering
+  - `{{ range .Values.list }}...{{ end }}`: Iteration
+
+  ### Values File Design
+
+  ```yaml
+  # values.yaml — sensible defaults
+  replicaCount: 2
+
+  image:
+    repository: registry.automotive.io/adas-processor
+    tag: "3.5.1"
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilization: 70
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: adas.automotive.io
+  ```
+
+  ### Helm Commands
+
+  ```bash
+  # Create new chart
+  helm create my-chart
+
+  # Lint chart
+  helm lint ./my-chart
+
+  # Template locally (dry-run)
+  helm template my-release ./my-chart -f values-prod.yaml
+
+  # Install
+  helm install my-release ./my-chart -n automotive -f values-prod.yaml
+
+  # Upgrade
+  helm upgrade my-release ./my-chart -n automotive -f values-prod.yaml
+
+  # Rollback
+  helm rollback my-release 1
+
+  # Package for distribution
+  helm package ./my-chart
+
+  # Push to OCI registry
+  helm push my-chart-1.2.0.tgz oci://registry.automotive.io/charts
+  ```
+
+  ### Best Practices
+
+  - Use SemVer for chart versions; increment on every change
+  - Separate chart version from appVersion (they evolve independently)
+  - Set sensible defaults in values.yaml; override per environment
+  - Use `_helpers.tpl` for reusable label and name templates
+  - Always include resource requests and limits in templates
+  - Add PodDisruptionBudgets for production workloads
+  - Lint and template-render in CI before merging chart changes
+  - Use Helm test hooks to validate deployments
+  - Store charts in OCI registries for versioned distribution
+  - Document all values in values.yaml with inline comments
+
+metadata:
+  author: Kubernetes Platform Engineer
+  created: 2026-03-19
+  stability: stable
+  prerequisites:
+    - Helm 3.x installed
+    - Kubernetes cluster access
+    - Understanding of Kubernetes resources
+  use_cases:
+    - Package automotive applications
+    - Multi-environment deployments
+    - Fleet-wide application distribution
+    - GitOps workflows
+
+parameters:
+  chart_name:
+    type: string
+    description: Name of the Helm chart
+    required: true
+    pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+    example: adas-processing-service
+
+  chart_version:
+    type: string
+    description: Semantic version of the chart
+    required: true
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    default: "0.1.0"
+
+  app_version:
+    type: string
+    description: Version of the application being deployed
+    required: true
+    example: "1.0.0"
+
+  description:
+    type: string
+    description: Chart description
+    required: true
+
+  chart_type:
+    type: enum
+    description: Type of Helm chart
+    values: [application, library]
+    default: application
+
+  include_crds:
+    type: boolean
+    description: Include Custom Resource Definitions
+    default: false
+
+  multi_container:
+    type: boolean
+    description: Support multiple containers per pod
+    default: false
+
+  stateful:
+    type: boolean
+    description: StatefulSet instead of Deployment
+    default: false
+
+  include_ingress:
+    type: boolean
+    description: Include ingress configuration
+    default: true
+
+  include_hpa:
+    type: boolean
+    description: Include HorizontalPodAutoscaler
+    default: true
+
+  include_pdb:
+    type: boolean
+    description: Include PodDisruptionBudget
+    default: true
+
+  include_service_monitor:
+    type: boolean
+    description: Include Prometheus ServiceMonitor
+    default: true
+
+steps:
+  - id: create_chart_structure
+    name: Create Helm chart directory structure
+    type: generation
+    commands:
+      - name: Initialize chart
+        command: |
+          helm create {{chart_name}}
+          cd {{chart_name}}
+
+          # Clean default templates
+          rm -rf templates/*
+          rm values.yaml
+
+      - name: Create directory structure
+        command: |
+          mkdir -p {{chart_name}}/{templates,crds,ci}
+          mkdir -p {{chart_name}}/templates/{deployment,service,ingress,monitoring}
+
+  - id: create_chart_yaml
+    name: Create Chart.yaml
+    type: generation
+    commands:
+      - name: Generate Chart.yaml
+        command: |
+          cat > {{chart_name}}/Chart.yaml <<EOF
+          apiVersion: v2
+          name: {{chart_name}}
+          description: {{description}}
+          type: {{chart_type}}
+          version: {{chart_version}}
+          appVersion: "{{app_version}}"
+          keywords:
+            - automotive
+            - kubernetes
+          home: https://github.com/automotive/{{chart_name}}
+          sources:
+            - https://github.com/automotive/{{chart_name}}
+          maintainers:
+            - name: Automotive Platform Team
+              email: platform@automotive.example.com
+          dependencies: []
+          EOF
+
+  - id: create_values_files
+    name: Create values files for different environments
+    type: generation
+    commands:
+      - name: Create values.yaml (defaults)
+        command: |
+          cat > {{chart_name}}/values.yaml <<'EOF'
+          # Default values for {{chart_name}}
+
+          replicaCount: 1
+
+          image:
+            repository: automotive/{{chart_name}}
+            pullPolicy: IfNotPresent
+            tag: "{{app_version}}"
+
+          imagePullSecrets: []
+          nameOverride: ""
+          fullnameOverride: ""
+
+          serviceAccount:
+            create: true
+            annotations: {}
+            name: ""
+
+          podAnnotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9090"
+            prometheus.io/path: "/metrics"
+
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+
+          service:
+            type: ClusterIP
+            port: 8080
+            targetPort: 8080
+            annotations: {}
+
+          ingress:
+            enabled: {{include_ingress}}
+            className: "nginx"
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            hosts:
+              - host: {{chart_name}}.automotive.example.com
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls:
+              - secretName: {{chart_name}}-tls
+                hosts:
+                  - {{chart_name}}.automotive.example.com
+
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+          autoscaling:
+            enabled: {{include_hpa}}
+            minReplicas: 2
+            maxReplicas: 10
+            targetCPUUtilizationPercentage: 70
+            targetMemoryUtilizationPercentage: 80
+
+          podDisruptionBudget:
+            enabled: {{include_pdb}}
+            minAvailable: 1
+
+          nodeSelector: {}
+
+          tolerations: []
+
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                      - {{chart_name}}
+                  topologyKey: kubernetes.io/hostname
+
+          # Automotive-specific configuration
+          automotive:
+            region: "us-west-2"
+            environment: "production"
+            compliance:
+              iso26262: true
+              aspice: true
+
+          # Application configuration
+          config:
+            logLevel: info
+            metricsPort: 9090
+            healthCheckPath: /health
+
+          # Persistent storage
+          persistence:
+            enabled: false
+            storageClass: "local-path"
+            accessMode: ReadWriteOnce
+            size: 1Gi
+
+          # Monitoring
+          monitoring:
+            serviceMonitor:
+              enabled: {{include_service_monitor}}
+              interval: 30s
+              scrapeTimeout: 10s
+
+          # Network policies
+          networkPolicy:
+            enabled: true
+            policyTypes:
+              - Ingress
+              - Egress
+
+          EOF
+
+      - name: Create values-dev.yaml
+        command: |
+          cat > {{chart_name}}/values-dev.yaml <<'EOF'
+          # Development environment overrides
+          replicaCount: 1
+
+          image:
+            tag: "latest"
+            pullPolicy: Always
+
+          ingress:
+            hosts:
+              - host: {{chart_name}}-dev.automotive.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+
+          autoscaling:
+            enabled: false
+
+          automotive:
+            environment: "development"
+
+          config:
+            logLevel: debug
+          EOF
+
+      - name: Create values-staging.yaml
+        command: |
+          cat > {{chart_name}}/values-staging.yaml <<'EOF'
+          # Staging environment overrides
+          replicaCount: 2
+
+          ingress:
+            hosts:
+              - host: {{chart_name}}-staging.automotive.example.com
+                paths:
+                  - path: /
+                    pathType: Prefix
+
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+          autoscaling:
+            enabled: true
+            minReplicas: 2
+            maxReplicas: 5
+
+          automotive:
+            environment: "staging"
+          EOF
+
+      - name: Create values-production.yaml
+        command: |
+          cat > {{chart_name}}/values-production.yaml <<'EOF'
+          # Production environment overrides
+          replicaCount: 3
+
+          ingress:
+            hosts:
+              - host: {{chart_name}}.automotive.example.com
+                paths:
+                  - path: /
+                    pathType: Prefix
+
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+
+          autoscaling:
+            enabled: true
+            minReplicas: 3
+            maxReplicas: 20
+
+          automotive:
+            environment: "production"
+
+          podDisruptionBudget:
+            minAvailable: 2
+          EOF
+
+  - id: create_templates
+    name: Create Kubernetes resource templates
+    type: generation
+    commands:
+      - name: Create _helpers.tpl
+        command: |
+          cat > {{chart_name}}/templates/_helpers.tpl <<'EOF'
+          {{/*
+          Expand the name of the chart.
+          */}}
+          {{- define "{{chart_name}}.name" -}}
+          {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+          {{- end }}
+
+          {{/*
+          Create a default fully qualified app name.
+          */}}
+          {{- define "{{chart_name}}.fullname" -}}
+          {{- if .Values.fullnameOverride }}
+          {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+          {{- else }}
+          {{- $name := default .Chart.Name .Values.nameOverride }}
+          {{- if contains $name .Release.Name }}
+          {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+          {{- else }}
+          {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+
+          {{/*
+          Create chart name and version as used by the chart label.
+          */}}
+          {{- define "{{chart_name}}.chart" -}}
+          {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+          {{- end }}
+
+          {{/*
+          Common labels
+          */}}
+          {{- define "{{chart_name}}.labels" -}}
+          helm.sh/chart: {{ include "{{chart_name}}.chart" . }}
+          {{ include "{{chart_name}}.selectorLabels" . }}
+          {{- if .Chart.AppVersion }}
+          app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+          {{- end }}
+          app.kubernetes.io/managed-by: {{ .Release.Service }}
+          automotive.io/region: {{ .Values.automotive.region }}
+          automotive.io/environment: {{ .Values.automotive.environment }}
+          {{- end }}
+
+          {{/*
+          Selector labels
+          */}}
+          {{- define "{{chart_name}}.selectorLabels" -}}
+          app.kubernetes.io/name: {{ include "{{chart_name}}.name" . }}
+          app.kubernetes.io/instance: {{ .Release.Name }}
+          {{- end }}
+
+          {{/*
+          Create the name of the service account to use
+          */}}
+          {{- define "{{chart_name}}.serviceAccountName" -}}
+          {{- if .Values.serviceAccount.create }}
+          {{- default (include "{{chart_name}}.fullname" .) .Values.serviceAccount.name }}
+          {{- else }}
+          {{- default "default" .Values.serviceAccount.name }}
+          {{- end }}
+          {{- end }}
+          EOF
+
+      - name: Create deployment.yaml
+        command: |
+          cat > {{chart_name}}/templates/deployment.yaml <<'EOF'
+          apiVersion: apps/v1
+          kind: {% if stateful %}StatefulSet{% else %}Deployment{% endif %}
+          metadata:
+            name: {{ include "{{chart_name}}.fullname" . }}
+            labels:
+              {{- include "{{chart_name}}.labels" . | nindent 4 }}
+          spec:
+            {{- if not .Values.autoscaling.enabled }}
+            replicas: {{ .Values.replicaCount }}
+            {{- end }}
+            selector:
+              matchLabels:
+                {{- include "{{chart_name}}.selectorLabels" . | nindent 6 }}
+            template:
+              metadata:
+                annotations:
+                  checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+                  {{- with .Values.podAnnotations }}
+                  {{- toYaml . | nindent 8 }}
+                  {{- end }}
+                labels:
+                  {{- include "{{chart_name}}.selectorLabels" . | nindent 8 }}
+              spec:
+                {{- with .Values.imagePullSecrets }}
+                imagePullSecrets:
+                  {{- toYaml . | nindent 8 }}
+                {{- end }}
+                serviceAccountName: {{ include "{{chart_name}}.serviceAccountName" . }}
+                securityContext:
+                  {{- toYaml .Values.podSecurityContext | nindent 8 }}
+                containers:
+                - name: {{ .Chart.Name }}
+                  securityContext:
+                    {{- toYaml .Values.securityContext | nindent 12 }}
+                  image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+                  imagePullPolicy: {{ .Values.image.pullPolicy }}
+                  ports:
+                  - name: http
+                    containerPort: {{ .Values.service.targetPort }}
+                    protocol: TCP
+                  - name: metrics
+                    containerPort: {{ .Values.config.metricsPort }}
+                    protocol: TCP
+                  livenessProbe:
+                    httpGet:
+                      path: {{ .Values.config.healthCheckPath }}
+                      port: http
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
+                  readinessProbe:
+                    httpGet:
+                      path: {{ .Values.config.healthCheckPath }}
+                      port: http
+                    initialDelaySeconds: 10
+                    periodSeconds: 5
+                    timeoutSeconds: 3
+                    failureThreshold: 3
+                  resources:
+                    {{- toYaml .Values.resources | nindent 12 }}
+                  envFrom:
+                  - configMapRef:
+                      name: {{ include "{{chart_name}}.fullname" . }}
+                  {{- if .Values.persistence.enabled }}
+                  volumeMounts:
+                  - name: data
+                    mountPath: /data
+                  {{- end }}
+                {{- with .Values.nodeSelector }}
+                nodeSelector:
+                  {{- toYaml . | nindent 8 }}
+                {{- end }}
+                {{- with .Values.affinity }}
+                affinity:
+                  {{- toYaml . | nindent 8 }}
+                {{- end }}
+                {{- with .Values.tolerations }}
+                tolerations:
+                  {{- toYaml . | nindent 8 }}
+                {{- end }}
+            {{- if .Values.persistence.enabled }}
+            volumeClaimTemplates:
+            - metadata:
+                name: data
+              spec:
+                accessModes:
+                  - {{ .Values.persistence.accessMode }}
+                storageClassName: {{ .Values.persistence.storageClass }}
+                resources:
+                  requests:
+                    storage: {{ .Values.persistence.size }}
+            {{- end }}
+          EOF
+
+      - name: Create service.yaml
+        command: |
+          cat > {{chart_name}}/templates/service.yaml <<'EOF'
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: {{ include "{{chart_name}}.fullname" . }}
+            labels:
+              {{- include "{{chart_name}}.labels" . | nindent 4 }}
+            {{- with .Values.service.annotations }}
+            annotations:
+              {{- toYaml . | nindent 4 }}
+            {{- end }}
+          spec:
+            type: {{ .Values.service.type }}
+            ports:
+            - port: {{ .Values.service.port }}
+              targetPort: http
+              protocol: TCP
+              name: http
+            - port: {{ .Values.config.metricsPort }}
+              targetPort: metrics
+              protocol: TCP
+              name: metrics
+            selector:
+              {{- include "{{chart_name}}.selectorLabels" . | nindent 6 }}
+          EOF
+
+      - name: Create ingress.yaml
+        condition: include_ingress
+        command: |
+          cat > {{chart_name}}/templates/ingress.yaml <<'EOF'
+          {{- if .Values.ingress.enabled -}}
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: {{ include "{{chart_name}}.fullname" . }}
+            labels:
+              {{- include "{{chart_name}}.labels" . | nindent 4 }}
+            {{- with .Values.ingress.annotations }}
+            annotations:
+              {{- toYaml . | nindent 4 }}
+            {{- end }}
+          spec:
+            {{- if .Values.ingress.className }}
+            ingressClassName: {{ .Values.ingress.className }}
+            {{- end }}
+            {{- if .Values.ingress.tls }}
+            tls:
+              {{- range .Values.ingress.tls }}
+              - hosts:
+                  {{- range .hosts }}
+                  - {{ . | quote }}
+                  {{- end }}
+                secretName: {{ .secretName }}
+              {{- end }}
+            {{- end }}
+            rules:
+              {{- range .Values.ingress.hosts }}
+              - host: {{ .host | quote }}
+                http:
+                  paths:
+                    {{- range .paths }}
+                    - path: {{ .path }}
+                      pathType: {{ .pathType }}
+                      backend:
+                        service:
+                          name: {{ include "{{chart_name}}.fullname" $ }}
+                          port:
+                            number: {{ $.Values.service.port }}
+                    {{- end }}
+              {{- end }}
+          {{- end }}
+          EOF
+
+      - name: Create hpa.yaml
+        condition: include_hpa
+        command: |
+          cat > {{chart_name}}/templates/hpa.yaml <<'EOF'
+          {{- if .Values.autoscaling.enabled }}
+          apiVersion: autoscaling/v2
+          kind: HorizontalPodAutoscaler
+          metadata:
+            name: {{ include "{{chart_name}}.fullname" . }}
+            labels:
+              {{- include "{{chart_name}}.labels" . | nindent 4 }}
+          spec:
+            scaleTargetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: {{ include "{{chart_name}}.fullname" . }}
+            minReplicas: {{ .Values.autoscaling.minReplicas }}
+            maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+            metrics:
+            {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: Utilization
+                  averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+            {{- end }}
+            {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+            - type: Resource
+              resource:
+                name: memory
+                target:
+                  type: Utilization
+                  averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+            {{- end }}
+          {{- end }}
+          EOF
+
+      - name: Create servicemonitor.yaml
+        condition: include_service_monitor
+        command: |
+          cat > {{chart_name}}/templates/servicemonitor.yaml <<'EOF'
+          {{- if .Values.monitoring.serviceMonitor.enabled }}
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: {{ include "{{chart_name}}.fullname" . }}
+            labels:
+              {{- include "{{chart_name}}.labels" . | nindent 4 }}
+          spec:
+            selector:
+              matchLabels:
+                {{- include "{{chart_name}}.selectorLabels" . | nindent 6 }}
+            endpoints:
+            - port: metrics
+              interval: {{ .Values.monitoring.serviceMonitor.interval }}
+              scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+              path: /metrics
+          {{- end }}
+          EOF
+
+  - id: validate_chart
+    name: Validate Helm chart
+    type: validation
+    depends_on: [create_templates]
+    commands:
+      - name: Lint chart
+        command: |
+          helm lint {{chart_name}}
+
+      - name: Template chart
+        command: |
+          helm template {{chart_name}} {{chart_name}}/ > /tmp/{{chart_name}}-rendered.yaml
+
+      - name: Validate Kubernetes manifests
+        command: |
+          kubectl apply --dry-run=client -f /tmp/{{chart_name}}-rendered.yaml
+
+  - id: package_chart
+    name: Package Helm chart
+    type: packaging
+    depends_on: [validate_chart]
+    commands:
+      - name: Package chart
+        command: |
+          helm package {{chart_name}}
+
+      - name: Generate chart index
+        command: |
+          helm repo index .
+
+outputs:
+  chart_package:
+    description: Packaged Helm chart
+    path: "{{chart_name}}-{{chart_version}}.tgz"
+
+  rendered_manifests:
+    description: Rendered Kubernetes manifests
+    path: "/tmp/{{chart_name}}-rendered.yaml"
+
+best_practices:
+  - Use semantic versioning for charts
+  - Include comprehensive README.md
+  - Document all values in values.yaml
+  - Use _helpers.tpl for reusable templates
+  - Implement proper resource limits
+  - Include health checks
+  - Use pod anti-affinity for HA
+  - Enable security contexts
+  - Include ServiceMonitor for metrics
+  - Support multiple environments via values files
+
+automotive_specific:
+  - Include ISO 26262 compliance labels
+  - Support offline deployment scenarios
+  - Implement proper logging for auditing
+  - Include ASPICE traceability metadata
+  - Support multi-region deployments
+  - Enable fleet-wide rollout strategies
+
+examples:
+  - name: Create ADAS service chart
+    command: |
+      helm-charts-creation \
+        --chart-name=adas-processing-service \
+        --chart-version=1.0.0 \
+        --app-version=2.5.0 \
+        --description="ADAS sensor data processing service" \
+        --include-hpa=true \
+        --include-service-monitor=true
+
+related_skills:
+  - helm-repository-management
+  - helm-deployment-strategies
+  - k8s-deployments
+  - argocd-gitops

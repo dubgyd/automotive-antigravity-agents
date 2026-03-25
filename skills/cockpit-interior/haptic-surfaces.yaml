@@ -1,0 +1,161 @@
+name: haptic-surfaces
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Tactile feedback control surfaces for automotive interiors, covering piezoelectric actuators, surface haptics, and multi-modal feedback design for touch interfaces."
+use_cases:
+  - "Designing touch surfaces with localized haptic feedback for blind operation"
+  - "Implementing piezoelectric actuators beneath touchscreen cover glass"
+  - "Building surface haptic textures that simulate physical buttons on flat panels"
+  - "Creating force-sensitive touch with variable haptic response intensity"
+  - "Integrating ultrasonic mid-air haptics with gesture recognition systems"
+automotive_standards:
+  - "ISO 9241-920 - Guidance on tactile and haptic interactions"
+  - "ISO 15005 - Dialogue principles for in-vehicle information systems"
+  - "SAE J2364 - Navigation and route guidance haptic feedback standards"
+  - "ISO 15008 - Transport information ergonomic presentation"
+  - "UNECE R121 - Identification of controls for haptic-enabled surfaces"
+instructions: |
+  # Haptic Surfaces
+
+  ## Overview
+  Haptic surfaces restore the tactile feedback that was lost when physical buttons were
+  replaced by touchscreens in modern vehicles. Using piezoelectric actuators, linear
+  resonant actuators, and electrostatic friction modulation, flat surfaces can simulate
+  the click of a button, the detent of a dial, or the texture of a ridged surface. This
+  enables drivers to confirm input actions by feel without taking eyes off the road.
+
+  ## Key Concepts
+
+  ### Actuator Technologies
+  Several technologies provide tactile feedback on surfaces:
+  - Piezoelectric actuators deliver sharp, precise clicks with sub-millisecond response
+  - Linear resonant actuators (LRA) produce sustained vibrations for textures and alerts
+  - Eccentric rotating mass (ERM) motors provide broad vibration but lack precision
+  - Electrostatic friction modulation changes the perceived texture of a glass surface
+
+  ### Surface Haptic Effects
+  Common haptic patterns used in automotive interfaces:
+  - Click effect simulates a mechanical button press with a sharp 5 ms pulse
+  - Detent effect creates periodic bumps when sliding through a value range
+  - Texture effect provides continuous tactile variation across a surface region
+  - Edge effect signals the boundary of a virtual button through friction change
+  - Alert effect uses distinctive patterns to indicate warnings or confirmations
+
+  ### Force Sensing Integration
+  Haptic surfaces often combine with force measurement:
+  - Strain gauge sensors beneath the touch surface measure applied pressure
+  - Light press triggers hover preview, firm press triggers activation
+  - Force curves can be tuned to mimic the feel of specific mechanical switches
+  - Typical force threshold for activation ranges from 1 N to 3 N
+
+  ## Implementation Guide
+
+  ### Step 1 - Map Haptic Zones
+  Define which areas of the touch surface require haptic feedback:
+  - Climate controls need distinct button-click haptics for temperature and fan
+  - Volume and tuning sliders need detent haptics at meaningful positions
+  - Navigation list scrolling benefits from texture haptics indicating scroll speed
+  - Non-interactive display areas should provide no haptic response to touches
+
+  ### Step 2 - Select and Place Actuators
+  Choose actuator type and placement for each haptic zone:
+  - Piezoelectric actuators mounted at panel edges provide whole-surface excitation
+  - Multiple smaller actuators enable localized haptics on specific screen regions
+  - Actuator mounting must be mechanically isolated from the vehicle structure
+  - Design for replacement access without removing the entire dashboard panel
+
+  ### Step 3 - Design the Haptic Rendering Engine
+  Build software that generates haptic waveforms in response to touch events:
+  - Maintain a library of effect waveforms indexed by interaction type
+  - Render haptic waveforms synchronized with visual feedback within 10 ms
+  - Support parameterized effects where intensity scales with touch force
+  - Implement haptic effect priority so safety alerts override comfort haptics
+
+  ### Step 4 - Tune the Experience
+  Iteratively refine haptic effects through user testing:
+  - Adjust click amplitude until 95% of test users perceive the feedback reliably
+  - Tune detent spacing so users can count positions without looking
+  - Calibrate force thresholds for the target demographic including gloved operation
+  - Validate that haptic feedback is perceivable over road vibration at highway speeds
+
+  ### Step 5 - Integrate with Vehicle HMI
+  Connect haptic control to the overall interaction framework:
+  - Haptic events triggered by the HMI framework, not the touch controller directly
+  - Support OTA updates to haptic effect libraries for refinement after launch
+  - Log haptic usage patterns for analytics and future optimization
+  - Provide a user setting to adjust haptic intensity from off to strong
+
+  ## Best Practices
+
+  ### Perceptibility in Motion
+  - Vehicle vibration masks subtle haptic effects, so design for highway conditions
+  - Target haptic acceleration of 1.0 g minimum at the touch surface
+  - Use sharp transients rather than sustained vibration for button clicks
+  - Test all haptic effects on a four-post shaker simulating rough road surfaces
+
+  ### Latency Requirements
+  - Touch-to-haptic latency must be below 15 ms for perceived simultaneity
+  - Visual feedback should appear within 5 ms of haptic onset for coherence
+  - Audio confirmation click should align within 20 ms of haptic pulse
+  - Measure end-to-end latency with an accelerometer and high-speed camera
+
+  ### Multi-Modal Consistency
+  - Every haptic event should have a corresponding visual state change
+  - Audio feedback complements haptics but should not be the sole confirmation
+  - Maintain consistent haptic language across all vehicle touch surfaces
+  - Document the haptic design language in a specification shared across teams
+
+  ## Troubleshooting
+
+  ### Haptic Feedback Feels Weak or Absent
+  Verify actuator electrical connections and driving voltage amplitude. Check that the
+  actuator resonant frequency matches the driving frequency. Inspect the mechanical
+  coupling between actuator and touch surface for damping or decoupling.
+
+  ### Haptic Click Feels Mushy Instead of Sharp
+  Reduce the waveform duration to under 8 ms for a crisper feel. Increase the initial
+  acceleration peak in the drive signal. Check for excess adhesive or gasket material
+  damping the actuator output.
+
+  ### Users Cannot Feel Haptics While Driving
+  Increase the drive amplitude specifically for in-motion scenarios. Add a road-noise
+  compensation algorithm that boosts haptic intensity based on vehicle speed. Consider
+  adding auditory confirmation as a supplementary feedback channel.
+
+  ### Haptic Zones Feel Blurred Together
+  Increase physical separation between actuator groups. Apply damping material between
+  zones to attenuate vibration propagation. Reduce the duration of each haptic pulse to
+  minimize spatial spread.
+
+  ## Integration Patterns
+
+  ### Multi-Modal Feedback Coordination
+  Synchronizing haptic, visual, and audio feedback for coherent interaction:
+  - Define a feedback event bus that triggers all modalities from a single source event
+  - Measure and compensate for timing differences between haptic, display, and audio paths
+  - Implement a feedback profile system that controls the mix of modalities per context
+  - Allow users to customize the balance between haptic, visual, and audio confirmation
+
+  ### Display Integration
+  Coupling haptic actuators with specific touchscreen display technologies:
+  - Mount piezoelectric actuators on the display cover glass for direct surface excitation
+  - Use bonding adhesive that transmits vibration efficiently without damping high frequencies
+  - Calibrate haptic zones to align precisely with on-screen button boundaries
+  - Support dynamic zone reconfiguration when the UI layout changes between screens
+
+  ## Testing and Validation
+
+  ### Perceptibility Testing
+  Validate that haptic effects are reliably perceived by users:
+  - Conduct just-noticeable-difference studies to determine minimum effective amplitude
+  - Test perception at different vehicle speeds on a chassis dynamometer
+  - Measure detection rates across user demographics including age-related sensitivity loss
+  - Validate that 95% of users can distinguish between click and detent effects reliably
+
+  ### Durability and Lifetime
+  Ensure haptic actuators survive automotive lifetime requirements:
+  - Cycle piezoelectric actuators through 100 million click events at maximum amplitude
+  - Monitor actuator resonant frequency shift as an indicator of mechanical fatigue
+  - Test LRA performance after 85 C and -40 C temperature exposure for 1000 hours each
+  - Verify haptic output consistency between start of life and end of life conditions

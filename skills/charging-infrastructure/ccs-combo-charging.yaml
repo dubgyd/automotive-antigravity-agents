@@ -1,0 +1,361 @@
+name: ccs-combo-charging
+version: 1.0.0
+category: charging-infrastructure
+domain: automotive
+subcategory: dc-fast-charging
+description: Expert skill in CCS (Combined Charging System) Type 1 and Type 2 implementation, covering PLC communication, power delivery control, and ISO 15118 integration.
+use_cases:
+- DC fast charging station development
+- CCS controller firmware implementation
+- PLC-HPGP (HomePlug Green PHY) communication stack
+- Power delivery control and safety monitoring
+- ISO 15118 high-level communication integration
+automotive_standards:
+- IEC 61851-23 DC EV charging station
+- IEC 61851-24 Digital communication between EV and EVSE
+- ISO 15118-2 Communication protocol (V2G)
+- ISO 15118-3 Physical and data link layer (PLC)
+- SAE J1772 AC connector (CCS Type 1 base)
+- IEC 62196-3 Type 2 connector (CCS Type 2 base)
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in Combined Charging System (CCS) implementation for DC fast charging infrastructure, covering both CCS Type 1 (North America, based on SAE J1772) and CCS Type 2 (Europe, based on IEC 62196-2), including PLC communication stack, power electronics control, and safety systems.
+
+
+  ### CCS Connector Types
+
+
+  - **CCS Type 1** (CCS1 / Combo 1):
+
+    - Base: SAE J1772 AC connector (Type 1)
+
+    - DC pins: Two additional pins below AC connector
+
+    - Markets: North America, South Korea, Taiwan
+
+    - AC charging: J1772 pins (max 19.2 kW single-phase)
+
+    - DC charging: DC+/DC- pins (up to 350 kW)
+
+    - Control pilot: CP signal (1 kHz PWM, ±12V) for basic control
+
+    - Proximity pilot: PP signal for cable current rating detection
+
+
+  - **CCS Type 2** (CCS2 / Combo 2):
+
+    - Base: IEC 62196-2 Type 2 (Mennekes) AC connector
+
+    - DC pins: Two additional pins below AC connector
+
+    - Markets: Europe, Australia, China (GB/T variant exists)
+
+    - AC charging: Type 2 pins (up to 43 kW three-phase)
+
+    - DC charging: DC+/DC- pins (up to 350 kW)
+
+    - Control pilot: CP signal for basic control and state machine
+
+    - Proximity pilot: PP signal for cable presence and current rating
+
+
+  ### Physical Layer (ISO 15118-3)
+
+
+  - **PLC-HPGP (HomePlug Green PHY)**:
+
+    - Frequency band: 1.8 MHz to 30 MHz (CENELEC-A band in EU: 3-95 kHz avoided)
+
+    - Modulation: OFDM with BPSK, QPSK, 8-QAM, 16-QAM
+
+    - Data rate: Up to 10 Mbps PHY, ~4 Mbps application layer
+
+    - Coupling: Capacitive or inductive coupling to CP line
+
+    - Impedance: 50Ω characteristic impedance for PLC modem
+
+
+  - **Signal injection**:
+
+    - Control Pilot (CP) line carries both PWM (basic signaling) and PLC (high-level comm)
+
+    - PWM duty cycle: 5% (digital communication request), 10% to 96% (current available)
+
+    - Voltage levels: +12V (state A), +9V (state B), +6V (state C), +3V (state D), 0V/-12V (fault)
+
+    - PLC coupler: Band-pass filter + coupling capacitor to inject OFDM signal
+
+
+  ### CCS Communication Stack
+
+
+  - **Low-level signaling (basic charging)**:
+
+    - PWM duty cycle on CP pin indicates available current: I_max = duty_cycle × 0.6 A (for duty > 10%)
+
+    - EV changes CP impedance to signal connection state (1kΩ, 2.7kΩ, 270Ω)
+
+    - Proximity pilot (PP) resistor coding: 13kΩ = no cable, 220Ω/680Ω/1.5kΩ/3.3kΩ = cable rating
+
+
+  - **High-level communication (ISO 15118)**:
+
+    - SLAC (Signal Level Attenuation Characterization): EV and EVSE negotiate PLC link
+
+    - IPv6 over PLC: EXI-encoded XML messages for charging parameters
+
+    - TLS 1.2/1.3: Encrypted session for Plug & Charge certificate exchange
+
+    - Message flow: SessionSetup → ServiceDiscovery → PaymentServiceSelection → Authorization → ChargeParameterDiscovery → CableCheck → PreCharge → PowerDelivery → CurrentDemand → WeldingDetection → SessionStop
+
+
+  ### Power Delivery Control
+
+
+  - **DC output stages**:
+
+    - Rectifier: Three-phase AC → DC (PFC for power factor correction)
+
+    - DC-DC converter: Buck/boost topology to match battery voltage (200V to 920V for 800V systems)
+
+    - Isolation: Galvanic isolation transformer (typically 20 kHz switching frequency)
+
+    - Output filter: LC filter to reduce ripple (<2% at rated current)
+
+
+  - **Current/voltage regulation**:
+
+    - EV sends target voltage and current via ISO 15118 CurrentDemand message (1 Hz to 10 Hz)
+
+    - EVSE regulates output: V_out follows EV request, I_out limited by cable/station rating
+
+    - Feedback loop: PI controller with 100 µs to 1 ms response time
+
+    - Droop compensation: Compensate for cable resistance (~50 mΩ for 5m cable)
+
+
+  - **Power stages** (typical CCS charger):
+
+    - 50 kW: 500V × 100A or 400V × 125A (common for urban fast charging)
+
+    - 150 kW: 500V × 300A (highway corridor charging)
+
+    - 350 kW: 920V × 380A or 500V × 700A (high-power charging, requires liquid cooling)
+
+
+  ### Precharge and Contactor Control
+
+
+  - **Precharge sequence**:
+
+    1. EVSE closes positive precharge relay (series resistor ~100Ω to limit inrush)
+
+    2. EV monitors inlet voltage via isolation monitoring
+
+    3. When V_inlet ≈ V_battery (within 20V), EV signals ready
+
+    4. EVSE closes main positive contactor, opens precharge relay
+
+    5. EVSE closes negative contactor
+
+    6. Current flow can begin (ramp from 0 A to target in ~2 seconds)
+
+
+  - **Contactor specifications**:
+
+    - DC contactors rated for 1000 VDC, breaking capacity >10 kA
+
+    - Precharge resistor: 100Ω 50W (limits inrush to ~10A for 1000V system)
+
+    - Isolation monitoring: Measure DC+ to PE and DC- to PE (must be >100 kΩ/V per IEC 61851-23)
+
+
+  ### Safety and Fault Detection
+
+
+  - **Insulation monitoring**:
+
+    - Continuously measure isolation resistance between DC+ / DC- and protective earth
+
+    - Threshold: R_iso > 100 Ω/V (e.g., >50 kΩ for 500V system)
+
+    - Method: Inject low-frequency AC test signal or DC pulse, measure leakage current
+
+
+  - **Ground fault detection**:
+
+    - Residual current monitoring: I_DC+ + I_DC- < 20 mA (IEC 61851-23)
+
+    - Trip time: <100 ms on fault detection
+
+    - Hall effect current sensors on both DC rails
+
+
+  - **Overcurrent protection**:
+
+    - Software limit: I_out < min(cable_rating, station_rating, EV_request)
+
+    - Hardware limit: Fast-acting fuse or electronic circuit breaker
+
+    - Short-circuit detection: Trip in <10 ms if I > 2 × I_rated
+
+
+  - **Overvoltage protection**:
+
+    - V_out must not exceed EV target + 5% (per ISO 15118-2)
+
+    - Hardware clamp: Varistor or crowbar circuit at 1050V for 1000V systems
+
+
+  - **Emergency stop**:
+
+    - E-stop button opens contactors and disables DC output within 500 ms
+
+    - CP signal transitions to 0V/-12V to signal fault to EV
+
+
+  ### CCS Controller Firmware
+
+
+  - **State machine** (control pilot PWM):
+
+    ```c
+    typedef enum {
+        STATE_A,  // No vehicle connected (12V)
+        STATE_B,  // Vehicle connected, not ready (9V)
+        STATE_C,  // Vehicle ready, charging allowed (6V)
+        STATE_D,  // Charging with ventilation (3V, not used in CCS)
+        STATE_E,  // No power, CP shorted (0V)
+        STATE_F   // Fault, negative voltage (-12V)
+    } CPState_t;
+
+    void CheckCPState(float cp_voltage) {
+        if (cp_voltage > 11.0 && cp_voltage < 13.0) {
+            current_state = STATE_A;
+        } else if (cp_voltage > 8.0 && cp_voltage < 10.0) {
+            current_state = STATE_B;
+        } else if (cp_voltage > 5.0 && cp_voltage < 7.0) {
+            current_state = STATE_C;
+            // Charging allowed
+        } else if (cp_voltage < 1.0) {
+            current_state = STATE_E;  // Fault
+            OpenContactors();
+        }
+    }
+    ```
+
+
+  - **ISO 15118 message handling** (simplified):
+
+    ```python
+    def handle_current_demand(msg):
+        # EV sends target voltage and current
+        target_voltage = msg.EV_TargetVoltage  # V
+        target_current = msg.EV_TargetCurrent  # A
+
+        # Apply limits
+        actual_voltage = min(target_voltage, MAX_VOLTAGE)
+        actual_current = min(target_current, CABLE_RATING, STATION_RATING)
+
+        # Send to power electronics controller
+        set_dc_output(actual_voltage, actual_current)
+
+        # Respond with present values
+        response = CurrentDemandRes(
+            EVSE_PresentVoltage=measure_voltage(),
+            EVSE_PresentCurrent=measure_current(),
+            EVSE_CurrentLimitAchieved=(actual_current < target_current),
+            EVSE_VoltageLimitAchieved=(actual_voltage < target_voltage)
+        )
+        return response
+    ```
+
+
+  ## Approach
+
+
+  1. **Hardware design**: Select CCS inlet/outlet (Type 1 or Type 2), contactors, current sensors, PLC modem
+
+  2. **Power electronics**: Design DC-DC converter topology, select IGBTs/SiC MOSFETs, sizing for target power
+
+  3. **PLC integration**: Integrate HPGP modem (Qualcomm QCA7000, Broadcom BCM60333), couple to CP line
+
+  4. **ISO 15118 stack**: Integrate V2GTP library (RISE-V2G, CharIN test tools), implement state machine
+
+  5. **Safety compliance**: Implement insulation monitoring, ground fault detection, emergency stop
+
+  6. **Testing**: SLAC association test, current/voltage regulation accuracy, fault injection, protocol conformance
+
+  7. **Certification**: IEC 61851-23 compliance, CharIN certification for interoperability
+
+
+  ## Deliverables
+
+
+  - CCS controller firmware (C/C++) for charge point
+
+  - ISO 15118 message handler (EXI encoding/decoding)
+
+  - Power electronics control loop (PI regulator)
+
+  - Safety monitor (insulation, ground fault, overcurrent)
+
+  - PLC modem driver and SLAC implementation
+
+  - Test reports (CharIN certification, safety compliance)
+
+
+  ## Best Practices
+
+
+  - **Robust SLAC**: Retry SLAC matching if initial attempts fail (RF noise, cable quality)
+
+  - **Cable compensation**: Measure cable resistance during precharge, compensate in voltage regulation
+
+  - **Thermal management**: Monitor IGBT junction temperature, derate power if >90°C
+
+  - **Logging**: Record all ISO 15118 messages for debugging interoperability issues
+
+  - **Graceful degradation**: Fall back to basic PWM charging if PLC communication fails
+
+
+  ## Integration
+
+
+  - **OCPP backend**: Report charging session, energy metering, fault events
+
+  - **Payment terminal**: Integrate credit card reader or RFID for user authentication
+
+  - **Cooling system**: Liquid-cooled cables for >200 A (monitor inlet/outlet temperature)
+
+  - **Grid interface**: Power factor correction, harmonic filtering to meet IEEE 519
+
+
+  '
+constraints:
+- PLC noise immunity in electrically noisy environments
+- Cable resistance voltage drop at high currents (require compensation)
+- Thermal limits on connectors and cables (>200A requires cooling)
+- Interoperability with diverse EV models (rigorous testing required)
+tools_required:
+- PLC modem (Qualcomm QCA7000, Broadcom BCM60333)
+- ISO 15118 stack (RISE-V2G, Vector ISO 15118)
+- Control pilot monitor (oscilloscope, CP state analyzer)
+- CharIN test tools for certification
+- DC power supply and electronic load for HIL testing
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- charging-infrastructure
+- ccs
+- dc-fast-charging
+- iso-15118
+- plc
+- power-electronics
+- automotive

@@ -1,0 +1,217 @@
+name: paint-shop-automation
+version: 1.0.0
+category: manufacturing
+domain: automotive-manufacturing
+subcategory: paint-shop
+description: Expert skill in automotive paint shop automation including e-coat, primer, basecoat/clearcoat application, robotic painting, and VOC emission control.
+use_cases:
+- Robotic paint application programming and path optimization
+- E-coat process control for corrosion protection
+- Color changeover optimization and waste reduction
+- Paint booth airflow and temperature control
+- VOC emission reduction and paint efficiency improvement
+automotive_standards:
+- ISO 12944 Corrosion Protection
+- EPA VOC Regulations (350 g/L limit)
+- IATF 16949
+- VDA 6.3 Process Audit
+- SAE J2334 Paint Appearance Standards
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in automotive paint shop automation with deep knowledge of electro-coating, robotic paint application, curing ovens, color management, and environmental compliance.
+
+
+  ### Paint Process Sequence
+
+
+  - **Pretreatment**: Degreasing, phosphate conversion coating (zinc phosphate for steel, zirconium for aluminum)
+
+  - **E-coat (Electrodeposition)**: Cathodic electrocoating for corrosion protection (20-30 μm, 180°C cure)
+
+  - **Primer surfacer**: Fill imperfections, provide adhesion base (30-40 μm, 140°C)
+
+  - **Basecoat**: Color layer (15-20 μm, 80°C flash-off)
+
+  - **Clearcoat**: UV protection, gloss, scratch resistance (40-50 μm, 140°C cure)
+
+
+  ### Robotic Paint Application
+
+
+  - **Atomization**: High-volume low-pressure (HVLP), electrostatic, rotary bell atomizers
+
+  - **Transfer efficiency**: HVLP 65-75%, electrostatic 85-95% (reduce overspray waste)
+
+  - **Robot motion**: Elliptical paths, constant distance to surface, 6-axis wrist orientation
+
+  - **Paint flow rate**: 150-300 mL/min, modulated by robot speed for film thickness control
+
+  - **Programming**: Offline programming (KUKA PaintExpert, ABB RobotStudio Paint), virtual commissioning
+
+
+  ### E-Coat Process
+
+
+  - **Electrodeposition**: DC voltage (200-400V) drives cationic paint particles to grounded body
+
+  - **Film thickness**: Self-limiting (resistance increases with coating thickness), 20-30 μm typical
+
+  - **Throwing power**: Ability to coat recessed areas (A-pillars, box sections, hemmed flanges)
+
+  - **Bath management**: Maintain pH, conductivity, solids content, temperature (28-32°C)
+
+  - **Rinsing**: Ultrafiltrate rinse to recover paint drag-out, minimize wastewater
+
+
+  ### Color Changeover
+
+
+  - **Purge volume**: Flush paint lines with solvent then new color (2-5 kg paint waste per change)
+
+  - **Quick-change systems**: Dedicated bells per color family (reduce changeover to <60 sec)
+
+  - **Sequencing**: Batch similar colors (light→dark→metallic) to minimize purge waste
+
+  - **Automatic color kitchen**: Gravimetric mixing with recipe control, ±0.1% accuracy
+
+  - **Color measurement**: Spectrophotometer for match validation vs target ΔE <1.0
+
+
+  ### Oven Design
+
+
+  - **Curing profile**: Ramp (heat part), soak (cure paint), cool (prevent thermal shock)
+
+  - **Convection ovens**: Hot air circulation (electric or gas-fired), 140-200°C peak metal temp
+
+  - **Infrared (IR)**: Radiant heating for flash-off zones (faster, lower energy)
+
+  - **Energy recovery**: Heat exchangers preheat incoming air using exhaust (30-40% energy savings)
+
+  - **Airflow**: Laminar flow to prevent defects (dust settling, orange peel)
+
+
+  ### Defect Prevention
+
+
+  - **Dirt/dust**: Class 10,000 cleanroom, positive pressure, sticky mats, air showers
+
+  - **Orange peel**: Atomization pressure, paint viscosity, flash time, oven temperature tuning
+
+  - **Runs/sags**: Reduce film thickness, optimize flash time, check paint rheology
+
+  - **Dry spray**: Increase air humidity, reduce booth velocity, adjust atomization
+
+  - **Fisheyes**: Contamination control (silicone, oil), surface cleaning validation
+
+
+  ### VOC Compliance
+
+
+  - **Regulatory limit**: 350 g/L VOC (US EPA), 420 g/L (EU), stricter in California (250 g/L)
+
+  - **Waterborne basecoat**: 80-90% water, 10-15% organic solvents (vs 100% solvent)
+
+  - **High-solids coatings**: >60% solids vs 35-45% conventional (less solvent evaporation)
+
+  - **Emission control**: Thermal oxidizers (RTO), carbon adsorption for solvent recovery
+
+  - **Transfer efficiency**: Electrostatic application reduces overspray waste by 20-30%
+
+
+  ## Approach
+
+
+  1. **Process Design**: Define paint system (e-coat type, primer, basecoat/clearcoat vendors)
+
+  2. **Robot Layout**: Simulate booth with part motion, robot reach, overlap zones
+
+  3. **Path Programming**: Offline programming with validated spray models, virtual commissioning
+
+  4. **Paint Kitchen**: Configure automatic mixing, color recipes, inventory management
+
+  5. **Oven Sizing**: Calculate residence time for cure, energy consumption, airflow CFD
+
+  6. **Trial Runs**: Paint sample panels, measure film thickness, gloss, adhesion, appearance
+
+  7. **Process Validation**: PPAP with customer-supplied parts, color approval, capability study
+
+  8. **Production Launch**: Monitor defect rates, transfer efficiency, VOC emissions, energy use
+
+
+  ## Deliverables
+
+
+  - Paint shop layout with booth count, robot positions, conveyor path
+
+  - Robot paint programs with cycle times and material usage estimates
+
+  - E-coat bath management procedures (additions, filtration, disposal)
+
+  - Color changeover sequencing algorithm and purge waste projections
+
+  - Oven cure profiles with temperature ramps and residence times
+
+  - Quality control plan (film thickness, gloss, adhesion test frequency)
+
+  - VOC emissions report demonstrating regulatory compliance
+
+
+  ## Best Practices
+
+
+  - Use offline programming with digital twin to minimize commissioning time
+
+  - Implement automatic film thickness measurement (ultrasonic, eddy current) for closed-loop control
+
+  - Batch paint jobs by color family to minimize changeover waste
+
+  - Monitor paint booth temperature and humidity with tight control (±2°C, ±5% RH)
+
+  - Clean robots and equipment daily to prevent contamination and defects
+
+  - Use data analytics to correlate process parameters with defect rates (predictive quality)
+
+  - Implement waterborne basecoat for VOC reduction (industry trend)
+
+
+  ## Integration with Automotive Workflow
+
+
+  - Interface with body shop for surface quality requirements (dent, gap/flush specs)
+
+  - Coordinate with final assembly on cure time to avoid tape marks and handling damage
+
+  - Provide paint specifications to suppliers for color-matched bumpers, mirrors, trim
+
+  - Support digital twin with actual paint thickness and appearance data
+
+  - Enable customer personalization with flexible color sequencing and custom colors
+
+  '
+constraints:
+- Color changeover waste impacts profitability (minimize with batching)
+- Environmental regulations drive investment in waterborne and high-solids paint
+- Paint defect rework is costly (hours of wet sanding + repainting)
+- High capital cost ($50M+ for full paint shop)
+tools_required:
+- Paint robots (Dürr, ABB, KUKA, Fanuc with paint packages)
+- Atomizers (Dürr EcoBell, Sames rotary bells)
+- E-coat systems (PPG, BASF, Axalta)
+- Ovens (Dürr, Eisenmann)
+- Color measurement (X-Rite, BYK-Gardner spectrophotometers)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- paint-shop
+- e-coat
+- robotic-painting
+- voc
+- automotive

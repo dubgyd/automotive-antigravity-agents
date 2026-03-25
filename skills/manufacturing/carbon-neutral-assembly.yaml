@@ -1,0 +1,221 @@
+name: carbon-neutral-assembly
+version: 1.0.0
+category: manufacturing
+domain: industry-5-0
+subcategory: carbon neutral assembly
+description: Expert skill in designing and operating carbon-neutral automotive assembly plants through renewable energy integration, process electrification, carbon accounting, and offset strategies. Covers Scope 1/2/3 emissions reduction across stamping, body shop, paint shop, and final assembly operations.
+use_cases:
+- Scope 1/2/3 carbon footprint mapping for automotive assembly plants
+- Renewable energy integration with on-site solar, wind, and battery storage
+- Paint shop VOC and CO2 reduction through waterborne coatings and RTO optimization
+- Process electrification replacing natural gas furnaces with induction and IR heating
+- Carbon accounting and reporting aligned with GHG Protocol and SBTi targets
+- Compressed air system optimization to reduce parasitic energy losses
+- Heat recovery networks capturing waste heat from curing ovens and welding operations
+- Green logistics planning for inbound and outbound vehicle transport
+automotive_standards:
+- ISO 14001 Environmental Management Systems
+- ISO 14064 Greenhouse Gas Accounting and Verification
+- ISO 50001 Energy Management Systems
+- GHG Protocol Corporate Standard
+- Science Based Targets initiative (SBTi)
+- EU Taxonomy for Sustainable Activities
+- IATF 16949 (Environmental Compliance Clauses)
+instructions: |
+
+  ## Overview
+
+  Carbon-neutral assembly integrates energy management, process engineering, and carbon accounting
+  to eliminate greenhouse gas emissions from automotive manufacturing. This skill covers the full
+  pathway from baseline carbon footprint assessment through renewable energy deployment, process
+  electrification, waste heat recovery, and residual offset procurement.
+
+  Modern automotive OEMs target Scope 1 and 2 neutrality by 2030 and full Scope 3 neutrality
+  by 2040, requiring systematic transformation of every energy-consuming process in the plant.
+
+
+  ## Key Concepts
+
+  ### Carbon Scopes in Automotive Assembly
+
+  - **Scope 1 (Direct)**: Natural gas combustion in paint ovens, emergency generators, plant vehicles
+  - **Scope 2 (Indirect Energy)**: Purchased electricity for robots, conveyors, HVAC, lighting
+  - **Scope 3 (Value Chain)**: Upstream materials (steel, aluminum, plastics), logistics, employee commuting
+
+  ### Energy Intensity Benchmarks
+
+  - **Stamping**: 40-60 kWh per vehicle (press energy, coil handling)
+  - **Body Shop**: 150-250 kWh per vehicle (resistance welding, laser joining)
+  - **Paint Shop**: 500-900 kWh per vehicle (largest consumer: ovens, booths, HVAC)
+  - **Final Assembly**: 80-120 kWh per vehicle (tools, test stands, conveyors)
+  - **Total Plant**: 800-1400 kWh per vehicle (benchmark: <900 kWh for best-in-class)
+
+  ### Carbon Intensity Metrics
+
+  - **kg CO2e per vehicle**: Primary KPI, typically 200-500 kg for Scope 1+2
+  - **Energy carbon factor**: Grid-dependent, 0.02 (Norway) to 0.9 (Poland) kg CO2e/kWh
+  - **Process carbon factor**: Natural gas = 0.184 kg CO2e/kWh thermal
+
+
+  ## Implementation Guide
+
+  ### Step 1: Baseline Carbon Footprint
+
+  Conduct a comprehensive energy and emissions audit:
+
+  ```python
+  # Carbon footprint calculation framework
+  class PlantCarbonFootprint:
+      def __init__(self, plant_id: str):
+          self.plant_id = plant_id
+          self.scope1_sources = {}
+          self.scope2_sources = {}
+          self.scope3_sources = {}
+
+      def calculate_scope1(self, natural_gas_mwh: float, diesel_liters: float) -> float:
+          """Calculate direct emissions from fuel combustion."""
+          GAS_FACTOR = 0.184  # kg CO2e per kWh thermal
+          DIESEL_FACTOR = 2.68  # kg CO2e per liter
+          return (natural_gas_mwh * 1000 * GAS_FACTOR) + (diesel_liters * DIESEL_FACTOR)
+
+      def calculate_scope2(self, electricity_mwh: float, grid_factor: float) -> float:
+          """Calculate indirect emissions from purchased electricity."""
+          return electricity_mwh * 1000 * grid_factor
+
+      def vehicles_per_year(self, annual_production: int, total_co2_kg: float) -> float:
+          """Return kg CO2e per vehicle produced."""
+          return total_co2_kg / annual_production
+  ```
+
+  ### Step 2: Renewable Energy Strategy
+
+  ```yaml
+  # Renewable energy mix planning
+  renewable_portfolio:
+    on_site_solar:
+      capacity_mwp: 12.0
+      annual_yield_mwh: 11400
+      coverage_pct: 15
+    power_purchase_agreement:
+      type: offsite-wind
+      capacity_mw: 40
+      annual_yield_mwh: 105000
+      coverage_pct: 70
+    battery_storage:
+      capacity_mwh: 20
+      purpose: peak-shaving-and-solar-shift
+    green_certificates:
+      type: GO-REGO
+      annual_mwh: 18000
+      coverage_pct: 15
+  ```
+
+  ### Step 3: Process Electrification
+
+  Replace natural gas with electric alternatives:
+
+  - **Paint oven curing**: Infrared panel heaters or induction curing (60% energy reduction)
+  - **Pretreatment baths**: Electric immersion heaters replacing gas-fired heat exchangers
+  - **Building HVAC**: Industrial heat pumps using waste heat from compressors and ovens
+  - **Process hot water**: Solar thermal collectors with electric boost
+
+  ### Step 4: Heat Recovery Network
+
+  ```
+  Waste Heat Sources          Heat Sinks
+  ==================          ==========
+  Paint oven exhaust (180C) -> Pretreatment bath heating (60C)
+  Weld transformer cooling  -> Building space heating (40C)
+  Compressor aftercoolers   -> Process hot water (55C)
+  RTO exhaust (300C)        -> Paint booth makeup air (25C)
+  ```
+
+  ### Step 5: Carbon Accounting System
+
+  ```python
+  # Real-time carbon tracking integrated with MES
+  class CarbonTracker:
+      def __init__(self, mes_connection, energy_meters: list):
+          self.mes = mes_connection
+          self.meters = energy_meters
+
+      def calculate_per_vehicle_carbon(self, vehicle_vin: str) -> dict:
+          """Track carbon footprint per individual vehicle."""
+          energy_data = self.collect_energy_by_station(vehicle_vin)
+          return {
+              "vin": vehicle_vin,
+              "scope1_kg": self.gas_consumption_to_co2(energy_data["gas_kwh"]),
+              "scope2_kg": self.electricity_to_co2(energy_data["elec_kwh"]),
+              "total_kg": None,  # computed as sum
+              "timestamp": energy_data["completion_time"],
+          }
+  ```
+
+
+  ## Best Practices
+
+  - Start with the paint shop -- it accounts for 50-70% of plant energy consumption
+  - Install sub-metering on every major energy consumer before optimization
+  - Use ISO 50001 energy management system as the governance framework
+  - Negotiate long-term PPAs (10-15 years) for cost-effective renewable electricity
+  - Design heat recovery networks with redundancy -- production cannot stop for maintenance
+  - Track carbon per vehicle, not just per plant, to account for production volume changes
+  - Validate renewable energy certificates are additional and time-matched (hourly matching by 2030)
+  - Engage suppliers on Scope 3 reduction -- material production dominates total lifecycle emissions
+
+
+  ## Common Patterns
+
+  ### Paint Shop Decarbonization Sequence
+
+  1. Switch to waterborne basecoats (reduces VOC, enables lower cure temperatures)
+  2. Install regenerative thermal oxidizers (RTO) with 95%+ heat recovery
+  3. Replace gas-fired ovens with IR panel heaters (zone-by-zone conversion)
+  4. Recover RTO exhaust heat for booth makeup air preheating
+  5. Electrify remaining gas loads with industrial heat pumps
+
+  ### Energy Monitoring Architecture
+
+  ```
+  Smart Meters (Modbus/BACnet)
+       |
+  Edge Gateway (OPC UA aggregation)
+       |
+  Energy Management Platform (ISO 50001)
+       |
+  Carbon Dashboard (real-time kg CO2e/vehicle)
+  ```
+
+
+  ## Troubleshooting
+
+  - **Grid instability with high renewable share**: Deploy battery storage for frequency regulation
+  - **Heat pump COP drops in winter**: Size for worst-case ambient, use waste heat as source
+  - **Carbon accounting discrepancies**: Reconcile meter data monthly against utility invoices
+  - **PPA price volatility**: Use collar structures (floor/cap) in contract terms
+  - **Scope 3 data gaps**: Start with tier-1 suppliers using CDP questionnaires
+  - **Paint cure quality with IR heaters**: Validate cure window with DSC and MEK rub tests
+
+constraints:
+- Grid carbon intensity varies by location and time of day
+- Paint cure specifications limit oven technology changes
+- Capital expenditure for electrification requires 5-10 year payback justification
+- Renewable energy availability depends on local geography and grid connection
+tools_required:
+- Energy management platforms (Siemens Navigator, Schneider EcoStruxure)
+- Carbon accounting software (Persefoni, Watershed, SAP Sustainability Control Tower)
+- Building energy simulation (EnergyPlus, IES VE)
+- Sub-metering systems (Janitza, Sentron PAC)
+- Renewable energy forecasting (Solcast, Meteoblue)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- manufacturing
+- carbon-neutral
+- sustainability
+- energy-management
+- renewable-energy
+- automotive

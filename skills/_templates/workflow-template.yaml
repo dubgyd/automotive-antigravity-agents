@@ -1,0 +1,373 @@
+---
+# Automotive Workflow Template
+# Copy this template to create new automotive development workflows
+
+name: workflow-name
+version: "1.0.0"
+type: development|validation|review|deployment
+domain: automotive
+phase: concept|development|integration|validation|production
+
+description: >
+  Clear description of workflow purpose, inputs, outputs,
+  and position in automotive development lifecycle.
+
+trigger:
+  type: manual|automatic|event-based
+  conditions:
+    - "Condition 1 that starts workflow"
+    - "Condition 2 that starts workflow"
+
+inputs:
+  - name: "Input 1"
+    type: "specification|code|model|test-data"
+    format: "File format or structure"
+    required: true
+    validation: "Validation criteria"
+
+  - name: "Input 2"
+    type: "configuration|requirements"
+    format: "YAML|JSON|XML|PDF"
+    required: false
+    default: "Default value if applicable"
+
+outputs:
+  - name: "Output 1"
+    type: "artifact-type"
+    format: "Output format"
+    location: "Where artifact is stored"
+    traceability: "Link to requirements"
+
+  - name: "Output 2"
+    type: "report|documentation"
+    format: "PDF|HTML|Markdown"
+    location: "Documentation repository"
+
+stages:
+  - stage: "1. Initialization"
+    description: "Setup and context gathering"
+    agent: "initialization-agent"
+    duration: "5-10 minutes"
+
+    tasks:
+      - task: "Parse input specifications"
+        actions:
+          - "Validate input format"
+          - "Extract requirements"
+          - "Identify constraints"
+
+      - task: "Setup environment"
+        actions:
+          - "Configure toolchain"
+          - "Load dependencies"
+          - "Initialize workspace"
+
+    outputs:
+      - "Validated requirements document"
+      - "Configured environment"
+
+    quality_gates:
+      - criteria: "All inputs validated"
+        pass_threshold: "100%"
+      - criteria: "Environment ready"
+        verification: "Toolchain version check"
+
+  - stage: "2. Analysis"
+    description: "Deep analysis of requirements and constraints"
+    agent: "analysis-agent"
+    duration: "10-20 minutes"
+    dependencies:
+      - "Stage 1 complete"
+
+    tasks:
+      - task: "Requirements analysis"
+        actions:
+          - "Decompose system requirements"
+          - "Identify safety requirements (ASIL)"
+          - "Extract functional requirements"
+          - "Derive technical requirements"
+
+      - task: "Constraint analysis"
+        actions:
+          - "Performance constraints"
+          - "Resource constraints"
+          - "Timing constraints"
+          - "Compliance constraints"
+
+    outputs:
+      - "Requirements traceability matrix"
+      - "Safety analysis report"
+      - "Technical feasibility assessment"
+
+    quality_gates:
+      - criteria: "Requirements completeness"
+        pass_threshold: "100% traceable"
+      - criteria: "Safety analysis complete"
+        verification: "ASIL assignment verified"
+
+  - stage: "3. Design"
+    description: "Create architectural and detailed design"
+    agent: "design-agent"
+    duration: "20-40 minutes"
+    dependencies:
+      - "Stage 2 passed quality gates"
+
+    tasks:
+      - task: "Architectural design"
+        actions:
+          - "Define system architecture"
+          - "Component decomposition"
+          - "Interface definition"
+          - "AUTOSAR mapping (if applicable)"
+
+      - task: "Detailed design"
+        actions:
+          - "Algorithm design"
+          - "Data structure design"
+          - "State machine design"
+          - "Error handling design"
+
+    outputs:
+      - "Architecture diagram (UML/SysML)"
+      - "Component specifications"
+      - "Interface control documents"
+      - "Design rationale"
+
+    quality_gates:
+      - criteria: "Architecture review passed"
+        reviewers: ["system-architect", "safety-engineer"]
+      - criteria: "AUTOSAR compliance"
+        verification: "Schema validation"
+
+  - stage: "4. Implementation"
+    description: "Code implementation following design"
+    agent: "implementation-agent"
+    duration: "30-90 minutes"
+    dependencies:
+      - "Stage 3 design approved"
+
+    tasks:
+      - task: "Code generation"
+        actions:
+          - "Implement components"
+          - "Follow MISRA guidelines"
+          - "Add safety mechanisms"
+          - "Implement error handling"
+
+      - task: "Documentation"
+        actions:
+          - "Inline documentation"
+          - "API documentation"
+          - "Safety manual"
+          - "Integration guide"
+
+    outputs:
+      - "Source code (C/C++/Model)"
+      - "Unit tests"
+      - "Code documentation"
+      - "Build configuration"
+
+    quality_gates:
+      - criteria: "MISRA compliance"
+        tool: "Static analyzer"
+        pass_threshold: "Zero violations"
+      - criteria: "Code coverage"
+        tool: "Coverage analyzer"
+        pass_threshold: ">90% for safety-critical"
+
+  - stage: "5. Verification"
+    description: "Test and verify implementation"
+    agent: "verification-agent"
+    duration: "20-60 minutes"
+    dependencies:
+      - "Stage 4 code complete"
+
+    tasks:
+      - task: "Unit testing"
+        actions:
+          - "Execute unit tests"
+          - "Measure coverage"
+          - "Verify error paths"
+
+      - task: "Integration testing"
+        actions:
+          - "Component integration tests"
+          - "Interface verification"
+          - "Timing analysis"
+
+      - task: "Safety verification"
+        actions:
+          - "Fault injection testing"
+          - "Safety mechanism testing"
+          - "Failure mode analysis"
+
+    outputs:
+      - "Test reports"
+      - "Coverage reports"
+      - "Safety verification report"
+      - "Known issues log"
+
+    quality_gates:
+      - criteria: "All tests passed"
+        pass_threshold: "100%"
+      - criteria: "Coverage achieved"
+        pass_threshold: "Per ASIL requirements"
+      - criteria: "Safety verification complete"
+        verification: "All safety goals verified"
+
+  - stage: "6. Review & Approval"
+    description: "Peer review and formal approval"
+    agent: "review-agent"
+    duration: "15-30 minutes"
+    dependencies:
+      - "Stage 5 verification passed"
+
+    tasks:
+      - task: "Code review"
+        actions:
+          - "Standards compliance check"
+          - "Design adherence check"
+          - "Best practices verification"
+
+      - task: "Documentation review"
+        actions:
+          - "Completeness check"
+          - "Accuracy verification"
+          - "Traceability verification"
+
+      - task: "Safety review"
+        actions:
+          - "Safety analysis review"
+          - "Hazard coverage check"
+          - "FMEA verification"
+
+    outputs:
+      - "Review report"
+      - "Approval certificate"
+      - "Action items (if any)"
+
+    quality_gates:
+      - criteria: "Review approval"
+        reviewers: ["peer-reviewer", "safety-reviewer"]
+        pass_threshold: "All approvals received"
+
+  - stage: "7. Delivery"
+    description: "Package and deliver artifacts"
+    agent: "delivery-agent"
+    duration: "10-15 minutes"
+    dependencies:
+      - "Stage 6 approved"
+
+    tasks:
+      - task: "Artifact packaging"
+        actions:
+          - "Collect all deliverables"
+          - "Version tagging"
+          - "Generate manifest"
+
+      - task: "Documentation finalization"
+        actions:
+          - "Compile final documentation"
+          - "Generate release notes"
+          - "Update traceability"
+
+      - task: "Handoff preparation"
+        actions:
+          - "Integration instructions"
+          - "Known limitations"
+          - "Support contact"
+
+    outputs:
+      - "Release package"
+      - "Release notes"
+      - "Traceability matrix"
+      - "Handoff documentation"
+
+    quality_gates:
+      - criteria: "Package completeness"
+        verification: "Manifest checklist"
+      - criteria: "Documentation complete"
+        verification: "ASPICE checklist"
+
+rollback_procedures:
+  - condition: "Quality gate failure"
+    action: "Return to previous stage"
+    notification: "Alert workflow owner"
+
+  - condition: "Safety violation detected"
+    action: "Immediate stop, escalate to safety officer"
+    notification: "Critical alert"
+
+error_handling:
+  - error_type: "Tool failure"
+    recovery: "Retry with alternative tool"
+    escalation: "Alert DevOps if persistent"
+
+  - error_type: "Missing input"
+    recovery: "Request from user"
+    timeout: "30 minutes"
+
+  - error_type: "Compliance violation"
+    recovery: "Stop and fix"
+    escalation: "Quality manager"
+
+metrics:
+  - metric: "Cycle time"
+    target: "< 4 hours for standard workflow"
+    measurement: "Start to delivery"
+
+  - metric: "First-pass yield"
+    target: "> 95%"
+    measurement: "No rework needed"
+
+  - metric: "Defect escape rate"
+    target: "< 0.1 per KLOC"
+    measurement: "Post-delivery defects"
+
+compliance_mapping:
+  ISO26262:
+    - clause: "6-4.7"
+      stage: "Design"
+      evidence: "Architecture diagram"
+    - clause: "6-5.8"
+      stage: "Implementation"
+      evidence: "Source code + unit tests"
+    - clause: "6-6.9"
+      stage: "Verification"
+      evidence: "Test reports"
+
+  ASPICE:
+    - process: "SWE.1"
+      stage: "Design"
+      work_products: ["Software design specification"]
+    - process: "SWE.2"
+      stage: "Implementation"
+      work_products: ["Source code", "Unit test results"]
+
+automation:
+  triggers:
+    - event: "Git push to feature branch"
+      action: "Start verification stage"
+    - event: "Pull request created"
+      action: "Start review stage"
+
+  notifications:
+    - event: "Quality gate failed"
+      recipients: ["workflow-owner", "team-lead"]
+      channel: "email|slack"
+    - event: "Workflow complete"
+      recipients: ["requester"]
+      channel: "email"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  created: "2026-03-19"
+  last_updated: "2026-03-19"
+  status: "production|beta|experimental"
+  complexity: "standard|complex|critical"
+
+tags:
+  - automotive
+  - workflow
+  - lifecycle-phase
+  - compliance

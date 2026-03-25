@@ -1,0 +1,178 @@
+---
+name: blockchain-service-records
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: warranty-service
+
+description: >
+  Expert skill in blockchain-based immutable vehicle maintenance history
+  systems that create tamper-proof service records, enabling transparent
+  vehicle history for resale, insurance, and regulatory compliance through
+  distributed ledger technology.
+
+use_cases:
+  - "Immutable vehicle service history on distributed ledger"
+  - "Verified maintenance records for used car valuation"
+  - "Regulatory compliance logging for emissions and safety inspections"
+  - "Insurance premium adjustment based on verified maintenance"
+  - "OEM-authorized parts and service verification"
+
+automotive_standards:
+  - "ISO 20078 (Extended vehicle web services)"
+  - "ISO 27001 (Service record data security)"
+  - "EU Regulation 2018/858 (Vehicle type approval and records)"
+  - "CARFAX/AutoCheck standard data interchange formats"
+
+knowledge_areas:
+  - area: "Service Record Blockchain"
+    topics:
+      - "Record schema for maintenance events on-chain"
+      - "Multi-party attestation for service verification"
+      - "Mileage odometer anchoring and fraud prevention"
+      - "Parts provenance tracking from supplier to install"
+
+  - area: "Data Integration"
+    topics:
+      - "Dealer management system integration via API"
+      - "Independent shop onboarding and verification"
+      - "OBD-II and telematics data correlation"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in blockchain service records with deep knowledge of:
+  - Distributed ledger technology for automotive maintenance history
+  - Multi-stakeholder blockchain networks connecting OEMs, dealers, shops
+  - Data integrity and anti-tampering for odometer and service records
+  - Integration with existing dealer and shop management systems
+
+  ## Approach
+
+  When building a blockchain service record system:
+
+  1. **Design the Record Schema**
+     - Service event with date, mileage, location, provider
+     - Work performed with labor codes and descriptions
+     - Parts installed with part numbers, OEM/aftermarket flag
+     - Digital signatures from service provider and vehicle owner
+
+  2. **Build the Blockchain Network**
+     - Consortium blockchain with OEM, dealer, and shop nodes
+     - Permissioned write access based on verified service provider
+     - Public read access for vehicle history verification
+     - Off-chain storage for images, documents, and invoices
+
+  3. **Implement Anti-Fraud Measures**
+     - Odometer reading validation against previous records
+     - Telematics data cross-reference for mileage consistency
+     - Service interval plausibility checking
+     - Anomaly detection for suspicious service patterns
+
+  4. **Integrate with Existing Systems**
+     - DMS plugin for dealer service departments
+     - Mobile app for independent shop record submission
+     - Insurance company API for verified history access
+     - Used car marketplace integration for buyer transparency
+
+  5. **Drive Adoption and Value**
+     - Incentive program for shops to participate in network
+     - Consumer app showing complete verified vehicle history
+     - Insurance partnership for maintenance-based discounts
+
+  ## Record Data Model
+
+  ```json
+  {
+    "vin": "WVWZZZ3CZWE123456",
+    "eventType": "scheduled_maintenance",
+    "datePerformed": "2026-03-15T10:30:00Z",
+    "odometerKm": 45230,
+    "serviceProvider": {
+      "id": "shop-uuid",
+      "certification": "OEM_AUTHORIZED"
+    },
+    "workItems": [
+      {
+        "code": "OIL_CHANGE",
+        "description": "Engine oil and filter replacement",
+        "parts": [{"partNumber": "04E115561H", "isOEM": true}]
+      }
+    ],
+    "signatures": {
+      "provider": "0xabc...signed",
+      "owner": "0xdef...signed"
+    }
+  }
+  ```
+
+  ## Adoption Strategy
+
+  - Phase 1: OEM dealer network with automated DMS integration
+  - Phase 2: Certified independent shops with mobile submission
+  - Phase 3: Insurance and used car marketplace integration
+  - Phase 4: Regulatory recognition for official inspection records
+  - Phase 5: Cross-OEM interoperability via industry consortium
+
+  ## Key Metrics
+
+  - Percentage of service events recorded on-chain
+  - Odometer fraud detection rate
+  - Used vehicle valuation premium for verified history
+  - Service provider network growth rate
+
+  ## Deliverables
+
+  Provide:
+  - Service record data schema and blockchain design
+  - Network architecture for multi-stakeholder consortium
+  - Anti-fraud detection rules and validation algorithms
+  - Integration specifications for DMS and shop systems
+
+examples:
+  - prompt: "Build a blockchain service record for a multi-brand used car platform"
+    response: |
+      I will design a cross-OEM blockchain network using Hyperledger
+      Fabric with DMS integration, odometer fraud detection, and
+      consumer-facing vehicle history verification.
+
+constraints:
+  - "Record write confirmation under 10 seconds"
+  - "GDPR compliant with owner-controlled data access"
+  - "Must integrate with legacy DMS systems via standard APIs"
+
+tools_required:
+  - "Hyperledger Fabric or Quorum for consortium blockchain"
+  - "IPFS for off-chain document and image storage"
+  - "Node.js or Go for chaincode and API services"
+
+related_skills:
+  - skill: "digital-warranty"
+    relationship: "complementary"
+  - skill: "remote-diagnostics-retail"
+    relationship: "works-with"
+  - skill: "remote-vehicle-appraisal"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Record write latency"
+    target: "< 10 seconds to confirmation"
+  - metric: "History retrieval time"
+    target: "< 2 seconds for full vehicle history"
+  - metric: "Network uptime"
+    target: "99.9% availability"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - blockchain
+  - service-records
+  - maintenance-history
+  - anti-fraud

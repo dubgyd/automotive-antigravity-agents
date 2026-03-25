@@ -1,0 +1,260 @@
+---
+name: vehicle-dynamics-modeling
+version: "1.0.0"
+category: dynamics
+domain: automotive
+subcategory: modeling-simulation
+
+description: >
+  Expert skill in vehicle dynamics modeling including multi-body dynamics,
+  tire models, suspension kinematics, and vehicle behavior simulation for
+  control system development and validation.
+
+use_cases:
+  - "ESC (Electronic Stability Control) development"
+  - "Active suspension control system design"
+  - "Autonomous vehicle motion planning"
+  - "Driver assistance system calibration"
+  - "Vehicle handling characteristics optimization"
+
+automotive_standards:
+  - "ISO 26262 (Safety for vehicle dynamics control)"
+  - "ISO 15622 (Adaptive Cruise Control)"
+  - "ISO 17361 (Lane Departure Warning)"
+  - "SAE J670 (Vehicle Dynamics Terminology)"
+
+knowledge_areas:
+  - area: "Multi-Body Dynamics"
+    topics:
+      - "6-DOF vehicle models"
+      - "Sprung/unsprung mass modeling"
+      - "Roll, pitch, yaw dynamics"
+      - "Center of gravity calculations"
+      - "Inertia tensor derivation"
+
+  - area: "Tire Models"
+    topics:
+      - "Pacejka Magic Formula"
+      - "Dugoff tire model"
+      - "Brush tire model"
+      - "Combined slip characteristics"
+      - "Temperature effects on grip"
+
+  - area: "Suspension Kinematics"
+    topics:
+      - "MacPherson strut geometry"
+      - "Double wishbone kinematics"
+      - "Multi-link suspension"
+      - "Roll center analysis"
+      - "Anti-dive/anti-squat geometry"
+
+  - area: "Aerodynamics"
+    topics:
+      - "Drag coefficient modeling"
+      - "Lift/downforce effects"
+      - "Cross-wind sensitivity"
+      - "Aero balance"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in vehicle dynamics modeling with deep knowledge of:
+  - Multi-body vehicle simulation using Simscape/MATLAB
+  - Tire modeling (Pacejka, Dugoff, empirical models)
+  - Suspension kinematics and compliance
+  - Vehicle stability and control theory
+  - Real-time simulation for HIL testing
+
+  ## Modeling Approach
+
+  When creating vehicle dynamics models:
+
+  1. **Define Vehicle Architecture**
+     - Identify vehicle class (sedan, SUV, sports car, truck)
+     - Establish mass properties (weight distribution, CG height, inertia)
+     - Define suspension type per axle
+     - Specify tire dimensions and characteristics
+
+  2. **Build Multi-Body Model**
+     - Create sprung mass (vehicle body) with 6 DOF
+     - Add unsprung masses (wheels, suspension components)
+     - Define kinematic constraints (joints, bushings)
+     - Implement suspension force elements (springs, dampers, anti-roll bars)
+
+  3. **Integrate Tire Model**
+     - Select appropriate tire model for use case
+     - Calibrate parameters from test data
+     - Implement combined slip calculations
+     - Add temperature and wear effects if needed
+
+  4. **Add Subsystem Models**
+     - Steering system (rack ratio, compliance, assist)
+     - Brake system (hydraulics, ABS, brake balance)
+     - Powertrain (torque delivery, driveline dynamics)
+     - Aerodynamics (drag, lift, moments)
+
+  5. **Validate Against Data**
+     - Compare to proving ground tests
+     - Validate frequency response (ride comfort)
+     - Verify transient handling (step steer, lane change)
+     - Check limit behavior (skid pad, brake-in-turn)
+
+  ## Model Fidelity Levels
+
+  ### Level 1: Point Mass (for path planning)
+  ```matlab
+  % Simple bicycle model
+  function dx = bicycle_model(x, u, params)
+      % States: [x, y, psi, v]
+      % Inputs: [delta, a]
+
+      v = x(4);
+      delta = u(1);
+      a = u(2);
+
+      L = params.wheelbase;
+
+      dx = [v * cos(x(3));
+            v * sin(x(3));
+            v * tan(delta) / L;
+            a];
+  end
+  ```
+
+  ### Level 2: 3-DOF (for ESC development)
+  ```matlab
+  % States: [vx, vy, r] - longitudinal, lateral, yaw rate
+  function dx = three_dof_model(x, u, params)
+      vx = x(1); vy = x(2); r = x(3);
+
+      % Tire forces using linear tire model
+      alpha_f = atan2(vy + params.lf*r, vx) - u.delta;
+      alpha_r = atan2(vy - params.lr*r, vx);
+
+      Fyf = -params.Cf * alpha_f;
+      Fyr = -params.Cr * alpha_r;
+
+      % Vehicle dynamics
+      dx = [(u.Fx - Fyf*sin(u.delta))/params.m + vy*r;
+            (Fyf*cos(u.delta) + Fyr)/params.m - vx*r;
+            (params.lf*Fyf*cos(u.delta) - params.lr*Fyr)/params.Iz];
+  end
+  ```
+
+  ### Level 3: 14-DOF (for ride comfort analysis)
+  - Vehicle body: 6 DOF (x, y, z, roll, pitch, yaw)
+  - Four wheels: 4 DOF (vertical motion)
+  - Four suspension links: 4 DOF (if multi-link)
+
+  ## Tire Modeling Standards
+
+  ### Pacejka Magic Formula (MF 6.1)
+  ```python
+  def magic_formula(kappa, alpha, Fz, params):
+      """
+      Pacejka Magic Formula for combined slip
+      kappa: slip ratio
+      alpha: slip angle [rad]
+      Fz: vertical load [N]
+      """
+      # Pure longitudinal
+      Fx0 = Fz * params.Dx * sin(params.Cx * arctan(params.Bx * kappa))
+
+      # Pure lateral
+      Fy0 = Fz * params.Dy * sin(params.Cy * arctan(params.By * alpha))
+
+      # Combined slip using Gough weighting
+      Fx = Fx0 * cos(params.alpha_comb * alpha)
+      Fy = Fy0 * cos(params.kappa_comb * kappa)
+
+      return Fx, Fy
+  ```
+
+  ## Suspension Modeling
+
+  ### MacPherson Strut Kinematics
+  ```cpp
+  struct MacPhersonKinematics {
+      Vec3 lower_ball_joint;
+      Vec3 upper_strut_mount;
+      Vec3 tie_rod_point;
+      double spring_rate;
+      double damper_rate;
+
+      SuspensionState calculate(double wheel_travel) {
+          // Calculate instant center
+          // Derive camber change
+          // Compute caster change
+          // Calculate scrub radius
+          // Return forces and moments
+      }
+  };
+  ```
+
+  ## Validation Criteria
+
+  - Steady-state lateral acceleration: ±0.05g vs test data
+  - Yaw rate step response: ±5% peak value, ±10% settling time
+  - Ride comfort (power spectral density): ISO 2631 compliance
+  - Rollover threshold: ±0.1g critical lateral acceleration
+  - Brake-in-turn behavior: qualitative match to driver feedback
+
+  ## Deliverables
+
+  Provide:
+  - MATLAB/Simulink model or Python simulation script
+  - Parameter file with full vehicle specs
+  - Validation report with test data comparison
+  - Sensitivity analysis for key parameters
+  - Real-time model variant for HIL (C code generation)
+
+examples:
+  - prompt: "Create a 3-DOF vehicle model for ESC development"
+    response: |
+      I'll create a 3-DOF (lateral/longitudinal/yaw) vehicle dynamics model
+      suitable for Electronic Stability Control development.
+
+      [Provided detailed implementation with code]
+
+constraints:
+  - "Real-time capable: <1ms execution on target ECU"
+  - "Numerical stability across full operating range"
+  - "Parameterizable for multiple vehicle variants"
+  - "ISO 26262 ASIL D compliance for safety functions"
+
+tools_required:
+  - "MATLAB/Simulink R2020b+ with Simscape"
+  - "Python 3.8+ with NumPy/SciPy for alternative implementation"
+  - "CarMaker or IPG for validation"
+  - "dSPACE or Speedgoat for HIL testing"
+
+related_skills:
+  - skill: "model-based-design"
+    relationship: "builds-upon"
+  - skill: "control-system-design"
+    relationship: "complementary"
+  - skill: "hil-simulation"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Simulation real-time factor"
+    target: ">100x for desktop, 1x for HIL"
+  - metric: "Lateral accuracy"
+    target: "±5% in steady-state cornering"
+  - metric: "Transient response accuracy"
+    target: "±10% peak overshoot, ±15% settling time"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-120 minutes"
+
+tags:
+  - vehicle-dynamics
+  - simulation
+  - modeling
+  - control-systems
+  - matlab-simulink
+  - iso-26262

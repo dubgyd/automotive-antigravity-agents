@@ -1,0 +1,482 @@
+---
+name: ecu-flash
+category: diagnostics
+description: ECU flash programming skills covering UDS and KWP2000 protocols
+
+instructions: |
+  ## ECU Flash Programming Guide
+
+  ### Overview
+
+  ECU flash programming (reprogramming) is the process of updating software in an
+  ECU's non-volatile memory (NOR/NAND flash). This covers application software,
+  calibration data, and bootloader updates using UDS (ISO 14229) or legacy KWP2000
+  (ISO 14230) protocols over CAN or Ethernet (DoIP).
+
+  ### Flash Programming Sequence (UDS)
+
+  ```
+  Tester                              ECU
+  ──────                              ───
+  1. DiagnosticSessionControl(0x02) ──► Enter Programming Session
+                                   ◄── P2/P2* timing parameters
+  2. SecurityAccess(seed/key) ────────► Unlock flash access
+                                   ◄── Access granted
+  3. ControlDTCSettings(0x02) ────────► Disable DTC recording
+  4. CommunicationControl(0x03) ──────► Disable normal comm
+  5. RoutineControl(erase) ───────────► Erase flash sector
+                                   ◄── Erase complete
+  6. RequestDownload(0x34) ───────────► Specify address, size, format
+                                   ◄── maxNumberOfBlockLength
+  7. TransferData(0x36) [N times] ────► Send data blocks
+                                   ◄── Positive ack per block
+  8. RequestTransferExit(0x37) ───────► Finalize transfer
+                                   ◄── Checksum validation result
+  9. RoutineControl(verify) ──────────► CRC/signature check
+  10. ECUReset(0x01) ─────────────────► Hard reset to boot new SW
+                                   ◄── ECU reboots
+  11. ReadDataByIdentifier(0xF1xx) ───► Verify new SW version
+  ```
+
+  ### Flash File Formats
+
+  | Format | Description | Usage |
+  |--------|-------------|-------|
+  | Intel HEX (.hex) | ASCII hex with addresses | Most common |
+  | Motorola S-Record (.s19) | Similar to HEX, Motorola format | Legacy ECUs |
+  | VBF (.vbf) | Volvo Binary Format | Volvo/Geely |
+  | ODX Flash (.odx-f) | ISO 22901 flash data | ODX-based tools |
+  | AUTOSAR ARXML + binary | AUTOSAR flash container | Modern ECUs |
+
+  ### Memory Layout
+
+  ```
+  Flash Memory Map (typical):
+  ┌─────────────────────┐ 0x00000000
+  │ Bootloader (BL)     │ Protected, rarely updated
+  ├─────────────────────┤ 0x00010000
+  │ Application SW      │ Main ECU software
+  ├─────────────────────┤ 0x000C0000
+  │ Calibration Data    │ Tuning parameters
+  ├─────────────────────┤ 0x000F0000
+  │ NV Data (EEPROM)    │ Learned values, DTCs
+  └─────────────────────┘ 0x00100000
+  ```
+
+  ### TransferData Block Management
+
+  - Block sequence counter: 1 byte, starts at 0x01, wraps 0xFF -> 0x00
+  - Block size: limited by maxNumberOfBlockLength from RequestDownload response
+  - Typical block sizes: 256 bytes (CAN), 4096 bytes (Ethernet/DoIP)
+  - Handle NRC 0x78 (ResponsePending) during slow flash write operations
+
+  ### Data Format Identifier
+
+  The dataFormatIdentifier in RequestDownload specifies compression and encryption:
+  ```
+  Byte: [High nibble: compression] [Low nibble: encryption]
+  0x00 = no compression, no encryption
+  0x10 = LZMA compression, no encryption
+  0x01 = no compression, AES encryption
+  0x11 = LZMA compression + AES encryption
+  ```
+
+  ### Security Considerations
+
+  - **Seed-Key Authentication**: Required before flash operations
+  - **Secure Boot**: ECU verifies signature of new SW before execution
+  - **Rollback Protection**: Anti-rollback counter prevents downgrade attacks
+  - **Encrypted Transfer**: AES-256 encryption for sensitive firmware
+  - **Flash Fingerprint**: SHA-256 hash of programmed content for verification
+
+  ### Error Recovery
+
+  - On transfer error: retry the failed block (up to 3 attempts)
+  - On fatal error (security denied, erase failure): abort and log
+  - On power loss during flash: bootloader must recover (dual-bank or recovery mode)
+  - Always create backup before programming (RequestUpload 0x35)
+  - Implement rollback procedure to restore previous version
+
+  ### Performance Optimization
+
+  | Transport | Typical Speed | Block Size |
+  |-----------|--------------|------------|
+  | CAN 500kbit | ~30 KB/s | 256 bytes |
+  | CAN FD 2Mbit | ~150 KB/s | 4096 bytes |
+  | DoIP 100Mbit | ~5 MB/s | 4096 bytes |
+
+  - Use compression to reduce transfer time (LZMA can achieve 2-3x reduction)
+  - Use Ethernet/DoIP for large ECU software (>1MB)
+  - Minimize erase operations (erase only changed sectors)
+
+  ### Best Practices
+
+  - Verify programming preconditions (battery voltage >12V, ignition on)
+  - Check HW/SW compatibility before allowing flash (fingerprint matching)
+  - Validate flash file integrity (CRC32 or SHA-256) before transfer
+  - Monitor flash progress and provide ETA to operators
+  - Test flash recovery scenarios (power interruption, communication loss)
+  - Document flash results: ECU ID, old version, new version, timestamp, result
+
+skills:
+  - name: init_flash_session
+    description: Initialize flash programming session with security access
+    task: |
+      Establish diagnostic session for flash programming:
+      1. Send DiagnosticSessionControl (0x10) - Programming Session (0x02)
+      2. Verify positive response and extended timing parameters
+      3. Perform security access sequence (0x27) - seed/key algorithm
+      4. Disable DTC setting (0x85) to prevent fault codes during flash
+      5. Verify ECU is ready for flash (RequestDownload pre-check)
+    tools:
+      - python_uds_adapter
+      - vflash_adapter
+    validation:
+      - Session established with positive response 0x50
+      - Security access granted (0x67)
+      - DTC setting disabled (0xC5)
+
+  - name: request_download
+    description: Request download of flash data to ECU memory
+    task: |
+      Execute UDS RequestDownload service:
+      1. Prepare RequestDownload (0x34) with memory address and size
+      2. Specify data format identifier (compression, encryption)
+      3. Include addressAndLengthFormatIdentifier
+      4. Receive maxNumberOfBlockLength from ECU response
+      5. Validate memory address range against ODX database
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Positive response 0x74 received
+      - Block length parameter extracted
+      - Memory range valid per ODX
+
+  - name: transfer_data_blocks
+    description: Transfer flash data blocks to ECU
+    task: |
+      Execute TransferData (0x36) sequence:
+      1. Split flash file into blocks per maxNumberOfBlockLength
+      2. For each block, send TransferData with incrementing sequence counter
+      3. Implement checksum verification per block
+      4. Handle negative responses (0x78 - RequestCorrectlyReceived-ResponsePending)
+      5. Maintain transfer statistics (speed, progress, errors)
+    tools:
+      - python_uds_adapter
+      - vflash_adapter
+    validation:
+      - All blocks transferred with 0x76 responses
+      - Sequence counter wrapped correctly at 0xFF
+      - No transfer errors or timeouts
+
+  - name: request_transfer_exit
+    description: Finalize flash data transfer
+    task: |
+      Complete download sequence:
+      1. Send RequestTransferExit (0x37) after last block
+      2. Wait for ECU to process and validate transferred data
+      3. Verify positive response 0x77
+      4. Check for ECU internal checksum validation result
+      5. Log transfer statistics (total bytes, duration, speed)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Positive response 0x77 received
+      - No internal ECU errors reported
+
+  - name: ecu_reset_flash
+    description: Reset ECU to activate new flash
+    task: |
+      Execute ECUReset to apply new software:
+      1. Send ECUReset (0x11) - Hard Reset (0x01)
+      2. Wait for ECU to reboot (typically 5-10 seconds)
+      3. Re-establish communication after reset
+      4. Read software version (0x22 - ReadDataByIdentifier)
+      5. Verify new software version matches expected
+    tools:
+      - python_uds_adapter
+    validation:
+      - Positive response 0x51 received
+      - ECU comes back online
+      - Software version updated correctly
+
+  - name: verify_flash_integrity
+    description: Verify flash programming integrity
+    task: |
+      Post-flash verification sequence:
+      1. Read flash fingerprint (0x22 - DID 0xF186 or vendor-specific)
+      2. Calculate CRC32/SHA256 checksum of programmed blocks
+      3. Compare with reference checksum from flash file
+      4. Read diagnostic trouble codes (0x19) to check for flash errors
+      5. Generate verification report
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Checksum matches reference
+      - No DTCs related to flash programming
+      - Flash fingerprint valid
+
+  - name: flash_multi_block
+    description: Flash multiple memory blocks (bootloader, application, calibration)
+    task: |
+      Multi-block flash programming:
+      1. Parse flash container file (HEX, S19, VBF) for memory regions
+      2. For each memory block: RequestDownload, TransferData, RequestTransferExit
+      3. Respect block dependencies (bootloader before application)
+      4. Implement rollback on failure (restore previous version)
+      5. Verify each block before proceeding to next
+    tools:
+      - vflash_adapter
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - All blocks programmed successfully
+      - Block checksums valid
+      - ECU boots with new software
+
+  - name: security_access_seed_key
+    description: Perform security access seed-key algorithm
+    task: |
+      Execute security access sequence:
+      1. Send SecurityAccess (0x27) RequestSeed (odd sub-function)
+      2. Receive seed value from ECU
+      3. Apply seed-key algorithm (vendor-specific DLL or Python implementation)
+      4. Send SendKey (even sub-function) with calculated key
+      5. Verify positive response granting access level
+    tools:
+      - python_uds_adapter
+      - vflash_adapter
+    validation:
+      - Seed received (0x67 response)
+      - Key accepted (0x67 response)
+      - Access level granted
+
+  - name: handle_flash_errors
+    description: Handle flash programming error conditions
+    task: |
+      Error recovery mechanisms:
+      1. Parse negative response codes (0x7F) - NRC meanings
+      2. Implement retry logic for transient errors (0x78, 0x21)
+      3. Detect fatal errors requiring abort (0x33 - SecurityAccessDenied)
+      4. Log all errors with timestamps and context
+      5. Trigger rollback procedure if configured
+    tools:
+      - python_uds_adapter
+    validation:
+      - Transient errors retried appropriately
+      - Fatal errors abort cleanly
+      - Error log complete and accurate
+
+  - name: read_flash_configuration
+    description: Read ECU flash configuration and capabilities
+    task: |
+      Query ECU flash capabilities:
+      1. Read supported diagnostic services (0x22 - DID for capabilities)
+      2. Query memory map (0x22 - DID 0xF18C or vendor-specific)
+      3. Read bootloader version (0x22 - DID 0xF180)
+      4. Check programming preconditions (voltage, temperature)
+      5. Parse capabilities into structured format
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - All capability DIDs read successfully
+      - Memory map parsed correctly
+      - Preconditions within acceptable range
+
+  - name: kwp2000_flash_mode
+    description: KWP2000 flash programming (legacy ECUs)
+    task: |
+      KWP2000 flash sequence:
+      1. Send StartDiagnosticSession (0x10) - Programming Mode (0x85)
+      2. Perform SecurityAccess (0x27) with KWP2000 seed-key
+      3. Use StartRoutineByLocalIdentifier (0x31) for flash initiation
+      4. Transfer data using RequestDownload (0x34) KWP2000 format
+      5. Execute programming routine and verify
+    tools:
+      - python_uds_adapter
+    validation:
+      - KWP2000 session established
+      - Flash routine executed successfully
+      - Positive response received
+
+  - name: compress_flash_data
+    description: Compress flash data for faster transfer
+    task: |
+      Flash data compression:
+      1. Apply compression algorithm (LZMA, ZLIB) to flash binary
+      2. Set dataFormatIdentifier to indicate compression type
+      3. Calculate compressed block sizes respecting maxNumberOfBlockLength
+      4. Verify ECU supports specified compression in ODX
+      5. Monitor decompression progress on ECU side
+    tools:
+      - vflash_adapter
+      - odxtools_adapter
+    validation:
+      - Compression reduces transfer time
+      - ECU decompresses correctly
+      - Checksum matches after decompression
+
+  - name: encrypt_flash_data
+    description: Encrypt flash data for secure programming
+    task: |
+      Flash data encryption:
+      1. Generate session key using ECU's public key (RSA/ECC)
+      2. Encrypt flash blocks using AES-256-CBC
+      3. Set dataFormatIdentifier encryption bits
+      4. Include encrypted key in RequestDownload
+      5. Verify ECU decrypts and programs correctly
+    tools:
+      - vflash_adapter
+      - python_uds_adapter
+    validation:
+      - Data encrypted before transfer
+      - ECU acknowledges encrypted format
+      - Programming succeeds with encryption
+
+  - name: flash_progress_monitoring
+    description: Monitor and report flash programming progress
+    task: |
+      Progress tracking implementation:
+      1. Calculate total flash size and block count
+      2. Track blocks transferred vs. remaining
+      3. Calculate transfer rate (bytes/second)
+      4. Estimate time remaining (ETA)
+      5. Emit progress events (percentage, rate, ETA) for UI updates
+    tools:
+      - python_uds_adapter
+      - vflash_adapter
+    validation:
+      - Progress percentage accurate
+      - Transfer rate calculated correctly
+      - ETA reasonable
+
+  - name: backup_existing_flash
+    description: Backup ECU flash before programming
+    task: |
+      Flash backup procedure:
+      1. Read existing flash content using ReadMemoryByAddress (0x23)
+      2. Request upload (0x35) for each memory region
+      3. Receive data blocks via TransferData (0x36)
+      4. Save backup to file (HEX, BIN) with metadata
+      5. Verify backup integrity with checksum
+    tools:
+      - python_uds_adapter
+    validation:
+      - All memory regions backed up
+      - Backup file integrity verified
+      - Metadata includes ECU identification
+
+  - name: restore_flash_backup
+    description: Restore ECU flash from backup
+    task: |
+      Flash restoration procedure:
+      1. Validate backup file integrity (checksum, format)
+      2. Verify backup ECU ID matches target ECU
+      3. Execute standard flash sequence with backup data
+      4. Perform post-flash verification
+      5. Log restoration event with backup timestamp
+    tools:
+      - python_uds_adapter
+      - vflash_adapter
+    validation:
+      - Backup restored successfully
+      - ECU boots with restored software
+      - No errors during restoration
+
+  - name: flash_fingerprinting
+    description: Generate and verify flash fingerprint
+    task: |
+      Flash fingerprinting:
+      1. Read ECU identification DIDs (0x22): ECU Serial, HW Version, SW Version
+      2. Calculate composite fingerprint (SHA256 of concatenated values)
+      3. Store fingerprint with flash file metadata
+      4. Verify fingerprint matches before allowing flash
+      5. Prevent cross-flashing between incompatible ECUs
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Fingerprint calculated correctly
+      - Mismatch detected and prevented
+      - Compatible ECUs allowed
+
+  - name: flash_with_vector_vflash
+    description: Execute flash using Vector vFlash API
+    task: |
+      Vector vFlash integration:
+      1. Load vFlash project file (.vflash)
+      2. Configure CAN interface (Vector hardware or PassThru)
+      3. Set flash parameters (voltage monitoring, timing)
+      4. Execute flash job with progress callbacks
+      5. Parse vFlash result log for success/failure
+    tools:
+      - vflash_adapter
+    validation:
+      - vFlash project loaded successfully
+      - Flash job completed without errors
+      - Result log indicates success
+
+  - name: adaptive_flash_timing
+    description: Adapt flash timing based on ECU responses
+    task: |
+      Dynamic timing adjustment:
+      1. Monitor P2 and P2* timing from DiagnosticSessionControl response
+      2. Adjust timeout values for RequestDownload, TransferData
+      3. Handle 0x78 (RequestCorrectlyReceived-ResponsePending) NRC
+      4. Implement exponential backoff on retries
+      5. Log timing statistics for optimization
+    tools:
+      - python_uds_adapter
+    validation:
+      - Timeouts adapt to ECU requirements
+      - No premature timeout errors
+      - Flash succeeds on slow ECUs
+
+  - name: flash_dependency_check
+    description: Check flash file dependencies and compatibility
+    task: |
+      Pre-flash validation:
+      1. Parse flash file metadata (ECU type, HW version, SW dependencies)
+      2. Read ECU current versions (0x22 - DIDs)
+      3. Check compatibility matrix (bootloader vs. application versions)
+      4. Verify voltage and temperature preconditions
+      5. Block incompatible flash attempts with detailed error message
+    tools:
+      - odxtools_adapter
+      - python_uds_adapter
+    validation:
+      - Incompatibilities detected
+      - Compatible combinations allowed
+      - Clear error messages provided
+
+  - name: flash_rollback_protection
+    description: Implement flash rollback protection mechanisms
+    task: |
+      Rollback protection:
+      1. Read ECU anti-rollback counter (0x22 - vendor-specific DID)
+      2. Compare flash file version counter with ECU counter
+      3. Prevent downgrade if rollback counter check fails
+      4. Increment counter after successful flash (0x2E - WriteDataByIdentifier)
+      5. Log rollback prevention events
+    tools:
+      - python_uds_adapter
+    validation:
+      - Downgrades blocked correctly
+      - Counter incremented on success
+      - Rollback protection bypassed only with authorization
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 20
+  protocols:
+    - UDS ISO 14229
+    - KWP2000 ISO 14230
+  tools_required:
+    - python-uds
+    - vector-vflash
+    - odxtools

@@ -1,0 +1,163 @@
+name: joint-venture-partnerships
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: joint_venture_partnerships
+description: JV structuring, technology sharing agreements, IP protection, exit strategies
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Joint ventures and strategic partnerships are critical instruments for automotive OEMs to access
+  technology, scale, and market entry capabilities that would take too long or cost too much to develop
+  independently. The EV transition has accelerated JV formation in battery cell production, autonomous
+  driving, charging infrastructure, and software platforms. This skill covers JV structuring, technology
+  sharing agreements, governance design, IP protection frameworks, performance management, and exit
+  strategies for automotive industry partnerships and joint ventures.
+
+  ## Key Concepts
+
+  ### Partnership Structure Types
+  - **Equity JV**: Separate legal entity with shared ownership (e.g., 50/50 or majority/minority)
+  - **Contractual JV**: Collaborative agreement without separate entity creation
+  - **Strategic alliance**: Non-equity cooperation with defined scope and mutual commitments
+  - **Technology licensing**: One-way or cross-licensing of IP without shared operations
+  - **Development partnership**: Shared engineering work with defined deliverables and cost sharing
+  - **Consortium**: Multi-party collaboration for pre-competitive or infrastructure development
+
+  ### Common Automotive JV Categories
+  - **Battery cell production**: OEM + cell manufacturer gigafactory JVs (e.g., Samsung SDI + Stellantis)
+  - **Autonomous driving**: OEM + tech company for L3/L4 development (e.g., BMW + Intel/Mobileye)
+  - **Charging infrastructure**: Multi-OEM JVs for public charging networks (e.g., IONITY)
+  - **Software platforms**: Shared vehicle OS or cloud platform development
+  - **Market entry**: JV with local partner for regulatory compliance and market access (especially China)
+  - **Manufacturing**: Shared production facilities for scale economies (e.g., Toyota + Mazda plant)
+
+  ### JV Governance Elements
+  - **Board composition**: Representation proportional to equity, independent directors for deadlock
+  - **Reserved matters**: Decisions requiring unanimous or supermajority consent (budget, strategy, key hires)
+  - **Management structure**: CEO appointment, rotation, reporting lines, operational autonomy
+  - **Financial framework**: Capital calls, profit distribution, transfer pricing, audit rights
+  - **Deadlock resolution**: Escalation mechanism, mediation, buy-sell provisions (Russian roulette, Texas shootout)
+  - **Exit provisions**: Put/call options, IPO rights, drag-along/tag-along, change of control triggers
+
+  ## Implementation Guide
+
+  ### Step 1: Strategic Rationale and Partner Selection
+  - Define strategic gap that JV must address: technology, scale, market access, or cost
+  - Screen potential partners for complementary capabilities, cultural fit, and strategic alignment
+  - Assess partner financial strength, reputation, and commitment capacity
+  - Conduct preliminary discussions under NDA to validate mutual interest and compatible objectives
+
+  ### Step 2: Deal Structuring and Negotiation
+  - Define JV scope clearly: what is in-scope, what remains with parents, boundary conditions
+  - Negotiate equity split based on contribution value (cash, IP, assets, people, market access)
+  - Structure IP framework: background IP licensing, foreground IP ownership, improvement rights
+  - Define governance model with appropriate checks and balances for both parties
+  - Agree on financial model: initial capitalization, ongoing funding, profit distribution timeline
+
+  ### Step 3: Regulatory and Antitrust Clearance
+  - Assess antitrust implications in all relevant jurisdictions (EU, US, China)
+  - Prepare merger control filings where JV constitutes a full-function entity
+  - Address foreign investment screening requirements (CFIUS, EU FDI screening)
+  - Obtain sector-specific approvals (e.g., automotive type approval, environmental permits)
+
+  ### Step 4: Integration and Operations Launch
+  - Establish JV management team with clear reporting to JV board, not parent companies
+  - Transfer agreed assets, IP licenses, and personnel to JV with defined transition plan
+  - Implement operational systems: ERP, PLM, HR, IT infrastructure (independent or shared with parent)
+  - Conduct 100-day plan with key milestones for operational readiness and first deliverables
+
+  ## Decision Frameworks
+
+  ### JV vs. Alternative Structures Decision
+  | Factor | Full Equity JV | Contractual Alliance | M&A | Internal Development |
+  |--------|---------------|---------------------|-----|-------------------|
+  | Capital commitment | Shared | Minimal | Full | Full |
+  | Control | Shared | Limited | Full | Full |
+  | Speed to market | Medium | Fast | Medium | Slow |
+  | IP protection | Moderate risk | Lower risk | Full control | Full control |
+  | Flexibility to exit | Moderate | High | Low | N/A |
+  | Cultural integration | Required | Minimal | Full | None |
+
+  ### Partner Evaluation Scorecard
+  - **Strategic fit (30%)**: Capability complementarity, market overlap, vision alignment
+  - **Financial strength (20%)**: Balance sheet, commitment capacity, risk tolerance
+  - **Technology contribution (20%)**: IP quality, engineering depth, development maturity
+  - **Cultural compatibility (15%)**: Decision-making style, risk appetite, communication norms
+  - **Track record (15%)**: Previous JV success/failure history, reputation, management quality
+
+  ### JV Health Assessment Framework
+  - **Strategic alignment**: Are parent strategies still compatible? Has the market context changed?
+  - **Operational performance**: Is the JV meeting business plan milestones (volume, cost, quality)?
+  - **Relationship quality**: Are governance processes working? Is trust between parents intact?
+  - **Financial returns**: Is the JV on track for targeted ROI? Are capital calls on schedule?
+  - **Market position**: Is the JV product/service competitive vs. standalone alternatives?
+
+  ## Best Practices
+
+  - Define exit mechanisms at formation, not when the relationship deteriorates
+  - Ensure JV has sufficient operational independence to make day-to-day decisions without parent approval
+  - Staff JV with dedicated full-time employees, not part-time secondees with divided loyalties
+  - Implement clear IP boundaries from day one with information barriers where needed
+  - Schedule annual strategic reviews between parent company executives, not just JV board meetings
+  - Build cultural integration program addressing differences in decision-making, speed, and risk appetite
+  - Include change-of-control provisions protecting against hostile acquisition of a parent
+  - Design financial model with realistic ramp-up assumptions; most JVs take 2-3 years to reach breakeven
+  - Maintain relationship at multiple levels (board, management, working teams) for resilience
+  - Document all agreements thoroughly; verbal understandings between executives create future disputes
+
+  ## Examples
+
+  ### Example 1: Battery Cell Gigafactory JV
+  A European OEM and Korean cell manufacturer form 50/50 JV for 40 GWh gigafactory. OEM contributes
+  land, permits, and 2B EUR cash; cell maker contributes cell technology license and 200 engineering
+  staff. Governance: rotating CEO (first term cell maker), board with 3 directors each, reserved
+  matters for >100M EUR decisions. IP: cell chemistry remains cell maker background IP, pack design
+  improvements shared, manufacturing process innovations owned by JV. Exit: put/call at fair market
+  value after 5-year lock-up.
+
+  ### Example 2: Autonomous Driving Development Alliance
+  Three OEMs form non-equity alliance to co-develop L4 autonomous driving platform for robotaxi use.
+  Structure: contractual alliance with shared development costs (500M EUR over 5 years, split by volume
+  commitment), dedicated joint engineering team of 300 co-located engineers, IP owned by contributing
+  party with royalty-free cross-license within alliance scope. Each OEM integrates shared platform
+  into its own vehicle independently. Alliance governance by steering committee with quarterly reviews.
+
+  ### Example 3: China Market Entry JV
+  A European premium OEM forms 51/49 JV with Chinese partner for local production and sales. JV scope:
+  manufacturing, local engineering adaptation, sales and marketing. OEM contributes vehicle platform
+  and brand license, Chinese partner contributes factory, distribution network, and government relations.
+  Transfer pricing: CKD kits at cost-plus, technology license at 3% of revenue. Critical clause:
+  OEM retains veto on brand usage standards and quality requirements regardless of equity split.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- joint-venture-partnerships
+- automotive
+- oem

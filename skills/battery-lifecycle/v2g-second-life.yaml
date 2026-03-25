@@ -1,0 +1,44 @@
+name: v2g-second-life
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: second-life
+description: Expert in using retired EV batteries in Vehicle-to-Grid (V2G) aggregation networks including degradation-aware dispatch algorithms and revenue model optimization.
+use_cases:
+- Second-life batteries as stationary V2G nodes
+- Degradation-aware charge/discharge scheduling
+- Revenue optimization (frequency regulation + energy arbitrage)
+- Aggregated VPP (Virtual Power Plant) integration
+- Retired battery fleet management software
+automotive_standards:
+- ISO 15118 V2G Communication Protocol
+- IEC 61850 Substation Automation for VPP
+- IEEE 2030.5 Smart Energy Profile
+- OpenADR 2.0 Demand Response Protocol
+- IEC 62933 Energy Storage System Integration
+instructions: 'Expert in integrating second-life EV batteries into V2G aggregation platforms for grid services. Concept: Retired batteries (70-85% SOH) deployed as stationary nodes in V2G network, providing frequency regulation and energy arbitrage without further EV cycling stress. Architecture: 100-1000 second-life packs (5-20 kWh each) aggregated via cloud platform (AWS/Azure IoT), each pack has BMS with cellular/WiFi connectivity, central controller dispatches charge/discharge commands per ISO 15118 protocol, aggregated capacity 0.5-20 MW. Revenue streams: (1) Frequency regulation (PFR, primary frequency response, 50 Hz ±0.2 Hz target, $50-100/kW-year), (2) Capacity market (paid for availability, $20-50/kW-year), (3) Energy arbitrage (charge at $20-40/MWh off-peak, discharge at $60-150/MWh peak, $10-30/MWh margin). Degradation-aware dispatch: Model capacity fade as function of cycles, C-rate, temperature, calendar time (empirical: 0.05% SOH loss per equivalent full cycle + 2% calendar aging per year), assign degradation cost per kWh cycled ($0.02-0.05/kWh for 70% SOH battery at $80/kWh residual value), bid into markets only when revenue >degradation cost (dynamic bidding, some hours non-participating). SOH management: Limit SOC range (operate 20-80% SOC instead of 0-100%, reduces calendar aging by 30%), reduce C-rate (0.5C vs 1C reduces cycle aging by 40%), temperature control (15-25°C optimal, 35°C+ accelerates degradation by 2-3x), balance degradation across fleet (rotate high-duty modules to low-duty apps). Software platform: Cloud-based (scalable to 100k+ batteries), real-time telemetry (voltage, current, temp per module, 1-10 sec sampling), predictive SOH (LSTM model on voltage/temperature history, ±5% accuracy), dispatch optimization (linear program: maximize revenue - degradation cost subject to grid constraints), remote firmware updates (BMS security patches, control algorithm improvements). Grid interconnection: Each site requires utility interconnection approval (IEEE 1547 anti-islanding, voltage ride-through), revenue metering (ANSI C12.20 Class 0.2 accuracy), cybersecurity (IEC 62351 for secure comms). Case studies: Nuvve V2G platform (integrates new and second-life Nissan Leaf batteries, 15 MW aggregated, California/UK), Fermata Energy (bidirectional chargers + stationary second-life packs, PJM frequency regulation market), The Mobility House (ChargePilot software, aggregates BMW i3 second-life ESS in Germany). Economics: CAPEX $150-250/kWh (second-life module $80-150, inverter/controls $50-80, installation $20-40), revenue $70-150/kW-year (stacked grid services), OPEX $10-20/kW-year (connectivity, maintenance, degradation), payback 3-6 years. Regulatory: Some ISOs allow aggregated resources <1 MW (FERC Order 2222 in US), others require ≥1 MW (limits small-scale participation), battery passport updates required (EU regulation, document second-life grid service application).
+'
+constraints:
+- Degradation modeling accuracy ±10-20% (affects bidding profitability)
+- Regulatory barriers for <1 MW aggregations in some markets
+- Connectivity costs ($5-15/module/month cellular) add up at scale
+- Revenue volatility (frequency regulation prices vary 2-5x year-to-year)
+- Requires sophisticated software platform (development cost $1-5M)
+tools_required:
+- Cloud IoT platform (AWS IoT Core, Azure IoT Hub, GCP IoT)
+- VPP aggregation software (AutoGrid, Enbala, Stem, custom)
+- BMS with cellular/WiFi (Particle, Hologram, Twilio SIM cards)
+- Degradation models (electrochemical or ML-based SOH prediction)
+- Market bidding algorithms (linear/quadratic programming solvers)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: emerging
+  complexity: advanced
+tags:
+- battery-lifecycle
+- second-life
+- v2g
+- vpp
+- grid-services
+- automotive

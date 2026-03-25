@@ -1,0 +1,163 @@
+name: wireless-charging-cabin
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Qi wireless charging, wireless CarPlay/Android Auto, and in-cabin wireless power delivery covering charging pad design, NFC positioning, thermal management, and protocol integration."
+use_cases:
+  - "Designing Qi-certified wireless charging pads for center console integration"
+  - "Implementing multi-device wireless charging across multiple cabin positions"
+  - "Building wireless CarPlay and Android Auto with simultaneous wireless charging"
+  - "Creating foreign object detection to prevent heating of metallic items on charge pads"
+  - "Integrating wireless charging status with vehicle HMI and phone projection systems"
+automotive_standards:
+  - "Qi v1.3 Extended Power Profile (EPP) 15W specification"
+  - "SAE J2954 - Wireless power transfer for light-duty plug-in EVs (reference)"
+  - "Apple MFi certification for wireless CarPlay integration"
+  - "Google Wireless Android Auto certification requirements"
+  - "IEC 62368 - Audio/video and ICT equipment safety for charging systems"
+instructions: |
+  # Wireless Charging Cabin
+
+  ## Overview
+  In-cabin wireless charging eliminates cable clutter by providing Qi-standard wireless
+  power delivery to smartphones, earbuds, and accessories placed on designated charging
+  surfaces. Combined with wireless CarPlay and Android Auto, the system enables a
+  fully cable-free smartphone integration experience where the phone charges while
+  simultaneously projecting navigation, media, and communication to the vehicle displays.
+  Multiple charging positions throughout the cabin serve all occupants.
+
+  ## Key Concepts
+
+  ### Qi Wireless Charging Standard
+  The dominant wireless power protocol for consumer devices:
+  - Qi Baseline Power Profile (BPP) delivers up to 5W for basic charging
+  - Qi Extended Power Profile (EPP) delivers up to 15W for fast charging
+  - Proprietary extensions support up to 50W for specific device brands
+  - Inductive coupling at 87 to 205 kHz between transmitter coil and phone receiver
+  - Typical end-to-end efficiency of 65 to 80% from wall power to phone battery
+
+  ### Foreign Object Detection (FOD)
+  Safety system preventing heating of metallic items on the charging surface:
+  - Detects coins, keys, credit cards, and other conductive objects
+  - Quality factor measurement compares expected versus actual coil impedance
+  - Capacitive sensing detects the presence of non-phone objects on the surface
+  - Charging suspends immediately when a foreign object is detected
+  - Required for Qi certification and critical for automotive safety
+
+  ### Wireless Smartphone Projection
+  Cable-free connection for CarPlay and Android Auto:
+  - Wireless CarPlay uses Wi-Fi 5 GHz for video and Bluetooth for initial pairing
+  - Wireless Android Auto uses Wi-Fi Direct for data and Bluetooth for discovery
+  - Both protocols can operate simultaneously with Qi wireless charging
+  - NFC tap on the charging pad can trigger automatic wireless projection pairing
+
+  ## Implementation Guide
+
+  ### Step 1 - Design the Charging Pad
+  Engineer the wireless charging hardware for automotive integration:
+  - Select a multi-coil transmitter design (3 coils typical) for position tolerance
+  - Provide a charging area of at least 80 mm x 150 mm to accommodate all phone sizes
+  - Include a ferrite shield beneath coils to prevent EMI to vehicle electronics below
+  - Design the surface material for low friction to prevent phone sliding during driving
+
+  ### Step 2 - Implement Thermal Management
+  Control heat generation during wireless charging:
+  - Add a temperature sensor on the transmitter coil surface and beneath the phone
+  - Implement active cooling with a fan drawing air across the charging surface
+  - Set thermal derating thresholds that reduce power at 40 C and pause at 50 C
+  - Design heat sinking into the center console structure for passive thermal spread
+
+  ### Step 3 - Build Foreign Object Detection
+  Deploy robust FOD for automotive safety:
+  - Implement quality factor monitoring on each transmitter coil
+  - Add a capacitive sensing array across the charging surface
+  - Calibrate FOD sensitivity for the specific charging pad geometry and materials
+  - Test with a standard set of metallic objects per Qi FOD test specifications
+
+  ### Step 4 - Integrate Wireless Projection
+  Connect wireless charging with CarPlay and Android Auto:
+  - Implement NFC tag in the charging pad surface for tap-to-pair convenience
+  - Configure the Wi-Fi module for 5 GHz operation with dedicated antenna
+  - Route wireless projection video to the vehicle display compositor
+  - Handle seamless transition from wired to wireless when the phone is placed on the pad
+
+  ### Step 5 - Extend to Multiple Cabin Positions
+  Provide wireless charging beyond the center console:
+  - Add rear-seat charging pads in the center armrest or door panel pockets
+  - Include a wireless charging pocket in the instrument panel for the front passenger
+  - Manage power distribution across multiple active charging pads
+  - Display per-pad charging status on the vehicle HMI with device identification
+
+  ## Best Practices
+
+  ### Charging Reliability
+  - Provide clear visual feedback (LED or display) showing charging, charged, and error states
+  - Use phone alignment guides (physical cradle edges or magnetic alignment) to position
+  - Support all major phone form factors without requiring case removal
+  - Test with the top 20 selling smartphones for reliable power delivery and detection
+
+  ### EMI Management
+  - Shield the transmitter to meet CISPR 25 Class 5 emissions requirements
+  - Test for interference with AM/FM radio, GPS, Bluetooth, and Wi-Fi receivers
+  - Ensure NFC communication remains functional during active Qi power transfer
+  - Validate that wireless charging does not interfere with key fob detection range
+
+  ### Phone Temperature Management
+  - Monitor phone surface temperature through the Qi protocol power control messages
+  - Reduce transmitter power when the phone requests thermal throttling
+  - Allow the HVAC system to direct cooled air over the charging pad surface
+  - Warn the user if the phone is too hot to charge safely
+
+  ## Troubleshooting
+
+  ### Phone Not Detected on Charging Pad
+  Verify the phone supports Qi wireless charging and is positioned over a coil. Check
+  for a phone case that is too thick (maximum 5 mm typical). Inspect for metallic
+  accessories like ring holders that trigger FOD and prevent charging.
+
+  ### Charging Starts Then Stops Repeatedly
+  Check for FOD alerts caused by small metallic debris on the charging surface. Verify
+  thermal management is keeping temperatures within limits. Inspect the power supply
+  voltage to the charging module for stability under load.
+
+  ### Wireless CarPlay Does Not Connect
+  Verify the phone Wi-Fi is enabled and on the 5 GHz band. Check Bluetooth pairing
+  status between the phone and vehicle head unit. Restart the wireless projection
+  module and retry the NFC tap pairing sequence.
+
+  ### Charging is Slow (5W Instead of 15W)
+  Confirm the phone supports Qi EPP 15W charging. Verify the transmitter is negotiating
+  EPP mode by checking the Qi protocol communication log. Ensure the power supply
+  provides sufficient wattage for EPP operation under thermal headroom.
+
+  ## Integration Patterns
+
+  ### Digital Key and Charging Handoff
+  Coordinating wireless charging with digital key authentication:
+  - Detect phone placement on charging pad and authenticate via NFC for keyless entry
+  - Maintain charging connection while phone acts as the active digital key
+  - Handle phone removal detection and trigger key presence warning if driver exits range
+  - Support simultaneous NFC digital key communication and Qi power transfer
+
+  ### Vehicle Energy Management
+  Integrating cabin wireless charging into overall vehicle power management:
+  - Monitor total power draw from all active charging pads on the 12V system
+  - Reduce charging power when the vehicle 12V battery voltage drops below threshold
+  - Prioritize driver phone charging over passenger devices in low-battery scenarios
+  - Track cumulative energy delivered per session for user information display
+
+  ## Testing and Validation
+
+  ### Qi Certification Testing
+  Follow the Wireless Power Consortium certification process:
+  - Test with the full set of WPC reference devices at multiple placement positions
+  - Verify power delivery efficiency meets Qi EPP minimum 75% requirement
+  - Validate FOD detection with all specified test objects from the Qi test standard
+  - Measure electromagnetic emissions compliance with Qi-defined limits
+
+  ### Automotive Environmental Qualification
+  Validate charging module under vehicle-specific conditions:
+  - Test charging performance across -40 C to 85 C ambient temperature range
+  - Verify operation under vibration profiles matching center console mounting location
+  - Validate EMC compliance per CISPR 25 Class 5 across the full Qi frequency range
+  - Test with simulated vehicle voltage transients per ISO 7637 load dump specification

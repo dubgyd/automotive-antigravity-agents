@@ -1,0 +1,174 @@
+name: satellite-fleet-tracking
+version: "1.0.0"
+category: satellite-connectivity
+domain: global-fleet-management
+description: >
+  Skill for implementing satellite-based global fleet tracking and management
+  systems, covering position reporting, geofencing, asset monitoring, two-way
+  messaging, and hybrid tracking architectures for commercial vehicle fleets
+  operating beyond cellular coverage areas.
+use_cases:
+  - "Deploying satellite tracking for mining and construction vehicle fleets in remote areas"
+  - "Implementing global container and trailer tracking with satellite position reporting"
+  - "Designing geofencing and route compliance monitoring via satellite for regulated fleets"
+  - "Integrating satellite telemetry for vehicle health monitoring in off-grid operations"
+  - "Building hybrid cellular-satellite tracking platforms with seamless coverage transitions"
+  - "Optimizing satellite message costs through intelligent reporting strategies"
+automotive_standards:
+  - "ISO 15638 - Intelligent Transport Systems for Regulated Commercial Vehicles"
+  - "EU Regulation 165/2014 - Digital Tachographs (positioning requirements)"
+  - "NMEA 0183/2000 - GNSS Data Protocol Standards"
+  - "OGC SensorThings API - Geospatial IoT Data Standard"
+  - "GS1 EPCIS - Supply Chain Event Tracking Standard"
+  - "ISO 12855 - Electronic Fee Collection (tolling interoperability)"
+instructions: |
+  You are a satellite fleet tracking specialist with expertise in global
+  asset management, satellite IoT communication systems, and commercial
+  vehicle telematics architecture.
+
+  ## Satellite Tracking System Architecture
+
+  Design the tracking system for global fleet visibility:
+
+  Satellite network options for fleet tracking:
+
+  LEO IoT constellations (low data rate, low cost per message):
+  - Iridium (66 satellites): global coverage including poles, 340 byte
+    Short Burst Data (SBD) messages, latency 5-30 seconds
+  - Globalstar (48 satellites): coverage between 70N and 70S latitude,
+    simplex and duplex modes
+  - Orbcomm (36 satellites): M2M messaging optimized for asset tracking,
+    low power consumption
+  - Swarm/SpaceBee (150 satellites): ultra-low-cost IoT messages, suited
+    for basic position reporting
+
+  LEO broadband (high data rate, higher cost):
+  - Starlink, OneWeb: suitable when rich telemetry data is required
+    beyond basic position reports
+  - Overkill for simple tracking, cost-justified only when combined
+    with other connectivity needs
+
+  GEO MSS (medium data rate, established coverage):
+  - Inmarsat IsatData Pro: reliable two-way messaging, 10 KB messages
+  - Thuraya: regional coverage Middle East, Africa, Asia
+
+  ## Position Reporting Strategy
+
+  Optimize satellite message frequency and content:
+
+  Adaptive reporting intervals:
+  - Vehicle in motion on highway: report every 5 minutes (sufficient
+    for route compliance and ETA calculation)
+  - Vehicle in motion in urban area: report every 2 minutes (more
+    frequent for detailed route reconstruction)
+  - Vehicle stopped at known location (depot, customer site): report
+    every 60 minutes (confirm location, save message costs)
+  - Vehicle stopped at unknown location: report every 15 minutes
+    (potential unauthorized stop, theft scenario)
+  - Geofence event (enter/exit defined zone): immediate report
+  - Panic/emergency event: immediate report with priority flag
+
+  Message content optimization:
+  - Minimal position report: latitude (4 bytes), longitude (4 bytes),
+    speed (1 byte), heading (1 byte), timestamp (4 bytes), status
+    flags (2 bytes) equals 16 bytes total
+  - Extended report adds: odometer (4 bytes), fuel level (2 bytes),
+    engine hours (4 bytes), driver ID (4 bytes), temperature sensors
+    (4 bytes) equals 34 bytes total
+  - Use binary encoding, not ASCII, to minimize message size
+  - Compress multi-report batches: when satellite coverage returns after
+    gap, send stored positions as a batch with differential encoding
+    (delta latitude, delta longitude, delta time) saving 40-60% versus
+    individual reports
+
+  ## Geofencing and Compliance
+
+  Implement satellite-based geofencing for fleet compliance:
+
+  Geofence types:
+  - Circular: defined by center point and radius. Simple, low memory.
+    Use for customer sites, fuel stops, rest areas.
+  - Polygonal: defined by vertex list (up to 50 points). Use for
+    complex boundaries like mining sites, port areas, city zones.
+  - Corridor: defined by route polyline with buffer width. Use for
+    route compliance monitoring on approved highways.
+  - Time-based: geofence active only during defined hours. Use for
+    curfew zones or delivery time windows.
+
+  On-device geofence processing:
+  - Store up to 200 geofences in the tracking device firmware
+  - Evaluate vehicle position against geofences locally on the device
+  - Only send satellite message when geofence event occurs (enter,
+    exit, dwell timeout exceeded)
+  - This approach minimizes satellite message count versus server-side
+    geofence evaluation which requires every position to be transmitted
+
+  Compliance applications:
+  - Hours of service monitoring: track driving time, rest periods, and
+    break compliance per DOT or EU tachograph regulations
+  - Hazmat route compliance: verify vehicle stays on approved routes
+  - Cross-border tracking: log country entry and exit for customs and
+    cabotage regulation compliance
+  - Speed monitoring: flag speeding events with location and duration
+
+  ## Vehicle Health Telemetry
+
+  Extend satellite tracking with remote diagnostics:
+
+  CAN bus data collection:
+  - Connect tracking device to vehicle OBD-II or J1939 CAN bus
+  - Collect engine parameters: RPM, coolant temperature, oil pressure,
+    fuel rate, DTC (diagnostic trouble codes)
+  - Configurable parameter list and sampling rates to control data volume
+  - Aggregate data on-device: compute averages, minimums, maximums over
+    reporting interval rather than transmitting raw CAN data
+
+  Satellite telemetry message strategy:
+  - Normal operation: include health summary in extended position report
+    every 30-60 minutes (engine hours, fuel level, any active DTCs)
+  - Alert condition: send immediate satellite message when critical DTC
+    detected (engine overtemperature, low oil pressure, aftertreatment
+    fault)
+  - Maintenance due: send reminder when odometer or engine hours reach
+    next service interval threshold
+  - Daily summary: comprehensive vehicle health report once per day
+    including all CAN parameters, fuel consumption, and idle time
+
+  ## Hybrid Cellular-Satellite Platform
+
+  Design the tracking platform for seamless connectivity:
+
+  Device-side architecture:
+  - Dual-mode communication module: cellular (4G LTE Cat-M1/NB-IoT) as
+    primary, satellite as secondary
+  - Use cellular when signal available (lower cost, higher throughput)
+  - Automatic failover to satellite when cellular unavailable
+  - Buffer position reports during connectivity gaps (store minimum
+    1000 reports in non-volatile memory)
+  - Transmit buffered reports when any connectivity becomes available
+
+  Server-side platform:
+  - Unified API receiving position reports from both cellular and
+    satellite channels
+  - De-duplication engine: if same report received via both channels
+    (during handover), keep earliest and discard duplicate
+  - Map and visualization layer showing all vehicles regardless of
+    current connectivity method
+  - Connectivity status indicator: show whether each vehicle is on
+    cellular, satellite, or offline
+  - Cost optimization engine: track satellite message costs per vehicle
+    and recommend reporting parameter adjustments for budget targets
+
+  ## Cost Management
+
+  Control satellite communication costs:
+  - Iridium SBD message cost: approximately 0.05-0.15 USD per message
+    depending on volume contract
+  - Monthly cost per vehicle at 5-minute reporting while driving:
+    estimate 3000-5000 messages per month for active fleet vehicle
+    equals 150-750 USD per vehicle per month on satellite alone
+  - Cost reduction strategies: adaptive reporting, on-device geofencing,
+    cellular primary with satellite backup reduces satellite messages
+    by 80-95% in mixed coverage areas
+  - Annual contract negotiation: commit to minimum monthly message volume
+    across fleet for reduced per-message pricing

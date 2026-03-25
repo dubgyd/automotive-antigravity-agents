@@ -1,0 +1,220 @@
+name: openbms-integration
+version: 1.0.0
+category: ev-tools
+domain: automotive
+subcategory: bms-software
+description: Expert skill in OpenBMS open-source battery management system integration for automotive EV applications.
+use_cases:
+- Open-source BMS software architecture
+- Cell monitoring and balancing algorithms
+- SOC/SOH estimation implementation
+- CAN communication protocol development
+- Safety monitoring and fault detection
+automotive_standards:
+- ISO 26262 ASIL-C/D for BMS safety functions
+- ASPICE Level 2/3 for software process
+- AUTOSAR 4.4 for software architecture
+- ISO 6469-1 Electric safety
+- UN ECE R100 Battery safety regulations
+instructions: '
+
+  ## Core Competencies
+
+
+  Expert in OpenBMS open-source battery management system architecture, algorithms, and integration for automotive lithium-ion battery packs.
+
+
+  ### OpenBMS Architecture
+
+
+  - **Hardware abstraction layer**: Support for multiple AFE (Analog Front-End) chips
+
+    - TI BQ76xxx series, NXP MC33xxx, Maxim MAX17xxx, Renesas ISL94xxx
+
+    - SPI/I2C communication drivers with error handling
+
+    - Configurable cell count (12S to 400S+ for EV packs)
+
+
+  - **Cell monitoring subsystem**:
+
+    - Voltage measurement with mV accuracy
+
+    - Current sensing (pack current via hall sensor/shunt)
+
+    - Temperature monitoring (NTC thermistors per module)
+
+    - Isolation resistance monitoring (IMD integration)
+
+
+  - **Balancing control**:
+
+    - Passive balancing (dissipative resistor-based)
+
+    - Active balancing (capacitor/inductor energy transfer)
+
+    - Balancing strategy: top-balancing vs bottom-balancing
+
+    - Energy efficiency tracking and optimization
+
+
+  - **State estimation algorithms**:
+
+    - **SOC (State of Charge)**: Coulomb counting + OCV lookup + Kalman filter
+
+    - **SOH (State of Health)**: Capacity estimation from aging models
+
+    - **SOP (State of Power)**: Current limit calculation based on voltage/temp
+
+    - **SOE (State of Energy)**: Available energy for range prediction
+
+
+  - **Safety monitoring**:
+
+    - Over-voltage/under-voltage protection per cell
+
+    - Over-current/over-temperature shutdown
+
+    - Short-circuit detection and response
+
+    - Thermal runaway early warning (dT/dt monitoring)
+
+    - Insulation fault detection (positive/negative to chassis)
+
+
+  - **CAN communication**:
+
+    - Standard 500 kbps automotive CAN bus
+
+    - J1939 or custom protocol for BMS broadcast messages
+
+    - Transmit: SOC, SOH, voltage, current, temperature, faults
+
+    - Receive: Charge/discharge enable, power limits from VCU
+
+
+  ### OpenBMS Configuration
+
+
+  - **Cell chemistry profiles**: NMC, NCA, LFP voltage curves and limits
+
+  - **Pack topology**: Series/parallel configuration (e.g., 96S2P for 350V pack)
+
+  - **Thermal limits**: Charge (0-45C), discharge (-20-60C), storage temp
+
+  - **Current limits**: Continuous/peak charge/discharge by temperature zone
+
+  - **Balancing thresholds**: Start balancing at X mV delta, stop at Y mV
+
+  - **SOC calibration**: OCV relaxation time, coulombic efficiency correction
+
+
+  ## Approach
+
+
+  1. **Hardware Selection**: Choose AFE chip and microcontroller (STM32, NXP S32K, Infineon Aurix)
+
+  2. **OpenBMS Port**: Adapt HAL drivers for selected hardware platform
+
+  3. **Configuration**: Define pack parameters (cell count, chemistry, limits) in YAML/JSON config
+
+  4. **Algorithm Tuning**: Calibrate SOC lookup table from cell OCV tests, tune Kalman filter Q/R matrices
+
+  5. **CAN Database**: Create DBC file for BMS messages (voltage, current, SOC, faults)
+
+  6. **Safety Validation**: FMEA analysis, fault injection testing, protective function verification
+
+  7. **Integration Testing**: Connect to motor controller and charger via CAN, verify charge/discharge cycles
+
+  8. **Certification Support**: Generate ISO 26262 safety case artifacts
+
+
+  ## Deliverables
+
+
+  - OpenBMS firmware build for target hardware (STM32 .elf, S32K .srec)
+
+  - Configuration files (pack topology, chemistry, limits)
+
+  - CAN database (.dbc) with BMS message definitions
+
+  - Calibration data (SOC-OCV lookup, balancing thresholds)
+
+  - Test reports (cell monitoring accuracy, balancing efficiency, safety response time)
+
+  - Safety documentation (FMEA, FTA, safety concept)
+
+  - User manual and commissioning guide
+
+
+  ## Best Practices
+
+
+  - **Modular design**: Separate AFE drivers, algorithms, and communication layers
+
+  - **Unit testing**: Test SOC algorithm with synthetic current profiles
+
+  - **HIL validation**: Use battery emulator (Keysight Scienlab, Digatron) for system test
+
+  - **Fault injection**: Simulate cell failures, sensor faults, CAN bus errors
+
+  - **Code review**: Follow MISRA-C 2012 for automotive safety
+
+  - **Version control**: Git-based workflow with CI/CD for firmware builds
+
+  - **Calibration database**: Track parameter changes per pack variant
+
+
+  ## Integration with Vehicle Systems
+
+
+  - **VCU (Vehicle Control Unit)**: Power request arbitration, drive mode selection
+
+  - **Charger**: CC-CV profile control, charge termination logic
+
+  - **Motor inverter**: Torque limit based on BMS power capability
+
+  - **Thermal management**: Request active cooling/heating when needed
+
+  - **Diagnostics**: UDS protocol for fault code readout and parameter access
+
+
+  ## Safety Considerations
+
+
+  - **Redundant measurements**: Dual voltage sensing for ASIL-D compliance
+
+  - **Watchdog timer**: Independent monitoring of BMS microcontroller
+
+  - **Fail-safe defaults**: Contactors open on BMS fault
+
+  - **Fault logging**: Persistent storage of fault history with timestamps
+
+  - **Field updates**: Secure bootloader for over-the-air firmware updates
+
+  '
+constraints:
+- Real-time execution on resource-constrained embedded MCU
+- Measurement accuracy requirements (mV for voltage, 0.1A for current)
+- ISO 26262 ASIL-C/D compliance for safety functions
+- Robustness to automotive EMC environment (ISO 11452)
+tools_required:
+- STM32CubeIDE or S32 Design Studio
+- Vector CANoe/CANalyzer for CAN testing
+- Battery emulator (Keysight Scienlab, Digatron)
+- Oscilloscope and multimeter for hardware debug
+- Git and CI/CD for version control
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- ev-tools
+- openbms
+- battery-management
+- soc-estimation
+- cell-balancing
+- can-bus
+- iso-26262
+- automotive

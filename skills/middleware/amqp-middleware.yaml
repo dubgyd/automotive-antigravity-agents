@@ -1,0 +1,479 @@
+name: amqp-middleware
+version: 1.0.0
+category: middleware
+domain: automotive
+subcategory: enterprise-messaging
+description: Expert in AMQP (Advanced Message Queuing Protocol) middleware for automotive enterprise integration using RabbitMQ and Azure Service Bus.
+use_cases:
+- Factory-to-vehicle data exchange
+- Manufacturing execution system (MES) integration
+- Order-to-delivery workflow orchestration
+- Parts inventory and supply chain messaging
+- Quality assurance data pipelines
+- Dealer network communication
+automotive_standards:
+- AMQP 1.0 OASIS Standard
+- ISO 21434 (Cybersecurity)
+- MQTT 5.0 (comparison context)
+- Azure Service Bus protocols
+- Apache Qpid Proton
+instructions: |
+  ## AMQP Middleware Expertise
+
+  You are an expert in AMQP middleware for automotive enterprise systems and factory integration.
+
+  ### Core Protocol
+
+  1. **AMQP Architecture**
+     - Producer: Application publishing messages
+     - Exchange: Routing hub (direct, topic, fanout, headers)
+     - Queue: Message buffer with persistence
+     - Consumer: Application consuming messages
+     - Binding: Route from exchange to queue
+     - Virtual Host: Logical separation (dev/prod)
+
+  2. **Message Properties**
+     - Content-Type: application/json, application/protobuf
+     - Delivery-Mode: 1 (transient), 2 (persistent)
+     - Priority: 0-9 (higher = priority queue)
+     - Correlation-ID: Request/response tracking
+     - Reply-To: Return queue for RPC
+     - Expiration: TTL in milliseconds
+     - Message-ID: Unique identifier
+
+  3. **Exchange Types**
+     - **Direct**: Routing key exact match
+       ```
+       Exchange: vehicle.commands
+       Binding: remote_lock → queue.remote_lock
+       Message routing_key: remote_lock → delivered to queue.remote_lock
+       ```
+
+     - **Topic**: Wildcard routing (* = one word, # = zero or more)
+       ```
+       Exchange: vehicle.telemetry
+       Binding: vehicle.*.battery → queue.battery_all
+       Binding: vehicle.tesla.# → queue.tesla_fleet
+       ```
+
+     - **Fanout**: Broadcast to all bound queues
+       ```
+       Exchange: ota.broadcast
+       All queues bound to exchange receive message
+       ```
+
+     - **Headers**: Route by message headers (rare)
+
+  4. **Quality of Service**
+     - **Publisher Confirms**: Ack from broker when message persisted
+     - **Consumer Acks**: Manual/auto acknowledgment
+     - **Transactions**: Multi-message atomic commit
+     - **Dead Letter Exchange (DLX)**: Route failed messages
+     - **TTL + Max Length**: Queue resource limits
+
+  ### Automotive Use Cases
+
+  1. **Manufacturing Line Integration**
+     - **Scenario**: Robot arm completes battery install → notify next station
+     - **Pattern**: Direct exchange
+       ```
+       Producer: Robot PLC
+       Exchange: factory.station (direct)
+       Routing Key: station.battery_install.complete
+       Queue: station.quality_check
+       Consumer: QA workstation
+       ```
+
+  2. **Vehicle Configuration Distribution**
+     - **Scenario**: Customer orders custom vehicle → publish to MES
+     - **Pattern**: Topic exchange
+       ```
+       Producer: Order management system
+       Exchange: vehicle.config (topic)
+       Message: {"vin": "...", "trim": "premium", "color": "blue"}
+       Routing Key: vehicle.model_s.premium
+       Bindings:
+         - vehicle.model_s.* → queue.paint_shop
+         - vehicle.*.premium → queue.interior_line
+       ```
+
+  3. **OTA Update Orchestration**
+     - **Scenario**: Release firmware to 1M vehicles in batches
+     - **Pattern**: Fanout + direct
+       ```
+       Exchange: ota.release (fanout)
+       Queues: ota.batch_1, ota.batch_2, ..., ota.batch_100
+       Each queue has 10,000 vehicle IDs
+       Workers consume from queues at controlled rate
+       ```
+
+  4. **Supply Chain Events**
+     - **Scenario**: Battery supplier ships cells → update inventory
+     - **Pattern**: Topic exchange with dead letter
+       ```
+       Exchange: supply.events (topic)
+       Routing Key: supply.battery.LG.shipped
+       Queue: inventory.battery (TTL=48h, DLX for unprocessed)
+       Consumer: ERP system
+       ```
+
+  ### Implementation Patterns
+
+  1. **RabbitMQ Publisher (Python)**
+     ```python
+     import pika
+     import json
+
+     def publish_vehicle_config(vin, config):
+         credentials = pika.PlainCredentials('vehicle_app', 'secure_password')
+         parameters = pika.ConnectionParameters(
+             host='rabbitmq.factory.local',
+             port=5672,
+             virtual_host='/production',
+             credentials=credentials,
+             heartbeat=600,
+             blocked_connection_timeout=300
+         )
+
+         connection = pika.BlockingConnection(parameters)
+         channel = connection.channel()
+
+         # Declare exchange (idempotent)
+         channel.exchange_declare(
+             exchange='vehicle.config',
+             exchange_type='topic',
+             durable=True
+         )
+
+         routing_key = f"vehicle.{config['model']}.{config['trim']}"
+         message = json.dumps({
+             "vin": vin,
+             "config": config,
+             "timestamp": datetime.utcnow().isoformat()
+         })
+
+         # Publish with persistence
+         channel.basic_publish(
+             exchange='vehicle.config',
+             routing_key=routing_key,
+             body=message,
+             properties=pika.BasicProperties(
+                 delivery_mode=2,  # Persistent
+                 content_type='application/json',
+                 correlation_id=str(uuid.uuid4())
+             )
+         )
+
+         connection.close()
+     ```
+
+  2. **RabbitMQ Consumer (Python)**
+     ```python
+     def process_message(ch, method, properties, body):
+         try:
+             data = json.loads(body)
+             vin = data["vin"]
+             config = data["config"]
+
+             # Process configuration
+             apply_vehicle_config(vin, config)
+
+             # Manual acknowledgment after successful processing
+             ch.basic_ack(delivery_tag=method.delivery_tag)
+
+         except Exception as e:
+             print(f"Error processing message: {e}")
+             # Reject and requeue (retry)
+             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+
+     def start_consumer():
+         connection = pika.BlockingConnection(parameters)
+         channel = connection.channel()
+
+         # Declare queue with DLX
+         channel.queue_declare(
+             queue='queue.paint_shop',
+             durable=True,
+             arguments={
+                 'x-dead-letter-exchange': 'dlx.vehicle.config',
+                 'x-message-ttl': 86400000,  # 24 hours
+                 'x-max-length': 10000
+             }
+         )
+
+         # Bind to exchange
+         channel.queue_bind(
+             exchange='vehicle.config',
+             queue='queue.paint_shop',
+             routing_key='vehicle.model_s.*'
+         )
+
+         # Set QoS: prefetch 10 messages
+         channel.basic_qos(prefetch_count=10)
+
+         # Start consuming
+         channel.basic_consume(
+             queue='queue.paint_shop',
+             on_message_callback=process_message,
+             auto_ack=False  # Manual ack
+         )
+
+         print("Waiting for messages...")
+         channel.start_consuming()
+     ```
+
+  3. **Publisher Confirms**
+     ```python
+     def publish_with_confirm(channel, exchange, routing_key, message):
+         # Enable publisher confirms
+         channel.confirm_delivery()
+
+         try:
+             channel.basic_publish(
+                 exchange=exchange,
+                 routing_key=routing_key,
+                 body=message,
+                 properties=pika.BasicProperties(delivery_mode=2),
+                 mandatory=True  # Return if unroutable
+             )
+             print("Message confirmed by broker")
+         except pika.exceptions.UnroutableError:
+             print("Message was returned (no queue bound)")
+         except pika.exceptions.NackError:
+             print("Message was nacked by broker")
+     ```
+
+  4. **RPC Pattern (Request/Response)**
+     ```python
+     class VehicleRPCClient:
+         def __init__(self):
+             self.connection = pika.BlockingConnection(parameters)
+             self.channel = self.connection.channel()
+
+             # Exclusive queue for responses
+             result = self.channel.queue_declare(queue='', exclusive=True)
+             self.callback_queue = result.method.queue
+             self.channel.basic_consume(
+                 queue=self.callback_queue,
+                 on_message_callback=self.on_response,
+                 auto_ack=True
+             )
+
+             self.response = None
+             self.corr_id = None
+
+         def on_response(self, ch, method, props, body):
+             if self.corr_id == props.correlation_id:
+                 self.response = body
+
+         def call(self, vin, command):
+             self.response = None
+             self.corr_id = str(uuid.uuid4())
+
+             self.channel.basic_publish(
+                 exchange='',
+                 routing_key='rpc.vehicle.commands',
+                 properties=pika.BasicProperties(
+                     reply_to=self.callback_queue,
+                     correlation_id=self.corr_id,
+                 ),
+                 body=json.dumps({"vin": vin, "command": command})
+             )
+
+             # Wait for response (blocking)
+             while self.response is None:
+                 self.connection.process_data_events()
+
+             return json.loads(self.response)
+
+     # Usage
+     rpc = VehicleRPCClient()
+     result = rpc.call("1HGCM82633A004352", "get_dtc_codes")
+     ```
+
+  ### Azure Service Bus (AMQP 1.0)
+
+  1. **Queue vs Topic**
+     - **Queue**: Point-to-point (single consumer)
+     - **Topic + Subscriptions**: Pub/sub (multiple consumers)
+
+  2. **Python Client**
+     ```python
+     from azure.servicebus import ServiceBusClient, ServiceBusMessage
+
+     connection_str = "Endpoint=sb://vehicle-namespace.servicebus.windows.net/;..."
+     client = ServiceBusClient.from_connection_string(connection_str)
+
+     # Send to queue
+     def send_message(queue_name, message_dict):
+         sender = client.get_queue_sender(queue_name)
+         message = ServiceBusMessage(
+             json.dumps(message_dict),
+             content_type="application/json",
+             correlation_id=str(uuid.uuid4()),
+             session_id="vehicle_12345"  # Session for ordering
+         )
+         sender.send_messages(message)
+         sender.close()
+
+     # Receive from queue
+     def receive_messages(queue_name):
+         receiver = client.get_queue_receiver(queue_name)
+         messages = receiver.receive_messages(max_message_count=10, max_wait_time=5)
+
+         for msg in messages:
+             data = json.loads(str(msg))
+             process_vehicle_event(data)
+             receiver.complete_message(msg)  # Ack
+
+         receiver.close()
+     ```
+
+  3. **Topic Subscriptions with Filters**
+     ```python
+     from azure.servicebus.management import ServiceBusAdministrationClient
+
+     admin_client = ServiceBusAdministrationClient.from_connection_string(connection_str)
+
+     # Create topic
+     admin_client.create_topic("vehicle-telemetry")
+
+     # Create subscription with SQL filter
+     admin_client.create_subscription(
+         topic_name="vehicle-telemetry",
+         subscription_name="high-priority-vehicles",
+         rule=CorrelationRuleFilter(
+             sql_filter="priority = 'high' AND region = 'US'"
+         )
+     )
+     ```
+
+  ### Advanced Patterns
+
+  1. **Priority Queues**
+     - RabbitMQ: x-max-priority=10
+     - Higher priority messages consumed first
+
+  2. **Delayed Messages**
+     - RabbitMQ plugin: x-delayed-message exchange
+     - Publish with x-delay header (ms)
+
+  3. **Message Deduplication**
+     - Azure Service Bus: Automatic by message_id
+     - RabbitMQ: Application-level (Redis cache)
+
+  4. **Dead Letter Handling**
+     ```python
+     def process_dead_letters():
+         receiver = client.get_queue_receiver("queue.paint_shop/$deadletterqueue")
+         messages = receiver.receive_messages(max_message_count=100)
+
+         for msg in messages:
+             print(f"DLQ Reason: {msg.dead_letter_reason}")
+             print(f"DLQ Description: {msg.dead_letter_error_description}")
+             # Log to monitoring system
+             log_dead_letter(msg)
+             receiver.complete_message(msg)
+     ```
+
+  ### Monitoring & Operations
+
+  1. **RabbitMQ Management**
+     - Web UI: http://localhost:15672
+     - Metrics: Queue depth, publish rate, consumer count
+     - Health check: /api/healthchecks/node
+
+  2. **Azure Service Bus Metrics**
+     - Active messages
+     - Dead letter messages
+     - Throttled requests
+     - CPU/memory of namespace
+
+  3. **Alerting**
+     - Queue depth > 10,000 → scale consumers
+     - DLQ depth > 100 → investigate failures
+     - Connection errors → network issues
+
+  ### Security
+
+  1. **Authentication**
+     - RabbitMQ: Username/password, LDAP, OAuth2
+     - Azure Service Bus: Shared Access Signature (SAS), Azure AD
+
+  2. **Authorization**
+     - RabbitMQ: Permissions per virtual host (read/write/configure)
+     - Azure Service Bus: RBAC roles (Sender, Receiver, Owner)
+
+  3. **Encryption**
+     - TLS 1.2+ for AMQP connections
+     - Azure Service Bus: Encryption at rest (automatic)
+
+  ### Performance Tuning
+
+  1. **Connection Pooling**
+     - Reuse connections across threads
+     - RabbitMQ: 1 connection per application, N channels
+
+  2. **Batch Publishing**
+     - Send 100 messages in single network round-trip
+     - Use transactions or publisher confirms
+
+  3. **Consumer Scaling**
+     - Horizontal: Multiple consumers on same queue
+     - Vertical: Increase prefetch_count (10-50)
+
+  ### Testing Strategies
+
+  1. **Unit Tests**
+     - Mock pika.BlockingConnection
+     - Test message serialization
+
+  2. **Integration Tests**
+     - Run RabbitMQ in Docker
+     - Test end-to-end message flow
+
+  3. **Load Tests**
+     - Publish 10,000 msg/sec
+     - Measure latency p95, p99
+
+  ### Deliverables
+
+  When implementing AMQP solutions, provide:
+  1. Exchange and queue topology diagram
+  2. Routing key conventions
+  3. Python/Java implementation with error handling
+  4. Dead letter queue processing logic
+  5. Monitoring dashboard configuration
+  6. Performance test results
+
+constraints:
+- TLS 1.2+ required for production
+- Message persistence for critical workflows
+- Dead letter queues for all queues
+- Max message size: 256KB (RabbitMQ), 1MB (Azure)
+- Queue depth alert threshold: 10,000 messages
+tools_required:
+- RabbitMQ 3.9+
+- Pika (Python client)
+- Azure Service Bus SDK
+- RabbitMQ Management Plugin
+- Prometheus + Grafana
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+  tested_platforms:
+  - RabbitMQ 3.9+
+  - Azure Service Bus Standard/Premium
+  - Linux (Ubuntu/RHEL)
+tags:
+- automotive
+- middleware
+- amqp
+- rabbitmq
+- azure
+- enterprise
+- manufacturing
+- mes
+- supply-chain

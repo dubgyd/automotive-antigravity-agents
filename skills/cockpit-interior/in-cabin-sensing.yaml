@@ -1,0 +1,162 @@
+name: in-cabin-sensing
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "Time-of-flight cameras, IR occupant detection, and multi-sensor cabin monitoring for occupant classification, child presence detection, and cabin state awareness."
+use_cases:
+  - "Implementing ToF camera-based 3D occupant detection and classification"
+  - "Designing child presence detection systems to prevent hot car fatalities"
+  - "Building multi-sensor fusion for accurate occupant count and position tracking"
+  - "Creating object detection for left-behind items and pet monitoring in parked vehicles"
+  - "Integrating cabin sensing with airbag deployment and seatbelt reminder systems"
+automotive_standards:
+  - "Euro NCAP 2023+ - Child presence detection requirements"
+  - "FMVSS 208 - Advanced airbag occupant classification requirements"
+  - "EU Regulation 2019/2144 - Intelligent speed assistance and cabin monitoring"
+  - "IEC 62471 - Photobiological safety for IR illumination in cabin sensors"
+  - "ISO 26262 - Functional safety for occupant classification ASIL-B"
+instructions: |
+  # In-Cabin Sensing
+
+  ## Overview
+  In-cabin sensing systems use time-of-flight cameras, infrared sensors, radar, and
+  pressure mats to build a comprehensive understanding of the cabin environment. These
+  systems detect and classify occupants by size, position, and activity, identify
+  unattended children and pets, monitor driver attention, and track object placement.
+  This information is critical for adaptive safety systems, personalized comfort, and
+  regulatory compliance with Euro NCAP child presence detection requirements.
+
+  ## Key Concepts
+
+  ### Time-of-Flight Cameras
+  3D depth sensors optimized for in-cabin use:
+  - Indirect ToF sensors emit modulated IR light and measure phase shift for depth
+  - Resolution typically 320x240 to 640x480 pixels with depth accuracy of 10 mm
+  - Frame rate of 30 to 60 fps sufficient for occupant tracking and activity recognition
+  - Near-infrared operation (850 or 940 nm) works in complete darkness
+  - Power consumption of 0.5 to 2 W per sensor module
+
+  ### Occupant Classification System
+  Categorizing each detected occupant for safety system adaptation:
+  - Empty seat, child in child seat, small child, large child, small adult, average adult
+  - Classification accuracy must exceed 99% per FMVSS 208 requirements
+  - Uses combination of weight (pressure mat), height, and body shape (ToF camera)
+  - Classification result directly controls airbag deployment force and suppress decisions
+
+  ### Child Presence Detection
+  Detecting unattended children after vehicle is parked and locked:
+  - Continuous monitoring using low-power radar or ToF sensor in sleep mode
+  - Must detect a sleeping child breathing at 12 to 20 breaths per minute
+  - Alert sequence includes horn, lights, mobile notification, and emergency call
+  - System must remain active for hours on 12V battery without excessive drain
+
+  ## Implementation Guide
+
+  ### Step 1 - Position In-Cabin Sensors
+  Determine optimal sensor placement for full cabin coverage:
+  - Mount a ToF camera in the overhead console for driver and front passenger view
+  - Place a second ToF camera in the B-pillar or rear-view mirror area for rear seats
+  - Install pressure sensing mats in every seating position for weight measurement
+  - Add radar modules for parked vehicle monitoring with ultra-low power consumption
+
+  ### Step 2 - Build the Perception Pipeline
+  Process raw sensor data into occupant state information:
+  - Generate depth maps from ToF sensors and segment individual occupants
+  - Apply body model fitting to estimate occupant height, shoulder width, and posture
+  - Fuse depth data with pressure mat readings for robust classification
+  - Track occupants across frames to maintain identity through movements
+
+  ### Step 3 - Implement Occupant Classification
+  Deploy the classification algorithm meeting regulatory requirements:
+  - Train a classifier on diverse datasets covering body types, clothing, and positions
+  - Include edge cases like bulky winter clothing, child seats, and booster seats
+  - Validate against the FMVSS 208 test matrix with certified test dummies
+  - Run classification at 10 Hz minimum with result latency under 200 ms
+
+  ### Step 4 - Build Child Presence Detection
+  Implement the post-parking monitoring system:
+  - Switch to ultra-low-power radar monitoring when the vehicle is locked
+  - Detect micro-movements from breathing using Doppler analysis
+  - Implement a multi-stage alert escalation with increasing urgency
+  - Send remote notification to the driver's phone within 60 seconds of detection
+
+  ### Step 5 - Integrate with Vehicle Safety Systems
+  Connect cabin sensing to downstream safety controllers:
+  - Transmit occupant classification to the airbag ECU for deployment adaptation
+  - Feed occupant position data to seatbelt pretensioner control
+  - Provide child seat detection status for ISOFIX indicator and seatbelt reminder
+  - Share cabin state with HVAC for occupied-zone-only climate control
+
+  ## Best Practices
+
+  ### Sensor Redundancy
+  - Use at least two independent sensing modalities for safety-critical classification
+  - ToF camera plus pressure mat provides robust adult versus child discrimination
+  - Radar provides independent verification for child presence detection
+  - Implement a voter logic that requires agreement between sensors for classification
+
+  ### Privacy Protection
+  - ToF cameras capture depth only, no identifiable facial features or color images
+  - Process all cabin sensing data on-device with no cloud transmission
+  - Do not store raw sensor data beyond the current processing frame
+  - Provide clear privacy indicators when cabin cameras are active
+
+  ### Power Management for Parked Detection
+  - Use radar in micro-power mode consuming under 100 mW during parked monitoring
+  - Wake ToF cameras from sleep only when radar detects potential occupant motion
+  - Implement battery voltage monitoring and cease monitoring before starter discharge
+  - Total parked monitoring power budget should stay below 500 mW average
+
+  ## Troubleshooting
+
+  ### Occupant Misclassified as Child
+  Recalibrate the pressure mat zero offset to account for seat foam aging. Check ToF
+  camera lens for contamination reducing depth accuracy. Review the classification model
+  for edge cases similar to the misclassified scenario.
+
+  ### Child Presence Detection False Alarm
+  Check for items on the seat that create radar reflections mimicking breathing motion.
+  Verify the breathing detection algorithm is filtering out vehicle motion from wind.
+  Inspect the radar mounting for vibration coupling from the vehicle structure.
+
+  ### ToF Camera Returns Noisy Depth Data
+  Clean the IR illuminator and receiver lens surfaces. Check for strong IR interference
+  from direct sunlight flooding through windows. Verify the sensor operating temperature
+  is within specification and thermal throttling is not active.
+
+  ### Object Left Behind Not Detected
+  Verify the object detection model has been trained on the relevant item categories.
+  Check that the ToF camera field of view covers footwell and under-seat areas. Ensure
+  the detection algorithm compares post-exit cabin state against the pre-exit baseline.
+
+  ## Integration Patterns
+
+  ### Smart Airbag Deployment
+  Using cabin sensing data to optimize airbag deployment:
+  - Transmit occupant height and position to the airbag ECU at 100 ms intervals
+  - Classify out-of-position occupants who are too close to the airbag module
+  - Suppress airbag deployment for empty seat positions to reduce repair costs
+  - Adjust dual-stage airbag deployment force based on occupant size classification
+
+  ### Connected Vehicle Integration
+  Sharing cabin state with external systems through the telematics unit:
+  - Report occupant count for carpool lane verification in connected infrastructure
+  - Transmit child presence alerts through the telematics unit to emergency services
+  - Share cabin occupancy data with fleet management for capacity optimization
+  - Enable remote cabin monitoring for parents checking on teenage drivers
+
+  ## Testing and Validation
+
+  ### Occupant Classification Certification
+  Validate classification accuracy against regulatory test matrices:
+  - Test with the full set of FMVSS 208 specified test dummies and child restraints
+  - Achieve less than 1% misclassification rate across all specified test conditions
+  - Validate performance with diverse real-world objects placed on seats (groceries, bags)
+  - Run certification tests at temperature extremes from -30 C to 70 C
+
+  ### Child Presence Detection Validation
+  Verify child detection reliability under worst-case conditions:
+  - Test detection of a sleeping infant with minimal movement in a rear-facing child seat
+  - Validate detection through blankets and winter clothing covering the child
+  - Measure false alarm rate over 1000 hours of empty-vehicle monitoring
+  - Test alert chain completion including horn, lights, and phone notification timing

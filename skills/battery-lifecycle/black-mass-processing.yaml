@@ -1,0 +1,320 @@
+name: black-mass-processing
+version: 1.0.0
+category: battery-lifecycle
+domain: automotive
+subcategory: recycling
+description: Expert knowledge of black mass production through shredding, drying, sieving, composition analysis, and quality grading for downstream recycling processes.
+use_cases:
+- Mechanical recycling plant design and optimization
+- Black mass quality specification and grading
+- Shredding process safety and efficiency
+- Material separation and concentration techniques
+- Black mass trading and supply chain management
+automotive_standards:
+- ATEX Directive 2014/34/EU (explosion protection)
+- ISO 14001 Environmental Management
+- UN 3480/3481 Battery Transport Classification
+- IEC 62133 Battery Safety Testing
+- ISO 12100 Machinery Safety
+instructions: '
+
+  ## Core Competencies
+
+  Expert in mechanical processing of end-of-life lithium-ion batteries to produce black mass (fine powder containing cathode and anode active materials) for downstream pyrometallurgical or hydrometallurgical recycling.
+
+  ### Black Mass Definition
+
+  **Black Mass** is the fine powder (<2mm particles) produced by mechanical shredding and separation of lithium-ion batteries, containing:
+  - Cathode active material (LiCoO2, LiNi0.8Mn0.1Co0.1O2, LiFePO4, etc.)
+  - Anode active material (graphite, some Li compounds from SEI layer)
+  - Carbon black (cathode additive)
+  - Small particles of copper (anode current collector)
+  - Small particles of aluminum (cathode current collector)
+  - Trace amounts of binder (PVDF), electrolyte residue
+
+  **Typical Composition** (NMC battery black mass):
+  - Cathode material: 40-50% by mass
+  - Graphite: 25-35%
+  - Copper: 10-15%
+  - Aluminum: 5-10%
+  - Binder/carbon black: 2-5%
+  - Electrolyte residue: <1%
+
+  ### Mechanical Recycling Process Flow
+
+  **Stage 1: Battery Pre-Treatment**
+
+  **Depth of Discharge (DoD)**:
+  - Target: Discharge to 20-30% SOC (not 0% to avoid cell damage, not >50% to reduce fire risk)
+  - Methods:
+    - Resistive discharge: Connect pack to resistive load (1-5 kW) over 2-8 hours
+    - Salt water bath: Submerge modules in brine solution (short-circuits cells safely)
+    - Active discharge: Use battery tester to controlled discharge (slowest, safest)
+  - Safety: Monitor for thermal runaway signs (temp rise >5°C/min, voltage drop)
+
+  **Manual Disassembly** (if economical):
+  - Remove pack housing (steel/aluminum enclosure)
+  - Disconnect high-voltage bus bars (wear PPE, insulated tools)
+  - Separate modules from cooling system (drain coolant first)
+  - Remove BMS and wiring harness (can be resold or recycled separately)
+  - Benefits: Higher material recovery (clean aluminum, copper, steel), safer shredding
+  - Cost: 15-30 min labor per pack ($20-40 per pack)
+
+  **Stage 2: Shredding**
+
+  **Primary Shredding** (coarse reduction):
+  - Equipment: Hammer mill or shear shredder
+  - Input: Whole modules or cells (after optional disassembly)
+  - Output size: 50-200 mm chunks
+  - Purpose: Break open cell casing, expose electrode materials
+  - Safety: Inert atmosphere (N2 or CO2 flooding) to prevent fires
+  - Throughput: 1-5 tons/hour depending on shredder size
+
+  **Fire Prevention Strategies**:
+  - Cryogenic shredding: Liquid nitrogen (LN2) at -196°C to embrittle materials, prevent short circuits
+  - Water immersion shredding: Submerge batteries in water tank before/during shredding
+  - Inert gas blanketing: Continuous N2 or CO2 flow to displace O2 (<5% O2 concentration)
+  - Temperature monitoring: IR cameras detect hot spots (>60°C triggers shutdown)
+
+  **Secondary Shredding** (fine reduction):
+  - Equipment: Impact mill or knife mill
+  - Input: 50-200 mm chunks from primary shredder
+  - Output size: 2-20 mm particles
+  - Purpose: Further liberate cathode/anode materials from current collectors
+
+  **Tertiary Shredding** (optional, for high-purity black mass):
+  - Equipment: Jet mill or pin mill
+  - Input: 2-20 mm particles
+  - Output size: <2 mm (fine powder)
+  - Purpose: Create homogenous black mass for optimal leaching
+
+  **Stage 3: Thermal Treatment (Drying & Electrolyte Removal)**
+
+  **Low-Temperature Drying** (80-120°C):
+  - Purpose: Evaporate residual moisture and volatile electrolyte solvents (DMC, EMC, EC)
+  - Equipment: Rotary dryer or fluidized bed dryer
+  - Time: 2-4 hours
+  - Atmosphere: Inert (N2) or vacuum to prevent oxidation
+  - Off-gas treatment: Condenser to recover solvents (DMC can be purified and resold)
+
+  **High-Temperature Pyrolysis** (400-600°C, optional):
+  - Purpose: Burn off PVDF binder, residual electrolyte, SEI layer organics
+  - Equipment: Rotary kiln or fluidized bed reactor
+  - Atmosphere: Air or O2 (oxidative) to combust organics
+  - Result: Mass reduction (5-10%), cleaner black mass (easier leaching)
+  - Off-gas: CO2, HF (from LiPF6 electrolyte salt) → requires scrubbing
+  - Caution: Can cause slight oxidation of cathode (e.g., Ni²⁺ → Ni³⁺)
+
+  **Stage 4: Sieving & Classification**
+
+  **Multi-Stage Sieving**:
+  - Coarse screen (>10 mm): Removes large plastic/metal chunks → manual sorting
+  - Medium screen (2-10 mm): Mixed metal/active material → further grinding or pyro recycling
+  - Fine screen (<2 mm): **Black mass product** → highest cathode/anode content
+
+  **Particle Size Distribution** (typical black mass):
+  - <0.1 mm: 20-30% (ultrafine cathode/carbon black)
+  - 0.1-0.5 mm: 40-50% (cathode particles, graphite)
+  - 0.5-2 mm: 20-30% (graphite, small metal fragments)
+  - >2 mm: <5% (rejected, return to secondary shredder)
+
+  **Stage 5: Metal Separation**
+
+  **Magnetic Separation**:
+  - Target: Ferrous metals (steel from casing, some stainless steel)
+  - Equipment: Drum magnets or overhead magnets
+  - Recovery: 95-99% of ferrous content
+  - Output: Clean steel scrap for sale to steel mills
+
+  **Eddy Current Separation**:
+  - Target: Non-ferrous metals (copper, aluminum)
+  - Principle: Rotating magnetic field induces eddy currents in conductive metals → repulsion
+  - Equipment: Eddy current separator with high-speed rotor
+  - Effectiveness: 80-90% Cu/Al recovery (small particles escape)
+  - Output: Mixed Cu/Al scrap → further separation by density or color sorting
+
+  **Air Classification (Zigzag Separator)**:
+  - Target: Separate low-density (graphite, plastic) from high-density (cathode, metals)
+  - Principle: Air jet blows light materials upward, heavy materials fall
+  - Result: Graphite concentrate (90%+ purity) and cathode-enriched black mass
+  - Benefit: Increases black mass cathode content from 40% to 55-65%
+
+  **Density Separation (Sink-Float)**:
+  - Medium: Water or heavy liquid (density 2.0-3.5 g/cm³)
+  - Principle: Cathode (4.5-5.2 g/cm³) sinks, graphite (2.2 g/cm³) floats
+  - Equipment: Jig separator or dense media separator
+  - Result: >70% cathode purity in sinking fraction
+  - Challenge: Water introduces moisture (requires redrying)
+
+  **Stage 6: Quality Control & Analysis**
+
+  **Elemental Composition** (most critical):
+  - Technique: ICP-OES (Inductively Coupled Plasma Optical Emission Spectroscopy)
+  - Elements analyzed: Li, Co, Ni, Mn, Cu, Al, Fe, Ca (impurity)
+  - Sampling: Homogenize 100 kg batch, take 500g representative sample
+  - Reporting: % by mass of each element (dry basis)
+
+  **Example ICP-OES Report (NMC811 black mass)**:
+  ```
+  Element    Content (% dry mass)
+  Li         3.5 - 4.5%
+  Ni         18 - 24%
+  Mn         1.5 - 2.5%
+  Co         2.5 - 4.0%
+  Cu         8 - 12%
+  Al         4 - 7%
+  Fe         <1% (impurity from shredder wear)
+  Ca         <0.5% (impurity from concrete dust)
+  C (total)  20 - 30% (graphite + carbon black)
+  ```
+
+  **Moisture Content**:
+  - Method: Loss on drying (LOD) at 105°C for 2 hours
+  - Target: <5% moisture (prevents caking, corrosion during storage)
+  - High moisture (>10%) indicates incomplete drying
+
+  **Particle Size Distribution**:
+  - Method: Laser diffraction (Malvern Mastersizer) or sieve analysis
+  - Report: D10, D50, D90 (10th, 50th, 90th percentile particle sizes)
+  - Target: D50 = 50-200 µm (optimal for leaching)
+
+  **Hazardous Characterization**:
+  - pH of water extract: Should be neutral (pH 6-8)
+  - Heavy metals (Pb, Cd, Hg): <100 ppm per element (waste classification)
+  - Flammability: Self-heating test (UN 3090 classification)
+
+  ### Black Mass Quality Grades
+
+  **Premium Grade** (for hydrometallurgy):
+  - Cathode content: >55% (high Co/Ni/Li)
+  - Cu + Al: <15% (low impurities)
+  - Graphite: <25% (can interfere with leaching)
+  - Moisture: <3%
+  - Fe: <0.5% (interferes with solvent extraction)
+  - Price: $8-15/kg (depending on Co/Ni market price)
+
+  **Standard Grade** (for pyrometallurgy or lower-grade hydro):
+  - Cathode content: 40-55%
+  - Cu + Al: 15-25%
+  - Graphite: 25-35%
+  - Moisture: <5%
+  - Price: $4-8/kg
+
+  **Low Grade** (for pyrometallurgy only or disposal):
+  - Cathode content: <40%
+  - High plastic/aluminum content (difficult to process)
+  - May require disposal fee rather than payment
+
+  ### Economics of Black Mass Production
+
+  **Cost Breakdown** (per ton of input batteries):
+  - Collection & transport: $100-200
+  - Discharge & disassembly: $100-300 (if manual disassembly performed)
+  - Shredding (equipment amortization, energy, maintenance): $150-300
+  - Thermal treatment (energy, off-gas scrubbing): $100-200
+  - Sieving & separation (equipment, labor): $50-100
+  - Quality control (ICP-OES, labor): $50-100
+  - Total processing cost: $550-1200 per ton input batteries
+
+  **Revenue**:
+  - Black mass yield: 400-600 kg per ton of input batteries (40-60%)
+  - Black mass sale price: $4-15/kg (depends on chemistry, purity, market)
+  - Scrap metal (Cu, Al, steel): $200-400 per ton input
+  - Total revenue: $2000-5000 per ton input batteries
+
+  **Gross margin**: $800-3800 per ton (highly dependent on black mass purity and Co/Ni prices)
+
+  ### Safety & Environmental Compliance
+
+  **Fire & Explosion Protection**:
+  - ATEX Zone 1 or 2 classification for shredding area (explosive dust atmosphere)
+  - Explosion vents on shredders (pressure relief panels)
+  - Spark detection and suppression systems
+  - Emergency shutdown interlocks (temperature, smoke, gas detection)
+
+  **Personal Protective Equipment (PPE)**:
+  - Respiratory protection: P3 particulate filters (black mass is fine dust)
+  - Skin protection: Nitrile gloves (electrolyte residue is corrosive)
+  - Eye protection: Safety goggles (dust and liquid splash)
+  - Hearing protection: Earplugs (shredders are 90-110 dB)
+
+  **Waste Streams**:
+  - Plastic/separator material: 5-10% of input mass → landfill or energy recovery
+  - Off-gas from drying: VOCs (DMC, EMC) → thermal oxidizer or condenser
+  - HF from pyrolysis: Acid gas → alkaline scrubber (NaOH)
+  - Contaminated water (if water immersion shredding): Metal-laden → treatment
+
+  ### Major Black Mass Producers
+
+  - **Li-Cycle (Canada/USA)**: 25k ton/year capacity, water-based shredding ("Spoke" facilities)
+  - **Duesenfeld (Germany)**: 3k ton/year, LN2 cryogenic shredding, 96% graphite recovery
+  - **Retriev Technologies (USA)**: 10k ton/year, hammer mill + thermal treatment
+  - **Redux (Germany)**: Battery-to-black-mass service for OEMs, 5k ton/year
+  - **SNAM (France)**: 6k ton/year, rotary kiln pyrolysis integrated with shredding
+
+  ## Approach
+
+  1. **Feedstock Characterization**: Determine battery chemistries, pack formats, contamination levels
+  2. **Process Selection**: Cryogenic vs inert gas shredding, manual disassembly vs direct shred
+  3. **Equipment Sizing**: Calculate throughput requirements, select shredder types
+  4. **Separation Strategy**: Optimize magnetic, eddy current, air classification sequence
+  5. **Quality Specification**: Define target black mass grade for downstream customer
+  6. **Safety Design**: ATEX compliance, fire suppression, off-gas treatment
+  7. **Pilot Testing**: Run 100-500 kg trials to validate yield and quality
+  8. **Economic Modeling**: CAPEX (equipment), OPEX (energy, labor), revenue (black mass + scrap)
+
+  ## Deliverables
+
+  - Process flow diagram with mass balance (input batteries → outputs by stream)
+  - Equipment list with specifications (shredder capacity, sieve sizes, magnet strength)
+  - Black mass quality specification sheet (composition, particle size, moisture)
+  - Safety documentation (ATEX assessment, fire protection plan, PPE requirements)
+  - Off-gas treatment system design (thermal oxidizer or scrubber sizing)
+  - Quality control protocol (sampling frequency, analytical methods)
+  - Economic model (cost per ton processed, black mass sale price sensitivity)
+  - Yield projections by battery chemistry (NMC vs LFP vs NCA)
+
+  ## Best Practices
+
+  - Discharge batteries to 20-30% SOC (balances safety and cell preservation)
+  - Use cryogenic shredding for LFP batteries (more reactive than NMC)
+  - Implement air classification to remove graphite (increases black mass value by 30-50%)
+  - Homogenize batches (mix 10-20 tons) before sampling for ICP-OES to ensure representative analysis
+  - Store black mass in sealed containers (prevents moisture absorption, oxidation)
+  - Perform weekly XRF spot checks between monthly ICP-OES analysis (cost savings)
+  - Separate pouch cells from cylindrical cells (different shredding requirements)
+  - Establish long-term offtake agreements with hydrometallurgy recyclers (price stability)
+
+  ## Integration with Automotive Workflow
+
+  - Accept whole battery packs from OEM collection networks
+  - Provide black mass certificates of analysis (CoA) for battery passport traceability
+  - Coordinate with downstream recyclers on quality specifications
+  - Report material recovery rates for OEM EPR (Extended Producer Responsibility) compliance
+
+  '
+constraints:
+- Fire risk during shredding requires expensive safety systems
+- Black mass price volatile (follows Co/Ni/Li commodity prices)
+- Particle size control difficult (affects downstream leaching efficiency)
+- Mixed chemistry feedstock reduces black mass grade and value
+- Moisture control critical (hygroscopic, causes caking in storage)
+tools_required:
+- Hammer mill or shear shredder with ATEX certification
+- ICP-OES or XRF for elemental analysis
+- Laser diffraction particle size analyzer
+- Moisture analyzer (loss on drying oven)
+- Density separator or air classifier
+- Off-gas treatment (thermal oxidizer or scrubber)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: intermediate
+tags:
+- battery-lifecycle
+- recycling
+- black-mass
+- shredding
+- mechanical-processing
+- automotive

@@ -1,0 +1,749 @@
+---
+name: vehicle-to-cloud-sync
+version: 1.0.0
+description: Vehicle-to-cloud data synchronization for automotive Kubernetes edge clusters
+category: kubernetes
+subcategory: edge
+tags: [vehicle, cloud, sync, edge, telemetry, offline, automotive]
+
+instructions: |
+  ## Vehicle-to-Cloud Data Synchronization
+
+  ### Overview
+
+  Vehicle-to-cloud sync handles bidirectional data exchange between edge
+  Kubernetes clusters running on vehicles and central cloud clusters. The
+  primary challenge is intermittent connectivity — vehicles go through tunnels,
+  parking garages, and areas with no coverage. The sync system must buffer
+  data locally, prioritize uploads, and reconcile state when connectivity
+  returns.
+
+  ### Data Flow Architecture
+
+  ```
+  Vehicle (K3s)                           Cloud (K8s)
+  ┌─────────────────────┐               ┌─────────────────────┐
+  │ ┌───────────────┐   │               │ ┌───────────────┐   │
+  │ │ Telemetry     │───┼──── push ────►│ │ Telemetry     │   │
+  │ │ Collector     │   │               │ │ Ingestor      │   │
+  │ └───────────────┘   │               │ └───────────────┘   │
+  │ ┌───────────────┐   │               │ ┌───────────────┐   │
+  │ │ Local Buffer  │   │  offline      │ │ Config        │   │
+  │ │ (PV/SQLite)   │   │  buffering    │ │ Server        │   │
+  │ └───────────────┘   │               │ └───────┬───────┘   │
+  │ ┌───────────────┐   │               │         │           │
+  │ │ Config        │◄──┼──── pull ─────┼─────────┘           │
+  │ │ Agent         │   │               │ ┌───────────────┐   │
+  │ └───────────────┘   │               │ │ OTA Package   │   │
+  │ ┌───────────────┐   │               │ │ Repository    │   │
+  │ │ OTA Agent     │◄──┼──── pull ─────┼─┘               │   │
+  │ └───────────────┘   │               └─────────────────────┘
+  └─────────────────────┘
+  ```
+
+  ### Sync Modes
+
+  | Mode | Direction | Use Case |
+  |------|-----------|----------|
+  | Push | Vehicle → Cloud | Telemetry, logs, diagnostics data |
+  | Pull | Cloud → Vehicle | Configuration updates, OTA packages |
+  | Bidirectional | Both | State reconciliation, command/response |
+
+  ### Data Types and Priorities
+
+  | Data Type | Priority | Buffering | Compression | Frequency |
+  |-----------|----------|-----------|-------------|-----------|
+  | Safety alerts | Critical | No drop | None | Event-driven |
+  | DTC reports | High | 7 days | gzip | On occurrence |
+  | Telemetry | Medium | 24 hours | zstd | 1-10 Hz |
+  | Logs | Low | 12 hours | zstd | Continuous |
+  | Camera/LIDAR | Bulk | 4 hours | H.264/Draco | On trigger |
+
+  ### Offline Buffering Strategy
+
+  When connectivity is lost, data is buffered locally:
+
+  ```
+  Buffer Strategy:
+  1. Write to local persistent volume (SQLite or embedded DB)
+  2. Apply retention policy per data type
+  3. When buffer fills, drop lowest-priority data first
+  4. On reconnect, sync in priority order (safety first)
+  5. Use sequence numbers for exactly-once delivery
+  6. Compress before transmission to reduce bandwidth
+  ```
+
+  Buffer sizing example for a typical vehicle:
+  - 4GB allocated for telemetry buffer
+  - At 1KB/sec average telemetry rate = ~46 hours of buffering
+  - Safety events use reserved partition (never dropped)
+
+  ### Connectivity-Aware Sync
+
+  The sync agent monitors network state and adapts:
+  - **Connected (LTE/5G)**: Real-time streaming of all priority levels
+  - **Connected (WiFi)**: Bulk upload of buffered data + large payloads
+  - **Degraded**: Safety-critical only, batch medium-priority
+  - **Disconnected**: Buffer all data locally, apply retention policies
+
+  ### Data Serialization
+
+  | Format | Size | Speed | Use Case |
+  |--------|------|-------|----------|
+  | Protobuf | Small | Fast | Telemetry, structured data |
+  | Avro | Small | Fast | Schema-evolving data |
+  | JSON | Large | Moderate | Configuration, human-readable |
+  | CBOR | Small | Fast | IoT constrained devices |
+  | Parquet | Columnar | Batch | Analytics bulk upload |
+
+  ### Cloud Ingestion
+
+  The cloud side must handle burst uploads from thousands of vehicles
+  reconnecting simultaneously:
+  - Use message queues (Kafka, NATS) to decouple ingestion from processing
+  - Auto-scale ingestors based on message backlog
+  - Implement backpressure to prevent overwhelming the cloud tier
+  - Deduplicate messages using vehicle ID + sequence number
+
+  ### Best Practices
+
+  - Design for offline-first: the vehicle must function without cloud connectivity
+  - Use idempotent message delivery with sequence numbers
+  - Compress data before transmission (zstd offers good ratio at low CPU)
+  - Prioritize safety-critical data; drop bulk data under pressure
+  - Implement exponential backoff for reconnection attempts
+  - Use mutual TLS for vehicle-to-cloud authentication
+  - Monitor sync lag per vehicle in the fleet management dashboard
+  - Test with realistic connectivity profiles (urban, rural, highway, parking)
+
+metadata:
+  author: Edge Computing Specialist
+  created: 2026-03-19
+  stability: stable
+  prerequisites:
+    - K3s running on vehicle
+    - Cloud Kubernetes cluster accessible
+    - Network connectivity (intermittent OK)
+  use_cases:
+    - Telemetry data synchronization
+    - Configuration updates
+    - OTA package distribution
+    - Log aggregation
+    - Metrics collection
+
+parameters:
+  sync_mode:
+    type: enum
+    description: Synchronization mode
+    values: [push, pull, bidirectional]
+    default: bidirectional
+    required: true
+
+  vehicle_id:
+    type: string
+    description: Unique vehicle identifier (VIN)
+    required: true
+    pattern: "^[A-HJ-NPR-Z0-9]{17}$"
+
+  cloud_endpoint:
+    type: string
+    description: Cloud API endpoint
+    required: true
+    example: https://api.automotive.example.com
+
+  sync_interval:
+    type: string
+    description: Sync interval when online
+    default: 5m
+
+  batch_size:
+    type: integer
+    description: Number of records per sync batch
+    default: 1000
+    minimum: 100
+    maximum: 10000
+
+  compression_enabled:
+    type: boolean
+    description: Enable data compression
+    default: true
+
+  encryption_enabled:
+    type: boolean
+    description: Enable end-to-end encryption
+    default: true
+
+  offline_buffer_size:
+    type: string
+    description: Maximum offline buffer size
+    default: 10Gi
+
+  prioritization_enabled:
+    type: boolean
+    description: Enable data prioritization
+    default: true
+
+  retry_policy:
+    type: object
+    description: Retry policy for failed syncs
+    properties:
+      max_retries:
+        type: integer
+        default: 3
+      backoff_multiplier:
+        type: number
+        default: 2.0
+      max_backoff:
+        type: string
+        default: 1h
+
+steps:
+  - id: deploy_sync_agent
+    name: Deploy vehicle-to-cloud sync agent
+    type: deployment
+    commands:
+      - name: Create sync agent namespace
+        command: |
+          kubectl create namespace vehicle-sync --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create sync configuration
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: sync-config
+            namespace: vehicle-sync
+          data:
+            config.yaml: |
+              vehicle:
+                id: {{vehicle_id}}
+                type: passenger
+                model: automotive-ev-2024
+
+              cloud:
+                endpoint: {{cloud_endpoint}}
+                timeout: 30s
+                tls_verify: true
+
+              sync:
+                mode: {{sync_mode}}
+                interval: {{sync_interval}}
+                batch_size: {{batch_size}}
+                compression: {{compression_enabled}}
+                encryption: {{encryption_enabled}}
+
+              offline:
+                buffer_size: {{offline_buffer_size}}
+                persistence_path: /data/offline-buffer
+                max_age: 7d
+
+              data_types:
+                telemetry:
+                  enabled: true
+                  priority: high
+                  fields:
+                    - vehicle_speed
+                    - battery_soc
+                    - battery_temperature
+                    - gps_location
+                    - adas_events
+
+                logs:
+                  enabled: true
+                  priority: medium
+                  level: info
+                  max_size: 100MB
+
+                metrics:
+                  enabled: true
+                  priority: low
+                  aggregation: 1m
+
+                diagnostics:
+                  enabled: true
+                  priority: critical
+                  on_demand: true
+
+              prioritization:
+                enabled: {{prioritization_enabled}}
+                rules:
+                  - name: safety_critical
+                    condition: event_type == "safety"
+                    priority: 10
+                  - name: battery_critical
+                    condition: battery_soc < 10
+                    priority: 9
+                  - name: error_logs
+                    condition: log_level == "error"
+                    priority: 8
+
+              retry:
+                max_retries: {{retry_policy.max_retries}}
+                backoff_multiplier: {{retry_policy.backoff_multiplier}}
+                max_backoff: {{retry_policy.max_backoff}}
+          EOF
+
+      - name: Deploy sync agent
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: vehicle-sync-agent
+            namespace: vehicle-sync
+            labels:
+              app: vehicle-sync-agent
+              vehicle-id: {{vehicle_id}}
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: vehicle-sync-agent
+            template:
+              metadata:
+                labels:
+                  app: vehicle-sync-agent
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: "9090"
+              spec:
+                serviceAccountName: vehicle-sync-agent
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  fsGroup: 1000
+
+                containers:
+                - name: sync-agent
+                  image: automotive/vehicle-sync-agent:latest
+                  imagePullPolicy: IfNotPresent
+
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                      - ALL
+                    readOnlyRootFilesystem: true
+
+                  env:
+                  - name: VEHICLE_ID
+                    value: "{{vehicle_id}}"
+                  - name: CLOUD_ENDPOINT
+                    valueFrom:
+                      configMapKeyRef:
+                        name: sync-config
+                        key: cloud.endpoint
+                  - name: LOG_LEVEL
+                    value: info
+
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 256Mi
+                    limits:
+                      cpu: 500m
+                      memory: 1Gi
+
+                  volumeMounts:
+                  - name: config
+                    mountPath: /etc/sync
+                    readOnly: true
+                  - name: data
+                    mountPath: /data
+                  - name: tmp
+                    mountPath: /tmp
+
+                  livenessProbe:
+                    httpGet:
+                      path: /health
+                      port: 8080
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+
+                  readinessProbe:
+                    httpGet:
+                      path: /ready
+                      port: 8080
+                    initialDelaySeconds: 10
+                    periodSeconds: 5
+
+                volumes:
+                - name: config
+                  configMap:
+                    name: sync-config
+                - name: data
+                  persistentVolumeClaim:
+                    claimName: sync-data-pvc
+                - name: tmp
+                  emptyDir: {}
+
+                nodeSelector:
+                  node-role.kubernetes.io/master: "true"
+
+                tolerations:
+                - key: node-role.kubernetes.io/master
+                  operator: Exists
+                  effect: NoSchedule
+          ---
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: vehicle-sync-agent
+            namespace: vehicle-sync
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: sync-data-pvc
+            namespace: vehicle-sync
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: {{offline_buffer_size}}
+            storageClassName: local-path
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: vehicle-sync-agent
+            namespace: vehicle-sync
+          spec:
+            selector:
+              app: vehicle-sync-agent
+            ports:
+            - name: http
+              port: 8080
+              targetPort: 8080
+            - name: metrics
+              port: 9090
+              targetPort: 9090
+          EOF
+
+  - id: configure_data_collectors
+    name: Configure data collectors
+    type: configuration
+    commands:
+      - name: Deploy telemetry collector
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: apps/v1
+          kind: DaemonSet
+          metadata:
+            name: telemetry-collector
+            namespace: vehicle-sync
+          spec:
+            selector:
+              matchLabels:
+                app: telemetry-collector
+            template:
+              metadata:
+                labels:
+                  app: telemetry-collector
+              spec:
+                hostNetwork: true
+                hostPID: true
+                containers:
+                - name: collector
+                  image: automotive/telemetry-collector:latest
+                  securityContext:
+                    privileged: true
+                  env:
+                  - name: VEHICLE_ID
+                    value: "{{vehicle_id}}"
+                  - name: COLLECTION_INTERVAL
+                    value: "1s"
+                  - name: BUFFER_ENDPOINT
+                    value: "http://vehicle-sync-agent:8080/ingest"
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 128Mi
+                    limits:
+                      cpu: 200m
+                      memory: 256Mi
+                  volumeMounts:
+                  - name: vehicle-data
+                    mountPath: /vehicle-data
+                    readOnly: true
+                volumes:
+                - name: vehicle-data
+                  hostPath:
+                    path: /var/vehicle/data
+          EOF
+
+      - name: Configure log forwarder
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: fluent-bit-config
+            namespace: vehicle-sync
+          data:
+            fluent-bit.conf: |
+              [SERVICE]
+                  Flush        5
+                  Daemon       Off
+                  Log_Level    info
+
+              [INPUT]
+                  Name              tail
+                  Path              /var/log/containers/*.log
+                  Parser            docker
+                  Tag               kube.*
+                  Refresh_Interval  5
+
+              [FILTER]
+                  Name                kubernetes
+                  Match               kube.*
+                  Kube_URL            https://kubernetes.default.svc:443
+                  Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+
+              [OUTPUT]
+                  Name   http
+                  Match  *
+                  Host   vehicle-sync-agent
+                  Port   8080
+                  URI    /ingest/logs
+                  Format json
+          ---
+          apiVersion: apps/v1
+          kind: DaemonSet
+          metadata:
+            name: fluent-bit
+            namespace: vehicle-sync
+          spec:
+            selector:
+              matchLabels:
+                app: fluent-bit
+            template:
+              metadata:
+                labels:
+                  app: fluent-bit
+              spec:
+                serviceAccountName: fluent-bit
+                containers:
+                - name: fluent-bit
+                  image: fluent/fluent-bit:latest
+                  volumeMounts:
+                  - name: config
+                    mountPath: /fluent-bit/etc/
+                  - name: varlog
+                    mountPath: /var/log
+                    readOnly: true
+                  - name: varlibdockercontainers
+                    mountPath: /var/lib/docker/containers
+                    readOnly: true
+                  resources:
+                    requests:
+                      cpu: 50m
+                      memory: 64Mi
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
+                volumes:
+                - name: config
+                  configMap:
+                    name: fluent-bit-config
+                - name: varlog
+                  hostPath:
+                    path: /var/log
+                - name: varlibdockercontainers
+                  hostPath:
+                    path: /var/lib/docker/containers
+          ---
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: fluent-bit
+            namespace: vehicle-sync
+          EOF
+
+  - id: configure_monitoring
+    name: Configure sync monitoring
+    type: configuration
+    commands:
+      - name: Create ServiceMonitor
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: vehicle-sync-agent
+            namespace: vehicle-sync
+          spec:
+            selector:
+              matchLabels:
+                app: vehicle-sync-agent
+            endpoints:
+            - port: metrics
+              interval: 30s
+          EOF
+
+      - name: Create dashboard
+        command: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: vehicle-sync-dashboard
+            namespace: vehicle-sync
+            labels:
+              grafana_dashboard: "1"
+          data:
+            dashboard.json: |
+              {
+                "dashboard": {
+                  "title": "Vehicle Sync Status",
+                  "panels": [
+                    {
+                      "title": "Sync Status",
+                      "targets": [{"expr": "vehicle_sync_status{vehicle_id='{{vehicle_id}}'}"}]
+                    },
+                    {
+                      "title": "Pending Records",
+                      "targets": [{"expr": "vehicle_sync_pending_records{vehicle_id='{{vehicle_id}}'}"}]
+                    },
+                    {
+                      "title": "Sync Errors",
+                      "targets": [{"expr": "rate(vehicle_sync_errors_total{vehicle_id='{{vehicle_id}}'}[5m])"}]
+                    }
+                  ]
+                }
+              }
+          EOF
+
+automotive_sync_patterns:
+  telemetry_streaming:
+    description: Real-time vehicle telemetry
+    data_types:
+      - Speed, acceleration
+      - Battery state (SOC, temperature, voltage)
+      - GPS location
+      - ADAS events
+    frequency: 1Hz - 10Hz
+    priority: high
+    offline_behavior: Buffer locally, sync when online
+
+  diagnostics_sync:
+    description: Diagnostic trouble codes (DTCs)
+    data_types:
+      - Error codes
+      - Component health
+      - Firmware versions
+    frequency: On-change
+    priority: critical
+    offline_behavior: Immediate sync when online
+
+  log_aggregation:
+    description: Application and system logs
+    data_types:
+      - Application logs
+      - System logs
+      - Audit logs
+    frequency: Continuous
+    priority: medium
+    offline_behavior: Compress and batch
+
+  ota_updates:
+    description: Over-the-air software updates
+    data_types:
+      - Update packages
+      - Rollback data
+      - Installation status
+    frequency: On-demand
+    priority: high
+    offline_behavior: Wait for connectivity
+
+offline_resilience:
+  buffering:
+    description: Local data buffering during offline periods
+    implementation: |
+      - Use persistent storage (PVC)
+      - Implement circular buffer
+      - Prioritize safety-critical data
+      - Compress historical data
+      - Monitor buffer utilization
+
+  synchronization:
+    description: Sync when connectivity restored
+    strategy: |
+      1. Detect online status
+      2. Authenticate with cloud
+      3. Sync high-priority data first
+      4. Batch sync remaining data
+      5. Verify sync completion
+      6. Clean up synced data
+
+  conflict_resolution:
+    description: Handle configuration conflicts
+    rules: |
+      - Cloud wins for configuration
+      - Vehicle wins for telemetry
+      - Timestamp-based for bidirectional
+      - Manual resolution for critical
+
+security:
+  authentication:
+    - Vehicle certificate-based auth
+    - Mutual TLS
+    - Token refresh
+
+  encryption:
+    - End-to-end encryption
+    - TLS 1.3 in-transit
+    - AES-256 at-rest
+
+  authorization:
+    - RBAC for cloud API
+    - Vehicle-specific permissions
+    - Data access controls
+
+monitoring_metrics:
+  - vehicle_sync_status (0=offline, 1=online, 2=syncing)
+  - vehicle_sync_pending_records
+  - vehicle_sync_bytes_transmitted
+  - vehicle_sync_bytes_received
+  - vehicle_sync_errors_total
+  - vehicle_sync_duration_seconds
+  - vehicle_offline_buffer_usage_bytes
+
+best_practices:
+  - Implement exponential backoff
+  - Prioritize safety-critical data
+  - Compress large payloads
+  - Monitor sync health
+  - Test offline scenarios
+  - Implement circuit breakers
+  - Use connection pooling
+  - Log sync activities
+
+related_skills:
+  - k3s-edge-deployment
+  - edge-fleet-management
+  - offline-capable-deployments
+  - k8s-monitoring-setup
+
+examples:
+  - name: Configure bidirectional sync
+    command: |
+      vehicle-to-cloud-sync \
+        --sync-mode=bidirectional \
+        --vehicle-id=1HGBH41JXMN109186 \
+        --cloud-endpoint=https://api.automotive.example.com \
+        --sync-interval=5m \
+        --compression-enabled=true \
+        --encryption-enabled=true
+
+  - name: High-frequency telemetry sync
+    command: |
+      vehicle-to-cloud-sync \
+        --sync-mode=push \
+        --vehicle-id=1HGBH41JXMN109186 \
+        --sync-interval=10s \
+        --batch-size=5000 \
+        --prioritization-enabled=true

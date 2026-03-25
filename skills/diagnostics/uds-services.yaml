@@ -1,0 +1,488 @@
+---
+name: uds-services
+category: diagnostics
+description: Comprehensive UDS ISO 14229 service implementation skills
+
+instructions: |
+  ## UDS Service Implementation Guide — ISO 14229-1
+
+  ### Overview
+
+  This skill covers the implementation of all major UDS diagnostic services for both
+  client (tester) and server (ECU) sides. UDS services are grouped by function:
+  diagnostic management, data transmission, stored data, I/O control, routine
+  execution, upload/download, and communication management.
+
+  ### Service Categories
+
+  ```
+  Diagnostic Management:     0x10, 0x11, 0x27, 0x28, 0x3E, 0x83, 0x84, 0x85, 0x86, 0x87
+  Data Transmission:         0x22, 0x23, 0x24, 0x2A, 0x2C, 0x2E, 0x3D
+  Stored Data Transmission:  0x14, 0x19
+  I/O Control:               0x2F
+  Routine Execution:         0x31
+  Upload/Download:           0x34, 0x35, 0x36, 0x37, 0x38
+  ```
+
+  ### Request/Response Protocol
+
+  Every UDS service follows a consistent message pattern:
+
+  ```
+  Positive Request:   [SID] [Sub-function | Parameters...]
+  Positive Response:  [SID + 0x40] [Sub-function echo | Response data...]
+  Negative Response:  [0x7F] [SID] [NRC]
+  ```
+
+  Sub-function byte bit 7 (suppressPosRspMsgIndicationBit):
+  - 0 = ECU sends positive response
+  - 1 = ECU suppresses positive response (reduces bus load)
+
+  ### Session and Security State Machine
+
+  ```
+  ┌──────────────┐   0x10(0x01)   ┌──────────────┐
+  │   Default    │◄──────────────│  Extended     │
+  │   Session    │───────────────►│  Session      │
+  │  (0x01)      │   0x10(0x03)   │  (0x03)      │
+  └──────┬───────┘                └──────┬───────┘
+         │ 0x10(0x02)                     │ 0x10(0x02)
+         ▼                               ▼
+  ┌──────────────┐                ┌──────────────┐
+  │ Programming  │                │ Programming  │
+  │ Session      │                │ Session      │
+  │ (0x02)       │                │ (0x02)       │
+  └──────────────┘                └──────────────┘
+
+  Security Access Levels:
+  Level 1 (0x01/0x02): Basic diagnostic access
+  Level 2 (0x03/0x04): Extended access (calibration)
+  Level 3 (0x05/0x06): Programming access (flash)
+  ```
+
+  ### Timing Management
+
+  Proper timeout handling is critical for reliable UDS communication:
+
+  | Parameter | Description | Typical Value |
+  |-----------|-------------|---------------|
+  | P2Server | ECU response timeout | 50ms |
+  | P2*Server | Extended timeout (after NRC 0x78) | 5000ms |
+  | S3Server | Session timeout (needs TesterPresent) | 5000ms |
+  | P2Client | Tester inter-request gap | 50ms |
+
+  Implementation pattern:
+  ```python
+  def send_uds_request(request, p2_timeout, p2star_timeout):
+      send(request)
+      while True:
+          response = receive(timeout=p2_timeout)
+          if response is None:
+              raise TimeoutError("No response within P2")
+          if response[0] == 0x7F and response[2] == 0x78:
+              # ResponsePending - wait with extended timeout
+              p2_timeout = p2star_timeout
+              continue
+          return response
+  ```
+
+  ### Data Identifier (DID) Ranges
+
+  | Range | Assigned To |
+  |-------|-------------|
+  | 0x0000-0x00FF | ISO 14229 reserved |
+  | 0x0100-0xA5FF | Vehicle manufacturer specific |
+  | 0xA600-0xA7FF | Reserved |
+  | 0xA800-0xACFF | Reserved |
+  | 0xF000-0xF0FF | Network configuration |
+  | 0xF100-0xF1FF | Identification (VIN, ECU serial, SW version) |
+  | 0xF200-0xF2FF | Periodic DIDs |
+  | 0xF300-0xF3FF | Dynamically defined DIDs |
+
+  ### Flash Programming Sequence (0x34/0x36/0x37)
+
+  The download sequence is stateful and must follow this exact order:
+  1. RequestDownload (0x34) — opens download, returns max block length
+  2. TransferData (0x36) — send N data blocks with incrementing counter
+  3. RequestTransferExit (0x37) — close download, triggers ECU validation
+
+  Block sequence counter: starts at 0x01, increments per block, wraps 0xFF->0x00
+
+  ### Implementation Checklist
+
+  For each UDS service implementation, verify:
+  - [ ] Correct session requirement enforced
+  - [ ] Security access level checked
+  - [ ] Sub-function validation (supported values)
+  - [ ] Message length validation
+  - [ ] Proper NRC returned for each error case
+  - [ ] Timing parameters respected (P2, P2*, S3)
+  - [ ] Thread safety for concurrent requests
+  - [ ] Logging of all request/response pairs
+
+  ### Best Practices
+
+  - Use a state machine to track session, security, and communication state
+  - Implement a generic UDS client class with per-service method wrappers
+  - Cache frequently used DID values to reduce bus traffic
+  - Use background TesterPresent thread for session keep-alive
+  - Validate all parameters against ODX before sending requests
+  - Handle multi-frame ISO-TP transparently in transport layer
+  - Test with both positive and negative response scenarios
+
+skills:
+  - name: uds_service_0x10_session_control
+    description: DiagnosticSessionControl implementation
+    task: |
+      Implement 0x10 service:
+      1. Support session types: 01-default, 02-programming, 03-extended
+      2. Parse response for P2ServerMax and P2*ServerMax timing
+      3. Handle session timeout with S3Server timer
+      4. Implement automatic TesterPresent if needed
+      5. Log session state transitions
+    tools:
+      - python_uds_adapter
+    validation:
+      - All session types supported
+      - Timing parameters extracted correctly
+      - Session state tracked
+
+  - name: uds_service_0x11_ecu_reset
+    description: ECUReset implementation
+    task: |
+      Implement 0x11 service:
+      1. Support reset types: 01-hardReset, 02-keyOffOnReset, 03-softReset
+      2. Handle powerDownTime parameter in response
+      3. Wait for ECU to reboot (typically 5-10 seconds)
+      4. Re-establish communication after reset
+      5. Verify ECU online with TesterPresent
+    tools:
+      - python_uds_adapter
+    validation:
+      - Reset executed successfully
+      - ECU comes back online
+      - Communication re-established
+
+  - name: uds_service_0x14_clear_dtc
+    description: ClearDiagnosticInformation implementation
+    task: |
+      Implement 0x14 service:
+      1. Support group of DTC clearing (0xFFFFFF for all)
+      2. Verify positive response 0x54
+      3. Handle negative responses (conditions not correct)
+      4. Optionally verify DTCs cleared with 0x19
+      5. Log clearing operation with timestamp
+    tools:
+      - python_uds_adapter
+    validation:
+      - DTCs cleared successfully
+      - Verification confirms clearing
+      - Operation logged
+
+  - name: uds_service_0x19_read_dtc
+    description: ReadDTCInformation implementation
+    task: |
+      Implement 0x19 service with sub-functions:
+      1. 0x01: reportNumberOfDTCByStatusMask
+      2. 0x02: reportDTCByStatusMask
+      3. 0x04: reportDTCSnapshotRecordByDTCNumber
+      4. 0x06: reportDTCExtDataRecordByDTCNumber
+      5. 0x0A: reportSupportedDTC
+      Parse DTC format: 3 bytes DTC + 1 byte status
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - All sub-functions implemented
+      - DTCs parsed correctly
+      - Status bytes decoded
+
+  - name: uds_service_0x22_read_did
+    description: ReadDataByIdentifier implementation
+    task: |
+      Implement 0x22 service:
+      1. Support multiple DIDs in single request
+      2. Parse response matching DID to data
+      3. Apply ODX scaling to raw values
+      4. Handle variable-length responses
+      5. Cache frequently read DIDs for performance
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Multiple DIDs supported
+      - Data parsed and scaled correctly
+      - Caching improves performance
+
+  - name: uds_service_0x23_read_memory
+    description: ReadMemoryByAddress implementation
+    task: |
+      Implement 0x23 service:
+      1. Encode address and length with format identifier
+      2. Support 2, 3, 4 byte addresses
+      3. Handle security access requirements
+      4. Parse memory content from response
+      5. Validate response length matches request
+    tools:
+      - python_uds_adapter
+    validation:
+      - Memory read successfully
+      - Address formats supported
+      - Security enforced
+
+  - name: uds_service_0x27_security_access
+    description: SecurityAccess implementation
+    task: |
+      Implement 0x27 service:
+      1. RequestSeed (odd sub-function): receive seed from ECU
+      2. Apply seed-key algorithm (vendor-specific)
+      3. SendKey (even sub-function): send calculated key
+      4. Handle access level (0x01/0x02, 0x03/0x04, etc.)
+      5. Track security state (locked/unlocked)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Seed received correctly
+      - Key algorithm applied
+      - Access granted on correct key
+
+  - name: uds_service_0x28_communication_control
+    description: CommunicationControl implementation
+    task: |
+      Implement 0x28 service:
+      1. Support control types: 00-enableRxAndTx, 01-enableRxAndDisableTx, etc.
+      2. Specify communication type (normal, NM, NM and normal)
+      3. Apply to specific subnet or all subnets
+      4. Track communication state
+      5. Restore communication after operations
+    tools:
+      - python_uds_adapter
+    validation:
+      - Communication controlled successfully
+      - State tracked accurately
+      - Restoration works
+
+  - name: uds_service_0x2e_write_did
+    description: WriteDataByIdentifier implementation
+    task: |
+      Implement 0x2E service:
+      1. Apply ODX scaling to input values (reverse scaling)
+      2. Encode data per DID specification
+      3. Verify security access if required
+      4. Send write request and verify positive response
+      5. Optionally read back to confirm
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Data encoded correctly
+      - Write successful
+      - Read-back matches (if enabled)
+
+  - name: uds_service_0x2f_io_control
+    description: InputOutputControlByIdentifier implementation
+    task: |
+      Implement 0x2F service:
+      1. Support control parameters: returnControlToECU, resetToDefault, etc.
+      2. Provide control option record (setpoint, duty cycle, etc.)
+      3. Monitor control effect with 0x22 ReadDataByIdentifier
+      4. Implement timeout to auto-return control
+      5. Ensure safe defaults on error
+    tools:
+      - python_uds_adapter
+    validation:
+      - Control applied successfully
+      - Monitoring shows effect
+      - Auto-return on timeout works
+
+  - name: uds_service_0x31_routine_control
+    description: RoutineControl implementation
+    task: |
+      Implement 0x31 service:
+      1. Start routine (sub-function 0x01) with routine ID
+      2. Stop routine (sub-function 0x02) if long-running
+      3. Request results (sub-function 0x03) for status and data
+      4. Parse routine-specific result format from ODX
+      5. Handle asynchronous routines with polling
+    tools:
+      - python_uds_adapter
+      - odxtools_adapter
+    validation:
+      - Routines started and stopped correctly
+      - Results parsed accurately
+      - Async routines handled
+
+  - name: uds_service_0x34_request_download
+    description: RequestDownload implementation for flash programming
+    task: |
+      Implement 0x34 service:
+      1. Specify memory address and uncompressed size
+      2. Include dataFormatIdentifier (compression, encryption)
+      3. Parse maxNumberOfBlockLength from response
+      4. Validate address range against ECU memory map
+      5. Prepare for TransferData sequence
+    tools:
+      - python_uds_adapter
+    validation:
+      - Download requested successfully
+      - Block length extracted
+      - Address range valid
+
+  - name: uds_service_0x35_request_upload
+    description: RequestUpload implementation for memory reading
+    task: |
+      Implement 0x35 service:
+      1. Specify memory address and size to upload
+      2. Include dataFormatIdentifier if needed
+      3. Parse maxNumberOfBlockLength from response
+      4. Prepare to receive data via TransferData (0x36)
+      5. Validate uploaded data integrity
+    tools:
+      - python_uds_adapter
+    validation:
+      - Upload requested successfully
+      - Block length extracted
+      - Data integrity verified
+
+  - name: uds_service_0x36_transfer_data
+    description: TransferData implementation
+    task: |
+      Implement 0x36 service:
+      1. Manage block sequence counter (1-255, wraps to 0)
+      2. Split data into blocks per maxNumberOfBlockLength
+      3. Send each block with incremented counter
+      4. Handle NRC 0x78 (ResponsePending) gracefully
+      5. Track transfer progress (bytes, percentage)
+    tools:
+      - python_uds_adapter
+    validation:
+      - All blocks transferred successfully
+      - Sequence counter managed correctly
+      - Progress tracked accurately
+
+  - name: uds_service_0x37_transfer_exit
+    description: RequestTransferExit implementation
+    task: |
+      Implement 0x37 service:
+      1. Send after final TransferData block
+      2. Wait for ECU to process transferred data
+      3. Parse response for completion status
+      4. Handle ECU checksum validation result
+      5. Log transfer statistics (time, speed, bytes)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Exit acknowledged by ECU
+      - Checksum validation passed
+      - Statistics logged
+
+  - name: uds_service_0x3d_write_memory
+    description: WriteMemoryByAddress implementation
+    task: |
+      Implement 0x3D service:
+      1. Encode memory address with format identifier
+      2. Include data to write
+      3. Verify security access granted
+      4. Send write request
+      5. Optionally read back to verify
+    tools:
+      - python_uds_adapter
+    validation:
+      - Memory written successfully
+      - Security access enforced
+      - Verification confirms write
+
+  - name: uds_service_0x3e_tester_present
+    description: TesterPresent implementation
+    task: |
+      Implement 0x3E service:
+      1. Send with sub-function 0x00
+      2. Optionally suppress positive response (0x80 bit)
+      3. Implement periodic sending (every 2 seconds)
+      4. Use threading or async for background operation
+      5. Handle missed responses (session timeout detection)
+    tools:
+      - python_uds_adapter
+    validation:
+      - Periodic sending active
+      - Session maintained
+      - Timeout detection works
+
+  - name: uds_service_0x85_dtc_control
+    description: ControlDTCSettings implementation
+    task: |
+      Implement 0x85 service:
+      1. Support DTC setting types: 01-on, 02-off
+      2. Track DTC setting state
+      3. Auto-restore DTC setting on session end
+      4. Verify state with dedicated flag
+      5. Log DTC setting changes
+    tools:
+      - python_uds_adapter
+    validation:
+      - DTC setting controlled
+      - State tracked correctly
+      - Auto-restore works
+
+  - name: uds_negative_response_handling
+    description: Handle UDS negative responses
+    task: |
+      Comprehensive NRC handling:
+      1. Parse 0x7F response: service ID + NRC
+      2. Decode NRC meanings (0x11-serviceNotSupported, 0x13-incorrectMessageLength, etc.)
+      3. Implement retry logic for transient NRCs (0x21, 0x78)
+      4. Abort on fatal NRCs (0x33-securityAccessDenied)
+      5. Log all NRCs with context
+    tools:
+      - python_uds_adapter
+    validation:
+      - All NRCs decoded correctly
+      - Retry logic appropriate
+      - Fatal errors abort cleanly
+
+  - name: uds_timing_management
+    description: Manage UDS timing parameters
+    task: |
+      UDS timing implementation:
+      1. Track P2Client (tester request timeout, typically 50ms)
+      2. Track P2Server (ECU response timeout, from 0x10 response)
+      3. Handle P2*Server for long operations (extended timeout)
+      4. Implement S3Client (session keep-alive, typically 5s)
+      5. Adjust timeouts dynamically per session type
+    tools:
+      - python_uds_adapter
+    validation:
+      - Timeouts enforced correctly
+      - P2* extended timeout handled
+      - S3 keep-alive maintains session
+
+metadata:
+  version: 1.0.0
+  author: Implementation Agent #8
+  created: 2026-03-19
+  total_skills: 20
+  standard: ISO 14229-1:2020 (UDS)
+  services_implemented:
+    - 0x10: DiagnosticSessionControl
+    - 0x11: ECUReset
+    - 0x14: ClearDiagnosticInformation
+    - 0x19: ReadDTCInformation
+    - 0x22: ReadDataByIdentifier
+    - 0x23: ReadMemoryByAddress
+    - 0x27: SecurityAccess
+    - 0x28: CommunicationControl
+    - 0x2E: WriteDataByIdentifier
+    - 0x2F: InputOutputControlByIdentifier
+    - 0x31: RoutineControl
+    - 0x34: RequestDownload
+    - 0x35: RequestUpload
+    - 0x36: TransferData
+    - 0x37: RequestTransferExit
+    - 0x3D: WriteMemoryByAddress
+    - 0x3E: TesterPresent
+    - 0x85: ControlDTCSettings
+  timing_parameters:
+    - P2Client: Tester timeout
+    - P2Server: ECU response timeout
+    - P2*Server: Extended timeout
+    - S3Client: Session timeout

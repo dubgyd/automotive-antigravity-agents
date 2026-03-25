@@ -1,0 +1,159 @@
+name: ip-management
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: ip_management
+description: Patent strategy, freedom-to-operate analysis, licensing models, trade secret protection
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Intellectual property management in automotive has become a strategic imperative as vehicles evolve
+  from primarily mechanical products to software-defined platforms. The shift to EVs, ADAS, and connected
+  services creates new IP battlegrounds in battery chemistry, autonomous driving algorithms, V2X protocols,
+  and vehicle operating systems. OEMs must navigate patent thickets from tech companies entering automotive,
+  protect their own innovations, manage open-source software compliance, and structure IP rights in
+  collaborative development with suppliers and partners. This skill covers patent strategy, freedom-to-
+  operate analysis, licensing models, trade secret protection, and IP governance for automotive companies.
+
+  ## Key Concepts
+
+  ### IP Categories in Automotive
+  - **Patents**: Utility patents for technical inventions (20-year protection), design patents for appearance
+  - **Trade secrets**: Manufacturing processes, calibration data, algorithms, supplier pricing (indefinite)
+  - **Copyright**: Software source code, documentation, training materials, design drawings
+  - **Trademarks**: Brand names, logos, model names, sound marks, design language elements
+  - **Trade dress**: Distinctive vehicle design elements (grille shapes, light signatures)
+  - **Standard Essential Patents (SEPs)**: Patents essential to industry standards (V2X, cellular, WiFi)
+
+  ### Emerging IP Battlegrounds
+  - **Battery technology**: Cell chemistry, pack design, BMS algorithms, thermal management, recycling
+  - **Autonomous driving**: Perception algorithms, sensor fusion, planning, HD mapping, simulation
+  - **Vehicle software platform**: Operating systems, middleware, API frameworks, app ecosystems
+  - **Connectivity**: V2X communication, OTA update mechanisms, cloud-vehicle protocols
+  - **Manufacturing innovation**: Gigacasting, dry electrode coating, solid-state battery production
+  - **AI/ML models**: Training data rights, model architectures, inference optimization
+
+  ### IP Valuation Methods
+  - **Cost approach**: Reproduction or replacement cost of developing the technology
+  - **Market approach**: Comparable licensing transactions for similar automotive IP
+  - **Income approach**: Discounted future cash flows attributable to the IP (royalty savings, profit split)
+  - **Relief from royalty**: Value based on hypothetical license fee the owner avoids paying
+  - **Real options**: Value of strategic flexibility provided by owning key technology patents
+
+  ## Implementation Guide
+
+  ### Step 1: IP Audit and Portfolio Assessment
+  - Inventory all IP assets: patents (granted and pending), trade secrets, copyrights, trademarks
+  - Assess portfolio strength: geographic coverage, remaining life, claim breadth, citation metrics
+  - Map IP portfolio to business units, product lines, and technology domains
+  - Identify gaps where critical technologies lack IP protection
+
+  ### Step 2: Freedom-to-Operate (FTO) Analysis
+  - Conduct FTO searches for all new vehicle programs and major technology introductions
+  - Identify blocking patents and assess infringement risk with claim-by-claim analysis
+  - Develop risk mitigation strategies: design around, license, challenge validity, cross-license
+  - Establish ongoing patent watch service for key technology areas and competitor filing activity
+
+  ### Step 3: IP Strategy Alignment with Business Strategy
+  - Define IP objectives by technology domain: protect, license, cross-license, open-source, abandon
+  - Develop patent filing strategy with prioritized invention disclosures and geographic coverage
+  - Create licensing program for monetizable IP and negotiate cross-license agreements
+  - Establish IP governance committee with R&D, legal, and business representation
+
+  ### Step 4: IP Protection in Collaborations
+  - Define IP ownership and licensing terms in all supplier, JV, and partnership agreements upfront
+  - Implement information barriers and clean-room procedures for sensitive collaborations
+  - Establish trade secret protection program: access controls, NDAs, exit procedures, classification
+  - Create open-source compliance program for vehicle software development
+
+  ## Decision Frameworks
+
+  ### Patent vs. Trade Secret Decision
+  | Factor | Patent | Trade Secret |
+  |--------|--------|-------------|
+  | Reverse-engineerable | Yes -- patent | No -- trade secret |
+  | Independent discovery likely | Yes -- patent first | No -- trade secret |
+  | Enforcement ability | Strong (20 years, injunction) | Weak (must prove misappropriation) |
+  | Disclosure willingness | Must disclose | Keep confidential |
+  | Duration needed | <20 years | Indefinite |
+  | Cost | High (filing, prosecution, maintenance) | Low (process controls) |
+
+  ### IP Licensing Strategy Options
+  - **Defensive**: Build portfolio for cross-licensing leverage, minimize outbound royalty exposure
+  - **Offensive**: Actively license IP for revenue generation, establish licensing program
+  - **Collaborative**: Contribute to patent pools and standards bodies, FRAND licensing for SEPs
+  - **Open innovation**: Selective open-sourcing to build ecosystem, retain core differentiators
+  - **Acquisition-focused**: Buy patents and companies to fill portfolio gaps in critical areas
+
+  ### Open-Source Compliance Decision Tree
+  1. Is the component used in vehicle software? If yes, full compliance review required
+  2. What is the license type? Permissive (MIT, Apache) = low risk; Copyleft (GPL) = high scrutiny
+  3. Is the component linked or dynamically loaded? Determines copyleft obligation scope
+  4. Can license obligations be met? If no, find alternative or negotiate commercial license
+  5. Is contribution back to community required or strategically desirable?
+
+  ## Best Practices
+
+  - File patent applications before any public disclosure (conference papers, supplier discussions)
+  - Conduct FTO analysis at concept phase, not after design is frozen and changes are expensive
+  - Implement invention disclosure incentive programs to capture innovations from engineering teams
+  - Train software developers on open-source license compliance and contribution policies
+  - Include IP due diligence in all M&A, JV, and major supplier selection processes
+  - Maintain trade secret inventory with classification levels and access control documentation
+  - Monitor competitor patent filings monthly in strategic technology areas
+  - Negotiate IP provisions in supplier contracts before work begins, not during disputes
+  - Build patent portfolio quality over quantity: focus on broad claims in high-value areas
+  - Prepare for SEP licensing demands from telecom companies as vehicles become connected
+
+  ## Examples
+
+  ### Example 1: FTO Analysis for New ADAS Feature
+  An OEM plans to introduce automated lane change. FTO search identifies 45 potentially relevant patents
+  held by 12 entities including a tech company and two competitors. Claim analysis narrows to 8 high-risk
+  patents. Mitigation: design around 5 patents through alternative sensor fusion approach, negotiate
+  cross-license with one competitor using own radar patent portfolio, and take license for remaining 2
+  patents at 0.3% of ADAS module cost.
+
+  ### Example 2: Open-Source Compliance for Vehicle OS
+  An OEM adopts Linux-based vehicle OS with 2,000+ open-source components. Compliance program: deploy
+  automated scanning tools (Black Duck, FOSSA) in CI/CD pipeline, establish Open Source Review Board,
+  create component approval list with pre-cleared licenses, train 500 software engineers on compliance.
+  Identify 12 GPL-licensed components requiring architecture review to isolate copyleft obligations.
+
+  ### Example 3: IP Protection in Battery JV
+  Two OEMs form a battery cell JV. IP framework: each party licenses background IP to JV on royalty-free
+  basis for JV purposes only, foreground IP owned by JV with license-back to parents for non-competing
+  uses, improvement IP owned by improving party with FRAND license to JV, exit provisions include IP
+  buyout mechanism based on independent valuation. IP committee meets quarterly to resolve disputes.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- ip-management
+- automotive
+- oem

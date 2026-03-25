@@ -1,0 +1,154 @@
+name: competitive-benchmarking
+version: 1.0.0
+category: oem-decision-making
+domain: automotive
+subcategory: competitive_benchmarking
+description: Teardown analysis methodology, feature comparison, cost positioning strategies
+use_cases:
+- Automotive product development and integration
+- Supplier collaboration and qualification
+- Testing and validation per industry standards
+- Regulatory compliance and certification
+- Cost optimization and design-for-manufacturing
+automotive_standards:
+- ISO 9001
+- IATF 16949
+- APQP
+- PPAP
+instructions: |
+  ## Overview
+
+  Competitive benchmarking in the automotive industry is the systematic process of evaluating competitor
+  vehicles, technologies, manufacturing processes, and business strategies to identify gaps, opportunities,
+  and threats. With the convergence of electrification, autonomous driving, connectivity, and shared mobility,
+  the competitive landscape now includes traditional OEMs, EV-native startups, Chinese manufacturers, and
+  technology companies. This skill covers teardown analysis methodology, feature comparison frameworks,
+  cost positioning strategies, and competitive intelligence gathering for automotive decision-making.
+
+  ## Key Concepts
+
+  ### Vehicle Teardown Analysis
+  - **Full vehicle teardown**: Complete disassembly documenting every component, material, and manufacturing process
+  - **Targeted system teardown**: Focused analysis on specific systems (battery pack, ADAS, infotainment)
+  - **Virtual teardown**: CAD-based analysis using CT scanning, 3D modeling without physical disassembly
+  - **Costing teardown**: Bottom-up cost estimation based on materials, manufacturing, and assembly time
+  - **Teardown service providers**: A2Mac1, Munro & Associates, Caresoft Global benchmarking databases
+
+  ### Benchmarking Dimensions
+  - **Product benchmarking**: Features, specifications, performance, quality, design, user experience
+  - **Technology benchmarking**: Powertrain efficiency, ADAS capabilities, software architecture, OTA maturity
+  - **Cost benchmarking**: Bill of materials, manufacturing cost, warranty cost, total cost of ownership
+  - **Process benchmarking**: Development cycle time, manufacturing efficiency, quality metrics (PPM, FTQ)
+  - **Financial benchmarking**: Revenue per unit, EBIT margin, R&D intensity, CapEx efficiency
+  - **Customer experience benchmarking**: NPS, J.D. Power rankings, online reviews, ownership satisfaction
+
+  ### Competitive Intelligence Sources
+  - **Public filings**: Annual reports, investor presentations, SEC/regulatory filings
+  - **Patent analysis**: Patent landscapes, filing trends, technology direction indicators
+  - **Trade publications**: Automotive News, SAE papers, conference proceedings
+  - **Supplier intelligence**: Shared suppliers provide indirect competitive signals
+  - **Job postings analysis**: Hiring patterns reveal strategic technology investments
+  - **Satellite and geospatial**: Factory expansion monitoring, inventory levels, shipping patterns
+
+  ## Implementation Guide
+
+  ### Step 1: Define Benchmarking Scope and Objectives
+  - Identify specific strategic questions the benchmarking must answer (e.g., "Is our BEV competitive on TCO?")
+  - Select competitor set: direct competitors, aspirational targets, disruptive threats
+  - Define benchmarking dimensions and metrics aligned with strategic priorities
+  - Establish timeline, budget, and resource requirements for the benchmarking program
+
+  ### Step 2: Data Collection and Analysis
+  - Commission physical teardowns for critical competitor vehicles (budget 50K-200K EUR per full teardown)
+  - Subscribe to teardown databases for ongoing access to component-level competitive data
+  - Gather public financial and operational data for competitor profiling
+  - Conduct customer perception studies comparing your brand with competitors on key attributes
+
+  ### Step 3: Gap Analysis and Insight Generation
+  - Create feature-by-feature comparison matrices with weighted scoring based on customer importance
+  - Perform cost walks comparing your BOM cost to competitor estimated costs by system
+  - Map technology maturity gaps on radar charts showing your position vs. competitors
+  - Calculate customer value index: perceived value delivered per dollar of cost
+
+  ### Step 4: Strategic Response Development
+  - Translate benchmarking gaps into specific engineering targets for next product generation
+  - Develop cost reduction roadmap to close identified cost disadvantages
+  - Create technology acquisition plan for capabilities where gap cannot be closed organically
+  - Update competitive positioning strategy and product marketing based on findings
+
+  ## Decision Frameworks
+
+  ### Competitive Response Priority Matrix
+  | Gap Type | Customer Impact | Cost to Close | Priority |
+  |----------|----------------|---------------|----------|
+  | Safety/compliance | Critical | Must invest | Immediate |
+  | Core feature parity | High | Moderate | High |
+  | Differentiating feature | Medium-High | Variable | Strategic |
+  | Nice-to-have feature | Low | Low | Opportunistic |
+  | Cost disadvantage | Margin erosion | Process improvement | Continuous |
+
+  ### Technology Competitive Position Assessment
+  - **Leader (>18 months ahead)**: Maintain advantage through continuous innovation, monetize lead
+  - **Fast follower (6-18 months behind)**: Accelerate development, consider licensing or acquisition
+  - **Parity (within 6 months)**: Focus on differentiation through integration and user experience
+  - **Lagging (>18 months behind)**: Buy vs. build decision, consider strategic partnerships or JV
+
+  ### Benchmarking Frequency by Category
+  - **Real-time**: Pricing, incentives, inventory levels, online configurator features
+  - **Quarterly**: Market share, customer satisfaction scores, financial results
+  - **Annual**: Full competitive product comparison, technology roadmap assessment
+  - **Per launch**: Detailed teardown and analysis of each significant competitor launch
+
+  ## Best Practices
+
+  - Benchmark against the right competitors: include non-traditional threats (Chinese OEMs, tech companies)
+  - Use structured, repeatable methodologies to enable trend analysis across benchmarking cycles
+  - Involve cross-functional teams (engineering, purchasing, marketing, finance) in benchmarking reviews
+  - Distinguish between customer-visible features and internal process benchmarks in reporting
+  - Weight benchmarking criteria by customer importance, not engineering complexity
+  - Establish a competitive intelligence repository accessible to product planning and engineering
+  - Benchmark total cost of ownership (TCO) not just MSRP -- include insurance, energy, maintenance
+  - Track patent filing trends as leading indicators of competitor technology direction
+  - Use benchmarking insights to set aggressive but achievable targets in product specifications
+  - Update competitive sets regularly as new entrants emerge and segment boundaries shift
+
+  ## Examples
+
+  ### Example 1: EV Battery Pack Teardown Benchmarking
+  An OEM teardowns three competitor BEV battery packs (BYD Blade, Tesla 4680 structural, CATL CTP 3.0).
+  Analysis reveals competitors achieve 15-25% higher pack energy density and 20% lower $/kWh through
+  cell-to-pack designs. Findings drive engineering target to eliminate module-level packaging in next
+  generation, projected to close 80% of the cost gap within 2 model years.
+
+  ### Example 2: ADAS Feature Parity Analysis
+  Competitive benchmarking reveals that 4 of 5 direct competitors now offer highway hands-free driving.
+  Customer conjoint analysis shows this feature ranks #3 in purchase drivers for the target segment.
+  Decision: accelerate L2+ development program by 9 months, allocate additional 45M EUR R&D budget,
+  and establish partnership with perception software supplier to close the sensor fusion gap.
+
+  ### Example 3: Manufacturing Cost Benchmarking
+  Process benchmarking of a competitor's new plant reveals 18% lower labor hours per vehicle through
+  megacasting (rear underbody in single piece vs. 70+ stamped parts). Munro teardown confirms 30%
+  fewer assembly steps in the rear structure. Capital case developed for megacasting pilot line at
+  flagship plant, with breakeven at 80K units/year and full payback in 3.2 years.
+constraints:
+- Executive decision-making timelines vs market opportunities
+- Cross-functional alignment across engineering, finance, legal, marketing
+- Uncertainty in long-term technology trends and regulatory evolution
+- Balancing short-term financial performance with long-term strategic transformation
+tools_required:
+- Excel/Python (financial modeling, scenario analysis)
+- PowerBI/Tableau (KPI dashboards, data visualization)
+- MS Project/Jira (roadmap planning, task tracking)
+- SAP/Oracle (ERP for financial data)
+- Decision tree software (PrecisionTree, TreeAge)
+metadata:
+  author: Automotive Claude Code Agents
+  last_updated: '2026-03-19'
+  maturity: production
+  complexity: advanced
+tags:
+- oem-decision-making
+- competitive-benchmarking
+- automotive
+- oem

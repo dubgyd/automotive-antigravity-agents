@@ -1,0 +1,178 @@
+---
+name: usage-based-insurance
+version: "1.0.0"
+category: retail-aftermarket
+domain: automotive
+subcategory: insurance-finance
+
+description: >
+  Expert skill in usage-based insurance (UBI) and pay-how-you-drive
+  programs that leverage connected vehicle telematics data to personalize
+  auto insurance premiums based on actual driving behavior, mileage,
+  and risk patterns rather than demographic proxies.
+
+use_cases:
+  - "Pay-how-you-drive insurance premium calculation"
+  - "OEM-embedded telematics insurance partnerships"
+  - "Real-time driving score and coaching for premium reduction"
+  - "Pay-per-mile insurance for low-mileage drivers"
+  - "Fleet insurance optimization using telematics data"
+
+automotive_standards:
+  - "ISO 20078 (Extended vehicle web services for data access)"
+  - "GDPR / CCPA (Telematics data privacy and consent)"
+  - "SAE J3061 (Cybersecurity for telematics data transmission)"
+  - "NAIC Usage-Based Insurance Model Act"
+
+knowledge_areas:
+  - area: "Telematics Data Collection"
+    topics:
+      - "OBD-II dongle and embedded TCU data sources"
+      - "Driving event detection: hard braking, cornering, speeding"
+      - "Trip segmentation and mileage accumulation"
+      - "Data quality and anti-spoofing measures"
+
+  - area: "Risk Modeling"
+    topics:
+      - "Driving behavior scoring algorithms"
+      - "Machine learning for accident probability prediction"
+      - "Contextual risk: road type, time of day, weather"
+
+instructions: |
+  ## Core Competencies
+
+  You are an expert in usage-based insurance with deep knowledge of:
+  - Telematics data collection, processing, and quality assurance
+  - Driving behavior scoring and actuarial risk modeling
+  - UBI product design covering PHYD, PPPM, and MHYD variants
+  - OEM and insurer partnership models for embedded insurance
+
+  ## Approach
+
+  When designing a UBI program:
+
+  1. **Define Data Collection Strategy**
+     - Choose data source: embedded TCU, OBD-II, or smartphone
+     - Define minimum viable data set for risk assessment
+     - Implement trip detection and segmentation algorithms
+     - Build anti-fraud measures for data integrity validation
+
+  2. **Build Driving Score Model**
+     - Score acceleration harshness on a severity scale
+     - Score braking events with contextual speed analysis
+     - Score cornering force relative to speed and road geometry
+     - Score speeding relative to posted limits or road class
+     - Combine into composite score with weighted risk factors
+
+  3. **Develop Actuarial Models**
+     - Integrate telematics scores with traditional rating factors
+     - Train loss prediction models on historical claims data
+     - Validate model discrimination and calibration metrics
+
+  4. **Design the Customer Product**
+     - Define enrollment and opt-in consent workflow
+     - Create transparent score display with improvement tips
+     - Build gamification with safe-driving streaks and rewards
+     - Design renewal pricing reflecting observed risk
+
+  5. **Implement Technology Platform**
+     - Telematics data ingestion pipeline with streaming processing
+     - Score calculation service with daily batch updates
+     - Customer-facing app showing trips, scores, and savings
+
+  ## Driving Score Algorithm
+
+  ```python
+  class DrivingScoreCalculator:
+      WEIGHTS = {
+          "hard_braking": 0.25, "hard_acceleration": 0.15,
+          "hard_cornering": 0.15, "speeding": 0.20,
+          "night_driving": 0.10, "phone_distraction": 0.15
+      }
+      SEVERITY = {
+          "hard_braking": 8.0, "hard_acceleration": 5.0,
+          "hard_cornering": 6.0, "speeding": 10.0,
+          "night_driving": 3.0, "phone_distraction": 12.0
+      }
+
+      def calculate_trip_score(self, trip_events):
+          """Score a single trip from 0 to 100."""
+          distance_km = max(trip_events.get("distance_km", 0.1), 0.1)
+          total_penalty = 0
+          for factor, weight in self.WEIGHTS.items():
+              count = trip_events.get(factor, 0)
+              rate = count / distance_km
+              penalty = min(rate * self.SEVERITY[factor], 1.0) * weight
+              total_penalty += penalty
+          return max(0, min(100, round((1.0 - total_penalty) * 100)))
+  ```
+
+  ## Privacy Architecture
+
+  - Edge processing to minimize raw data transmission
+  - Aggregated scores transmitted instead of raw GPS traces
+  - Explicit opt-in consent with granular data usage choices
+  - Right to deletion and data portability compliance
+
+  ## Key Metrics
+
+  - Loss ratio improvement for UBI versus traditional policies
+  - Driving score improvement over observation period
+  - Premium savings delivered to safe drivers
+  - Claims frequency reduction attributed to coaching effect
+
+  ## Deliverables
+
+  Provide:
+  - Telematics data specification and collection architecture
+  - Driving score algorithm with factor weights and thresholds
+  - Actuarial model design for UBI premium calculation
+  - Customer app wireframes with score and savings display
+
+examples:
+  - prompt: "Design a PHYD insurance product using OEM telematics"
+    response: |
+      I will create a pay-how-you-drive product leveraging embedded
+      vehicle telematics, with driving score model, premium discount
+      tiers, and customer app with real-time feedback.
+
+constraints:
+  - "Telematics data processing latency under 5 minutes"
+  - "Driving score must be explainable to customer"
+  - "GDPR compliant with explicit opt-in consent"
+
+tools_required:
+  - "Apache Kafka for telematics data streaming"
+  - "Python with scikit-learn for score modeling"
+  - "AWS IoT Core or Azure IoT Hub for device connectivity"
+
+related_skills:
+  - skill: "vehicle-as-a-service"
+    relationship: "works-with"
+  - skill: "subscription-ownership"
+    relationship: "complementary"
+  - skill: "customer-data-platform"
+    relationship: "works-with"
+
+performance_criteria:
+  - metric: "Event detection accuracy"
+    target: "> 95% for hard braking and cornering"
+  - metric: "Score calculation latency"
+    target: "< 5 minutes after trip end"
+  - metric: "Loss ratio improvement"
+    target: "> 10% versus traditional book"
+
+metadata:
+  author: "Automotive Claude Code Agents"
+  last_updated: "2026-03-19"
+  maturity: "production"
+  complexity: "advanced"
+  estimated_time: "60-90 minutes"
+
+tags:
+  - retail
+  - aftermarket
+  - usage-based-insurance
+  - telematics
+  - driving-score
+  - pay-how-you-drive

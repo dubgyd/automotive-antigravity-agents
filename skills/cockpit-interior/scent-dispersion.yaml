@@ -1,0 +1,161 @@
+name: scent-dispersion
+version: 1.0.0
+category: cockpit-interior
+domain: automotive-cockpit
+description: "In-cabin aromatherapy and scent management systems covering fragrance cartridge design, HVAC-integrated dispersion, intensity control, and air quality interaction for automotive environments."
+use_cases:
+  - "Designing HVAC-integrated scent dispersion systems with replaceable cartridges"
+  - "Implementing intensity-controlled aromatherapy linked to driver stress detection"
+  - "Building multi-scent blending systems that create customized fragrance profiles"
+  - "Creating scent-based alerts for drowsiness prevention and attention restoration"
+  - "Integrating scent dispersion with cabin air quality monitoring systems"
+automotive_standards:
+  - "ISO 12219 - Interior air quality for road vehicles"
+  - "REACH Regulation EC 1907/2006 - Chemical safety for fragrance substances"
+  - "IFRA Standards - International Fragrance Association safety guidelines"
+  - "SAE J1113 - EMC requirements for fragrance dispenser actuators"
+  - "VDA 270 - Odor assessment of vehicle interior components"
+instructions: |
+  # Scent Dispersion
+
+  ## Overview
+  In-cabin scent dispersion systems deliver controlled fragrance to the vehicle interior
+  for comfort, wellness, and functional purposes. Integrated with the HVAC system,
+  these devices vaporize or atomize fragrance oils from replaceable cartridges, distributing
+  scent molecules through the cabin air distribution network. Advanced systems adjust
+  intensity based on occupant preferences, driving conditions, and even biometric signals
+  from the driver monitoring system.
+
+  ## Key Concepts
+
+  ### Dispersion Technologies
+  Several methods deliver fragrance into the cabin airstream:
+  - Piezoelectric atomizers create fine mist from liquid fragrance oil
+  - Heated wick evaporators use gentle warming to release volatile compounds
+  - Venturi-effect diffusers use HVAC airflow to draw scent from a reservoir
+  - Micro-valve systems meter precise quantities of fragrance into the air duct
+
+  ### Cartridge Design
+  Replaceable fragrance modules enable user choice and replenishment:
+  - Sealed cartridges prevent fragrance leakage during vehicle storage
+  - Typical cartridge life of 3 to 6 months at moderate usage levels
+  - Multiple cartridge slots allow blending of two or more fragrances
+  - NFC or RFID tags on cartridges communicate scent identity and remaining life
+
+  ### Olfactory Adaptation
+  The human nose rapidly adapts to constant scent exposure:
+  - Continuous exposure leads to reduced perception within 5 to 10 minutes
+  - Pulsed dispersion with 2-minute on and 5-minute off cycles maintains perception
+  - Alternating between two complementary scents reduces adaptation rate
+  - Intensity ramping gradually increases dispersion to compensate for adaptation
+
+  ## Implementation Guide
+
+  ### Step 1 - Define HVAC Integration Point
+  Locate the optimal position in the HVAC system for scent injection:
+  - Downstream of the cabin air filter to avoid contaminating filter media
+  - Upstream of the blending flap to enable zone-specific scent delivery
+  - In a low-turbulence section of the duct for consistent atomization
+  - Accessible from the cabin for cartridge replacement without tools
+
+  ### Step 2 - Design the Dispenser Module
+  Build the scent generation hardware:
+  - Size the atomizer for the target cabin volume (typical 2.5 to 3.5 cubic meters)
+  - Include a temperature-controlled reservoir to maintain fragrance viscosity
+  - Add a recirculation path to clear the atomizer between scent changes
+  - Implement a sealed cartridge dock with drip-free quick-connect interface
+
+  ### Step 3 - Build Intensity Control
+  Create the software that manages scent concentration:
+  - Map dispersion duty cycle to perceived intensity on a perceptual scale of 1 to 10
+  - Implement pulsed dispersion timing to combat olfactory adaptation
+  - Link intensity to HVAC fan speed since higher airflow dilutes scent concentration
+  - Provide automatic mode that adjusts based on cabin volume and occupant count
+
+  ### Step 4 - Integrate Wellness Features
+  Connect scent dispersion to driver wellness systems:
+  - Activate energizing citrus scents when drowsiness detection triggers
+  - Disperse calming lavender when stress indicators are elevated
+  - Schedule scent profiles based on time of day and trip duration
+  - Allow manual override so the driver maintains full control at all times
+
+  ### Step 5 - Manage Air Quality Interaction
+  Ensure scent systems coexist with air quality management:
+  - Suspend scent dispersion when cabin CO2 levels exceed 1000 ppm
+  - Coordinate with the air purification system to avoid filter loading
+  - Monitor VOC sensors to verify scent compounds remain within safe concentrations
+  - Disable scent when the recirculation mode is active to prevent over-concentration
+
+  ## Best Practices
+
+  ### Fragrance Safety
+  - Use only IFRA-compliant fragrance formulations rated for enclosed spaces
+  - Limit individual allergen compound concentrations per REACH guidelines
+  - Provide ingredient disclosure for each fragrance cartridge on the vehicle HMI
+  - Include a rapid purge function that clears scent using fresh air mode within 60 seconds
+
+  ### User Experience
+  - Default to off on first drive, allowing the user to opt in to scent features
+  - Remember per-driver scent preferences linked to the driver profile key
+  - Provide smooth transitions when switching between fragrance profiles
+  - Offer a scentless interval between different fragrances to prevent mixing
+
+  ### Maintenance and Lifecycle
+  - Display cartridge remaining life as a percentage on the vehicle status screen
+  - Alert the driver when cartridge is below 10% to allow timely replacement
+  - Design the cartridge bay for single-hand replacement in under 10 seconds
+  - Prevent the use of non-certified third-party cartridges that could release harmful VOC
+
+  ## Troubleshooting
+
+  ### No Scent Detected Despite System Active
+  Check cartridge installation and verify the seal has been removed. Confirm the HVAC fan
+  is running at sufficient speed to distribute scent. Inspect the atomizer for clogging
+  from dried fragrance residue and run a cleaning cycle.
+
+  ### Scent is Overwhelming or Too Strong
+  Reduce the dispersion duty cycle and verify the pulsed timing pattern is active. Check
+  that the HVAC is not in recirculation mode which concentrates cabin air. Verify cabin
+  occupant count detection is working and adjusting intensity accordingly.
+
+  ### Lingering Scent After System Off
+  Run the fresh air purge cycle for at least 3 minutes with windows cracked. Check for
+  fragrance oil residue on HVAC duct surfaces near the injection point. Verify the
+  cartridge seal closes properly when the system is deactivated.
+
+  ### Cartridge Not Recognized
+  Clean the NFC or RFID reader contacts on both cartridge and dock. Verify cartridge
+  firmware compatibility with the dispenser module software version. Try reseating the
+  cartridge to ensure proper mechanical and electrical contact.
+
+  ## Integration Patterns
+
+  ### Multi-Sensory Coordination
+  Combining scent with other comfort systems for immersive experiences:
+  - Synchronize calming scents with ambient lighting warm tones for relaxation mode
+  - Pair energizing citrus scents with cool blue-white lighting for alertness mode
+  - Coordinate scent activation with massage seat programs for spa-like experience
+  - Link scent profiles to music genre detection for entertainment immersion
+
+  ### Fleet and Ride-Share Considerations
+  Managing scent systems in shared vehicle environments:
+  - Run a neutral purge cycle between different riders in autonomous taxi service
+  - Disable scent system by default in shared vehicles until rider opts in
+  - Track allergen exposure data per rider profile for safety compliance
+  - Implement rapid scent clearing capability completing in under 90 seconds
+
+  ## Testing and Validation
+
+  ### Olfactory Perception Testing
+  Quantify scent delivery effectiveness with human evaluators:
+  - Use a trained sensory panel of 15 evaluators per ISO 5496 selection criteria
+  - Rate perceived intensity on a 10-point scale at each seat position
+  - Measure time to first perception after activation at the farthest seat position
+  - Validate that pulsed delivery maintains perceptible intensity over a 60-minute drive
+
+  ### Chemical Safety Verification
+  Confirm all fragrance compounds meet safety regulations:
+  - Analyze emitted VOC composition using GC-MS spectrometry at operating temperature
+  - Verify no individual compound exceeds REACH concentration limits for enclosed spaces
+  - Test for allergen compound concentration against IFRA 49th Amendment standards
+  - Measure total cabin VOC load with scent active versus inactive to verify margin
