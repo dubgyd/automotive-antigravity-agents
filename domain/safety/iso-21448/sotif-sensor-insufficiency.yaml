@@ -480,7 +480,7 @@ tools_required:
 - Field testing instrumentation
 - Performance analysis tools (Python, MATLAB)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

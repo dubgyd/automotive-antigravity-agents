@@ -733,7 +733,7 @@ tools_required:
 - Techno-economic analysis software (H2A, GREET)
 - Transport logistics modeling (FleetRoute, Optrak)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

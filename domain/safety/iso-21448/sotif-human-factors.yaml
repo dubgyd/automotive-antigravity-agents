@@ -543,7 +543,7 @@ tools_required:
 - Human factors analysis tools (HTA, SHERPA)
 - Statistical analysis for user study data
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -403,7 +403,7 @@ tools_required:
 - DC power supply and electronic load for testing
 - CHAdeMO certification test equipment
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

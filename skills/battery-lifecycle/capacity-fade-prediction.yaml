@@ -31,7 +31,7 @@ tools_required:
 - Cloud training infrastructure (GPU clusters for LSTM/GPR)
 - Edge deployment (ONNX for model export, TensorFlow Lite)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

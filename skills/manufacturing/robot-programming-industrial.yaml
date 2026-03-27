@@ -205,7 +205,7 @@ tools_required:
 - Calibration tools (TCP calibration fixtures)
 - Simulation and collision detection engines
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

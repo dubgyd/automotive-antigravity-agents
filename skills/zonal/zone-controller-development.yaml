@@ -629,7 +629,7 @@ tools_required:
 - Unit test (GoogleTest, Unity, CppUTest)
 - HIL simulator (dSPACE, ETAS, Vector CANoe)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: expert

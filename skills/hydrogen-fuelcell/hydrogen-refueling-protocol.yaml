@@ -614,7 +614,7 @@ tools_required:
 - Pressure/temperature data loggers for validation
 - SAE J2601 compliance test bench
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

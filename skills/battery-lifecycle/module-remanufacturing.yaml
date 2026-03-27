@@ -32,7 +32,7 @@ tools_required:
 - Hi-pot testers (insulation resistance, 1500V AC)
 - Assembly tools (torque wrenches, multimeters, oscilloscopes)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

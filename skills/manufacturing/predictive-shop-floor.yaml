@@ -300,7 +300,7 @@ tools_required:
 - CMMS integration (SAP PM, Maximo, Fiix)
 - Dashboard tools (Grafana, Power BI, Tableau)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

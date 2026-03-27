@@ -606,7 +606,7 @@ tools_required:
 - OpenSCENARIO editor and players
 - Statistical analysis tools
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

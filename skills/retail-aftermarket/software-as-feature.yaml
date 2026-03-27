@@ -158,7 +158,7 @@ performance_criteria:
     target: "> 30% of vehicles with paid feature at 12 months"
 
 metadata:
-  author: "Automotive Safety Agents"
+  author: "Automotive-Agent"
   last_updated: "2026-03-19"
   maturity: "beta"
   complexity: "expert"

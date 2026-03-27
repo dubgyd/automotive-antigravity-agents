@@ -430,7 +430,7 @@ tools_required:
 - Signal integrity simulator (HyperLynx, ADS)
 - EMI test chamber
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

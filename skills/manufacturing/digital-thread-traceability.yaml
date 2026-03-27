@@ -188,7 +188,7 @@ tools_required:
 - Integration platforms (MuleSoft, Dell Boomi)
 - Blockchain (Hyperledger Fabric, VeChain ToolChain)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

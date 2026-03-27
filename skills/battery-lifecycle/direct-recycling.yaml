@@ -137,7 +137,7 @@ instructions: |
   - Scale-up challenges - Start with 100-500 kg batches to validate reproducibility
   - OEM reluctance to use recycled cathode - Provide long-term cycling data with comparison
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: "2026-03-19"
   maturity: emerging
   complexity: advanced

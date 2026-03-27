@@ -177,7 +177,7 @@ tools_required:
 - LiDAR sensors (SICK, Hokuyo, Velodyne)
 - UWB positioning systems (Sewio, Ubisense)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

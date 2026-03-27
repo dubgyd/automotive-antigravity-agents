@@ -367,5 +367,5 @@ Code examples licensed under MIT
 
 **Knowledge Base Version**: 1.0
 **Last Updated**: 2026-03-19
-**Maintained By**: Automotive Safety Agents Team
+**Maintained By**: Automotive-Agent Team
 **Repository**: https://github.com/yourusername/automotive-claude-code-agents

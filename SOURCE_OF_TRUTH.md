@@ -1,4 +1,4 @@
-# Source of Truth - Automotive Safety Agents
+# Source of Truth - Automotive-Agent
 
 Comprehensive automotive software development AI assistant repository.
 

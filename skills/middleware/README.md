@@ -326,10 +326,10 @@ Each skill includes:
 
 ## License
 
-All skills are part of the Automotive Safety Agents project.
+All skills are part of the Automotive-Agent project.
 See LICENSE file in repository root.
 
 ## Author
 
-Automotive Safety Agents
+Automotive-Agent
 Last Updated: 2026-03-19

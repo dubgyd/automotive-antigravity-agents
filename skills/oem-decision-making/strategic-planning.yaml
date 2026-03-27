@@ -136,7 +136,7 @@ instructions: |
   Investment: 1.2B EUR over 4 years. Risk mitigation: maintain L2+ as fallback if regulatory approval
   delays, modular sensor architecture allowing upgrade to L4-ready hardware in future generation.
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: "2026-03-19"
   maturity: production
   complexity: advanced

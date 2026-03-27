@@ -763,4 +763,4 @@ private:
 
 **Version:** 1.0.0
 **Last Updated:** 2026-03-19
-**Author:** Automotive Safety Agents
+**Author:** Automotive-Agent

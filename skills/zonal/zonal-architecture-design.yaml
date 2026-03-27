@@ -513,7 +513,7 @@ tools_required:
 - AUTOSAR toolchain (Vector DaVinci, EB tresos)
 - Cable routing tools (Siemens Capital Harness)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: expert

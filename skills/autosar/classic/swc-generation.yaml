@@ -506,7 +506,7 @@ skills:
       7. Perform load and stress testing
 
 metadata:
-  author: "Automotive Safety Agents"
+  author: "Automotive-Agent"
   created: "2026-03-19"
   autosar_version: "4.2.2"
   compatible_tools: ["EB tresos", "Arctic Core", "Davinci Configurator"]

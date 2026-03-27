@@ -32,7 +32,7 @@ tools_required:
 - Cloud infrastructure (AWS, Azure, GCP)
 - API gateway and authentication (OAuth 2.0, JWT)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

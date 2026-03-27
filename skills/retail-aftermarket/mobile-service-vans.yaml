@@ -165,7 +165,7 @@ performance_criteria:
     target: "> 4.7/5.0 average rating"
 
 metadata:
-  author: "Automotive Safety Agents"
+  author: "Automotive-Agent"
   last_updated: "2026-03-19"
   maturity: "production"
   complexity: "intermediate"

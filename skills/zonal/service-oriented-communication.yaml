@@ -606,7 +606,7 @@ tools_required:
 - Wireshark with SOME/IP/DDS dissectors
 - Network simulator (CANoe, ETAS COSYM)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: expert

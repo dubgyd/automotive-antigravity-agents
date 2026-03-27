@@ -139,7 +139,7 @@ instructions: |
   unit cost increase offset by 60% lower safety stock, 90% fewer expedited air freight events, and
   elimination of one production stoppage per year (value: 15M EUR).
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: "2026-03-19"
   maturity: production
   complexity: advanced

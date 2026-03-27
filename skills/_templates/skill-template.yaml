@@ -124,7 +124,7 @@ validation:
     requirements: "All safety-critical paths"
 
 metadata:
-  author: "Automotive Safety Agents"
+  author: "Automotive-Agent"
   last_updated: "2026-03-19"
   maturity: "production|beta|experimental"
   complexity: "basic|intermediate|advanced|expert"

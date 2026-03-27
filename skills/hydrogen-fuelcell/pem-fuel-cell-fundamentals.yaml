@@ -312,7 +312,7 @@ tools_required:
 - Polarization curve test bench
 - Thermal imaging for hotspot detection
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

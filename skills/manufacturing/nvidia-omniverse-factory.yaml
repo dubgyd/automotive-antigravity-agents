@@ -263,7 +263,7 @@ tools_required:
 - ROS2 (Humble/Iron) for robot communication bridge
 - OPC UA servers for PLC and SCADA integration
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

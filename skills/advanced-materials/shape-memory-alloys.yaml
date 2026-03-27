@@ -301,7 +301,7 @@ tools_required:
 - LMS Test.Lab for vibration and durability testing
 - Python with SciPy for thermal dynamics modeling
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -411,7 +411,7 @@ See individual directories for specific licenses.
 
 **Created by**: Implementation Agent #12
 **Date**: 2026-03-19
-**Platform**: Automotive Safety Agents
+**Platform**: Automotive-Agent
 **Repository**: automotive-claude-code-agents
 
 ---

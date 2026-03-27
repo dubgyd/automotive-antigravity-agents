@@ -774,7 +774,7 @@ tools_required:
 - Test bench with flow meters, pressure/temperature sensors
 - CAN interface tools (Vector CANoe)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

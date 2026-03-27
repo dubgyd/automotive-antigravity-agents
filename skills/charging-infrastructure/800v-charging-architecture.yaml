@@ -256,7 +256,7 @@ tools_required:
   - "Thermal imaging camera (FLIR) for hotspot detection"
   - "EMC chamber for high-frequency EMI testing"
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: "2026-03-19"
   maturity: emerging
   complexity: expert

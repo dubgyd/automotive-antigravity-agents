@@ -2,7 +2,7 @@
 
 **Implementation Agent #2 Deliverables**
 
-This document describes the complete ADAS perception/planning/control and Battery/EV systems implementation for the Automotive Safety Agents framework.
+This document describes the complete ADAS perception/planning/control and Battery/EV systems implementation for the Automotive-Agent framework.
 
 ## Table of Contents
 

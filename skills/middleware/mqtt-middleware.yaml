@@ -366,7 +366,7 @@ tools_required:
 - MQTT Explorer (GUI client)
 - JMeter with MQTT plugin (load testing)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

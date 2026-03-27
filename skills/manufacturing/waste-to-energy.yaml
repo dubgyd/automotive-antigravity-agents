@@ -256,7 +256,7 @@ tools_required:
 - Emissions monitoring (CEMS for stack monitoring)
 - Waste tracking platforms (SAP EHS, Enablon)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

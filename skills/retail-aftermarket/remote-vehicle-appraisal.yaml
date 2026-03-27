@@ -164,7 +164,7 @@ performance_criteria:
     target: "> 85% for visible damage"
 
 metadata:
-  author: "Automotive Safety Agents"
+  author: "Automotive-Agent"
   last_updated: "2026-03-19"
   maturity: "production"
   complexity: "advanced"

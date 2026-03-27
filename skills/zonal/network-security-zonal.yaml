@@ -593,7 +593,7 @@ tools_required:
 - SIEM (Splunk, ELK stack, Wazuh)
 - Penetration testing (Metasploit, Kali Linux)
 metadata:
-  author: Automotive Safety Agents
+  author: Automotive-Agent
   last_updated: '2026-03-19'
   maturity: production
   complexity: expert
