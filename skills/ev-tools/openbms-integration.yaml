@@ -205,7 +205,7 @@ tools_required:
 - Oscilloscope and multimeter for hardware debug
 - Git and CI/CD for version control
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

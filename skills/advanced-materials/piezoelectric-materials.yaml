@@ -334,7 +334,7 @@ tools_required:
 - Laser Doppler vibrometer for mode shape characterization
 - Impedance analyzer for capacitance and loss tangent measurement
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

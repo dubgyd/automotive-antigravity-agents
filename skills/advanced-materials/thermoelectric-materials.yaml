@@ -195,7 +195,7 @@ tools_required:
 - LTspice for DC-DC converter design
 - Thermal camera for hot-spot detection and validation
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -343,7 +343,7 @@ tools_required:
 - Centrifuge or filter press for crystal recovery
 - XRD for product phase identification
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

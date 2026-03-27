@@ -173,7 +173,7 @@ tools_required:
 - Time-series databases (InfluxDB, TimescaleDB)
 - 3D visualization engines (Unity, Unreal Engine, NVIDIA Omniverse)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

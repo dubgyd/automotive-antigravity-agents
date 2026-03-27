@@ -693,7 +693,7 @@ tools_required:
 - Temperature data acquisition system
 - Freeze chamber for cold start testing
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -385,7 +385,7 @@ tools_required:
   - "HIL simulator (dSPACE, Typhoon HIL) for testing"
   - "CAN analyzer and PLC sniffer for protocol debugging"
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: "2026-03-19"
   maturity: production
   complexity: expert

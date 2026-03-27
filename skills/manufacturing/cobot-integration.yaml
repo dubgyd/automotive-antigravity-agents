@@ -188,7 +188,7 @@ tools_required:
 - Risk assessment software (pilz Risk Assessment Tool)
 - Simulation tools with force calculation (KUKA.Sim, RobotStudio)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

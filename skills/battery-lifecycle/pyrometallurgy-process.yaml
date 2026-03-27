@@ -252,7 +252,7 @@ tools_required:
 - CEMS (Continuous Emission Monitoring System)
 - Thermodynamic databases (FactSage, MTDATA)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

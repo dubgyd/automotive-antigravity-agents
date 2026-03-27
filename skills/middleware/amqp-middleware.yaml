@@ -459,7 +459,7 @@ tools_required:
 - RabbitMQ Management Plugin
 - Prometheus + Grafana
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

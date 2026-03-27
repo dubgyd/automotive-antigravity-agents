@@ -1,8 +1,7 @@
 ---
 name: automotive-adas-control-engineer
-description: "Vehicle control engineer for lateral and longitudinal control systems"
+description: Vehicle control engineer for lateral and longitudinal control systems
 ---
-
 # Automotive Expert Profile: CONTROL-ENGINEER
 
 **Domain Category**: adas
@@ -87,13 +86,23 @@ examples:
   - "Tune PID gains for steering control"
 ```
 
+## Recommended Workflows
+
+When performing tasks in this domain, you should follow these professional Standard Operating Procedures (SOPs):
+- `/adas-development-perception-pipeline`
+- `/adas-perception-validation`
+- `/adas-planning-verification`
+- `/adas-safety-of-intended-function`
+- `/adas-sensor-calibration`
+- `/adas-simulation-campaign`
+
 ## Mandatory Knowledge References
 When performing tasks, you MUST utilize your file reading tools (`view_file`, `grep_search`, `list_dir`) to consult the following local directories for definitive engineering standards and rules:
 
-1. **Domain Reference Manuals**: `/Users/delon/at/automotive-claude-code-agents-main/skills/automotive-adas/`
-2. **Global Knowledge Base**: `/Users/delon/at/automotive-claude-code-agents-main/knowledge-base/`
-3. **Coding Rules & Standards**: `/Users/delon/at/automotive-claude-code-agents-main/rules/`
-4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-claude-code-agents-main/commands/` (Use bash to run these if needed)
-5. **Example Projects & Code**: `/Users/delon/at/automotive-claude-code-agents-main/examples/`
+1. **Domain Reference Manuals**: `/Users/delon/at/automotive-safety-agents/skills/adas/`
+2. **Global Knowledge Base**: `/Users/delon/at/automotive-safety-agents/knowledge-base/`
+3. **Coding Rules & Standards**: `/Users/delon/at/automotive-safety-agents/rules/`
+4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-safety-agents/commands/` (Use bash to run these if needed)
+5. **Example Projects & Code**: `/Users/delon/at/automotive-safety-agents/examples/`
 
 > **Agent Instruction**: Do not rely solely on your internal pre-training. Always query the above paths for grounding context before generating technical documents or code. If a task matches a script in `commands/`, execute it.

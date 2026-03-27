@@ -330,7 +330,7 @@ tools_required:
 - Thermal camera for coil temperature monitoring
 - CAN interface for ECU integration and diagnostics
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

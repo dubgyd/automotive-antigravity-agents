@@ -216,7 +216,7 @@ tools_required:
 - Force/torque sensors (ATI, OnRobot, Robotiq)
 - Contact force measurement (CBSF, PFL measurement devices)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

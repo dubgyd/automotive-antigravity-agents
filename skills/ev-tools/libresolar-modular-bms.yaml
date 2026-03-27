@@ -254,7 +254,7 @@ tools_required:
 - Oscilloscope for AFE signal validation
 - Battery cycler for charge/discharge testing
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: community
   complexity: advanced

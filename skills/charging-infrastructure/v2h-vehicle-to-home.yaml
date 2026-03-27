@@ -451,7 +451,7 @@ tools_required:
 - Energy management system (custom or commercial HEMS)
 - Clamp-on power meter for load monitoring
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

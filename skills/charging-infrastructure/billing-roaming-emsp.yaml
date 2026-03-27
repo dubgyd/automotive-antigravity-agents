@@ -591,7 +591,7 @@ tools_required:
 - API gateway (Kong, AWS API Gateway)
 - Database (PostgreSQL for transactional, MongoDB for sessions)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

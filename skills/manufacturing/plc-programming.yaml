@@ -204,7 +204,7 @@ tools_required:
 - OPC UA servers (Kepware, Matrikon)
 - Version control (Git, TIA Portal Multiuser, Studio 5000 Version Control)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

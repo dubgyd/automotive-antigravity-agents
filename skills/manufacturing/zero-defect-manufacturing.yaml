@@ -261,7 +261,7 @@ tools_required:
 - Electronic torque tools (Atlas Copco, Desoutter)
 - MES with quality module (Siemens Opcenter, MPDV)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

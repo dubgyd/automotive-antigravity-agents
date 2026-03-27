@@ -251,7 +251,7 @@ escalation_criteria:
     action: "Escalate to system architect"
 
 metadata:
-  author: "Automotive Claude Code Agents"
+  author: "Automotive Safety Agents"
   created: "2026-03-19"
   status: "active|beta|experimental"
   priority: "critical|high|medium|low"

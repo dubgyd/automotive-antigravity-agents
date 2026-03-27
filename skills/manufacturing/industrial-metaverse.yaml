@@ -216,7 +216,7 @@ tools_required:
 - IoT integration (PTC ThingWorx, Siemens MindSphere)
 - Collaboration platforms (Autodesk Workshop XR, TeamViewer Spatial)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

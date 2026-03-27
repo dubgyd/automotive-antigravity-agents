@@ -419,7 +419,7 @@ tools_required:
 - FOD test objects (standardized metal pieces per SAE J2954)
 - Power analyzer for efficiency measurement
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

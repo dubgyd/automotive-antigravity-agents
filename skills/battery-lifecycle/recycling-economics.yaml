@@ -30,7 +30,7 @@ tools_required:
 - Monte Carlo simulation (Crystal Ball, @RISK)
 - Logistics optimization (Google OR-Tools, Python PuLP)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

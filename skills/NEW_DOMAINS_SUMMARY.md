@@ -181,6 +181,6 @@ These new domains complement existing skill categories:
 ---
 
 **Created**: 2026-03-19  
-**Author**: Automotive Claude Code Agents  
+**Author**: Automotive Safety Agents  
 **Repository**: automotive-claude-code-agents  
 **Maturity**: Production-ready

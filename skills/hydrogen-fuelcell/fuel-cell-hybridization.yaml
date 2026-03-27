@@ -762,7 +762,7 @@ tools_required:
 - dSPACE/ETAS HIL for validation
 - Vehicle dynamics model (AVL Cruise, GT-Suite)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

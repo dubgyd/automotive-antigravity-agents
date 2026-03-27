@@ -1,6 +1,6 @@
 # Roadmap
 
-Long-term vision and development roadmap for Automotive Claude Code Agents.
+Long-term vision and development roadmap for Automotive Safety Agents.
 
 ## Vision
 

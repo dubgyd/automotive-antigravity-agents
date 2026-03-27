@@ -31,7 +31,7 @@ tools_required:
 - Modular containerized ESS designs
 - Grid interconnection inverters (UL 1741, IEEE 1547)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

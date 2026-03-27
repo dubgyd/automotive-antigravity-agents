@@ -1,4 +1,4 @@
-# Source of Truth - Automotive Claude Code Agents
+# Source of Truth - Automotive Safety Agents
 
 Comprehensive automotive software development AI assistant repository.
 
@@ -127,52 +127,52 @@ Last Updated: 2026-03-19
 ### By Role
 
 **Embedded Engineer?**
-→ skills/automotive-ecu-systems/
-→ skills/automotive-powertrain-chassis/
+→ skills/ecu-systems/
+→ skills/powertrain-chassis/
 → agents/vehicle-systems-engineer, powertrain-control-engineer
 
 **ADAS Developer?**
-→ skills/automotive-adas/
-→ skills/automotive-ai-ecu/
+→ skills/adas/
+→ skills/ai-ecu/
 → agents/adas-perception-engineer, edge-ai-engineer
 
 **Safety Engineer?**
-→ skills/automotive-safety/
+→ domain/safety/iso-26262/
 → agents/safety-engineer, safety-assessor
 
 **Security Engineer?**
-→ skills/automotive-cybersecurity/
+→ domain/safety/iso-21434/
 → agents/automotive-security-architect, penetration-tester
 
 **System Architect?**
-→ skills/automotive-hpc/, automotive-zonal/, automotive-sdv/
+→ skills/hpc/, automotive-zonal/, automotive-sdv/
 → agents/hpc-platform-architect, zonal-architect, sdv-platform-engineer
 
 ### By Task
 
 **ISO 26262 Compliance?**
 → FUNCTIONAL_SAFETY_DELIVERABLES.md
-→ skills/automotive-safety/
+→ domain/safety/iso-26262/
 
 **ISO 21434 Security?**
 → CYBERSECURITY_DELIVERABLES.md
-→ skills/automotive-cybersecurity/
+→ domain/safety/iso-21434/
 
 **ADAS L2-L5 Development?**
 → ADAS_DELIVERABLES.md
-→ skills/automotive-adas/
+→ skills/adas/
 
 **Zonal Architecture Design?**
 → ZONAL_DELIVERABLES.md
-→ skills/automotive-zonal/
+→ skills/zonal/
 
 **OTA Updates?**
 → SDV_DELIVERABLES.md
-→ skills/automotive-sdv/ota-update-systems
+→ skills/sdv/ota-update-systems
 
 **UDS Diagnostics?**
 → AUTOMOTIVE_DIAGNOSTICS_COMPLETE.md
-→ skills/automotive-diagnostics/uds-iso14229-protocol
+→ skills/diagnostics/uds-iso14229-protocol
 
 ---
 

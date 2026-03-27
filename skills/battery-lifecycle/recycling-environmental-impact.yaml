@@ -31,7 +31,7 @@ tools_required:
 - Carbon accounting tools (SBTi, GHG Protocol)
 - Water footprint assessment tools (Water Footprint Network)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

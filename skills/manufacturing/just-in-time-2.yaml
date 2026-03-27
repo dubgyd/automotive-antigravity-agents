@@ -259,7 +259,7 @@ tools_required:
 - AMR fleet management (MiR Fleet, OTTO Fleet Manager)
 - Demand planning (SAP IBP, Kinaxis RapidResponse)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

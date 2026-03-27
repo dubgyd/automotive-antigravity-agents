@@ -126,7 +126,7 @@ tools_required:
 - EOBT equipment (MAHA roll test, Hunter wheel alignment)
 - MES integration (OPC UA, REST APIs)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

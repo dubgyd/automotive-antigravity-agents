@@ -326,7 +326,7 @@ tools_required:
 - Pilot plant with reactors, filters, crystallizers
 - HSC Chemistry or METSIM for process simulation
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

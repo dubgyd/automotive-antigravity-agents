@@ -130,7 +130,7 @@ instructions: |
   - VSM analysis paralysis - Time-box mapping to 2 days and focus on top 3 wastes
   - Management impatience - Set expectations that full benefits take 2-3 years
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: "2026-03-19"
   maturity: production
   complexity: intermediate

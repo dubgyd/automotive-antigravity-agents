@@ -439,7 +439,7 @@ tools_required:
 - Utility feeder maps and transformer data
 - Smart meter data (if available) for load profiling
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: expert

@@ -423,7 +423,7 @@ tools_required:
 - DC power supply (0-750V, 0-250A) for testing
 - CQC certification test equipment
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

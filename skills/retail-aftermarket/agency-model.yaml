@@ -144,7 +144,7 @@ performance_criteria:
     target: "> 7/10 within 12 months of transition"
 
 metadata:
-  author: "Automotive Claude Code Agents"
+  author: "Automotive Safety Agents"
   last_updated: "2026-03-19"
   maturity: "production"
   complexity: "advanced"

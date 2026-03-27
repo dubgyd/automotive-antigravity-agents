@@ -31,7 +31,7 @@ tools_required:
 - Degradation models (electrochemical or ML-based SOH prediction)
 - Market bidding algorithms (linear/quadratic programming solvers)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

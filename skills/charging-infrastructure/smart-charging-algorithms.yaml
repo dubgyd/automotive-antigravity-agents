@@ -480,7 +480,7 @@ tools_required:
 - OCPP/ISO 15118 stack for charging control
 - Weather API for solar forecast (Solcast, NREL)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

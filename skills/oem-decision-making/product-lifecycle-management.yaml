@@ -145,7 +145,7 @@ tools_required:
 - SAP/Oracle (ERP for financial data)
 - Decision tree software (PrecisionTree, TreeAge)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

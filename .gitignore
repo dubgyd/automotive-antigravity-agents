@@ -77,3 +77,6 @@ Thumbs.db
 
 # Ignore archived legacy Claude Code files for Antigravity
 .claude_archive/
+
+# Temporary OS files
+.!*!.DS_Store

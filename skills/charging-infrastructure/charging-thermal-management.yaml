@@ -503,7 +503,7 @@ tools_required:
 - Thermal simulation software (ANSYS Fluent, COMSOL)
 - Environmental chamber for ambient soak testing
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

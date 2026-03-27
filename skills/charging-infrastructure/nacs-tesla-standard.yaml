@@ -405,7 +405,7 @@ tools_required:
 - Thermal chamber for temperature testing
 - ISO 15118 test suite (for adapter development)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: advanced

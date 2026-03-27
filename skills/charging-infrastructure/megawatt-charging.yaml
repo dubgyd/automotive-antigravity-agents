@@ -429,7 +429,7 @@ tools_required:
 - Coolant circulation system (pump, heat exchanger, sensors)
 - Arc flash PPE and testing equipment
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: emerging
   complexity: expert

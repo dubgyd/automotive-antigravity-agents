@@ -179,7 +179,7 @@ tools_required:
 - ML platforms (Python scikit-learn, TensorFlow, Azure ML)
 - CMMS integration (SAP PM, IBM Maximo, Fiix)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

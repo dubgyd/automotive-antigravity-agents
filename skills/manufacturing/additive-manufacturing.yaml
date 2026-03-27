@@ -122,7 +122,7 @@ tools_required:
 - CT scanners (Nikon, Zeiss for porosity analysis)
 - CMM and laser scanners for dimensional inspection
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

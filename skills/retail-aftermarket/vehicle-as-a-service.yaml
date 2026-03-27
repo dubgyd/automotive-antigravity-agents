@@ -153,7 +153,7 @@ performance_criteria:
     target: "< 200ms for real-time display"
 
 metadata:
-  author: "Automotive Claude Code Agents"
+  author: "Automotive Safety Agents"
   last_updated: "2026-03-19"
   maturity: "production"
   complexity: "advanced"

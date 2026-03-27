@@ -120,7 +120,7 @@ tools_required:
 - SEM/EDX (microstructure analysis)
 - Thermal chamber and vibration table (environmental testing)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

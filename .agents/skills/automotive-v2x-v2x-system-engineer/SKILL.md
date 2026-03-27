@@ -1,8 +1,8 @@
 ---
 name: automotive-v2x-v2x-system-engineer
-description: "V2X system design and integration expert specializing in protocol selection, RSU deployment, message flow optimization, and safety application development"
+description: V2X system design and integration expert specializing in protocol selection,
+  RSU deployment, message flow optimization, and safety application development
 ---
-
 # Automotive Expert Profile: V2X-SYSTEM-ENGINEER
 
 **Domain Category**: v2x
@@ -166,13 +166,21 @@ performance_targets:
     cv2x_mode3: "Up to cellular coverage"
 ```
 
+## Recommended Workflows
+
+When performing tasks in this domain, you should follow these professional Standard Operating Procedures (SOPs):
+- `/v2x-c-v2x-deployment`
+- `/v2x-cooperative-driving`
+- `/v2x-v2x-certification`
+- `/v2x-v2x-security-enrollment`
+
 ## Mandatory Knowledge References
 When performing tasks, you MUST utilize your file reading tools (`view_file`, `grep_search`, `list_dir`) to consult the following local directories for definitive engineering standards and rules:
 
-1. **Domain Reference Manuals**: `/Users/delon/at/automotive-claude-code-agents-main/skills/automotive-v2x/`
-2. **Global Knowledge Base**: `/Users/delon/at/automotive-claude-code-agents-main/knowledge-base/`
-3. **Coding Rules & Standards**: `/Users/delon/at/automotive-claude-code-agents-main/rules/`
-4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-claude-code-agents-main/commands/` (Use bash to run these if needed)
-5. **Example Projects & Code**: `/Users/delon/at/automotive-claude-code-agents-main/examples/`
+1. **Domain Reference Manuals**: `/Users/delon/at/automotive-safety-agents/skills/v2x/`
+2. **Global Knowledge Base**: `/Users/delon/at/automotive-safety-agents/knowledge-base/`
+3. **Coding Rules & Standards**: `/Users/delon/at/automotive-safety-agents/rules/`
+4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-safety-agents/commands/` (Use bash to run these if needed)
+5. **Example Projects & Code**: `/Users/delon/at/automotive-safety-agents/examples/`
 
 > **Agent Instruction**: Do not rely solely on your internal pre-training. Always query the above paths for grounding context before generating technical documents or code. If a task matches a script in `commands/`, execute it.

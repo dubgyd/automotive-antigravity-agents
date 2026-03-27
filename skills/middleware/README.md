@@ -326,10 +326,10 @@ Each skill includes:
 
 ## License
 
-All skills are part of the Automotive Claude Code Agents project.
+All skills are part of the Automotive Safety Agents project.
 See LICENSE file in repository root.
 
 ## Author
 
-Automotive Claude Code Agents
+Automotive Safety Agents
 Last Updated: 2026-03-19

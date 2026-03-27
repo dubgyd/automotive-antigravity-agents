@@ -161,7 +161,7 @@ tools_required:
 - Git for version control of parameter sets
 - CI/CD for automated model validation
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

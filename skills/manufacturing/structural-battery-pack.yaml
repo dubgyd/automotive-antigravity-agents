@@ -279,7 +279,7 @@ tools_required:
 - Vision systems for cell placement (Cognex, Keyence)
 - Thermal simulation (ANSYS Fluent, Star-CCM+)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

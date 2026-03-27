@@ -126,7 +126,7 @@ tools_required:
 - Regulatory tracking software (LexisNexis, DecisionEngine)
 - Collaboration platforms for authority liaison
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -146,7 +146,7 @@ tools_required:
 - Tool/software 2
 - ...
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced
@@ -378,7 +378,7 @@ Planned additions:
 
 - **Repository**: automotive-claude-code-agents
 - **Created**: 2026-03-19
-- **Author**: Automotive Claude Code Agents
+- **Author**: Automotive Safety Agents
 - **License**: See repository LICENSE file
 - **Issues**: Report via repository issue tracker
 

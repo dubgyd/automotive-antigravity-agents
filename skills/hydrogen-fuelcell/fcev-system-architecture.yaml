@@ -460,7 +460,7 @@ tools_required:
 - dSPACE/ETAS HIL systems for controller validation
 - Safety analysis tools (FMEA, FTA)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

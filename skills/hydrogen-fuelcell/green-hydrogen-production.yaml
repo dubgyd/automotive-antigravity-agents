@@ -757,7 +757,7 @@ tools_required:
 - GC (Gas Chromatography) for H2 purity testing
 - LCA software (SimaPro, GaBi) for WTW analysis
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

@@ -31,7 +31,7 @@ tools_required:
 - Enclosures (NEMA 3R outdoor-rated, thermal management)
 - Monitoring software (Grafana, Home Assistant, vendor apps)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

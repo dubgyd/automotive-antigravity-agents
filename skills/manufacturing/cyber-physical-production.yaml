@@ -275,7 +275,7 @@ tools_required:
 - ML deployment (NVIDIA Triton, TensorFlow Serving, ONNX Runtime)
 - SCADA/MES (Siemens Opcenter, AVEVA, Ignition by Inductive Automation)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

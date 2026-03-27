@@ -190,7 +190,7 @@ tools_required:
 - MES integration for automated data collection
 - Dashboards (Power BI, Tableau, Grafana)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

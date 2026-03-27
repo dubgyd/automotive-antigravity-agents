@@ -760,7 +760,7 @@ tools_required:
 - Permeation test chamber (pressure decay measurement)
 - ATEX certification for electrical components
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

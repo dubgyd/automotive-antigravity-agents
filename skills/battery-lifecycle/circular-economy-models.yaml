@@ -31,7 +31,7 @@ tools_required:
 - IoT platforms for battery tracking (AWS IoT, Azure IoT)
 - Blockchain for provenance (Circulor, Minespider)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: intermediate

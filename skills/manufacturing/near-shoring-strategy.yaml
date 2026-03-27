@@ -258,7 +258,7 @@ tools_required:
 - Supplier audit (VDA 6.3 audit tools, SQM platforms)
 - Supply chain network design (Llamasoft/Coupa, AIMMS)
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

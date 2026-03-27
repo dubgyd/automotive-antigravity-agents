@@ -347,7 +347,7 @@ tools_required:
 - CharIN test tools for certification
 - DC power supply and electronic load for HIL testing
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   last_updated: '2026-03-19'
   maturity: production
   complexity: advanced

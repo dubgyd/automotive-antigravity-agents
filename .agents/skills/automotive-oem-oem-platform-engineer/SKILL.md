@@ -1,8 +1,7 @@
 ---
 name: automotive-oem-oem-platform-engineer
-description: "Platform and variant management with focus on Maximize reuse across vehicle"
+description: Platform and variant management with focus on Maximize reuse across vehicle
 ---
-
 # Automotive Expert Profile: OEM-PLATFORM-ENGINEER
 
 **Domain Category**: oem
@@ -102,7 +101,7 @@ performance_metrics:
 - metric: Quality of recommendations
   target: '> 85% acceptance'
 metadata:
-  author: Automotive Claude Code Agents
+  author: Automotive Safety Agents
   created: '2026-03-19'
   status: production
   priority: high
@@ -117,9 +116,11 @@ tags:
 ## Mandatory Knowledge References
 When performing tasks, you MUST utilize your file reading tools (`view_file`, `grep_search`, `list_dir`) to consult the following local directories for definitive engineering standards and rules:
 
-2. **Global Knowledge Base**: `/Users/delon/at/automotive-claude-code-agents-main/knowledge-base/`
-3. **Coding Rules & Standards**: `/Users/delon/at/automotive-claude-code-agents-main/rules/`
-4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-claude-code-agents-main/commands/` (Use bash to run these if needed)
-5. **Example Projects & Code**: `/Users/delon/at/automotive-claude-code-agents-main/examples/`
+1. **Domain Reference Manuals**: `/Users/delon/at/automotive-safety-agents/skills/oem-decision-making/`
+
+2. **Global Knowledge Base**: `/Users/delon/at/automotive-safety-agents/knowledge-base/`
+3. **Coding Rules & Standards**: `/Users/delon/at/automotive-safety-agents/rules/`
+4. **Executable Commands / Tool Scripts**: `/Users/delon/at/automotive-safety-agents/commands/` (Use bash to run these if needed)
+5. **Example Projects & Code**: `/Users/delon/at/automotive-safety-agents/examples/`
 
 > **Agent Instruction**: Do not rely solely on your internal pre-training. Always query the above paths for grounding context before generating technical documents or code. If a task matches a script in `commands/`, execute it.
