@@ -80,3 +80,5 @@ Thumbs.db
 
 # Temporary OS files
 .!*!.DS_Store
+.add . && git commit -m refactor: rename project to Automotive-Agent across codebase && git push origin migration-v2
+~
